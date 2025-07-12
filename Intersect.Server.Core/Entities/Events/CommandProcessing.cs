@@ -2249,4 +2249,39 @@ public static partial class CommandProcessing
             }
         }
     }
+
+
+    private static void ProcessCommand(
+    OpenEnchantmentWindowCommand command,
+     Player player,
+     Event instance,
+     CommandInstance stackInfo,
+     Stack<CommandInstance> callStack
+  )
+    {
+        player.OpenEnchantment();
+    }
+
+    private static void ProcessCommand(
+    OpenMageWindowCommand command,
+     Player player,
+     Event instance,
+     CommandInstance stackInfo,
+     Stack<CommandInstance> callStack
+  )
+    {
+        player.OpenMage();
+    }
+
+    private static void ProcessCommand(
+  OpenBrokeItemWindowCommand command,
+   Player player,
+   Event instance,
+   CommandInstance stackInfo,
+   Stack<CommandInstance> callStack
+)
+    {
+        player.OpenBrokeItem();
+    }
+
 }
