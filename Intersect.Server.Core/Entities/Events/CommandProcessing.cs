@@ -859,10 +859,10 @@ public static partial class CommandProcessing
         }
     }
 
-    //Spawn Npc Command
+    //Spawn Npc Command (accepts any entity as caller)
     private static void ProcessCommand(
         SpawnNpcCommand command,
-        Player player,
+        Entity caller,
         Event eventInstance,
         CommandInstance stackInfo,
         Stack<CommandInstance> callStack
@@ -873,7 +873,7 @@ public static partial class CommandProcessing
         var tileX = 0;
         var tileY = 0;
         Direction direction = (byte)Direction.Up;
-        var targetEntity = (Entity)player;
+        var targetEntity = caller;
         if (mapId != Guid.Empty)
         {
             tileX = command.X;
@@ -882,7 +882,7 @@ public static partial class CommandProcessing
         }
         else
         {
-            if (command.EntityId != Guid.Empty)
+            if (command.EntityId != Guid.Empty && caller is Player player)
             {
                 foreach (var evt in player.EventLookup)
                 {
@@ -942,10 +942,14 @@ public static partial class CommandProcessing
         }
 
         var tile = new TileHelper(mapId, tileX, tileY);
-        if (tile.TryFix() && MapController.TryGetInstanceFromMap(mapId, player.MapInstanceId, out var instance))
+        if (tile.TryFix() && MapController.TryGetInstanceFromMap(mapId, caller.MapInstanceId, out var instance))
         {
             var npc = instance.SpawnNpc((byte)tileX, (byte)tileY, direction, npcId, true);
-            player.SpawnedNpcs.Add(npc);
+            if (caller is Player playerCaller)
+            {
+                playerCaller.SpawnedNpcs.Add(npc);
+            }
+            // NPC callers currently do not track spawned NPCs.
         }
     }
 
