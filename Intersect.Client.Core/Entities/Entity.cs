@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Linq;
 using Intersect.Client.Core;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Entities.Projectiles;
@@ -18,6 +19,7 @@ using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
@@ -2038,7 +2040,13 @@ public partial class Entity : IEntity
         var boundingTexture = GameTexture.GetBoundingTexture(BoundsComparison.Height, castBackground, castForeground);
 
         float remainingTime = CastTime - Timing.Global.Milliseconds;
-        var fillRatio = 1 - remainingTime / castingSpell.CastDuration;
+        SpellProperties? props = null;
+        if (this is Player player)
+        {
+            var spell = player.Spells.FirstOrDefault(s => s.Id == SpellCast);
+            props = spell?.Properties;
+        }
+        var fillRatio = 1 - remainingTime / castingSpell.GetEffectiveCastDuration(props);
 
         var x = (int)Math.Ceiling(Origin.X);
         var y = (int)Math.Ceiling(Origin.Y);
@@ -2244,7 +2252,13 @@ public partial class Entity : IEntity
             var spell = SpellDescriptor.Get(SpellCast);
             if (spell != null)
             {
-                var duration = spell.CastDuration;
+                SpellProperties? props = null;
+                if (this is Player player)
+                {
+                    var pspell = player.Spells.FirstOrDefault(s => s.Id == SpellCast);
+                    props = pspell?.Properties;
+                }
+                var duration = spell.GetEffectiveCastDuration(props);
                 var timeInCast = duration - (CastTime - timingMilliseconds);
 
                 if (AnimatedTextures.TryGetValue(SpriteAnimations.Cast, out _))
