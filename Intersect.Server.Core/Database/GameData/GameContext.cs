@@ -96,6 +96,18 @@ public abstract partial class GameContext : IntersectDbContext<GameContext>, IGa
             .WithOne(item => item.EquipmentProperties)
             .HasForeignKey<EquipmentProperties>(property => property.DescriptorId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PetDescriptor>()
+            .Property(pet => pet.BaseEnergy)
+            .HasDefaultValue(100);
+
+        modelBuilder.Entity<PetDescriptor>()
+            .Property(pet => pet.BaseMood)
+            .HasDefaultValue(100);
+
+        modelBuilder.Entity<PetDescriptor>()
+            .Property(pet => pet.BaseMaturity)
+            .HasDefaultValue(0);
     }
 
     public override void OnSchemaMigrationsProcessed(string[] migrations)
@@ -118,6 +130,11 @@ public abstract partial class GameContext : IntersectDbContext<GameContext>, IGa
         if (migrations.IndexOf("20211031200145_FixQuestTaskCompletionEvents") > -1)
         {
             FixQuestTaskCompletionEventsMigration.Run(this);
+        }
+
+        if (migrations.IndexOf("20240601000000_PetGenderSpritesMigration") > -1)
+        {
+            PetSpriteGenderMigration.Run(this);
         }
     }
 

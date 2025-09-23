@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
@@ -46,6 +47,18 @@ public static partial class Interface
     public static bool HasInGameUI => _uiInGame != null;
 
     public static bool HasMainMenuUI => _uiMainMenu != null;
+
+    public static bool TryGetGameUi([NotNullWhen(true)] out GameInterface? gameInterface)
+    {
+        gameInterface = _uiInGame;
+        return gameInterface != null;
+    }
+
+    public static bool TryGetMenuUi([NotNullWhen(true)] out MenuGuiBase? menuGui)
+    {
+        menuGui = _uiMainMenu;
+        return menuGui != null;
+    }
 
     public static GameInterface GameUi
     {

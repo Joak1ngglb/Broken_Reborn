@@ -9,23 +9,33 @@ using Intersect.Framework.Core.GameObjects.Pets;
 using Intersect.Framework.Reflection;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
+using Intersect.Server.AI.Pets;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities.Pathfinding;
+using Intersect.Server.Entities.Pets;
 using Intersect.Server.Framework.Items;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.Utilities;
 namespace Intersect.Server.Entities;
 
-public sealed class Pet : Entity
+public sealed class Pet : Entity, IPet
 {
-    private const int FollowDistance = 3;
+    private const int FollowDistance = 1;
     private const long PathUpdateInterval = 100;
     private const long TargetLostGracePeriod = 2000;
+    internal const long CareMillisecondsPerMaturityPoint = 60_000;
+    private const long CombatCareBonusMilliseconds = 15_000;
+    private const long CareSyncIntervalMilliseconds = 15_000;
     private int _followPathFailureCount;
     private long _lastFollowFailureTime;
 
     private readonly Pathfinder _pathfinder;
+
+    public PetAIController Brain { get; }
+
+    internal PetCareBrain CareBrain { get; }
 
     private bool _canAssistOwner;
 
@@ -38,6 +48,8 @@ public sealed class Pet : Entity
     private long _combatTimeout;
     private long _lastTargetSeenTime;
     private long _nextPathUpdate;
+    private long _totalCareMilliseconds;
+    private long _nextCareSyncTime;
 
     private bool _metadataDirty;
 
@@ -52,6 +64,17 @@ public sealed class Pet : Entity
     private int _resetCenterX;
     private int _resetCenterY;
 
+    public const int MinAttributeValue = 0;
+
+    public const int MaxAttributeValue = 100;
+
+    private int _energy;
+    private int _mood;
+    private PetMood _moodState;
+    private int _maturity;
+    private int _whimsFulfilled;
+    private long _lastWhimFulfillmentTicks;
+
     public PetDescriptor Descriptor { get; private set; }
 
     public int ExperienceRate { get; private set; }
@@ -62,12 +85,6 @@ public sealed class Pet : Entity
 
     public PetLevelingMode LevelingMode { get; private set; }
 
-    public bool CanEvolve { get; private set; }
-
-    public int EvolutionLevel { get; private set; }
-
-    public Guid EvolutionTargetId { get; private set; }
-       
     public Guid OwnerId { get; }
 
     public bool Despawnable { get; } = true;
@@ -81,6 +98,169 @@ public sealed class Pet : Entity
     public int StatPoints { get; private set; }
 
     public int TotalAllocatedStatPoints => StatPointAllocations.Sum();
+
+    public int Energy => _energy;
+
+    public int MoodValue => _mood;
+
+    public PetMood Mood => _moodState;
+
+    public int Maturity => _maturity;
+
+    public int WhimsFulfilled => _whimsFulfilled;
+
+    public long LastWhimFulfillmentTicks => _lastWhimFulfillmentTicks;
+
+    private PetGender _gender = PetGender.Unspecified;
+
+    public PetGender Gender
+    {
+        get => _gender;
+        private set
+        {
+            if (_gender == value)
+            {
+                return;
+            }
+
+            _gender = value;
+            MarkMetadataDirty();
+        }
+    }
+
+    public long CareMilliseconds => _totalCareMilliseconds;
+
+    private static int ClampAttribute(int value, int descriptorBase) =>
+        Math.Clamp(value, MinAttributeValue, Math.Max(MaxAttributeValue, descriptorBase));
+
+    private bool UpdateAttribute(ref int field, int value, int descriptorBase, bool persist, bool notify)
+    {
+        var clamped = ClampAttribute(value, descriptorBase);
+        if (field == clamped)
+        {
+            return false;
+        }
+
+        field = clamped;
+
+        if (notify)
+        {
+            PacketSender.SendPetProgress(this);
+        }
+
+        if (persist)
+        {
+            Owner?.PersistPetProgress(this);
+        }
+
+        return true;
+    }
+
+    public bool SetEnergy(int value, bool persist = true, bool notify = true) =>
+        UpdateAttribute(ref _energy, value, Descriptor.BaseEnergy, persist, notify);
+
+    public bool ModifyEnergy(int delta, bool persist = true, bool notify = true) =>
+        SetEnergy(_energy + delta, persist, notify);
+
+    public bool SetMoodValue(int value, bool persist = true, bool notify = true)
+    {
+        var changed = UpdateAttribute(ref _mood, value, Descriptor.BaseMood, persist, notify: false);
+        if (!changed)
+        {
+            return false;
+        }
+
+        UpdateMoodState();
+
+        if (notify)
+        {
+            PacketSender.SendPetProgress(this);
+        }
+
+        return true;
+    }
+
+    public bool ModifyMoodValue(int delta, bool persist = true, bool notify = true) =>
+        SetMoodValue(_mood + delta, persist, notify);
+
+    private void UpdateMoodState()
+    {
+        var newState = ResolveMoodFromValue(_mood);
+        if (_moodState == newState)
+        {
+            return;
+        }
+
+        _moodState = newState;
+    }
+
+    private static PetMood ResolveMoodFromValue(int moodValue)
+    {
+        if (moodValue >= 80)
+        {
+            return PetMood.Joyful;
+        }
+
+        if (moodValue >= 60)
+        {
+            return PetMood.Happy;
+        }
+
+        if (moodValue >= 40)
+        {
+            return PetMood.Content;
+        }
+
+        if (moodValue >= 20)
+        {
+            return PetMood.Irritable;
+        }
+
+        return PetMood.Miserable;
+    }
+
+    public bool SetMaturity(int value, bool persist = true, bool notify = true) =>
+        UpdateAttribute(ref _maturity, value, Descriptor.BaseMaturity, persist, notify);
+
+    public bool ModifyMaturity(int delta, bool persist = true, bool notify = true) =>
+        SetMaturity(_maturity + delta, persist, notify);
+
+    public void RegisterFeeding()
+    {
+        CareBrain.RegisterFeeding();
+    }
+
+    public void RegisterPetting()
+    {
+        CareBrain.RegisterPetting();
+    }
+
+    public void RegisterWhimFulfillment(bool persist = true, bool notify = true)
+    {
+        try
+        {
+            checked
+            {
+                _whimsFulfilled++;
+            }
+        }
+        catch (OverflowException)
+        {
+            _whimsFulfilled = int.MaxValue;
+        }
+
+        _lastWhimFulfillmentTicks = DateTime.UtcNow.Ticks;
+
+        if (notify)
+        {
+            PacketSender.SendPetProgress(this);
+        }
+
+        if (persist)
+        {
+            Owner?.PersistPetProgress(this);
+        }
+    }
 
     public Player? Owner
     {
@@ -114,6 +294,7 @@ public sealed class Pet : Entity
             _behavior = value;
 
             ApplyBehaviorSettings(value);
+            Brain.OnBehaviorChanged(value);
             MarkMetadataDirty();
 
             if (State == previousState)
@@ -170,16 +351,20 @@ public sealed class Pet : Entity
 
         PetInstanceId = persistedPet?.PetInstanceId ?? Guid.Empty;
 
+        InitializeGender(descriptor, persistedPet);
+
         ExperienceRate = Math.Max(0, descriptor.ExperienceRate);
         StatPointsPerLevel = Math.Max(0, descriptor.StatPointsPerLevel);
         MaxLevel = Math.Max(1, descriptor.MaxLevel);
         LevelingMode = descriptor.LevelingMode;
-        CanEvolve = descriptor.CanEvolve;
-        EvolutionLevel = Math.Max(0, descriptor.EvolutionLevel);
-        EvolutionTargetId = descriptor.EvolutionTargetId;
 
         Experience = 0;
         StatPoints = 0;
+
+        SetEnergy(descriptor.BaseEnergy, persist: false, notify: false);
+        SetMoodValue(descriptor.BaseMood, persist: false, notify: false);
+        SetMaturity(descriptor.BaseMaturity, persist: false, notify: false);
+        _moodState = ResolveMoodFromValue(_mood);
 
         var spawnMapId = mapIdOverride ?? owner.MapId;
         var spawnMapInstanceId = mapInstanceIdOverride ?? owner.MapInstanceId;
@@ -190,7 +375,6 @@ public sealed class Pet : Entity
         Name = string.IsNullOrWhiteSpace(owner.ActivePet?.CustomName)
             ? descriptor.Name
             : owner.ActivePet.CustomName;
-        Sprite = descriptor.Sprite;
         Level = Math.Clamp(descriptor.Level, 1, Math.Max(1, MaxLevel));
         Immunities = descriptor.Immunities?.ToList() ?? [];
 
@@ -212,6 +396,8 @@ public sealed class Pet : Entity
         {
             ApplyPersistedState(persistedPet);
         }
+
+        _moodState = ResolveMoodFromValue(_mood);
 
         var spellSlot = 0;
         foreach (var spellId in descriptor.Spells)
@@ -246,6 +432,9 @@ public sealed class Pet : Entity
         _resetCenterY = Y;
 
         _pathfinder = new Pathfinder(this);
+
+        Brain = new PetAIController(new PetRuntimeAdapter(this));
+        CareBrain = new PetCareBrain(this);
 
         Behavior = PetState.Follow;
 
@@ -309,9 +498,95 @@ public sealed class Pet : Entity
                 SetVital(index, GetMaxVital((Vital)index));
             }
         }
+
+        var energy = persistedPet.Energy < 0 ? Descriptor.BaseEnergy : persistedPet.Energy;
+        SetEnergy(energy, persist: false, notify: false);
+
+        var mood = persistedPet.Mood < 0 ? Descriptor.BaseMood : persistedPet.Mood;
+        SetMoodValue(mood, persist: false, notify: false);
+
+        var maturity = persistedPet.Maturity < 0 ? Descriptor.BaseMaturity : persistedPet.Maturity;
+        SetMaturity(maturity, persist: false, notify: false);
+
+        _whimsFulfilled = Math.Max(0, persistedPet.WhimsFulfilled);
+        _lastWhimFulfillmentTicks = Math.Max(0, persistedPet.LastWhimFulfillmentTicks);
+
+        var persistedCare = Math.Max(0, persistedPet.CareMilliseconds);
+        var minimumCare = (long)Math.Max(0, Maturity) * CareMillisecondsPerMaturityPoint;
+        _totalCareMilliseconds = Math.Max(persistedCare, minimumCare);
+
+        EnsureMaturityFromCare(persist: false);
     }
 
     public override EntityType GetEntityType() => EntityType.Pet;
+
+    private void EnsureMaturityFromCare(bool persist)
+    {
+        if (Descriptor == null)
+        {
+            return;
+        }
+
+        var maturityCap = Math.Max(MaxAttributeValue, Descriptor.BaseMaturity);
+        var careBasedMaturity = _totalCareMilliseconds / CareMillisecondsPerMaturityPoint;
+        var expected = (int)Math.Min(maturityCap, Math.Min(int.MaxValue, careBasedMaturity));
+        if (expected > _maturity)
+        {
+            SetMaturity(expected, persist, notify: persist);
+        }
+        else
+        {
+            var minimumCare = (long)Math.Max(0, _maturity) * CareMillisecondsPerMaturityPoint;
+            if (_totalCareMilliseconds < minimumCare)
+            {
+                _totalCareMilliseconds = minimumCare;
+            }
+        }
+    }
+
+    private void AdvanceCare(long milliseconds, bool forcePersist = false)
+    {
+        if (milliseconds <= 0 || Descriptor == null)
+        {
+            return;
+        }
+
+        var previousTotal = _totalCareMilliseconds;
+
+        try
+        {
+            checked
+            {
+                _totalCareMilliseconds += milliseconds;
+            }
+        }
+        catch (OverflowException)
+        {
+            _totalCareMilliseconds = long.MaxValue;
+        }
+
+        var previousMaturity = _maturity;
+        EnsureMaturityFromCare(persist: true);
+
+        var maturityChanged = previousMaturity != _maturity;
+        if (maturityChanged)
+        {
+            _nextCareSyncTime = Timing.Global.Milliseconds + CareSyncIntervalMilliseconds;
+            return;
+        }
+
+        if (_totalCareMilliseconds == previousTotal)
+        {
+            return;
+        }
+
+        var now = Timing.Global.Milliseconds;
+        if (forcePersist || now >= _nextCareSyncTime)
+        {
+            Owner?.PersistPetProgress(this);
+            _nextCareSyncTime = now + CareSyncIntervalMilliseconds;
+        }
+    }
 
     public bool TrySpendStatPoint(Stat stat, int amount = 1)
     {
@@ -467,16 +742,7 @@ public sealed class Pet : Entity
 
         NotifyOwnerOfLevelUp(levelsGained, statPointsGained);
 
-        var evolved = false;
-        while (TryEvolve())
-        {
-            evolved = true;
-        }
-
-        if (!evolved)
-        {
-            Owner?.PersistPetProgress(this);
-        }
+        Owner?.PersistPetProgress(this);
     }
 
     private void NotifyOwnerOfLevelUp(int levelsGained, int statPointsGained)
@@ -524,10 +790,46 @@ public sealed class Pet : Entity
         petPacket.DescriptorId = Descriptor.Id;
         petPacket.Behavior = Behavior;
         petPacket.Despawnable = Despawnable;
+        petPacket.Gender = Gender;
 
         ResetMetadataDirty();
 
         return petPacket;
+    }
+
+    private void InitializeGender(PetDescriptor descriptor, PlayerPet? persistedPet)
+    {
+        ArgumentNullException.ThrowIfNull(descriptor);
+
+        var resolvedGender = persistedPet?.Gender switch
+        {
+            PetGender.Male or PetGender.Female => persistedPet.Gender,
+            _ => Randomization.Next(0, 2) == 0 ? PetGender.Male : PetGender.Female,
+        };
+
+        Gender = resolvedGender;
+
+        ApplySprite(descriptor.GetSpriteForGender(Gender));
+
+        if (persistedPet != null && persistedPet.Gender != Gender)
+        {
+            persistedPet.Gender = Gender;
+
+            // Persist immediately so migrated pets retain their assigned gender.
+            Owner?.PersistPetProgress(this);
+        }
+    }
+
+    private void ApplySprite(string? sprite)
+    {
+        var resolvedSprite = sprite ?? string.Empty;
+        if (string.Equals(Sprite, resolvedSprite, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        Sprite = resolvedSprite;
+        MarkMetadataDirty();
     }
 
     public override void Update(long timeMs)
@@ -548,6 +850,9 @@ public sealed class Pet : Entity
             UpdateState(owner);
         }
 
+        AdvanceCare(timeMs);
+        CareBrain.Update(timeMs);
+
         switch (State)
         {
             case PetState.Attack:
@@ -562,6 +867,8 @@ public sealed class Pet : Entity
                 _pathfinder.SetTarget(null);
                 break;
         }
+
+        Brain.Update(timeMs);
     }
 
     public override void ProcessRegen()
@@ -612,6 +919,8 @@ public sealed class Pet : Entity
         base.Reset();
 
         Array.Clear(_vitalAccumulators, 0, _vitalAccumulators.Length);
+
+        Brain.Reset();
     }
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
@@ -712,6 +1021,8 @@ public sealed class Pet : Entity
             return;
         }
 
+        Brain.OnOwnerDamaged(attacker);
+
         if (!_canDefendOwner || !_canEngageTarget)
         {
             return;
@@ -739,6 +1050,116 @@ public sealed class Pet : Entity
 
             TryAssignTarget(aggressor, timeMs);
         }
+    }
+
+    public bool TryCastSpell(SpellDescriptor spell, PlayerSpell spellSlot, Entity? targetEntity, int? tx = null, int? ty = null)
+    {
+        if (spell == null || spellSlot == null || spellSlot.IsEmpty)
+        {
+            return false;
+        }
+
+        var target = targetEntity;
+        var combat = spell.Combat;
+
+        if (target == null && combat != null && (combat.Friendly || combat.TargetType == SpellTargetType.Self))
+        {
+            target = this;
+        }
+
+        if (target == null && combat != null && combat.TargetType == SpellTargetType.Single && !combat.Friendly)
+        {
+            return false;
+        }
+
+        lock (EntityLock)
+        {
+            if (IsCasting)
+            {
+                return false;
+            }
+
+            var effectiveTarget = target ?? this;
+
+            if (!CanCastSpell(spell, effectiveTarget, true, SoftRetargetOnSelfCast, out _))
+            {
+                return false;
+            }
+
+            CastSpellProperties = spellSlot.Properties;
+            CastTarget = effectiveTarget;
+            SpellCastSlot = spellSlot.Slot;
+            CastTime = Timing.Global.Milliseconds + spell.CastDuration;
+
+            if (spell.CastDuration > 0)
+            {
+                PacketSender.SendEntityCastTime(this, spell.Id);
+            }
+
+            _ = tx;
+            _ = ty;
+
+            return true;
+        }
+    }
+
+    public bool TryMoveToward(int targetX, int targetY)
+    {
+        lock (EntityLock)
+        {
+            var now = Timing.Global.Milliseconds;
+            var success = UpdatePathfinder(MapId, targetX, targetY, Z, now, out var madeProgress);
+            return success && madeProgress;
+        }
+    }
+
+    public bool TryStepAwayFrom(Entity from, int tiles = 1)
+    {
+        if (from == null)
+        {
+            return false;
+        }
+
+        var dx = Math.Sign(X - from.X);
+        var dy = Math.Sign(Y - from.Y);
+
+        if (dx == 0 && dy == 0)
+        {
+            return false;
+        }
+
+        var targetX = X + dx * tiles;
+        var targetY = Y + dy * tiles;
+
+        if (dx == 0)
+        {
+            targetX = X;
+        }
+
+        if (dy == 0)
+        {
+            targetY = Y;
+        }
+
+        return TryMoveToward(targetX, targetY);
+    }
+
+    public bool TryFace(Entity target)
+    {
+        if (target == null)
+        {
+            return false;
+        }
+
+        var direction = DirectionToTarget(target);
+        if (direction == Direction.None)
+        {
+            return false;
+        }
+
+        var changed = Dir != direction;
+        ChangeDir(direction);
+        return changed;
     }
 
     internal override void RegisterIncomingAttack(Entity attacker, Vital vital)
@@ -803,6 +1224,7 @@ public sealed class Pet : Entity
             {
                 // No dropeamos nada, ni contamos muerte del owner: es un despawn “limpio”
                 Die(false, killer: Owner);
+                return;
             }
 
             // 2) Limpieza de estado interno
@@ -814,48 +1236,43 @@ public sealed class Pet : Entity
             var mapId = MapId;
             var mapInstanceId = MapInstanceId;
 
-            var hasNotifiedLeave = false;
-
             // 3) Notificar a clientes y sacar de la instancia (si todavía estaba en mapa)
-            if (mapId != Guid.Empty && mapInstanceId != Guid.Empty)
+            if (mapId != Guid.Empty)
             {
-                // primero broadcast del leave
+                RemoveFromMapInstances(mapId, mapInstanceId);
                 PacketSender.SendEntityLeave(this);
-                hasNotifiedLeave = true;
-
-                // luego quitar de la instancia
-                if (MapController.TryGetInstanceFromMap(mapId, mapInstanceId, out var instance))
-                {
-                    instance.RemoveEntity(this);
-
-                    // Si llevas un diccionario específico de pets en MapInstance, limpialo aquí también:
-                    if (instance.PetInstances != null)
-                    {
-                        _ = instance.PetInstances.TryRemove(Id, out _);
-                    }
-                }
-
-                // Opcional: resetear para que no haya “residuos” de posición
-                MapId = Guid.Empty;
-                MapInstanceId = Guid.Empty;
             }
 
             // 4) Desasociar del dueño (si cacheas la referencia)
-            var owner = Owner;
             Owner = null;
 
-            if (!hasNotifiedLeave)
-            {
-                PacketSender.SendEntityLeave(this);
-            }
+            // Opcional: resetear para que no haya “residuos” de posición
+            MapId = Guid.Empty;
+            MapInstanceId = Guid.Empty;
 
             Dispose();
+        }
+    }
+
+    private void RemoveFromMapInstances(Guid mapId, Guid mapInstanceId)
+    {
+        if (mapInstanceId != Guid.Empty &&
+            MapController.TryGetInstanceFromMap(mapId, mapInstanceId, out var instance) &&
+            instance != null)
+        {
+            instance.RemoveEntity(this);
+        }
+
+        if (MapController.TryGet(mapId, out var controller))
+        {
+            controller.RemoveEntityFromAllSurroundingMapsInInstance(this, mapInstanceId);
         }
     }
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
         var shouldDespawn = false;
+        Player? owner = null;
 
         lock (EntityLock)
         {
@@ -866,10 +1283,16 @@ public sealed class Pet : Entity
 
             base.Die(dropItems, killer);
 
+            owner = Owner;
+
             PacketSender.SendEntityDie(this);
 
             shouldDespawn = true;
         }
+
+        Brain.OnDied();
+
+        owner?.NotifyPetDied(this);
 
         if (shouldDespawn)
         {
@@ -1033,15 +1456,23 @@ public sealed class Pet : Entity
         _lastTargetSeenTime = timeMs;
         RefreshCombatTimeout(timeMs);
 
+        PacketSender.SendPetTarget(this, target);
+
         return true;
     }
 
     private void ClearCombatTarget()
     {
+        var previousTarget = Target;
         Target = null;
         _combatTimeout = 0;
         _lastTargetSeenTime = 0;
         _pathfinder.SetTarget(null);
+
+        if (previousTarget != null)
+        {
+            PacketSender.SendPetTarget(this, null);
+        }
     }
 
     private void RefreshCombatTimeout(long timeMs)
@@ -1454,7 +1885,13 @@ public sealed class Pet : Entity
         {
             owner = null;
         }
-        owner?.KilledEntity(entity);
+        owner?.HandlePetKill(this, entity);
+    }
+
+    internal void RegisterCombatCare()
+    {
+        AdvanceCare(CombatCareBonusMilliseconds, forcePersist: true);
+        CareBrain.RegisterWhimFulfilled();
     }
 
     internal bool MetadataDirty => _metadataDirty;
@@ -1471,149 +1908,5 @@ public sealed class Pet : Entity
         return null;
     }
 
-    private bool TryEvolve()
-    {
-        if (!CanEvolve || EvolutionTargetId == Guid.Empty)
-        {
-            return false;
-        }
-
-        if (Level < EvolutionLevel)
-        {
-            return false;
-        }
-
-        var targetDescriptor = PetDescriptor.Get(EvolutionTargetId);
-        if (targetDescriptor == null)
-        {
-            return false;
-        }
-
-        var previousDescriptor = Descriptor;
-        if (previousDescriptor != null && previousDescriptor.Id == targetDescriptor.Id)
-        {
-            return false;
-        }
-
-        ApplyEvolutionDescriptor(previousDescriptor, targetDescriptor);
-
-        var owner = Owner ?? Player.FindOnline(OwnerId);
-        if (owner != null && owner.IsDisposed)
-        {
-            owner = null;
-        }
-        PlayerPet? playerPet = null;
-
-        if (owner != null)
-        {
-            if (PetInstanceId != Guid.Empty)
-            {
-                playerPet = owner.Pets.FirstOrDefault(pet => pet.PetInstanceId == PetInstanceId);
-            }
-
-            if (playerPet == null && previousDescriptor != null)
-            {
-                playerPet = owner.Pets.FirstOrDefault(pet => pet.PetDescriptorId == previousDescriptor.Id);
-            }
-
-            playerPet ??= owner.ActivePet;
-
-            if (playerPet != null)
-            {
-                playerPet.PetDescriptorId = Descriptor.Id;
-                owner.UpdatePetItemReferences(playerPet, previousDescriptor?.Id ?? Guid.Empty);
-                Name = string.IsNullOrWhiteSpace(playerPet.CustomName) ? Descriptor.Name : playerPet.CustomName;
-            }
-            else if (string.IsNullOrWhiteSpace(Name))
-            {
-                Name = Descriptor.Name;
-            }
-
-            owner.PersistPetProgress(this);
-            owner.Save();
-        }
-        else if (string.IsNullOrWhiteSpace(Name))
-        {
-            Name = Descriptor.Name;
-        }
-
-        MarkMetadataDirty();
-
-        PacketSender.SendEntityDataToProximity(this);
-        PacketSender.SendPetProgress(this);
-
-        return true;
     }
 
-    private void ApplyEvolutionDescriptor(PetDescriptor? previousDescriptor, PetDescriptor targetDescriptor)
-    {
-        Descriptor = targetDescriptor;
-
-        ExperienceRate = Math.Max(0, targetDescriptor.ExperienceRate);
-        StatPointsPerLevel = Math.Max(0, targetDescriptor.StatPointsPerLevel);
-        MaxLevel = Math.Max(1, targetDescriptor.MaxLevel);
-        LevelingMode = targetDescriptor.LevelingMode;
-        CanEvolve = targetDescriptor.CanEvolve;
-        EvolutionLevel = Math.Max(0, targetDescriptor.EvolutionLevel);
-        EvolutionTargetId = targetDescriptor.EvolutionTargetId;
-
-        Sprite = targetDescriptor.Sprite;
-        Immunities = targetDescriptor.Immunities?.ToList() ?? [];
-
-        var statCount = Enum.GetValues<Stat>().Length;
-        for (var index = 0; index < statCount; index++)
-        {
-            BaseStats[index] = targetDescriptor.Stats[index];
-        }
-
-        var vitalCount = Enum.GetValues<Vital>().Length;
-        for (var index = 0; index < vitalCount; index++)
-        {
-            var maximum = targetDescriptor.MaxVitals[index];
-            SetMaxVital(index, maximum);
-            SetVital(index, maximum);
-        }
-
-        Array.Clear(_vitalAccumulators, 0, _vitalAccumulators.Length);
-
-        if (previousDescriptor != null && previousDescriptor.IdleAnimationId != Guid.Empty)
-        {
-            _ = Animations.Remove(previousDescriptor.IdleAnimationId);
-        }
-
-        if (targetDescriptor.IdleAnimationId != Guid.Empty && !Animations.Contains(targetDescriptor.IdleAnimationId))
-        {
-            Animations.Add(targetDescriptor.IdleAnimationId);
-        }
-
-        DeathAnimation = targetDescriptor.DeathAnimationId;
-
-        Spells.Clear();
-        var spellSlot = 0;
-        foreach (var spellId in targetDescriptor.Spells)
-        {
-            var slot = new PlayerSpell(spellSlot++);
-            slot.Set(new Spell(spellId));
-            Spells.Add(slot);
-        }
-
-        if (Level > MaxLevel)
-        {
-            Level = MaxLevel;
-            Experience = 0;
-        }
-
-        if (LevelingMode == PetLevelingMode.Experience)
-        {
-            var experienceToNext = GetExperienceToNextLevel(Level);
-            if (experienceToNext > 0 && Experience >= experienceToNext)
-            {
-                Experience = Math.Max(0, experienceToNext - 1);
-            }
-        }
-        else
-        {
-            Experience = 0;
-        }
-    }
-}

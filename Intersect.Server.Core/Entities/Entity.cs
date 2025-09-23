@@ -2254,6 +2254,11 @@ public abstract partial class Entity : IEntity
 
                 enemy.RegisterIncomingAttack(this, Vital.Health);
                 enemy.SubVital(Vital.Health, baseDamage);
+                if (enemy is Pet pet)
+                {
+                    var damageInt = (int)Math.Clamp(baseDamage, int.MinValue, int.MaxValue);
+                    pet.Brain.OnHit(this, Math.Max(0, damageInt));
+                }
                 switch (damageType)
                 {
                     case DamageType.Physical:

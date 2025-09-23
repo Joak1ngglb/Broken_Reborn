@@ -447,7 +447,7 @@ internal sealed partial class PacketHandler
                 continue;
             }
 
-            pet.ApplyMetadata(update.OwnerId, update.DescriptorId, update.Despawnable, update.Behavior);
+            pet.ApplyMetadata(update.OwnerId, update.DescriptorId, update.Despawnable, update.Behavior, update.Gender);
         }
     }
 
@@ -470,7 +470,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        pet.ApplyMetadata(pet.OwnerId, pet.DescriptorId, pet.Despawnable, packet.Behavior);
+        pet.ApplyMetadata(pet.OwnerId, pet.DescriptorId, pet.Despawnable, packet.Behavior, pet.Gender);
     }
 
     public void HandlePacket(IPacketSender packetSender, PetProgressPacket packet)
@@ -485,10 +485,32 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        pet.ApplyProgress(packet.Experience, packet.ExperienceToNextLevel, packet.StatPoints, packet.StatPointAllocations);
+        pet.ApplyProgress(
+            packet.Experience,
+            packet.ExperienceToNextLevel,
+            packet.StatPoints,
+            packet.StatPointAllocations,
+            packet.Energy,
+            packet.MoodValue,
+            packet.Mood,
+            packet.Maturity,
+            packet.CareMilliseconds,
+            packet.WhimsFulfilled,
+            packet.LastWhimFulfillmentTicks
+        );
     }
 
     public void HandlePacket(IPacketSender packetSender, PetHubStatePacket packet)
+    {
+        Globals.PetHub.Process(packet);
+    }
+
+    public void HandlePacket(IPacketSender packetSender, PetCooldownPacket packet)
+    {
+        Globals.PetHub.Process(packet);
+    }
+
+    public void HandlePacket(IPacketSender packetSender, PetTargetPacket packet)
     {
         Globals.PetHub.Process(packet);
     }
@@ -1460,14 +1482,19 @@ internal sealed partial class PacketHandler
     {
         Fade.FadeIn(ClientConfiguration.Instance.FadeDurationMs);
         Globals.WaitingOnServer = false;
-        if (Interface.Interface.GameUi?.mMarketWindow != null && Interface.Interface.GameUi.mMarketWindow.IsWaitingSearch)
+        if (Interface.Interface.TryGetGameUi(out var gameUi) &&
+            gameUi.mMarketWindow != null &&
+            gameUi.mMarketWindow.IsWaitingSearch)
         {
-            Interface.Interface.GameUi.mMarketWindow.SearchFailed(packet.Error);
+            gameUi.mMarketWindow.SearchFailed(packet.Error);
         }
         else
         {
             Interface.Interface.ShowAlert(packet.Error, packet.Header, alertType: AlertType.Error);
-            Interface.Interface.MenuUi?.Reset();
+            if (Interface.Interface.TryGetMenuUi(out var menuUi))
+            {
+                menuUi.Reset();
+            }
         }
     }
 

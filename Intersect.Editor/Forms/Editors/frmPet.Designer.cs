@@ -65,7 +65,11 @@ namespace Intersect.Editor.Forms.Editors
             lblHpRegen = new Label();
             nudHpRegen = new DarkNumericUpDown();
             grpStats = new DarkGroupBox();
-            label1 = new Label();
+            lblCures = new Label();
+            nudCures = new DarkNumericUpDown();
+            lblDamages = new Label();
+            nudDamages = new DarkNumericUpDown();
+            lblAgility = new Label();
             nudAgi = new DarkNumericUpDown();
             lblSpd = new Label();
             nudSpd = new DarkNumericUpDown();
@@ -82,9 +86,21 @@ namespace Intersect.Editor.Forms.Editors
             lblHP = new Label();
             nudHp = new DarkNumericUpDown();
             grpGeneral = new DarkGroupBox();
-            lblPic = new Label();
-            cmbSprite = new DarkComboBox();
+            lblMaleSprite = new Label();
+            cmbMaleSprite = new DarkComboBox();
+            lblFemaleSprite = new Label();
+            cmbFemaleSprite = new DarkComboBox();
+            rdoPreviewMale = new DarkRadioButton();
+            rdoPreviewFemale = new DarkRadioButton();
             picPet = new PictureBox();
+            lblBaseMaturity = new Label();
+            nudBaseMaturity = new DarkNumericUpDown();
+            lblBaseMood = new Label();
+            nudBaseMood = new DarkNumericUpDown();
+            lblBaseEnergy = new Label();
+            nudBaseEnergy = new DarkNumericUpDown();
+            lblFeedingItem = new Label();
+            cmbFeedingItem = new DarkComboBox();
             btnAddFolder = new DarkButton();
             lblFolder = new Label();
             cmbFolder = new DarkComboBox();
@@ -95,6 +111,16 @@ namespace Intersect.Editor.Forms.Editors
             btnAdd = new DarkButton();
             cmbSpell = new DarkComboBox();
             lstSpells = new ListBox();
+            DarkGroupBox4 = new DarkGroupBox();
+            pnlPetlevel = new Panel();
+            nudMaxLevel = new DarkNumericUpDown();
+            DarkLabel12 = new DarkLabel();
+            nudPetPnts = new DarkNumericUpDown();
+            DarkLabel13 = new DarkLabel();
+            nudPetExp = new DarkNumericUpDown();
+            DarkLabel11 = new DarkLabel();
+            optDoNotLevel = new DarkRadioButton();
+            optLevel = new DarkRadioButton();
             btnSave = new DarkButton();
             btnCancel = new DarkButton();
             toolStrip = new DarkToolStrip();
@@ -108,22 +134,6 @@ namespace Intersect.Editor.Forms.Editors
             toolStripItemPaste = new ToolStripButton();
             toolStripSeparator3 = new ToolStripSeparator();
             toolStripItemUndo = new ToolStripButton();
-            DarkGroupBox4 = new DarkGroupBox();
-            pnlPetlevel = new Panel();
-            DarkGroupBox5 = new DarkGroupBox();
-            cmbEvolve = new DarkComboBox();
-            DarkLabel15 = new DarkLabel();
-            nudEvolveLvl = new DarkNumericUpDown();
-            DarkLabel14 = new DarkLabel();
-            chkEvolve = new DarkCheckBox();
-            nudMaxLevel = new DarkNumericUpDown();
-            DarkLabel12 = new DarkLabel();
-            nudPetPnts = new DarkNumericUpDown();
-            DarkLabel13 = new DarkLabel();
-            nudPetExp = new DarkNumericUpDown();
-            DarkLabel11 = new DarkLabel();
-            optDoNotLevel = new DarkRadioButton();
-            optLevel = new DarkRadioButton();
             grpPets.SuspendLayout();
             pnlContainer.SuspendLayout();
             grpAnimation.SuspendLayout();
@@ -139,6 +149,8 @@ namespace Intersect.Editor.Forms.Editors
             ((System.ComponentModel.ISupportInitialize)nudMpRegen).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudHpRegen).BeginInit();
             grpStats.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudCures).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudDamages).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudAgi).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudSpd).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudMR).BeginInit();
@@ -149,15 +161,16 @@ namespace Intersect.Editor.Forms.Editors
             ((System.ComponentModel.ISupportInitialize)nudHp).BeginInit();
             grpGeneral.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picPet).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudBaseMaturity).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudBaseMood).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudBaseEnergy).BeginInit();
             grpSpells.SuspendLayout();
-            toolStrip.SuspendLayout();
             DarkGroupBox4.SuspendLayout();
             pnlPetlevel.SuspendLayout();
-            DarkGroupBox5.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)nudEvolveLvl).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudMaxLevel).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudPetPnts).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudPetExp).BeginInit();
+            toolStrip.SuspendLayout();
             SuspendLayout();
             // 
             // grpPets
@@ -214,7 +227,6 @@ namespace Intersect.Editor.Forms.Editors
             // pnlContainer
             // 
             pnlContainer.AutoScroll = true;
-            pnlContainer.Controls.Add(DarkGroupBox4);
             pnlContainer.Controls.Add(grpAnimation);
             pnlContainer.Controls.Add(grpImmunities);
             pnlContainer.Controls.Add(grpCombat);
@@ -222,6 +234,7 @@ namespace Intersect.Editor.Forms.Editors
             pnlContainer.Controls.Add(grpStats);
             pnlContainer.Controls.Add(grpGeneral);
             pnlContainer.Controls.Add(grpSpells);
+            pnlContainer.Controls.Add(DarkGroupBox4);
             pnlContainer.Location = new System.Drawing.Point(245, 39);
             pnlContainer.Name = "pnlContainer";
             pnlContainer.Size = new Size(621, 581);
@@ -234,9 +247,9 @@ namespace Intersect.Editor.Forms.Editors
             grpAnimation.Controls.Add(lblDeathAnimation);
             grpAnimation.Controls.Add(cmbDeathAnimation);
             grpAnimation.ForeColor = System.Drawing.Color.Gainsboro;
-            grpAnimation.Location = new System.Drawing.Point(300, 531);
+            grpAnimation.Location = new System.Drawing.Point(298, 506);
             grpAnimation.Name = "grpAnimation";
-            grpAnimation.Size = new Size(296, 75);
+            grpAnimation.Size = new Size(296, 58);
             grpAnimation.TabIndex = 5;
             grpAnimation.TabStop = false;
             grpAnimation.Text = "Animations";
@@ -262,9 +275,9 @@ namespace Intersect.Editor.Forms.Editors
             cmbDeathAnimation.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbDeathAnimation.FlatStyle = FlatStyle.Flat;
             cmbDeathAnimation.ForeColor = System.Drawing.Color.Gainsboro;
-            cmbDeathAnimation.Location = new System.Drawing.Point(13, 44);
+            cmbDeathAnimation.Location = new System.Drawing.Point(113, 22);
             cmbDeathAnimation.Name = "cmbDeathAnimation";
-            cmbDeathAnimation.Size = new Size(246, 24);
+            cmbDeathAnimation.Size = new Size(170, 24);
             cmbDeathAnimation.TabIndex = 1;
             cmbDeathAnimation.Text = null;
             cmbDeathAnimation.TextPadding = new Padding(2);
@@ -646,7 +659,7 @@ namespace Intersect.Editor.Forms.Editors
             grpRegen.ForeColor = System.Drawing.Color.Gainsboro;
             grpRegen.Location = new System.Drawing.Point(298, 451);
             grpRegen.Name = "grpRegen";
-            grpRegen.Size = new Size(298, 74);
+            grpRegen.Size = new Size(298, 49);
             grpRegen.TabIndex = 2;
             grpRegen.TabStop = false;
             grpRegen.Text = "Regen";
@@ -665,10 +678,10 @@ namespace Intersect.Editor.Forms.Editors
             // 
             nudMpRegen.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudMpRegen.ForeColor = System.Drawing.Color.Gainsboro;
-            nudMpRegen.Location = new System.Drawing.Point(151, 38);
+            nudMpRegen.Location = new System.Drawing.Point(228, 17);
             nudMpRegen.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
             nudMpRegen.Name = "nudMpRegen";
-            nudMpRegen.Size = new Size(105, 23);
+            nudMpRegen.Size = new Size(64, 23);
             nudMpRegen.TabIndex = 1;
             nudMpRegen.Value = new decimal(new int[] { 0, 0, 0, 0 });
             nudMpRegen.ValueChanged += nudMpRegen_ValueChanged;
@@ -686,10 +699,10 @@ namespace Intersect.Editor.Forms.Editors
             // 
             nudHpRegen.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudHpRegen.ForeColor = System.Drawing.Color.Gainsboro;
-            nudHpRegen.Location = new System.Drawing.Point(16, 38);
+            nudHpRegen.Location = new System.Drawing.Point(78, 17);
             nudHpRegen.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
             nudHpRegen.Name = "nudHpRegen";
-            nudHpRegen.Size = new Size(105, 23);
+            nudHpRegen.Size = new Size(65, 23);
             nudHpRegen.TabIndex = 0;
             nudHpRegen.Value = new decimal(new int[] { 0, 0, 0, 0 });
             nudHpRegen.ValueChanged += nudHpRegen_ValueChanged;
@@ -698,7 +711,11 @@ namespace Intersect.Editor.Forms.Editors
             // 
             grpStats.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpStats.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            grpStats.Controls.Add(label1);
+            grpStats.Controls.Add(lblCures);
+            grpStats.Controls.Add(nudCures);
+            grpStats.Controls.Add(lblDamages);
+            grpStats.Controls.Add(nudDamages);
+            grpStats.Controls.Add(lblAgility);
             grpStats.Controls.Add(nudAgi);
             grpStats.Controls.Add(lblSpd);
             grpStats.Controls.Add(nudSpd);
@@ -715,21 +732,63 @@ namespace Intersect.Editor.Forms.Editors
             grpStats.Controls.Add(lblHP);
             grpStats.Controls.Add(nudHp);
             grpStats.ForeColor = System.Drawing.Color.Gainsboro;
-            grpStats.Location = new System.Drawing.Point(7, 138);
+            grpStats.Location = new System.Drawing.Point(7, 265);
             grpStats.Name = "grpStats";
-            grpStats.Size = new Size(280, 224);
+            grpStats.Size = new Size(280, 271);
             grpStats.TabIndex = 1;
             grpStats.TabStop = false;
             grpStats.Text = "Stats";
             // 
-            // label1
+            // lblCures
             // 
-            label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(149, 174);
-            label1.Name = "label1";
-            label1.Size = new Size(41, 15);
-            label1.TabIndex = 0;
-            label1.Text = "Agility";
+            lblCures.AutoSize = true;
+            lblCures.Location = new System.Drawing.Point(149, 222);
+            lblCures.Name = "lblCures";
+            lblCures.Size = new Size(37, 15);
+            lblCures.TabIndex = 16;
+            lblCures.Text = "Cures";
+            // 
+            // nudCures
+            // 
+            nudCures.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudCures.ForeColor = System.Drawing.Color.Gainsboro;
+            nudCures.Location = new System.Drawing.Point(151, 241);
+            nudCures.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nudCures.Name = "nudCures";
+            nudCures.Size = new Size(105, 23);
+            nudCures.TabIndex = 9;
+            nudCures.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudCures.ValueChanged += nudCures_ValueChanged;
+            // 
+            // lblDamages
+            // 
+            lblDamages.AutoSize = true;
+            lblDamages.Location = new System.Drawing.Point(13, 222);
+            lblDamages.Name = "lblDamages";
+            lblDamages.Size = new Size(56, 15);
+            lblDamages.TabIndex = 15;
+            lblDamages.Text = "Damages";
+            // 
+            // nudDamages
+            // 
+            nudDamages.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudDamages.ForeColor = System.Drawing.Color.Gainsboro;
+            nudDamages.Location = new System.Drawing.Point(16, 241);
+            nudDamages.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nudDamages.Name = "nudDamages";
+            nudDamages.Size = new Size(105, 23);
+            nudDamages.TabIndex = 8;
+            nudDamages.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudDamages.ValueChanged += nudDamages_ValueChanged;
+            // 
+            // lblAgility
+            // 
+            lblAgility.AutoSize = true;
+            lblAgility.Location = new System.Drawing.Point(149, 174);
+            lblAgility.Name = "lblAgility";
+            lblAgility.Size = new Size(41, 15);
+            lblAgility.TabIndex = 0;
+            lblAgility.Text = "Agility";
             // 
             // nudAgi
             // 
@@ -748,9 +807,9 @@ namespace Intersect.Editor.Forms.Editors
             lblSpd.AutoSize = true;
             lblSpd.Location = new System.Drawing.Point(13, 174);
             lblSpd.Name = "lblSpd";
-            lblSpd.Size = new Size(72, 15);
+            lblSpd.Size = new Size(39, 15);
             lblSpd.TabIndex = 8;
-            lblSpd.Text = "Move Speed";
+            lblSpd.Text = "Speed";
             // 
             // nudSpd
             // 
@@ -769,9 +828,9 @@ namespace Intersect.Editor.Forms.Editors
             lblMR.AutoSize = true;
             lblMR.Location = new System.Drawing.Point(149, 126);
             lblMR.Name = "lblMR";
-            lblMR.Size = new Size(73, 15);
+            lblMR.Size = new Size(43, 15);
             lblMR.TabIndex = 9;
-            lblMR.Text = "Magic Resist";
+            lblMR.Text = "Vitality";
             // 
             // nudMR
             // 
@@ -811,9 +870,9 @@ namespace Intersect.Editor.Forms.Editors
             lblMag.AutoSize = true;
             lblMag.Location = new System.Drawing.Point(149, 77);
             lblMag.Name = "lblMag";
-            lblMag.Size = new Size(40, 15);
+            lblMag.Size = new Size(68, 15);
             lblMag.TabIndex = 11;
-            lblMag.Text = "Magic";
+            lblMag.Text = "Intelligence";
             // 
             // nudMag
             // 
@@ -832,9 +891,9 @@ namespace Intersect.Editor.Forms.Editors
             lblStr.AutoSize = true;
             lblStr.Location = new System.Drawing.Point(13, 77);
             lblStr.Name = "lblStr";
-            lblStr.Size = new Size(52, 15);
+            lblStr.Size = new Size(41, 15);
             lblStr.TabIndex = 12;
-            lblStr.Text = "Strength";
+            lblStr.Text = "Attack";
             // 
             // nudStr
             // 
@@ -894,9 +953,21 @@ namespace Intersect.Editor.Forms.Editors
             // 
             grpGeneral.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpGeneral.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            grpGeneral.Controls.Add(lblPic);
-            grpGeneral.Controls.Add(cmbSprite);
+            grpGeneral.Controls.Add(rdoPreviewFemale);
+            grpGeneral.Controls.Add(rdoPreviewMale);
+            grpGeneral.Controls.Add(lblFemaleSprite);
+            grpGeneral.Controls.Add(cmbFemaleSprite);
+            grpGeneral.Controls.Add(lblMaleSprite);
+            grpGeneral.Controls.Add(cmbMaleSprite);
             grpGeneral.Controls.Add(picPet);
+            grpGeneral.Controls.Add(lblBaseMaturity);
+            grpGeneral.Controls.Add(nudBaseMaturity);
+            grpGeneral.Controls.Add(lblBaseMood);
+            grpGeneral.Controls.Add(nudBaseMood);
+            grpGeneral.Controls.Add(lblBaseEnergy);
+            grpGeneral.Controls.Add(nudBaseEnergy);
+            grpGeneral.Controls.Add(lblFeedingItem);
+            grpGeneral.Controls.Add(cmbFeedingItem);
             grpGeneral.Controls.Add(btnAddFolder);
             grpGeneral.Controls.Add(lblFolder);
             grpGeneral.Controls.Add(cmbFolder);
@@ -905,48 +976,191 @@ namespace Intersect.Editor.Forms.Editors
             grpGeneral.ForeColor = System.Drawing.Color.Gainsboro;
             grpGeneral.Location = new System.Drawing.Point(7, 8);
             grpGeneral.Name = "grpGeneral";
-            grpGeneral.Size = new Size(280, 124);
+            grpGeneral.Size = new Size(280, 300);
             grpGeneral.TabIndex = 0;
             grpGeneral.TabStop = false;
             grpGeneral.Text = "General";
             // 
-            // lblPic
-            // 
-            lblPic.AutoSize = true;
-            lblPic.Location = new System.Drawing.Point(13, 86);
-            lblPic.Name = "lblPic";
-            lblPic.Size = new Size(37, 15);
-            lblPic.TabIndex = 7;
-            lblPic.Text = "Sprite";
-            // 
-            // cmbSprite
-            // 
-            cmbSprite.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            cmbSprite.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            cmbSprite.BorderStyle = ButtonBorderStyle.Solid;
-            cmbSprite.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
-            cmbSprite.DrawDropdownHoverOutline = false;
-            cmbSprite.DrawFocusRectangle = false;
-            cmbSprite.DrawMode = DrawMode.OwnerDrawVariable;
-            cmbSprite.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbSprite.FlatStyle = FlatStyle.Flat;
-            cmbSprite.ForeColor = System.Drawing.Color.Gainsboro;
-            cmbSprite.Location = new System.Drawing.Point(60, 84);
-            cmbSprite.Name = "cmbSprite";
-            cmbSprite.Size = new Size(122, 24);
-            cmbSprite.TabIndex = 3;
-            cmbSprite.Text = null;
-            cmbSprite.TextPadding = new Padding(2);
-            cmbSprite.SelectedIndexChanged += cmbSprite_SelectedIndexChanged;
+            // lblMaleSprite
+            //
+            lblMaleSprite.AutoSize = true;
+            lblMaleSprite.Location = new System.Drawing.Point(13, 92);
+            lblMaleSprite.Name = "lblMaleSprite";
+            lblMaleSprite.Size = new Size(71, 15);
+            lblMaleSprite.TabIndex = 7;
+            lblMaleSprite.Text = "Male Sprite";
+            //
+            // cmbMaleSprite
+            //
+            cmbMaleSprite.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbMaleSprite.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbMaleSprite.BorderStyle = ButtonBorderStyle.Solid;
+            cmbMaleSprite.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbMaleSprite.DrawDropdownHoverOutline = false;
+            cmbMaleSprite.DrawFocusRectangle = false;
+            cmbMaleSprite.DrawMode = DrawMode.OwnerDrawVariable;
+            cmbMaleSprite.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbMaleSprite.FlatStyle = FlatStyle.Flat;
+            cmbMaleSprite.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbMaleSprite.Location = new System.Drawing.Point(60, 90);
+            cmbMaleSprite.Name = "cmbMaleSprite";
+            cmbMaleSprite.Size = new Size(122, 24);
+            cmbMaleSprite.TabIndex = 3;
+            cmbMaleSprite.Text = null;
+            cmbMaleSprite.TextPadding = new Padding(2);
+            cmbMaleSprite.SelectedIndexChanged += cmbMaleSprite_SelectedIndexChanged;
+            //
+            // lblFemaleSprite
+            //
+            lblFemaleSprite.AutoSize = true;
+            lblFemaleSprite.Location = new System.Drawing.Point(13, 122);
+            lblFemaleSprite.Name = "lblFemaleSprite";
+            lblFemaleSprite.Size = new Size(81, 15);
+            lblFemaleSprite.TabIndex = 8;
+            lblFemaleSprite.Text = "Female Sprite";
+            //
+            // cmbFemaleSprite
+            //
+            cmbFemaleSprite.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbFemaleSprite.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbFemaleSprite.BorderStyle = ButtonBorderStyle.Solid;
+            cmbFemaleSprite.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbFemaleSprite.DrawDropdownHoverOutline = false;
+            cmbFemaleSprite.DrawFocusRectangle = false;
+            cmbFemaleSprite.DrawMode = DrawMode.OwnerDrawVariable;
+            cmbFemaleSprite.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbFemaleSprite.FlatStyle = FlatStyle.Flat;
+            cmbFemaleSprite.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbFemaleSprite.Location = new System.Drawing.Point(60, 120);
+            cmbFemaleSprite.Name = "cmbFemaleSprite";
+            cmbFemaleSprite.Size = new Size(122, 24);
+            cmbFemaleSprite.TabIndex = 4;
+            cmbFemaleSprite.Text = null;
+            cmbFemaleSprite.TextPadding = new Padding(2);
+            cmbFemaleSprite.SelectedIndexChanged += cmbFemaleSprite_SelectedIndexChanged;
+            //
+            // rdoPreviewMale
+            //
+            rdoPreviewMale.AutoSize = true;
+            rdoPreviewMale.Location = new System.Drawing.Point(188, 122);
+            rdoPreviewMale.Name = "rdoPreviewMale";
+            rdoPreviewMale.Size = new Size(100, 19);
+            rdoPreviewMale.TabIndex = 5;
+            rdoPreviewMale.TabStop = true;
+            rdoPreviewMale.Text = "Preview Male";
+            rdoPreviewMale.Checked = true;
+            rdoPreviewMale.CheckedChanged += rdoPreviewMale_CheckedChanged;
+            //
+            // rdoPreviewFemale
+            //
+            rdoPreviewFemale.AutoSize = true;
+            rdoPreviewFemale.Location = new System.Drawing.Point(188, 147);
+            rdoPreviewFemale.Name = "rdoPreviewFemale";
+            rdoPreviewFemale.Size = new Size(110, 19);
+            rdoPreviewFemale.TabIndex = 6;
+            rdoPreviewFemale.Text = "Preview Female";
+            rdoPreviewFemale.CheckedChanged += rdoPreviewFemale_CheckedChanged;
             // 
             // picPet
             // 
             picPet.BackColor = System.Drawing.Color.Black;
-            picPet.Location = new System.Drawing.Point(188, 22);
+            picPet.Location = new System.Drawing.Point(188, 24);
             picPet.Name = "picPet";
             picPet.Size = new Size(86, 92);
             picPet.TabIndex = 8;
             picPet.TabStop = false;
+            // 
+            // lblBaseMaturity
+            // 
+            lblBaseMaturity.AutoSize = true;
+            lblBaseMaturity.Location = new System.Drawing.Point(13, 236);
+            lblBaseMaturity.Name = "lblBaseMaturity";
+            lblBaseMaturity.Size = new Size(79, 15);
+            lblBaseMaturity.TabIndex = 13;
+            lblBaseMaturity.Text = "Base Maturity";
+            // 
+            // nudBaseMaturity
+            // 
+            nudBaseMaturity.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudBaseMaturity.ForeColor = System.Drawing.Color.Gainsboro;
+            nudBaseMaturity.Location = new System.Drawing.Point(110, 232);
+            nudBaseMaturity.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nudBaseMaturity.Name = "nudBaseMaturity";
+            nudBaseMaturity.Size = new Size(105, 23);
+            nudBaseMaturity.TabIndex = 9;
+            nudBaseMaturity.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudBaseMaturity.ValueChanged += nudBaseMaturity_ValueChanged;
+            // 
+            // lblBaseMood
+            // 
+            lblBaseMood.AutoSize = true;
+            lblBaseMood.Location = new System.Drawing.Point(13, 206);
+            lblBaseMood.Name = "lblBaseMood";
+            lblBaseMood.Size = new Size(66, 15);
+            lblBaseMood.TabIndex = 12;
+            lblBaseMood.Text = "Base Mood";
+            // 
+            // nudBaseMood
+            // 
+            nudBaseMood.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudBaseMood.ForeColor = System.Drawing.Color.Gainsboro;
+            nudBaseMood.Location = new System.Drawing.Point(110, 202);
+            nudBaseMood.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nudBaseMood.Name = "nudBaseMood";
+            nudBaseMood.Size = new Size(105, 23);
+            nudBaseMood.TabIndex = 8;
+            nudBaseMood.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudBaseMood.ValueChanged += nudBaseMood_ValueChanged;
+            // 
+            // lblBaseEnergy
+            // 
+            lblBaseEnergy.AutoSize = true;
+            lblBaseEnergy.Location = new System.Drawing.Point(13, 176);
+            lblBaseEnergy.Name = "lblBaseEnergy";
+            lblBaseEnergy.Size = new Size(70, 15);
+            lblBaseEnergy.TabIndex = 11;
+            lblBaseEnergy.Text = "Base Energy";
+            // 
+            // nudBaseEnergy
+            // 
+            nudBaseEnergy.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudBaseEnergy.ForeColor = System.Drawing.Color.Gainsboro;
+            nudBaseEnergy.Location = new System.Drawing.Point(110, 172);
+            nudBaseEnergy.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nudBaseEnergy.Name = "nudBaseEnergy";
+            nudBaseEnergy.Size = new Size(105, 23);
+            nudBaseEnergy.TabIndex = 7;
+            nudBaseEnergy.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudBaseEnergy.ValueChanged += nudBaseEnergy_ValueChanged;
+            // 
+            // lblFeedingItem
+            // 
+            lblFeedingItem.AutoSize = true;
+            lblFeedingItem.Location = new System.Drawing.Point(13, 266);
+            lblFeedingItem.Name = "lblFeedingItem";
+            lblFeedingItem.Size = new Size(76, 15);
+            lblFeedingItem.TabIndex = 16;
+            lblFeedingItem.Text = "Feeding Item";
+            // 
+            // cmbFeedingItem
+            // 
+            cmbFeedingItem.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbFeedingItem.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbFeedingItem.BorderStyle = ButtonBorderStyle.Solid;
+            cmbFeedingItem.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbFeedingItem.DrawDropdownHoverOutline = false;
+            cmbFeedingItem.DrawFocusRectangle = false;
+            cmbFeedingItem.DrawMode = DrawMode.OwnerDrawVariable;
+            cmbFeedingItem.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbFeedingItem.FlatStyle = FlatStyle.Flat;
+            cmbFeedingItem.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbFeedingItem.Location = new System.Drawing.Point(110, 264);
+            cmbFeedingItem.Name = "cmbFeedingItem";
+            cmbFeedingItem.Size = new Size(164, 24);
+            cmbFeedingItem.TabIndex = 10;
+            cmbFeedingItem.Text = null;
+            cmbFeedingItem.TextPadding = new Padding(2);
+            cmbFeedingItem.SelectedIndexChanged += cmbFeedingItem_SelectedIndexChanged;
             // 
             // btnAddFolder
             // 
@@ -1016,7 +1230,7 @@ namespace Intersect.Editor.Forms.Editors
             grpSpells.Controls.Add(cmbSpell);
             grpSpells.Controls.Add(lstSpells);
             grpSpells.ForeColor = System.Drawing.Color.Gainsboro;
-            grpSpells.Location = new System.Drawing.Point(7, 372);
+            grpSpells.Location = new System.Drawing.Point(7, 546);
             grpSpells.Name = "grpSpells";
             grpSpells.Size = new Size(280, 234);
             grpSpells.TabIndex = 6;
@@ -1073,6 +1287,129 @@ namespace Intersect.Editor.Forms.Editors
             lstSpells.Size = new Size(261, 124);
             lstSpells.TabIndex = 0;
             lstSpells.SelectedIndexChanged += lstSpells_SelectedIndexChanged;
+            // 
+            // DarkGroupBox4
+            // 
+            DarkGroupBox4.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+            DarkGroupBox4.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            DarkGroupBox4.Controls.Add(pnlPetlevel);
+            DarkGroupBox4.Controls.Add(optDoNotLevel);
+            DarkGroupBox4.Controls.Add(optLevel);
+            DarkGroupBox4.ForeColor = System.Drawing.Color.Gainsboro;
+            DarkGroupBox4.Location = new System.Drawing.Point(298, 570);
+            DarkGroupBox4.Margin = new Padding(4, 3, 4, 3);
+            DarkGroupBox4.Name = "DarkGroupBox4";
+            DarkGroupBox4.Padding = new Padding(4, 3, 4, 3);
+            DarkGroupBox4.Size = new Size(296, 192);
+            DarkGroupBox4.TabIndex = 10;
+            DarkGroupBox4.TabStop = false;
+            DarkGroupBox4.Text = "Leveling";
+            // 
+            // pnlPetlevel
+            // 
+            pnlPetlevel.Controls.Add(DarkLabel11);
+            pnlPetlevel.Controls.Add(nudMaxLevel);
+            pnlPetlevel.Controls.Add(nudPetExp);
+            pnlPetlevel.Controls.Add(DarkLabel12);
+            pnlPetlevel.Controls.Add(DarkLabel13);
+            pnlPetlevel.Controls.Add(nudPetPnts);
+            pnlPetlevel.Location = new System.Drawing.Point(7, 48);
+            pnlPetlevel.Margin = new Padding(4, 3, 4, 3);
+            pnlPetlevel.Name = "pnlPetlevel";
+            pnlPetlevel.Size = new Size(276, 136);
+            pnlPetlevel.TabIndex = 2;
+            // 
+            // nudMaxLevel
+            // 
+            nudMaxLevel.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudMaxLevel.ForeColor = System.Drawing.Color.Gainsboro;
+            nudMaxLevel.Location = new System.Drawing.Point(153, 49);
+            nudMaxLevel.Margin = new Padding(4, 3, 4, 3);
+            nudMaxLevel.Name = "nudMaxLevel";
+            nudMaxLevel.Size = new Size(109, 23);
+            nudMaxLevel.TabIndex = 6;
+            nudMaxLevel.Value = new decimal(new int[] { 100, 0, 0, 0 });
+            nudMaxLevel.ValueChanged += nudMaxLevel_ValueChanged;
+            // 
+            // DarkLabel12
+            // 
+            DarkLabel12.AutoSize = true;
+            DarkLabel12.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            DarkLabel12.Location = new System.Drawing.Point(12, 51);
+            DarkLabel12.Margin = new Padding(4, 0, 4, 0);
+            DarkLabel12.Name = "DarkLabel12";
+            DarkLabel12.Size = new Size(63, 15);
+            DarkLabel12.TabIndex = 5;
+            DarkLabel12.Text = "Max Level:";
+            // 
+            // nudPetPnts
+            // 
+            nudPetPnts.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudPetPnts.ForeColor = System.Drawing.Color.Gainsboro;
+            nudPetPnts.Location = new System.Drawing.Point(153, 81);
+            nudPetPnts.Margin = new Padding(4, 3, 4, 3);
+            nudPetPnts.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
+            nudPetPnts.Name = "nudPetPnts";
+            nudPetPnts.Size = new Size(109, 23);
+            nudPetPnts.TabIndex = 4;
+            nudPetPnts.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudPetPnts.ValueChanged += nudPetPnts_ValueChanged;
+            // 
+            // DarkLabel13
+            // 
+            DarkLabel13.AutoSize = true;
+            DarkLabel13.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            DarkLabel13.Location = new System.Drawing.Point(11, 82);
+            DarkLabel13.Margin = new Padding(4, 0, 4, 0);
+            DarkLabel13.Name = "DarkLabel13";
+            DarkLabel13.Size = new Size(93, 15);
+            DarkLabel13.TabIndex = 3;
+            DarkLabel13.Text = "Points Per Level:";
+            // 
+            // nudPetExp
+            // 
+            nudPetExp.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudPetExp.ForeColor = System.Drawing.Color.Gainsboro;
+            nudPetExp.Location = new System.Drawing.Point(153, 16);
+            nudPetExp.Margin = new Padding(4, 3, 4, 3);
+            nudPetExp.Name = "nudPetExp";
+            nudPetExp.Size = new Size(109, 23);
+            nudPetExp.TabIndex = 1;
+            nudPetExp.Value = new decimal(new int[] { 100, 0, 0, 0 });
+            nudPetExp.ValueChanged += nudPetExp_ValueChanged;
+            // 
+            // DarkLabel11
+            // 
+            DarkLabel11.AutoSize = true;
+            DarkLabel11.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            DarkLabel11.Location = new System.Drawing.Point(11, 17);
+            DarkLabel11.Margin = new Padding(4, 0, 4, 0);
+            DarkLabel11.Name = "DarkLabel11";
+            DarkLabel11.Size = new Size(69, 15);
+            DarkLabel11.TabIndex = 0;
+            DarkLabel11.Text = "Exp Gain %:";
+            // 
+            // optDoNotLevel
+            // 
+            optDoNotLevel.AutoSize = true;
+            optDoNotLevel.Location = new System.Drawing.Point(161, 22);
+            optDoNotLevel.Margin = new Padding(4, 3, 4, 3);
+            optDoNotLevel.Name = "optDoNotLevel";
+            optDoNotLevel.Size = new Size(119, 19);
+            optDoNotLevel.TabIndex = 1;
+            optDoNotLevel.Text = "Does Not LevelUp";
+            optDoNotLevel.CheckedChanged += optDoNotLevel_CheckedChanged;
+            // 
+            // optLevel
+            // 
+            optLevel.AutoSize = true;
+            optLevel.Location = new System.Drawing.Point(19, 22);
+            optLevel.Margin = new Padding(4, 3, 4, 3);
+            optLevel.Name = "optLevel";
+            optLevel.Size = new Size(128, 19);
+            optLevel.TabIndex = 0;
+            optLevel.Text = "Level by Experience";
+            optLevel.CheckedChanged += optLevel_CheckedChanged;
             // 
             // btnSave
             // 
@@ -1205,216 +1542,6 @@ namespace Intersect.Editor.Forms.Editors
             toolStripItemUndo.Text = "Undo";
             toolStripItemUndo.Click += toolStripItemUndo_Click;
             // 
-            // DarkGroupBox4
-            // 
-            DarkGroupBox4.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-            DarkGroupBox4.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            DarkGroupBox4.Controls.Add(pnlPetlevel);
-            DarkGroupBox4.Controls.Add(optDoNotLevel);
-            DarkGroupBox4.Controls.Add(optLevel);
-            DarkGroupBox4.ForeColor = System.Drawing.Color.Gainsboro;
-            DarkGroupBox4.Location = new System.Drawing.Point(7, 612);
-            DarkGroupBox4.Margin = new Padding(4, 3, 4, 3);
-            DarkGroupBox4.Name = "DarkGroupBox4";
-            DarkGroupBox4.Padding = new Padding(4, 3, 4, 3);
-            DarkGroupBox4.Size = new Size(589, 192);
-            DarkGroupBox4.TabIndex = 10;
-            DarkGroupBox4.TabStop = false;
-            DarkGroupBox4.Text = "Leveling";
-            // 
-            // pnlPetlevel
-            // 
-            pnlPetlevel.Controls.Add(DarkGroupBox5);
-            pnlPetlevel.Controls.Add(nudMaxLevel);
-            pnlPetlevel.Controls.Add(DarkLabel12);
-            pnlPetlevel.Controls.Add(nudPetPnts);
-            pnlPetlevel.Controls.Add(DarkLabel13);
-            pnlPetlevel.Controls.Add(nudPetExp);
-            pnlPetlevel.Controls.Add(DarkLabel11);
-            pnlPetlevel.Location = new System.Drawing.Point(7, 48);
-            pnlPetlevel.Margin = new Padding(4, 3, 4, 3);
-            pnlPetlevel.Name = "pnlPetlevel";
-            pnlPetlevel.Size = new Size(582, 136);
-            pnlPetlevel.TabIndex = 2;
-            // 
-            // DarkGroupBox5
-            // 
-            DarkGroupBox5.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-            DarkGroupBox5.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            DarkGroupBox5.Controls.Add(cmbEvolve);
-            DarkGroupBox5.Controls.Add(DarkLabel15);
-            DarkGroupBox5.Controls.Add(nudEvolveLvl);
-            DarkGroupBox5.Controls.Add(DarkLabel14);
-            DarkGroupBox5.Controls.Add(chkEvolve);
-            DarkGroupBox5.ForeColor = System.Drawing.Color.Gainsboro;
-            DarkGroupBox5.Location = new System.Drawing.Point(7, 44);
-            DarkGroupBox5.Margin = new Padding(4, 3, 4, 3);
-            DarkGroupBox5.Name = "DarkGroupBox5";
-            DarkGroupBox5.Padding = new Padding(4, 3, 4, 3);
-            DarkGroupBox5.Size = new Size(567, 87);
-            DarkGroupBox5.TabIndex = 7;
-            DarkGroupBox5.TabStop = false;
-            DarkGroupBox5.Text = "Evolution";
-            // 
-            // cmbEvolve
-            // 
-            cmbEvolve.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            cmbEvolve.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            cmbEvolve.BorderStyle = ButtonBorderStyle.Solid;
-            cmbEvolve.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
-            cmbEvolve.DrawDropdownHoverOutline = false;
-            cmbEvolve.DrawFocusRectangle = false;
-            cmbEvolve.DrawMode = DrawMode.OwnerDrawFixed;
-            cmbEvolve.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbEvolve.FlatStyle = FlatStyle.Flat;
-            cmbEvolve.ForeColor = System.Drawing.Color.Gainsboro;
-            cmbEvolve.FormattingEnabled = true;
-            cmbEvolve.Location = new System.Drawing.Point(117, 52);
-            cmbEvolve.Margin = new Padding(4, 3, 4, 3);
-            cmbEvolve.Name = "cmbEvolve";
-            cmbEvolve.Size = new Size(443, 24);
-            cmbEvolve.TabIndex = 4;
-            cmbEvolve.Text = null;
-            cmbEvolve.TextPadding = new Padding(2);
-            cmbEvolve.SelectedIndexChanged += cmbEvolve_SelectedIndexChanged;
-            // 
-            // DarkLabel15
-            // 
-            DarkLabel15.AutoSize = true;
-            DarkLabel15.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
-            DarkLabel15.Location = new System.Drawing.Point(8, 55);
-            DarkLabel15.Margin = new Padding(4, 0, 4, 0);
-            DarkLabel15.Name = "DarkLabel15";
-            DarkLabel15.Size = new Size(73, 15);
-            DarkLabel15.TabIndex = 3;
-            DarkLabel15.Text = "Evolves into:";
-            // 
-            // nudEvolveLvl
-            // 
-            nudEvolveLvl.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudEvolveLvl.ForeColor = System.Drawing.Color.Gainsboro;
-            nudEvolveLvl.Location = new System.Drawing.Point(486, 24);
-            nudEvolveLvl.Margin = new Padding(4, 3, 4, 3);
-            nudEvolveLvl.Name = "nudEvolveLvl";
-            nudEvolveLvl.Size = new Size(74, 23);
-            nudEvolveLvl.TabIndex = 2;
-            nudEvolveLvl.Value = new decimal(new int[] { 0, 0, 0, 0 });
-            nudEvolveLvl.ValueChanged += nudEvolveLvl_ValueChanged;
-            // 
-            // DarkLabel14
-            // 
-            DarkLabel14.AutoSize = true;
-            DarkLabel14.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
-            DarkLabel14.Location = new System.Drawing.Point(382, 26);
-            DarkLabel14.Margin = new Padding(4, 0, 4, 0);
-            DarkLabel14.Name = "DarkLabel14";
-            DarkLabel14.Size = new Size(96, 15);
-            DarkLabel14.TabIndex = 1;
-            DarkLabel14.Text = "Evolves on Level:";
-            // 
-            // chkEvolve
-            // 
-            chkEvolve.AutoSize = true;
-            chkEvolve.Location = new System.Drawing.Point(8, 22);
-            chkEvolve.Margin = new Padding(4, 3, 4, 3);
-            chkEvolve.Name = "chkEvolve";
-            chkEvolve.Size = new Size(104, 19);
-            chkEvolve.TabIndex = 0;
-            chkEvolve.Text = "Pet Can Evolve";
-            chkEvolve.CheckedChanged += chkEvolve_CheckedChanged;
-            // 
-            // nudMaxLevel
-            // 
-            nudMaxLevel.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudMaxLevel.ForeColor = System.Drawing.Color.Gainsboro;
-            nudMaxLevel.Location = new System.Drawing.Point(379, 14);
-            nudMaxLevel.Margin = new Padding(4, 3, 4, 3);
-            nudMaxLevel.Name = "nudMaxLevel";
-            nudMaxLevel.Size = new Size(187, 23);
-            nudMaxLevel.TabIndex = 6;
-            nudMaxLevel.Value = new decimal(new int[] { 100, 0, 0, 0 });
-            nudMaxLevel.ValueChanged += nudMaxLevel_ValueChanged;
-            // 
-            // DarkLabel12
-            // 
-            DarkLabel12.AutoSize = true;
-            DarkLabel12.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
-            DarkLabel12.Location = new System.Drawing.Point(303, 16);
-            DarkLabel12.Margin = new Padding(4, 0, 4, 0);
-            DarkLabel12.Name = "DarkLabel12";
-            DarkLabel12.Size = new Size(63, 15);
-            DarkLabel12.TabIndex = 5;
-            DarkLabel12.Text = "Max Level:";
-            // 
-            // nudPetPnts
-            // 
-            nudPetPnts.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudPetPnts.ForeColor = System.Drawing.Color.Gainsboro;
-            nudPetPnts.Location = new System.Drawing.Point(243, 14);
-            nudPetPnts.Margin = new Padding(4, 3, 4, 3);
-            nudPetPnts.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
-            nudPetPnts.Name = "nudPetPnts";
-            nudPetPnts.Size = new Size(52, 23);
-            nudPetPnts.TabIndex = 4;
-            nudPetPnts.Value = new decimal(new int[] { 10, 0, 0, 0 });
-            nudPetPnts.ValueChanged += nudPetPnts_ValueChanged;
-            // 
-            // DarkLabel13
-            // 
-            DarkLabel13.AutoSize = true;
-            DarkLabel13.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
-            DarkLabel13.Location = new System.Drawing.Point(148, 16);
-            DarkLabel13.Margin = new Padding(4, 0, 4, 0);
-            DarkLabel13.Name = "DarkLabel13";
-            DarkLabel13.Size = new Size(93, 15);
-            DarkLabel13.TabIndex = 3;
-            DarkLabel13.Text = "Points Per Level:";
-            // 
-            // nudPetExp
-            // 
-            nudPetExp.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudPetExp.ForeColor = System.Drawing.Color.Gainsboro;
-            nudPetExp.Location = new System.Drawing.Point(86, 14);
-            nudPetExp.Margin = new Padding(4, 3, 4, 3);
-            nudPetExp.Name = "nudPetExp";
-            nudPetExp.Size = new Size(62, 23);
-            nudPetExp.TabIndex = 1;
-            nudPetExp.Value = new decimal(new int[] { 100, 0, 0, 0 });
-            nudPetExp.ValueChanged += nudPetExp_ValueChanged;
-            // 
-            // DarkLabel11
-            // 
-            DarkLabel11.AutoSize = true;
-            DarkLabel11.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
-            DarkLabel11.Location = new System.Drawing.Point(5, 16);
-            DarkLabel11.Margin = new Padding(4, 0, 4, 0);
-            DarkLabel11.Name = "DarkLabel11";
-            DarkLabel11.Size = new Size(69, 15);
-            DarkLabel11.TabIndex = 0;
-            DarkLabel11.Text = "Exp Gain %:";
-            // 
-            // optDoNotLevel
-            // 
-            optDoNotLevel.AutoSize = true;
-            optDoNotLevel.Location = new System.Drawing.Point(309, 22);
-            optDoNotLevel.Margin = new Padding(4, 3, 4, 3);
-            optDoNotLevel.Name = "optDoNotLevel";
-            optDoNotLevel.Size = new Size(119, 19);
-            optDoNotLevel.TabIndex = 1;
-            optDoNotLevel.Text = "Does Not LevelUp";
-            optDoNotLevel.CheckedChanged += optDoNotLevel_CheckedChanged;
-            // 
-            // optLevel
-            // 
-            optLevel.AutoSize = true;
-            optLevel.Location = new System.Drawing.Point(8, 22);
-            optLevel.Margin = new Padding(4, 3, 4, 3);
-            optLevel.Name = "optLevel";
-            optLevel.Size = new Size(128, 19);
-            optLevel.TabIndex = 0;
-            optLevel.Text = "Level by Experience";
-            optLevel.CheckedChanged += optLevel_CheckedChanged;
-            // 
             // FrmPet
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -1456,6 +1583,8 @@ namespace Intersect.Editor.Forms.Editors
             ((System.ComponentModel.ISupportInitialize)nudHpRegen).EndInit();
             grpStats.ResumeLayout(false);
             grpStats.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nudCures).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudDamages).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudAgi).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudSpd).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudMR).EndInit();
@@ -1467,19 +1596,19 @@ namespace Intersect.Editor.Forms.Editors
             grpGeneral.ResumeLayout(false);
             grpGeneral.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)picPet).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudBaseMaturity).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudBaseMood).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudBaseEnergy).EndInit();
             grpSpells.ResumeLayout(false);
-            toolStrip.ResumeLayout(false);
-            toolStrip.PerformLayout();
             DarkGroupBox4.ResumeLayout(false);
             DarkGroupBox4.PerformLayout();
             pnlPetlevel.ResumeLayout(false);
             pnlPetlevel.PerformLayout();
-            DarkGroupBox5.ResumeLayout(false);
-            DarkGroupBox5.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)nudEvolveLvl).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudMaxLevel).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudPetPnts).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudPetExp).EndInit();
+            toolStrip.ResumeLayout(false);
+            toolStrip.PerformLayout();
             ResumeLayout(false);
         }
         private DarkGroupBox grpPets;
@@ -1526,7 +1655,7 @@ namespace Intersect.Editor.Forms.Editors
         private Label lblHpRegen;
         private DarkNumericUpDown nudHpRegen;
         private DarkGroupBox grpStats;
-        private Label label1;
+        private Label lblAgility;
         private DarkNumericUpDown nudAgi;
         private Label lblSpd;
         private DarkNumericUpDown nudSpd;
@@ -1538,17 +1667,33 @@ namespace Intersect.Editor.Forms.Editors
         private DarkNumericUpDown nudMag;
         private Label lblStr;
         private DarkNumericUpDown nudStr;
+        private Label lblDamages;
+        private DarkNumericUpDown nudDamages;
+        private Label lblCures;
+        private DarkNumericUpDown nudCures;
         private Label lblMana;
         private DarkNumericUpDown nudMana;
         private Label lblHP;
         private DarkNumericUpDown nudHp;
         private DarkGroupBox grpGeneral;
-        private Label lblPic;
-        private DarkComboBox cmbSprite;
+        private Label lblMaleSprite;
+        private DarkComboBox cmbMaleSprite;
+        private Label lblFemaleSprite;
+        private DarkComboBox cmbFemaleSprite;
+        private DarkRadioButton rdoPreviewMale;
+        private DarkRadioButton rdoPreviewFemale;
         private PictureBox picPet;
         private DarkButton btnAddFolder;
         private Label lblFolder;
         private DarkComboBox cmbFolder;
+        private Label lblBaseEnergy;
+        private DarkNumericUpDown nudBaseEnergy;
+        private Label lblFeedingItem;
+        private DarkComboBox cmbFeedingItem;
+        private Label lblBaseMood;
+        private DarkNumericUpDown nudBaseMood;
+        private Label lblBaseMaturity;
+        private DarkNumericUpDown nudBaseMaturity;
         private Label lblName;
         private DarkTextBox txtName;
         private DarkGroupBox grpSpells;
@@ -1569,21 +1714,15 @@ namespace Intersect.Editor.Forms.Editors
         public ToolStripButton toolStripItemPaste;
         private ToolStripSeparator toolStripSeparator3;
         public ToolStripButton toolStripItemUndo;
-        internal DarkGroupBox DarkGroupBox4;
-        internal Panel pnlPetlevel;
-        internal DarkGroupBox DarkGroupBox5;
-        internal DarkComboBox cmbEvolve;
-        internal DarkLabel DarkLabel15;
-        internal DarkNumericUpDown nudEvolveLvl;
-        internal DarkLabel DarkLabel14;
-        internal DarkCheckBox chkEvolve;
-        internal DarkNumericUpDown nudMaxLevel;
-        internal DarkLabel DarkLabel12;
-        internal DarkNumericUpDown nudPetPnts;
-        internal DarkLabel DarkLabel13;
-        internal DarkNumericUpDown nudPetExp;
-        internal DarkLabel DarkLabel11;
-        internal DarkRadioButton optDoNotLevel;
-        internal DarkRadioButton optLevel;
+        private DarkGroupBox DarkGroupBox4;
+        private DarkNumericUpDown nudMaxLevel;
+        private DarkLabel DarkLabel12;
+     private DarkNumericUpDown nudPetPnts;
+          private DarkLabel DarkLabel13;
+          private DarkNumericUpDown nudPetExp;
+          private DarkLabel DarkLabel11;
+          private DarkRadioButton optDoNotLevel;
+          private DarkRadioButton optLevel;
+        private Panel pnlPetlevel;
     }
 }

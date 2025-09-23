@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.GameObjects;
 using Intersect.Models;
@@ -70,6 +71,16 @@ public partial class PetDescriptor : DatabaseObject<PetDescriptor>, IFolderable
         set => IdleAnimationId = value?.Id ?? Guid.Empty;
     }
 
+    [Column("FeedingItem")]
+    public Guid FeedingItemId { get; set; }
+
+    [NotMapped, JsonIgnore]
+    public ItemDescriptor? FeedingItem
+    {
+        get => ItemDescriptor.Get(FeedingItemId);
+        set => FeedingItemId = value?.Id ?? Guid.Empty;
+    }
+
     public int AttackSpeedModifier { get; set; }
 
     public int AttackSpeedValue { get; set; }
@@ -77,6 +88,12 @@ public partial class PetDescriptor : DatabaseObject<PetDescriptor>, IFolderable
     public int Damage { get; set; } = 1;
 
     public int DamageType { get; set; }
+
+    public int BaseEnergy { get; set; } = 100;
+
+    public int BaseMood { get; set; } = 100;
+
+    public int BaseMaturity { get; set; }
 
     public int CritChance { get; set; }
 
@@ -108,21 +125,45 @@ public partial class PetDescriptor : DatabaseObject<PetDescriptor>, IFolderable
 
     public PetLevelingMode LevelingMode { get; set; } = PetLevelingMode.Experience;
 
-    public bool CanEvolve { get; set; }
+    public string Sprite { get; set; } = string.Empty;
 
-    public int EvolutionLevel { get; set; }
+    [Column("MaleSprite")]
+    [JsonProperty(nameof(MaleSprite))]
+    public string MaleSprite { get; set; } = string.Empty;
 
-    [Column("EvolutionTarget")]
-    public Guid EvolutionTargetId { get; set; }
+    [Column("FemaleSprite")]
+    [JsonProperty(nameof(FemaleSprite))]
+    public string FemaleSprite { get; set; } = string.Empty;
 
-    [NotMapped, JsonIgnore]
-    public PetDescriptor? EvolutionTarget
+    public string GetSpriteForGender(PetGender gender)
     {
-        get => EvolutionTargetId == Guid.Empty ? null : Get(EvolutionTargetId);
-        set => EvolutionTargetId = value?.Id ?? Guid.Empty;
+        return gender switch
+        {
+            PetGender.Male when !string.IsNullOrWhiteSpace(MaleSprite) => MaleSprite,
+            PetGender.Female when !string.IsNullOrWhiteSpace(FemaleSprite) => FemaleSprite,
+            _ => ResolveFallbackSprite(),
+        };
     }
 
-    public string Sprite { get; set; } = string.Empty;
+    private string ResolveFallbackSprite()
+    {
+        if (!string.IsNullOrWhiteSpace(Sprite))
+        {
+            return Sprite;
+        }
+
+        if (!string.IsNullOrWhiteSpace(MaleSprite))
+        {
+            return MaleSprite;
+        }
+
+        if (!string.IsNullOrWhiteSpace(FemaleSprite))
+        {
+            return FemaleSprite;
+        }
+
+        return string.Empty;
+    }
 
     [Column("Spells"), JsonIgnore]
     public string SpellsJson

@@ -6,6 +6,16 @@ namespace Intersect.Config;
 public partial class PetOptions
 {
     /// <summary>
+    /// Milliseconds to wait between consecutive pet invokes.
+    /// </summary>
+    public int InvokeCooldownMilliseconds { get; set; } = 1000;
+
+    /// <summary>
+    /// Milliseconds after a pet dies before it can be invoked again.
+    /// </summary>
+    public int DeathInvokeCooldownMilliseconds { get; set; } = 15_000;
+
+    /// <summary>
     /// Distance (in tiles) at which pets are teleported back to their owner.
     /// Set to 0 or less to disable leash-based teleporting.
     /// </summary>

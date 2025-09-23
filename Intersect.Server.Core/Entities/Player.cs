@@ -90,13 +90,21 @@ public partial class Player : Entity
     [JsonIgnore][NotMapped] public bool IsPetSpawnedViaHub => _isPetSpawnedViaHub;
 
     private const int PetBehaviorChangeCooldownDuration = 500;
-    private const int PetInvokeCooldownDuration = 1000;
+
+    private static int PetInvokeCooldownDuration =>
+        Math.Max(0, Options.Instance.Pets.InvokeCooldownMilliseconds);
+
+    private static long PetDeathReinvokeCooldownDuration =>
+        Math.Max(0L, (long)Options.Instance.Pets.DeathInvokeCooldownMilliseconds);
 
     [JsonIgnore][NotMapped]
     private long _nextPetBehaviorChangeTime;
 
     [JsonIgnore][NotMapped]
     private long _nextPetInvokeTime;
+
+    [JsonIgnore][NotMapped]
+    private long _nextPetReinvokeAllowedTime;
 
     #endregion
 
@@ -1145,31 +1153,63 @@ public partial class Player : Entity
         }
     }
 
-    public bool SetPetHubSpawnRequested(bool requested, bool openPetHub = false, bool closePetHub = false)
+    public bool SetPetHubSpawnRequested(
+        bool requested,
+        bool openPetHub = false,
+        bool closePetHub = false,
+        bool ignoreCooldown = false
+    )
     {
+        var now = Timing.Global.Milliseconds;
+        long cooldownTimestamp;
+        bool result;
+        var shouldOpenPetHub = false;
+
         lock (EntityLock)
         {
             if (requested)
             {
-                SetPetHubSpawnFlag(true);
-
-                var descriptor = ActivePet?.Descriptor;
-                if (descriptor == null)
+                if (!ignoreCooldown && now < _nextPetReinvokeAllowedTime)
                 {
-                    if (openPetHub)
-                    {
-                        PacketSender.SendOpenPetHub(this);
-                    }
-
-                    return false;
+                    result = false;
+                    shouldOpenPetHub = openPetHub;
                 }
+                else
+                {
+                    SetPetHubSpawnFlag(true);
 
-                return TrySpawnActivePet(descriptor, openPetHub);
+                    var descriptor = ActivePet?.Descriptor;
+                    if (descriptor == null)
+                    {
+                        result = false;
+                        shouldOpenPetHub = openPetHub;
+                    }
+                    else
+                    {
+                        result = TrySpawnActivePet(descriptor, openPetHub);
+                        if (result && !ignoreCooldown)
+                        {
+                            _nextPetInvokeTime = now + PetInvokeCooldownDuration;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                SetPetHubSpawnFlag(false);
+                result = DismissActivePet(closePetHub);
             }
 
-            SetPetHubSpawnFlag(false);
-            return DismissActivePet(closePetHub);
+            cooldownTimestamp = Math.Max(_nextPetInvokeTime, _nextPetReinvokeAllowedTime);
         }
+
+        if (shouldOpenPetHub)
+        {
+            PacketSender.SendOpenPetHub(this);
+        }
+
+        PacketSender.SendPetCooldown(this, cooldownTimestamp);
+        return result;
     }
 
     private void UpdatePetState(long timeMs)
@@ -1178,11 +1218,22 @@ public partial class Player : Entity
 
         CleanupSpawnedPetsList();
 
+        var now = Timing.Global.Milliseconds;
         var activePet = ActivePet;
         var descriptor = activePet?.Descriptor;
         var currentPet = CurrentPet;
 
         if (!IsPetSpawnedViaHub)
+        {
+            if (currentPet != null)
+            {
+                DespawnPet(currentPet, false);
+            }
+
+            return;
+        }
+
+        if (now < _nextPetReinvokeAllowedTime)
         {
             if (currentPet != null)
             {
@@ -1217,6 +1268,11 @@ public partial class Player : Entity
         if (currentPet == null)
         {
             if (!MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance))
+            {
+                return;
+            }
+
+            if (now < _nextPetReinvokeAllowedTime)
             {
                 return;
             }
@@ -1317,9 +1373,16 @@ public partial class Player : Entity
 
         EnsurePlayerPetArraySizes(playerPet);
 
-        playerPet.Level = Math.Clamp(pet.Level, 1, pet.MaxLevel);
+        var maxLevel = Math.Max(1, pet.MaxLevel);
+        playerPet.Level = Math.Clamp(pet.Level, 1, maxLevel);
         playerPet.Experience = Math.Max(0, pet.Experience);
         playerPet.StatPoints = Math.Max(0, pet.StatPoints);
+        playerPet.Energy = pet.Energy;
+        playerPet.Mood = pet.MoodValue;
+        playerPet.Maturity = pet.Maturity;
+        playerPet.CareMilliseconds = pet.CareMilliseconds;
+        playerPet.WhimsFulfilled = pet.WhimsFulfilled;
+        playerPet.LastWhimFulfillmentTicks = pet.LastWhimFulfillmentTicks;
 
         var statCount = Enum.GetValues<Stat>().Length;
         for (var index = 0; index < statCount; index++)
@@ -1336,9 +1399,31 @@ public partial class Player : Entity
             playerPet.Vitals[index] = pet.GetVital(vital);
         }
 
+        playerPet.Gender = pet.Gender;
+
         if (playerPet.PetInstanceId == Guid.Empty && pet.PetInstanceId != Guid.Empty)
         {
             playerPet.PetInstanceId = pet.PetInstanceId;
+        }
+    }
+
+    internal void HandlePetKill(Pet pet, Entity entity)
+    {
+        if (pet == null || entity == null)
+        {
+            return;
+        }
+
+        if (pet.OwnerId != Id)
+        {
+            return;
+        }
+
+        KilledEntity(entity);
+
+        if (!pet.IsDisposed)
+        {
+            pet.RegisterCombatCare();
         }
     }
 
@@ -1469,11 +1554,62 @@ public partial class Player : Entity
         return true;
     }
 
+    public void NotifyPetDied(Pet pet)
+    {
+        if (pet == null || pet.OwnerId != Id)
+        {
+            return;
+        }
+
+        _nextPetReinvokeAllowedTime = Timing.Global.Milliseconds + PetDeathReinvokeCooldownDuration;
+
+        SetPetHubSpawnFlag(false, notifyClient: true);
+
+        if (ReferenceEquals(CurrentPet, pet))
+        {
+            CurrentPet = null;
+        }
+
+        lock (_spawnedPetsLock)
+        {
+            _ = SpawnedPets.Remove(pet);
+        }
+
+        PacketSender.SendChatMsg(
+            this,
+            "Tu mascota ha muerto. Podrás volver a invocarla cuando termine el enfriamiento.",
+            ChatMessageType.Combat,
+            CustomColors.Alerts.Info
+        );
+
+        PacketSender.SendPetCooldown(this, Math.Max(_nextPetInvokeTime, _nextPetReinvokeAllowedTime));
+    }
+
     public bool InvokePet(bool ignoreCooldown = false, bool openPetHub = false)
     {
         var now = Timing.Global.Milliseconds;
-        if (!ignoreCooldown && now < _nextPetInvokeTime)
+        if (!ignoreCooldown)
         {
+            if (now < _nextPetInvokeTime)
+            {
+                return false;
+            }
+
+            if (now < _nextPetReinvokeAllowedTime)
+            {
+                return false;
+            }
+        }
+
+        if (CombatTimer > now)
+        {
+            PacketSender.SendChatMsg(
+                this,
+                "No puedes invocar a tu mascota mientras estás en combate.",
+                ChatMessageType.Combat,
+                CustomColors.Alerts.Error
+            );
+
             return false;
         }
 
@@ -1484,12 +1620,13 @@ public partial class Player : Entity
             return false;
         }
 
-        if (!TrySummonPet(playerPet, descriptor, openPetHub))
+        if (!TrySummonPet(playerPet, descriptor, openPetHub, ignoreCooldown))
         {
             return false;
         }
 
         _nextPetInvokeTime = now + PetInvokeCooldownDuration;
+        PacketSender.SendPetCooldown(this, Math.Max(_nextPetInvokeTime, _nextPetReinvokeAllowedTime));
         return true;
     }
 
@@ -1617,8 +1754,10 @@ public partial class Player : Entity
         {
             playerPet = Pets.FirstOrDefault(pet => pet.PetInstanceId == instanceId);
         }
-
-        playerPet ??= Pets.FirstOrDefault(pet => pet.PetDescriptorId == descriptor.Id);
+        else
+        {
+            playerPet = Pets.FirstOrDefault(pet => pet.PetDescriptorId == descriptor.Id);
+        }
 
         if (playerPet == null)
         {
@@ -1683,7 +1822,26 @@ public partial class Player : Entity
             Experience = Math.Max(0, descriptor.Experience),
             StatPoints = 0,
             CustomName = string.Empty,
+            Energy = Math.Clamp(
+                descriptor.BaseEnergy,
+                Pet.MinAttributeValue,
+                Math.Max(Pet.MaxAttributeValue, descriptor.BaseEnergy)
+            ),
+            Mood = Math.Clamp(
+                descriptor.BaseMood,
+                Pet.MinAttributeValue,
+                Math.Max(Pet.MaxAttributeValue, descriptor.BaseMood)
+            ),
+            Maturity = Math.Clamp(
+                descriptor.BaseMaturity,
+                Pet.MinAttributeValue,
+                Math.Max(Pet.MaxAttributeValue, descriptor.BaseMaturity)
+            ),
+            CareMilliseconds = (long)Math.Max(0, descriptor.BaseMaturity)
+                                * Pet.CareMillisecondsPerMaturityPoint,
         };
+
+        playerPet.Gender = Randomization.Next(0, 2) == 0 ? PetGender.Male : PetGender.Female;
 
         var initialName = petData.PetNameOverride;
         if (!string.IsNullOrWhiteSpace(initialName))
@@ -1718,6 +1876,37 @@ public partial class Player : Entity
     {
         var statCount = Enum.GetValues<Stat>().Length;
         var vitalCount = Enum.GetValues<Vital>().Length;
+
+        var descriptor = playerPet.Descriptor;
+        if (playerPet.Energy < Pet.MinAttributeValue)
+        {
+            var baseEnergy = descriptor?.BaseEnergy ?? Pet.MaxAttributeValue;
+            playerPet.Energy = Math.Clamp(
+                baseEnergy,
+                Pet.MinAttributeValue,
+                Math.Max(Pet.MaxAttributeValue, baseEnergy)
+            );
+        }
+
+        if (playerPet.Mood < Pet.MinAttributeValue)
+        {
+            var baseMood = descriptor?.BaseMood ?? Pet.MaxAttributeValue;
+            playerPet.Mood = Math.Clamp(
+                baseMood,
+                Pet.MinAttributeValue,
+                Math.Max(Pet.MaxAttributeValue, baseMood)
+            );
+        }
+
+        if (playerPet.Maturity < Pet.MinAttributeValue)
+        {
+            var baseMaturity = descriptor?.BaseMaturity ?? Pet.MinAttributeValue;
+            playerPet.Maturity = Math.Clamp(
+                baseMaturity,
+                Pet.MinAttributeValue,
+                Math.Max(Pet.MaxAttributeValue, baseMaturity)
+            );
+        }
 
         var baseStats = playerPet.BaseStats ?? Array.Empty<int>();
         if (baseStats.Length != statCount)
@@ -1768,14 +1957,19 @@ public partial class Player : Entity
         }
     }
 
-    private bool TrySummonPet(PlayerPet playerPet, PetDescriptor descriptor, bool openPetHub)
+    private bool TrySummonPet(
+        PlayerPet playerPet,
+        PetDescriptor descriptor,
+        bool openPetHub,
+        bool ignoreCooldown
+    )
     {
         if (playerPet == null || descriptor == null)
         {
             return false;
         }
 
-        return SetPetHubSpawnRequested(true, openPetHub);
+        return SetPetHubSpawnRequested(true, openPetHub, ignoreCooldown: ignoreCooldown);
     }
 
     private bool TrySpawnActivePet(PetDescriptor descriptor, bool openPetHub)
@@ -7232,6 +7426,7 @@ public partial class Player : Entity
 
         SetPetHubSpawnFlag(false);
         _ = DismissActivePet(closePetHub);
+        PacketSender.SendPetCooldown(this, Math.Max(_nextPetInvokeTime, _nextPetReinvokeAllowedTime));
         ActivePet = null;
         ActivePetId = null;
     }
