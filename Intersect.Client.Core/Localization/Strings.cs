@@ -1351,6 +1351,39 @@ public static partial class Strings
         public static LocalizedString BehaviorUnknown = @"Unknown";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString EnergyLabel = @"Energy: {0}/{1}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MoodLabelDetailed = @"Mood: {0}/{1} ({2})";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MoodStateMiserable = @"Miserable";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MoodStateIrritable = @"Irritable";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MoodStateContent = @"Content";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MoodStateHappy = @"Happy";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MoodStateJoyful = @"Joyful";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString BehaviorBlockedEnergy = @"{0} is too exhausted to obey.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString BehaviorBlockedMood = @"{0} refuses while feeling {1}.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MaturityLabel = @"Maturity: {0}/{1}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MaturityTimeLabel = @"Maturity: {0}/{1} ({2})";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString VitalsHeader = @"Vitals";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1366,10 +1399,16 @@ public static partial class Strings
         public static LocalizedString NoStats = @"No stats available.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString OpenHub = @"Open Pet Hub";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString InvokeButton = @"Summon";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString DismissButton = @"Dismiss";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString CooldownLabel = @"Summon available in {0}s";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString SummonRequested = @"You begin summoning {0}.";

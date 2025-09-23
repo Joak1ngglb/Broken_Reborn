@@ -4946,6 +4946,21 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString sprite = @"Sprite";
 
+        public static LocalizedString malesprite = @"Male Sprite:";
+
+        public static LocalizedString femalesprite = @"Female Sprite:";
+
+        public static LocalizedString previewmale = @"Preview Male";
+
+        public static LocalizedString previewfemale = @"Preview Female";
+
+        public static LocalizedString baseenergy = @"Base Energy:";
+
+        public static LocalizedString basemood = @"Base Mood:";
+
+        public static LocalizedString basematurity = @"Base Maturity:";
+        public static LocalizedString feedingitem = @"Feeding Item:";
+
         public static LocalizedString level = @"Level:";
 
         public static LocalizedString experience = @"Experience:";

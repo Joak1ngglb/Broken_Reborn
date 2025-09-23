@@ -55,6 +55,8 @@ public static partial class PacketSender
 
     public static long SentBytes { get; set; }
 
+    internal static event Action<Entity>? EntityLeaveSent;
+
     public static void ResetMetrics()
     {
         SentPackets = 0;
@@ -669,7 +671,9 @@ public static partial class PacketSender
     //EntityLeftPacket
     public static void SendEntityLeave(Entity en)
     {
-        SendDataToProximityOnMapInstance(en.MapId, en.MapInstanceId, new EntityLeftPacket(en.Id, en.GetEntityType(), en.MapId));
+        var packet = new EntityLeftPacket(en.Id, en.GetEntityType(), en.MapId);
+        EntityLeaveSent?.Invoke(en);
+        SendDataToProximityOnMapInstance(en.MapId, en.MapInstanceId, packet);
     }
 
     //EntityLeftPacket
@@ -1023,6 +1027,7 @@ public static partial class PacketSender
                     DescriptorId = pet.Descriptor?.Id ?? Guid.Empty,
                     Despawnable = pet.Despawnable,
                     Behavior = pet.Behavior,
+                    Gender = pet.Gender,
                 }
             );
         }
@@ -1071,7 +1076,14 @@ public static partial class PacketSender
                 pet.Experience,
                 pet.ExperienceToNextLevel,
                 pet.StatPoints,
-                allocations.ToArray()
+                allocations.ToArray(),
+                pet.Energy,
+                pet.MoodValue,
+                pet.Maturity,
+                pet.CareMilliseconds,
+                pet.Mood,
+                pet.WhimsFulfilled,
+                pet.LastWhimFulfillmentTicks
             ),
             TransmissionMode.Any
         );
@@ -1085,6 +1097,33 @@ public static partial class PacketSender
         }
 
         player.SendPacket(new PetHubStatePacket(player.IsPetSpawnedViaHub), TransmissionMode.Any);
+    }
+
+    public static void SendPetCooldown(Player player, long nextInvokeAtMs)
+    {
+        if (player == null)
+        {
+            return;
+        }
+
+        player.SendPacket(new PetCooldownPacket(nextInvokeAtMs), TransmissionMode.Any);
+    }
+
+    public static void SendPetTarget(Pet pet, Entity? target)
+    {
+        if (pet == null)
+        {
+            return;
+        }
+
+        var owner = pet.Owner ?? Player.FindOnline(pet.OwnerId);
+        if (owner == null || owner.IsDisposed)
+        {
+            return;
+        }
+
+        var targetId = target?.Id ?? Guid.Empty;
+        owner.SendPacket(new PetTargetPacket(pet.Id, targetId), TransmissionMode.Any);
     }
 
     public static void SendOpenPetHub(Player player, bool close = false)

@@ -11,6 +11,7 @@ using Intersect.Client.Framework.Gwen.Control.EventArguments;
 using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Enums;
+using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Pets;
 
 
@@ -20,7 +21,7 @@ namespace Intersect.Client.Interface.Game.Pets
     {
         // Layout
         private const int WindowWidth = 360;
-        private const int WindowHeight = 560;
+        private const int WindowHeight = 720;
 
         private const int Margin = 16;
         private const int Gap = 8;
@@ -29,7 +30,9 @@ namespace Intersect.Client.Interface.Game.Pets
         private const int StatColumnWidth = 150;
         private const int StatRowHeight = 20;
 
-        private const int DetailsPanelHeight = 264;
+        private const int DetailsPanelHeight = 330;
+
+        private const int DefaultAttributeCap = 100;
 
         // Fonts
         private const string FontName = "sourceproblack";
@@ -50,6 +53,10 @@ namespace Intersect.Client.Interface.Game.Pets
         private readonly Label _experienceToNextLabel;
         private readonly Label _behaviorLabel;
 
+        private readonly Label _energyLabel;
+        private readonly Label _moodLabel;
+        private readonly Label _maturityLabel;
+
         private readonly Label _vitalsHeader;
         private readonly Dictionary<Vital, Label> _vitalLabels = new();
 
@@ -62,6 +69,7 @@ namespace Intersect.Client.Interface.Game.Pets
 
         private readonly Button _invokeButton;
         private readonly Button _dismissButton;
+        private readonly Label _cooldownLabel;
 
         public PetHubWindow(Canvas gameCanvas)
             : base(gameCanvas, Strings.Pets.HubTitle, modal: false, name: nameof(PetHubWindow))
@@ -104,12 +112,16 @@ namespace Intersect.Client.Interface.Game.Pets
             _experienceToNextLabel = CreateDetailLabel(_detailsPanel, "ExperienceToNextLabel", DetailLineHeight * 4);
             _behaviorLabel = CreateDetailLabel(_detailsPanel, "BehaviorLabel", DetailLineHeight * 5);
 
-            _vitalsHeader = CreateDetailLabel(_detailsPanel, "VitalsHeaderLabel", DetailLineHeight * 6);
+            _energyLabel = CreateDetailLabel(_detailsPanel, "EnergyLabel", DetailLineHeight * 6);
+            _moodLabel = CreateDetailLabel(_detailsPanel, "MoodLabel", DetailLineHeight * 7);
+            _maturityLabel = CreateDetailLabel(_detailsPanel, "MaturityLabel", DetailLineHeight * 8);
+
+            _vitalsHeader = CreateDetailLabel(_detailsPanel, "VitalsHeaderLabel", DetailLineHeight * 9);
             _vitalsHeader.FontSize = HeaderSize;
             _vitalsHeader.Text = Strings.Pets.VitalsHeader.ToString();
 
             // Vitals debajo del header
-            var firstVitalY = DetailLineHeight * 7;
+            var firstVitalY = DetailLineHeight * 10;
             var vitalIndex = 0;
             foreach (var vital in Enum.GetValues<Vital>())
             {
@@ -195,10 +207,23 @@ namespace Intersect.Client.Interface.Game.Pets
                 OnDismissClicked
             );
 
+            _cooldownLabel = new Label(this, "CooldownLabel")
+            {
+                FontName = FontName,
+                FontSize = StatSize,
+                TextColor = Color.White,
+                Text = string.Empty,
+                AutoSizeToContents = false,
+            };
+            _cooldownLabel.SetPosition(_invokeButton.X, _invokeButton.Y - 18);
+            _cooldownLabel.SetSize(180, 16);
+            _cooldownLabel.IsHidden = true;
+
             // Eventos del Hub
             Globals.PetHub.ActivePetChanged += OnPetHubStateChanged;
             Globals.PetHub.BehaviorChanged += OnPetHubStateChanged;
             Globals.PetHub.SpawnStateChanged += OnPetHubStateChanged;
+            Globals.PetHub.CooldownChanged += OnPetHubCooldownChanged;
         }
 
         protected override void OnClose(Base control, EventArgs args)
@@ -224,6 +249,7 @@ namespace Intersect.Client.Interface.Game.Pets
                 Globals.PetHub.ActivePetChanged -= OnPetHubStateChanged;
                 Globals.PetHub.BehaviorChanged -= OnPetHubStateChanged;
                 Globals.PetHub.SpawnStateChanged -= OnPetHubStateChanged;
+                Globals.PetHub.CooldownChanged -= OnPetHubCooldownChanged;
             }
 
             base.Dispose(disposing);
@@ -232,6 +258,11 @@ namespace Intersect.Client.Interface.Game.Pets
         private void OnPetHubStateChanged()
         {
             RefreshState();
+        }
+
+        private void OnPetHubCooldownChanged()
+        {
+            RefreshCooldown();
         }
 
         private void RefreshState()
@@ -254,8 +285,6 @@ namespace Intersect.Client.Interface.Game.Pets
             _statsPanel.IsHidden = !hasPet;
             _behaviorWidget.IsHidden = !hasPet;
 
-            // Según tu semántica previa: invocar deshabilitado si ya está solicitada/activa; dismiss habilitado cuando está activa
-            _invokeButton.IsDisabled = isSpawnRequested;
             _dismissButton.IsDisabled = !isSpawnRequested;
 
             if (!hasPet || pet == null)
@@ -274,6 +303,11 @@ namespace Intersect.Client.Interface.Game.Pets
                 _noStatsLabel.IsHidden = false;
                 _experienceLabel.IsHidden = true;
                 _experienceToNextLabel.IsHidden = true;
+                _energyLabel.IsHidden = true;
+                _moodLabel.IsHidden = true;
+                _maturityLabel.IsHidden = true;
+
+                RefreshCooldown();
 
                 return;
             }
@@ -303,8 +337,66 @@ namespace Intersect.Client.Interface.Game.Pets
             var behaviorText = GetBehaviorLabel(Globals.PetHub.Behavior);
             _behaviorLabel.Text = Strings.Pets.BehaviorLabel.ToString(behaviorText);
 
+            UpdateAttributes(pet);
             UpdateVitals(pet);
             UpdateStats(descriptor);
+
+            RefreshCooldown();
+        }
+
+        private void RefreshCooldown()
+        {
+            var now = Timing.Global.Milliseconds;
+            var remaining = Globals.PetHub.GetInvokeCooldownRemaining(now);
+            var hasPet = Globals.PetHub.HasActivePet;
+            var isSpawnRequested = Globals.PetHub.IsSpawnRequested;
+
+            if (remaining > 0)
+            {
+                var seconds = (int)Math.Ceiling(remaining / 1000.0);
+                _cooldownLabel.Text = Strings.Pets.CooldownLabel.ToString(seconds);
+                _cooldownLabel.IsHidden = false;
+                _invokeButton.IsDisabled = true;
+            }
+            else
+            {
+                _cooldownLabel.IsHidden = true;
+                _invokeButton.IsDisabled = isSpawnRequested || !hasPet;
+            }
+        }
+
+        private void UpdateAttributes(Pet pet)
+        {
+            var descriptor = pet.Descriptor;
+
+            var energyCap = Math.Max(DefaultAttributeCap, descriptor?.BaseEnergy ?? 0);
+            if (energyCap <= 0)
+            {
+                energyCap = DefaultAttributeCap;
+            }
+
+            var moodCap = Math.Max(DefaultAttributeCap, descriptor?.BaseMood ?? 0);
+            if (moodCap <= 0)
+            {
+                moodCap = DefaultAttributeCap;
+            }
+
+            var maturityCap = Math.Max(DefaultAttributeCap, descriptor?.BaseMaturity ?? 0);
+            if (maturityCap <= 0)
+            {
+                maturityCap = DefaultAttributeCap;
+            }
+
+            _energyLabel.Text = Strings.Pets.EnergyLabel.ToString(pet.Energy, energyCap);
+            _energyLabel.IsHidden = false;
+
+            var moodName = GetMoodDisplayName(pet.Mood);
+            _moodLabel.Text = Strings.Pets.MoodLabelDetailed.ToString(pet.MoodValue, moodCap, moodName);
+            _moodLabel.IsHidden = false;
+
+            var careText = FormatCareDuration(pet.CareMilliseconds);
+            _maturityLabel.Text = Strings.Pets.MaturityTimeLabel.ToString(pet.Maturity, maturityCap, careText);
+            _maturityLabel.IsHidden = false;
         }
 
         private void UpdateVitals(Pet pet)
@@ -372,6 +464,15 @@ namespace Intersect.Client.Interface.Game.Pets
                 ? label.ToString().TrimEnd(':')
                 : vital.ToString();
 
+        private static string GetMoodDisplayName(PetMood mood) => mood switch
+        {
+            PetMood.Miserable => Strings.Pets.MoodStateMiserable.ToString(),
+            PetMood.Irritable => Strings.Pets.MoodStateIrritable.ToString(),
+            PetMood.Happy => Strings.Pets.MoodStateHappy.ToString(),
+            PetMood.Joyful => Strings.Pets.MoodStateJoyful.ToString(),
+            _ => Strings.Pets.MoodStateContent.ToString(),
+        };
+
         private static string GetBehaviorLabel(PetState behavior) => behavior switch
         {
             PetState.Follow => Strings.Pets.BehaviorFollow.ToString(),
@@ -382,6 +483,21 @@ namespace Intersect.Client.Interface.Game.Pets
         };
 
         private static string FormatNumber(long value) => value.ToString("N0", CultureInfo.CurrentCulture);
+
+        private static string FormatCareDuration(long milliseconds)
+        {
+            if (milliseconds <= 0)
+            {
+                return "00:00:00";
+            }
+
+            var span = TimeSpan.FromMilliseconds(milliseconds);
+            var totalHours = (int)Math.Min(Math.Floor(span.TotalHours), 9999);
+            var minutes = span.Minutes;
+            var seconds = span.Seconds;
+
+            return $"{totalHours:D2}:{minutes:D2}:{seconds:D2}";
+        }
 
         private Label CreateDetailLabel(Base parent, string name, int y)
         {
@@ -425,7 +541,7 @@ namespace Intersect.Client.Interface.Game.Pets
 
         private void OnDismissClicked(Base sender, MouseButtonState arguments)
         {
-            if (Globals.PetHub.DismissPet(closePetHub: true))
+            if (Globals.PetHub.DismissPet())
             {
                 _dismissButton.IsDisabled = true;
                 _invokeButton.IsDisabled = false;

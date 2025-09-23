@@ -24,6 +24,8 @@ public partial class PlayerPet : IPlayerOwned
 
     public Guid PetInstanceId { get; set; }
 
+    public PetGender Gender { get; set; } = PetGender.Unspecified;
+
     public string CustomName { get; set; } = string.Empty;
 
     public int Level { get; set; } = 1;
@@ -31,6 +33,18 @@ public partial class PlayerPet : IPlayerOwned
     public long Experience { get; set; }
 
     public int StatPoints { get; set; }
+
+    public int Energy { get; set; } = -1;
+
+    public int Mood { get; set; } = -1;
+
+    public int Maturity { get; set; } = -1;
+
+    public long CareMilliseconds { get; set; } = 0;
+
+    public int WhimsFulfilled { get; set; } = 0;
+
+    public long LastWhimFulfillmentTicks { get; set; } = 0;
 
     [NotMapped]
     public int[] BaseStats { get; set; } = new int[Enum.GetValues<Stat>().Length];
