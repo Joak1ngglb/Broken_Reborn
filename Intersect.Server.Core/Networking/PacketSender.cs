@@ -1094,6 +1094,33 @@ public static partial class PacketSender
         player.SendPacket(new PetHubStatePacket(player.IsPetSpawnedViaHub), TransmissionMode.Any);
     }
 
+    public static void SendPetCooldown(Player player, long nextInvokeAtMs)
+    {
+        if (player == null)
+        {
+            return;
+        }
+
+        player.SendPacket(new PetCooldownPacket(nextInvokeAtMs), TransmissionMode.Any);
+    }
+
+    public static void SendPetTarget(Pet pet, Entity? target)
+    {
+        if (pet == null)
+        {
+            return;
+        }
+
+        var owner = pet.Owner ?? Player.FindOnline(pet.OwnerId);
+        if (owner == null || owner.IsDisposed)
+        {
+            return;
+        }
+
+        var targetId = target?.Id ?? Guid.Empty;
+        owner.SendPacket(new PetTargetPacket(pet.Id, targetId), TransmissionMode.Any);
+    }
+
     public static void SendOpenPetHub(Player player, bool close = false)
     {
         if (player == null)

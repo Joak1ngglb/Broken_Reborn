@@ -1216,15 +1216,23 @@ public sealed class Pet : Entity
         _lastTargetSeenTime = timeMs;
         RefreshCombatTimeout(timeMs);
 
+        PacketSender.SendPetTarget(this, target);
+
         return true;
     }
 
     private void ClearCombatTarget()
     {
+        var previousTarget = Target;
         Target = null;
         _combatTimeout = 0;
         _lastTargetSeenTime = 0;
         _pathfinder.SetTarget(null);
+
+        if (previousTarget != null)
+        {
+            PacketSender.SendPetTarget(this, null);
+        }
     }
 
     private void RefreshCombatTimeout(long timeMs)

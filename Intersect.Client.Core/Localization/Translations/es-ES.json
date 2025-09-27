@@ -34,6 +34,7 @@
     "NoStats": "No hay estadísticas disponibles.",
     "InvokeButton": "Invocar",
     "DismissButton": "Desinvocar",
+    "CooldownLabel": "Reinvocar en {0}s",
     "WidgetTitle": "Modos de mascota",
     "BehaviorFollow": "Seguir",
     "BehaviorStay": "Quieto",

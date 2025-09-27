@@ -1366,6 +1366,9 @@ public static partial class Strings
         public static LocalizedString DismissButton = @"Dismiss";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString CooldownLabel = @"Summon available in {0}s";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString SummonRequested = @"You begin summoning {0}.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

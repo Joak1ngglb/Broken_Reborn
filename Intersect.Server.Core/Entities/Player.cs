@@ -1156,40 +1156,56 @@ public partial class Player : Entity
         bool ignoreCooldown = false
     )
     {
+        var now = Timing.Global.Milliseconds;
+        long cooldownTimestamp;
+        bool result;
+        var shouldOpenPetHub = false;
+
         lock (EntityLock)
         {
             if (requested)
             {
-                var now = Timing.Global.Milliseconds;
                 if (!ignoreCooldown && now < _nextPetReinvokeAllowedTime)
                 {
-                    if (openPetHub)
-                    {
-                        PacketSender.SendOpenPetHub(this);
-                    }
-
-                    return false;
+                    result = false;
+                    shouldOpenPetHub = openPetHub;
                 }
-
-                SetPetHubSpawnFlag(true);
-
-                var descriptor = ActivePet?.Descriptor;
-                if (descriptor == null)
+                else
                 {
-                    if (openPetHub)
+                    SetPetHubSpawnFlag(true);
+
+                    var descriptor = ActivePet?.Descriptor;
+                    if (descriptor == null)
                     {
-                        PacketSender.SendOpenPetHub(this);
+                        result = false;
+                        shouldOpenPetHub = openPetHub;
                     }
-
-                    return false;
+                    else
+                    {
+                        result = TrySpawnActivePet(descriptor, openPetHub);
+                        if (result && !ignoreCooldown)
+                        {
+                            _nextPetInvokeTime = now + PetInvokeCooldownDuration;
+                        }
+                    }
                 }
-
-                return TrySpawnActivePet(descriptor, openPetHub);
+            }
+            else
+            {
+                SetPetHubSpawnFlag(false);
+                result = DismissActivePet(closePetHub);
             }
 
-            SetPetHubSpawnFlag(false);
-            return DismissActivePet(closePetHub);
+            cooldownTimestamp = Math.Max(_nextPetInvokeTime, _nextPetReinvokeAllowedTime);
         }
+
+        if (shouldOpenPetHub)
+        {
+            PacketSender.SendOpenPetHub(this);
+        }
+
+        PacketSender.SendPetCooldown(this, cooldownTimestamp);
+        return result;
     }
 
     private void UpdatePetState(long timeMs)
@@ -1535,6 +1551,8 @@ public partial class Player : Entity
             ChatMessageType.Combat,
             CustomColors.Alerts.Info
         );
+
+        PacketSender.SendPetCooldown(this, Math.Max(_nextPetInvokeTime, _nextPetReinvokeAllowedTime));
     }
 
     public bool InvokePet(bool ignoreCooldown = false, bool openPetHub = false)
@@ -1566,6 +1584,7 @@ public partial class Player : Entity
         }
 
         _nextPetInvokeTime = now + PetInvokeCooldownDuration;
+        PacketSender.SendPetCooldown(this, Math.Max(_nextPetInvokeTime, _nextPetReinvokeAllowedTime));
         return true;
     }
 
@@ -7359,6 +7378,7 @@ public partial class Player : Entity
 
         SetPetHubSpawnFlag(false);
         _ = DismissActivePet(closePetHub);
+        PacketSender.SendPetCooldown(this, Math.Max(_nextPetInvokeTime, _nextPetReinvokeAllowedTime));
         ActivePet = null;
         ActivePetId = null;
     }

@@ -34,6 +34,7 @@
     "NoStats": "No stats available.",
     "InvokeButton": "Summon",
     "DismissButton": "Dismiss",
+    "CooldownLabel": "Summon available in {0}s",
     "WidgetTitle": "Pet Modes",
     "BehaviorFollow": "Follow",
     "BehaviorStay": "Stay",

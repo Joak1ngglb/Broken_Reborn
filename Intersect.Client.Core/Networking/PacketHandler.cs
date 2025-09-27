@@ -501,6 +501,16 @@ internal sealed partial class PacketHandler
         Globals.PetHub.Process(packet);
     }
 
+    public void HandlePacket(IPacketSender packetSender, PetCooldownPacket packet)
+    {
+        Globals.PetHub.Process(packet);
+    }
+
+    public void HandlePacket(IPacketSender packetSender, PetTargetPacket packet)
+    {
+        Globals.PetHub.Process(packet);
+    }
+
     public void HandlePacket(IPacketSender packetSender, OpenPetHubPacket packet)
     {
         if (packet == null)

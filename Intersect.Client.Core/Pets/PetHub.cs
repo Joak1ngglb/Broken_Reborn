@@ -28,6 +28,9 @@ public sealed class PetHub
     private bool _invokeRequested;
     private bool _dismissRequested;
     private readonly Dictionary<Guid, PetProgressSnapshot> _progressSnapshots = new();
+    private long _nextInvokeAvailableAt;
+    private Guid? _currentTargetId;
+    private bool _keepHubOpenOnDismiss = true;
 
     public PetHub()
     {
@@ -40,6 +43,10 @@ public sealed class PetHub
     public event Action? BehaviorChanged;
 
     public event Action? SpawnStateChanged;
+
+    public event Action? CooldownChanged;
+
+    public event Action? TargetChanged;
 
     public Pet? ActivePet
     {
@@ -107,6 +114,58 @@ public sealed class PetHub
         }
     }
 
+    public long NextInvokeAvailableAt
+    {
+        get
+        {
+            lock (_syncRoot)
+            {
+                return _nextInvokeAvailableAt;
+            }
+        }
+    }
+
+    public Guid? CurrentTargetId
+    {
+        get
+        {
+            lock (_syncRoot)
+            {
+                return _currentTargetId;
+            }
+        }
+    }
+
+    public bool KeepHubOpenOnDismiss
+    {
+        get
+        {
+            lock (_syncRoot)
+            {
+                return _keepHubOpenOnDismiss;
+            }
+        }
+        set
+        {
+            lock (_syncRoot)
+            {
+                _keepHubOpenOnDismiss = value;
+            }
+        }
+    }
+
+    public long GetInvokeCooldownRemaining(long nowMs)
+    {
+        long nextInvoke;
+
+        lock (_syncRoot)
+        {
+            nextInvoke = _nextInvokeAvailableAt;
+        }
+
+        return Math.Max(0, nextInvoke - nowMs);
+    }
+
     public bool InvokePet(bool openPetHub = true)
     {
         var petName = string.Empty;
@@ -135,6 +194,7 @@ public sealed class PetHub
     public bool DismissPet(bool closePetHub = false)
     {
         var petName = string.Empty;
+        bool keepOpen;
 
         lock (_syncRoot)
         {
@@ -145,11 +205,56 @@ public sealed class PetHub
 
             _dismissRequested = true;
             petName = GetEquippedPetDisplayName();
+            keepOpen = _keepHubOpenOnDismiss;
         }
 
-        Intersect.Client.Networking. Network.SendPacket(new DespawnPetRequestPacket(closePetHub));
+        var shouldCloseHub = closePetHub && !keepOpen;
+
+        Intersect.Client.Networking. Network.SendPacket(new DespawnPetRequestPacket(shouldCloseHub));
         QueuePetMessage(Strings.Pets.DismissRequested, petName);
         return true;
+    }
+
+    internal void SetCooldown(long nextAt)
+    {
+        var changed = false;
+
+        lock (_syncRoot)
+        {
+            if (_nextInvokeAvailableAt == nextAt)
+            {
+                return;
+            }
+
+            _nextInvokeAvailableAt = nextAt;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            CooldownChanged?.Invoke();
+        }
+    }
+
+    internal void SetCurrentTarget(Guid? entityId)
+    {
+        var changed = false;
+
+        lock (_syncRoot)
+        {
+            if (_currentTargetId == entityId)
+            {
+                return;
+            }
+
+            _currentTargetId = entityId;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            TargetChanged?.Invoke();
+        }
     }
 
     public void HandlePetLeft(Guid petId)
@@ -157,6 +262,7 @@ public sealed class PetHub
         bool activeChanged;
         bool behaviorChanged;
         Pet? previousPet = null;
+        var shouldClearTarget = false;
 
         lock (_syncRoot)
         {
@@ -171,6 +277,12 @@ public sealed class PetHub
             {
                 _progressSnapshots.Remove(previousPet.Id);
             }
+
+            if (_currentTargetId != null)
+            {
+                _currentTargetId = null;
+                shouldClearTarget = true;
+            }
         }
 
         if (behaviorChanged)
@@ -182,6 +294,11 @@ public sealed class PetHub
         {
             HandleActivePetChanged(previousPet, null);
             ActivePetChanged?.Invoke();
+        }
+
+        if (shouldClearTarget)
+        {
+            TargetChanged?.Invoke();
         }
     }
 
@@ -302,6 +419,8 @@ public sealed class PetHub
             return;
         }
 
+        SetCurrentTarget(null);
+
         if (currentPet != null)
         {
             var name = GetPetDisplayName(currentPet);
@@ -378,6 +497,36 @@ public sealed class PetHub
         }
     }
 
+    public void Process(PetCooldownPacket packet)
+    {
+        if (packet == null)
+        {
+            return;
+        }
+
+        SetCooldown(packet.NextInvokeAtMs);
+    }
+
+    public void Process(PetTargetPacket packet)
+    {
+        if (packet == null)
+        {
+            return;
+        }
+
+        var targetId = packet.TargetId == Guid.Empty ? (Guid?)null : packet.TargetId;
+
+        lock (_syncRoot)
+        {
+            if (_activePet?.Id != packet.PetId)
+            {
+                return;
+            }
+        }
+
+        SetCurrentTarget(targetId);
+    }
+
     public void Process(PetStateUpdatePacket packet)
     {
         if (packet == null)
@@ -431,6 +580,8 @@ RaiseEvents:
         bool behaviorChanged;
         bool spawnChanged;
         bool descriptorChanged;
+        bool cooldownChanged;
+        bool targetChanged;
 
         lock (_syncRoot)
         {
@@ -447,6 +598,11 @@ RaiseEvents:
             _invokeRequested = false;
             _dismissRequested = false;
             _progressSnapshots.Clear();
+            cooldownChanged = _nextInvokeAvailableAt != 0;
+            _nextInvokeAvailableAt = 0;
+            targetChanged = _currentTargetId != null;
+            _currentTargetId = null;
+            _keepHubOpenOnDismiss = true;
         }
 
         if (behaviorChanged)
@@ -462,6 +618,16 @@ RaiseEvents:
         if (spawnChanged)
         {
             SpawnStateChanged?.Invoke();
+        }
+
+        if (cooldownChanged)
+        {
+            CooldownChanged?.Invoke();
+        }
+
+        if (targetChanged)
+        {
+            TargetChanged?.Invoke();
         }
     }
 

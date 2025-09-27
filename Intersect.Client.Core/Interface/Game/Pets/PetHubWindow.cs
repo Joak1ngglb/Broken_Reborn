@@ -68,6 +68,7 @@ namespace Intersect.Client.Interface.Game.Pets
 
         private readonly Button _invokeButton;
         private readonly Button _dismissButton;
+        private readonly Label _cooldownLabel;
 
         public PetHubWindow(Canvas gameCanvas)
             : base(gameCanvas, Strings.Pets.HubTitle, modal: false, name: nameof(PetHubWindow))
@@ -205,10 +206,23 @@ namespace Intersect.Client.Interface.Game.Pets
                 OnDismissClicked
             );
 
+            _cooldownLabel = new Label(this, "CooldownLabel")
+            {
+                FontName = FontName,
+                FontSize = StatSize,
+                TextColor = Color.White,
+                Text = string.Empty,
+                AutoSizeToContents = false,
+            };
+            _cooldownLabel.SetPosition(_invokeButton.X, _invokeButton.Y - 18);
+            _cooldownLabel.SetSize(180, 16);
+            _cooldownLabel.IsHidden = true;
+
             // Eventos del Hub
             Globals.PetHub.ActivePetChanged += OnPetHubStateChanged;
             Globals.PetHub.BehaviorChanged += OnPetHubStateChanged;
             Globals.PetHub.SpawnStateChanged += OnPetHubStateChanged;
+            Globals.PetHub.CooldownChanged += OnPetHubCooldownChanged;
         }
 
         protected override void OnClose(Base control, EventArgs args)
@@ -234,6 +248,7 @@ namespace Intersect.Client.Interface.Game.Pets
                 Globals.PetHub.ActivePetChanged -= OnPetHubStateChanged;
                 Globals.PetHub.BehaviorChanged -= OnPetHubStateChanged;
                 Globals.PetHub.SpawnStateChanged -= OnPetHubStateChanged;
+                Globals.PetHub.CooldownChanged -= OnPetHubCooldownChanged;
             }
 
             base.Dispose(disposing);
@@ -242,6 +257,11 @@ namespace Intersect.Client.Interface.Game.Pets
         private void OnPetHubStateChanged()
         {
             RefreshState();
+        }
+
+        private void OnPetHubCooldownChanged()
+        {
+            RefreshCooldown();
         }
 
         private void RefreshState()
@@ -264,8 +284,6 @@ namespace Intersect.Client.Interface.Game.Pets
             _statsPanel.IsHidden = !hasPet;
             _behaviorWidget.IsHidden = !hasPet;
 
-            // Según tu semántica previa: invocar deshabilitado si ya está solicitada/activa; dismiss habilitado cuando está activa
-            _invokeButton.IsDisabled = isSpawnRequested;
             _dismissButton.IsDisabled = !isSpawnRequested;
 
             if (!hasPet || pet == null)
@@ -287,6 +305,8 @@ namespace Intersect.Client.Interface.Game.Pets
                 _energyLabel.IsHidden = true;
                 _moodLabel.IsHidden = true;
                 _maturityLabel.IsHidden = true;
+
+                RefreshCooldown();
 
                 return;
             }
@@ -319,6 +339,29 @@ namespace Intersect.Client.Interface.Game.Pets
             UpdateAttributes(pet);
             UpdateVitals(pet);
             UpdateStats(descriptor);
+
+            RefreshCooldown();
+        }
+
+        private void RefreshCooldown()
+        {
+            var now = Timing.Global.Milliseconds;
+            var remaining = Globals.PetHub.GetInvokeCooldownRemaining(now);
+            var hasPet = Globals.PetHub.HasActivePet;
+            var isSpawnRequested = Globals.PetHub.IsSpawnRequested;
+
+            if (remaining > 0)
+            {
+                var seconds = (int)Math.Ceiling(remaining / 1000.0);
+                _cooldownLabel.Text = Strings.Pets.CooldownLabel.ToString(seconds);
+                _cooldownLabel.IsHidden = false;
+                _invokeButton.IsDisabled = true;
+            }
+            else
+            {
+                _cooldownLabel.IsHidden = true;
+                _invokeButton.IsDisabled = isSpawnRequested || !hasPet;
+            }
         }
 
         private void UpdateAttributes(Pet pet)
@@ -471,7 +514,7 @@ namespace Intersect.Client.Interface.Game.Pets
 
         private void OnDismissClicked(Base sender, MouseButtonState arguments)
         {
-            if (Globals.PetHub.DismissPet(closePetHub: true))
+            if (Globals.PetHub.DismissPet())
             {
                 _dismissButton.IsDisabled = true;
                 _invokeButton.IsDisabled = false;
