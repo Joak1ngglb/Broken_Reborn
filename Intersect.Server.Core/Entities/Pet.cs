@@ -146,19 +146,26 @@ public sealed class Pet : Entity, IPet
 
     public bool SetMoodValue(int value, bool persist = true, bool notify = true)
     {
-        var changed = UpdateAttribute(ref _mood, value, Descriptor.BaseMood, persist, notify);
-        if (changed)
+        var changed = UpdateAttribute(ref _mood, value, Descriptor.BaseMood, persist, notify: false);
+        if (!changed)
         {
-            UpdateMoodState(notify);
+            return false;
         }
 
-        return changed;
+        UpdateMoodState();
+
+        if (notify)
+        {
+            PacketSender.SendPetProgress(this);
+        }
+
+        return true;
     }
 
     public bool ModifyMoodValue(int delta, bool persist = true, bool notify = true) =>
         SetMoodValue(_mood + delta, persist, notify);
 
-    private void UpdateMoodState(bool notify)
+    private void UpdateMoodState()
     {
         var newState = ResolveMoodFromValue(_mood);
         if (_moodState == newState)
@@ -167,8 +174,6 @@ public sealed class Pet : Entity, IPet
         }
 
         _moodState = newState;
-
-        _ = notify;
     }
 
     private static PetMood ResolveMoodFromValue(int moodValue)
