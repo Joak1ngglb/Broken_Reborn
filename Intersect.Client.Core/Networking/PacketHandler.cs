@@ -491,9 +491,12 @@ internal sealed partial class PacketHandler
             packet.StatPoints,
             packet.StatPointAllocations,
             packet.Energy,
+            packet.MoodValue,
             packet.Mood,
             packet.Maturity,
-            packet.CareMilliseconds
+            packet.CareMilliseconds,
+            packet.WhimsFulfilled,
+            packet.LastWhimFulfillmentTicks
         );
     }
 

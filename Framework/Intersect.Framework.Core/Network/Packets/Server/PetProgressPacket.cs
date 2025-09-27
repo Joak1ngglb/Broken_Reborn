@@ -1,4 +1,5 @@
 using System;
+using Intersect.Enums;
 using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
@@ -21,9 +22,12 @@ public sealed class PetProgressPacket : IntersectPacket
         int statPoints,
         int[] statPointAllocations,
         int energy,
-        int mood,
+        int moodValue,
         int maturity,
-        long careMilliseconds
+        long careMilliseconds,
+        PetMood mood,
+        int whimsFulfilled,
+        long lastWhimFulfillmentTicks
     )
     {
         PetId = petId;
@@ -32,9 +36,12 @@ public sealed class PetProgressPacket : IntersectPacket
         StatPoints = statPoints;
         StatPointAllocations = statPointAllocations ?? Array.Empty<int>();
         Energy = energy;
-        Mood = mood;
+        MoodValue = moodValue;
         Maturity = maturity;
         CareMilliseconds = Math.Max(0, careMilliseconds);
+        Mood = mood;
+        WhimsFulfilled = Math.Max(0, whimsFulfilled);
+        LastWhimFulfillmentTicks = Math.Max(0, lastWhimFulfillmentTicks);
     }
 
     [Key(0)]
@@ -56,11 +63,20 @@ public sealed class PetProgressPacket : IntersectPacket
     public int Energy { get; set; }
 
     [Key(6)]
-    public int Mood { get; set; }
+    public int MoodValue { get; set; }
 
     [Key(7)]
     public int Maturity { get; set; }
 
     [Key(8)]
     public long CareMilliseconds { get; set; }
+
+    [Key(9)]
+    public PetMood Mood { get; set; }
+
+    [Key(10)]
+    public int WhimsFulfilled { get; set; }
+
+    [Key(11)]
+    public long LastWhimFulfillmentTicks { get; set; }
 }

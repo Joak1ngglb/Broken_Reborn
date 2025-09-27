@@ -104,11 +104,17 @@ public sealed class Pet : Entity
 
     public int Energy { get; private set; }
 
-    public int Mood { get; private set; }
+    public int MoodValue { get; private set; }
+
+    public PetMood Mood { get; private set; } = PetMood.Content;
 
     public int Maturity { get; private set; }
 
     public long CareMilliseconds { get; private set; }
+
+    public int WhimsFulfilled { get; private set; }
+
+    public long LastWhimFulfillmentTicks { get; private set; }
 
     /// <summary>
     ///     Applies the metadata provided by the server to this pet instance.
@@ -148,9 +154,12 @@ public sealed class Pet : Entity
         int statPoints,
         int[]? statPointAllocations,
         int energy,
-        int mood,
+        int moodValue,
+        PetMood mood,
         int maturity,
-        long careMilliseconds
+        long careMilliseconds,
+        int whimsFulfilled,
+        long lastWhimFulfillmentTicks
     )
     {
         Experience = Math.Max(0, experience);
@@ -168,9 +177,12 @@ public sealed class Pet : Entity
         }
 
         Energy = ClampAttribute(energy, Descriptor?.BaseEnergy ?? DefaultAttributeCap);
-        Mood = ClampAttribute(mood, Descriptor?.BaseMood ?? DefaultAttributeCap);
+        MoodValue = ClampAttribute(moodValue, Descriptor?.BaseMood ?? DefaultAttributeCap);
+        Mood = mood;
         Maturity = ClampAttribute(maturity, Descriptor?.BaseMaturity ?? DefaultAttributeCap);
         CareMilliseconds = Math.Max(0, careMilliseconds);
+        WhimsFulfilled = Math.Max(0, whimsFulfilled);
+        LastWhimFulfillmentTicks = Math.Max(0, lastWhimFulfillmentTicks);
 
         Globals.NotifyPetProgressApplied(this);
     }
@@ -190,9 +202,12 @@ public sealed class Pet : Entity
         StatPoints = 0;
         _statPointAllocations = Array.Empty<int>();
         Energy = 0;
-        Mood = 0;
+        MoodValue = 0;
+        Mood = PetMood.Content;
         Maturity = 0;
         CareMilliseconds = 0;
+        WhimsFulfilled = 0;
+        LastWhimFulfillmentTicks = 0;
     }
 
     /// <inheritdoc />

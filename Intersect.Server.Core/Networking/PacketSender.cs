@@ -1077,9 +1077,12 @@ public static partial class PacketSender
                 pet.StatPoints,
                 allocations.ToArray(),
                 pet.Energy,
-                pet.Mood,
+                pet.MoodValue,
                 pet.Maturity,
-                pet.CareMilliseconds
+                pet.CareMilliseconds,
+                pet.Mood,
+                pet.WhimsFulfilled,
+                pet.LastWhimFulfillmentTicks
             ),
             TransmissionMode.Any
         );

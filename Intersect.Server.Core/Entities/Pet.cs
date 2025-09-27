@@ -12,13 +12,14 @@ using Intersect.Network.Packets.Server;
 using Intersect.Server.AI.Pets;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities.Pathfinding;
+using Intersect.Server.Entities.Pets;
 using Intersect.Server.Framework.Items;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
 namespace Intersect.Server.Entities;
 
-public sealed class Pet : Entity
+public sealed class Pet : Entity, IPet
 {
     private const int FollowDistance = 1;
     private const long PathUpdateInterval = 100;
@@ -32,6 +33,8 @@ public sealed class Pet : Entity
     private readonly Pathfinder _pathfinder;
 
     public PetAIController Brain { get; }
+
+    internal PetCareBrain CareBrain { get; }
 
     private bool _canAssistOwner;
 
@@ -66,7 +69,10 @@ public sealed class Pet : Entity
 
     private int _energy;
     private int _mood;
+    private PetMood _moodState;
     private int _maturity;
+    private int _whimsFulfilled;
+    private long _lastWhimFulfillmentTicks;
 
     public PetDescriptor Descriptor { get; private set; }
 
@@ -94,9 +100,15 @@ public sealed class Pet : Entity
 
     public int Energy => _energy;
 
-    public int Mood => _mood;
+    public int MoodValue => _mood;
+
+    public PetMood Mood => _moodState;
 
     public int Maturity => _maturity;
+
+    public int WhimsFulfilled => _whimsFulfilled;
+
+    public long LastWhimFulfillmentTicks => _lastWhimFulfillmentTicks;
 
     public long CareMilliseconds => _totalCareMilliseconds;
 
@@ -132,17 +144,100 @@ public sealed class Pet : Entity
     public bool ModifyEnergy(int delta, bool persist = true, bool notify = true) =>
         SetEnergy(_energy + delta, persist, notify);
 
-    public bool SetMood(int value, bool persist = true, bool notify = true) =>
-        UpdateAttribute(ref _mood, value, Descriptor.BaseMood, persist, notify);
+    public bool SetMoodValue(int value, bool persist = true, bool notify = true)
+    {
+        var changed = UpdateAttribute(ref _mood, value, Descriptor.BaseMood, persist, notify);
+        if (changed)
+        {
+            UpdateMoodState(notify);
+        }
 
-    public bool ModifyMood(int delta, bool persist = true, bool notify = true) =>
-        SetMood(_mood + delta, persist, notify);
+        return changed;
+    }
+
+    public bool ModifyMoodValue(int delta, bool persist = true, bool notify = true) =>
+        SetMoodValue(_mood + delta, persist, notify);
+
+    private void UpdateMoodState(bool notify)
+    {
+        var newState = ResolveMoodFromValue(_mood);
+        if (_moodState == newState)
+        {
+            return;
+        }
+
+        _moodState = newState;
+
+        _ = notify;
+    }
+
+    private static PetMood ResolveMoodFromValue(int moodValue)
+    {
+        if (moodValue >= 80)
+        {
+            return PetMood.Joyful;
+        }
+
+        if (moodValue >= 60)
+        {
+            return PetMood.Happy;
+        }
+
+        if (moodValue >= 40)
+        {
+            return PetMood.Content;
+        }
+
+        if (moodValue >= 20)
+        {
+            return PetMood.Irritable;
+        }
+
+        return PetMood.Miserable;
+    }
 
     public bool SetMaturity(int value, bool persist = true, bool notify = true) =>
         UpdateAttribute(ref _maturity, value, Descriptor.BaseMaturity, persist, notify);
 
     public bool ModifyMaturity(int delta, bool persist = true, bool notify = true) =>
         SetMaturity(_maturity + delta, persist, notify);
+
+    public void RegisterFeeding()
+    {
+        CareBrain.RegisterFeeding();
+    }
+
+    public void RegisterPetting()
+    {
+        CareBrain.RegisterPetting();
+    }
+
+    public void RegisterWhimFulfillment(bool persist = true, bool notify = true)
+    {
+        try
+        {
+            checked
+            {
+                _whimsFulfilled++;
+            }
+        }
+        catch (OverflowException)
+        {
+            _whimsFulfilled = int.MaxValue;
+        }
+
+        _lastWhimFulfillmentTicks = DateTime.UtcNow.Ticks;
+
+        if (notify)
+        {
+            PacketSender.SendPetProgress(this);
+        }
+
+        if (persist)
+        {
+            Owner?.PersistPetProgress(this);
+        }
+    }
 
     public Player? Owner
     {
@@ -242,8 +337,9 @@ public sealed class Pet : Entity
         StatPoints = 0;
 
         SetEnergy(descriptor.BaseEnergy, persist: false, notify: false);
-        SetMood(descriptor.BaseMood, persist: false, notify: false);
+        SetMoodValue(descriptor.BaseMood, persist: false, notify: false);
         SetMaturity(descriptor.BaseMaturity, persist: false, notify: false);
+        _moodState = ResolveMoodFromValue(_mood);
 
         var spawnMapId = mapIdOverride ?? owner.MapId;
         var spawnMapInstanceId = mapInstanceIdOverride ?? owner.MapInstanceId;
@@ -276,6 +372,8 @@ public sealed class Pet : Entity
         {
             ApplyPersistedState(persistedPet);
         }
+
+        _moodState = ResolveMoodFromValue(_mood);
 
         var spellSlot = 0;
         foreach (var spellId in descriptor.Spells)
@@ -312,6 +410,7 @@ public sealed class Pet : Entity
         _pathfinder = new Pathfinder(this);
 
         Brain = new PetAIController(new PetRuntimeAdapter(this));
+        CareBrain = new PetCareBrain(this);
 
         Behavior = PetState.Follow;
 
@@ -380,10 +479,13 @@ public sealed class Pet : Entity
         SetEnergy(energy, persist: false, notify: false);
 
         var mood = persistedPet.Mood < 0 ? Descriptor.BaseMood : persistedPet.Mood;
-        SetMood(mood, persist: false, notify: false);
+        SetMoodValue(mood, persist: false, notify: false);
 
         var maturity = persistedPet.Maturity < 0 ? Descriptor.BaseMaturity : persistedPet.Maturity;
         SetMaturity(maturity, persist: false, notify: false);
+
+        _whimsFulfilled = Math.Max(0, persistedPet.WhimsFulfilled);
+        _lastWhimFulfillmentTicks = Math.Max(0, persistedPet.LastWhimFulfillmentTicks);
 
         var persistedCare = Math.Max(0, persistedPet.CareMilliseconds);
         var minimumCare = (long)Math.Max(0, Maturity) * CareMillisecondsPerMaturityPoint;
@@ -689,6 +791,7 @@ public sealed class Pet : Entity
         }
 
         AdvanceCare(timeMs);
+        CareBrain.Update(timeMs);
 
         switch (State)
         {
@@ -1734,6 +1837,7 @@ public sealed class Pet : Entity
     internal void RegisterCombatCare()
     {
         AdvanceCare(CombatCareBonusMilliseconds, forcePersist: true);
+        CareBrain.RegisterWhimFulfilled();
     }
 
     internal bool MetadataDirty => _metadataDirty;
@@ -1751,4 +1855,4 @@ public sealed class Pet : Entity
     }
 
     }
-}
+

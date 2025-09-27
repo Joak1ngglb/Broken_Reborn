@@ -40,6 +40,10 @@ public partial class PlayerPet : IPlayerOwned
 
     public long CareMilliseconds { get; set; } = 0;
 
+    public int WhimsFulfilled { get; set; } = 0;
+
+    public long LastWhimFulfillmentTicks { get; set; } = 0;
+
     [NotMapped]
     public int[] BaseStats { get; set; } = new int[Enum.GetValues<Stat>().Length];
 

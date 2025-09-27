@@ -114,6 +114,8 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
         modelBuilder.Entity<PlayerPet>().Property(pet => pet.Mood).HasDefaultValue(-1);
         modelBuilder.Entity<PlayerPet>().Property(pet => pet.Maturity).HasDefaultValue(-1);
         modelBuilder.Entity<PlayerPet>().Property(pet => pet.CareMilliseconds).HasDefaultValue(0L);
+        modelBuilder.Entity<PlayerPet>().Property(pet => pet.WhimsFulfilled).HasDefaultValue(0);
+        modelBuilder.Entity<PlayerPet>().Property(pet => pet.LastWhimFulfillmentTicks).HasDefaultValue(0L);
         modelBuilder.Entity<Player>()
             .HasOne(p => p.ActivePet)
             .WithMany()

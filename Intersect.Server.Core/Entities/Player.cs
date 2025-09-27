@@ -1373,9 +1373,11 @@ public partial class Player : Entity
         playerPet.Experience = Math.Max(0, pet.Experience);
         playerPet.StatPoints = Math.Max(0, pet.StatPoints);
         playerPet.Energy = pet.Energy;
-        playerPet.Mood = pet.Mood;
+        playerPet.Mood = pet.MoodValue;
         playerPet.Maturity = pet.Maturity;
         playerPet.CareMilliseconds = pet.CareMilliseconds;
+        playerPet.WhimsFulfilled = pet.WhimsFulfilled;
+        playerPet.LastWhimFulfillmentTicks = pet.LastWhimFulfillmentTicks;
 
         var statCount = Enum.GetValues<Stat>().Length;
         for (var index = 0; index < statCount; index++)

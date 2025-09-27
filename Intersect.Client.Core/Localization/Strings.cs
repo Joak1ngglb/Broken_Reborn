@@ -1336,7 +1336,28 @@ public static partial class Strings
         public static LocalizedString EnergyLabel = @"Energy: {0}/{1}";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public static LocalizedString MoodLabel = @"Mood: {0}/{1}";
+        public static LocalizedString MoodLabelDetailed = @"Mood: {0}/{1} ({2})";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MoodStateMiserable = @"Miserable";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MoodStateIrritable = @"Irritable";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MoodStateContent = @"Content";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MoodStateHappy = @"Happy";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MoodStateJoyful = @"Joyful";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString BehaviorBlockedEnergy = @"{0} is too exhausted to obey.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString BehaviorBlockedMood = @"{0} refuses while feeling {1}.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString MaturityLabel = @"Maturity: {0}/{1}";

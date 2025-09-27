@@ -650,6 +650,18 @@ RaiseEvents:
                 return false;
             }
 
+            if (RequiresEnergy(behavior) && pet.Energy <= 0)
+            {
+                QueuePetMessage(Strings.Pets.BehaviorBlockedEnergy, GetPetDisplayName(pet));
+                return false;
+            }
+
+            if (RequiresPositiveMood(behavior) && pet.Mood <= PetMood.Irritable)
+            {
+                QueuePetMessage(Strings.Pets.BehaviorBlockedMood, GetPetDisplayName(pet), GetMoodDisplayName(pet.Mood));
+                return false;
+            }
+
             if (pet.IsDisposed)
             {
                 petToClear = pet.Id;
@@ -676,6 +688,10 @@ RaiseEvents:
         Intersect.Client.Networking.Network.SendPacket(new PetBehaviorChangePacket(behavior, pet.Id));
         return true;
     }
+
+    private static bool RequiresEnergy(PetState behavior) => behavior is PetState.Defend;
+
+    private static bool RequiresPositiveMood(PetState behavior) => behavior is PetState.Defend;
 
     private void OnPetMetadataChanged(Pet pet)
     {
@@ -908,11 +924,17 @@ RaiseEvents:
 
         public int Energy { get; init; }
 
-        public int Mood { get; init; }
+        public int MoodValue { get; init; }
+
+        public PetMood Mood { get; init; }
 
         public int Maturity { get; init; }
 
         public long CareMilliseconds { get; init; }
+
+        public int WhimsFulfilled { get; init; }
+
+        public long LastWhimFulfillmentTicks { get; init; }
 
         public PetProgressSnapshot Clone() => new()
         {
@@ -923,9 +945,12 @@ RaiseEvents:
             Experience = Experience,
             ExperienceToNextLevel = ExperienceToNextLevel,
             Energy = Energy,
+            MoodValue = MoodValue,
             Mood = Mood,
             Maturity = Maturity,
             CareMilliseconds = CareMilliseconds,
+            WhimsFulfilled = WhimsFulfilled,
+            LastWhimFulfillmentTicks = LastWhimFulfillmentTicks,
         };
     }
 
@@ -938,9 +963,12 @@ RaiseEvents:
         Experience = pet.Experience,
         ExperienceToNextLevel = pet.ExperienceToNextLevel,
         Energy = pet.Energy,
+        MoodValue = pet.MoodValue,
         Mood = pet.Mood,
         Maturity = pet.Maturity,
         CareMilliseconds = pet.CareMilliseconds,
+        WhimsFulfilled = pet.WhimsFulfilled,
+        LastWhimFulfillmentTicks = pet.LastWhimFulfillmentTicks,
     };
 
     private PetProgressSnapshot? GetSnapshot(Guid petId)
@@ -976,6 +1004,15 @@ RaiseEvents:
 
         return Strings.Pets.UnknownDescriptorName.ToString();
     }
+
+    private static string GetMoodDisplayName(PetMood mood) => mood switch
+    {
+        PetMood.Miserable => Strings.Pets.MoodStateMiserable.ToString(),
+        PetMood.Irritable => Strings.Pets.MoodStateIrritable.ToString(),
+        PetMood.Happy => Strings.Pets.MoodStateHappy.ToString(),
+        PetMood.Joyful => Strings.Pets.MoodStateJoyful.ToString(),
+        _ => Strings.Pets.MoodStateContent.ToString(),
+    };
 
     private string GetEquippedPetDisplayName()
     {

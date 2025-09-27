@@ -389,7 +389,8 @@ namespace Intersect.Client.Interface.Game.Pets
             _energyLabel.Text = Strings.Pets.EnergyLabel.ToString(pet.Energy, energyCap);
             _energyLabel.IsHidden = false;
 
-            _moodLabel.Text = Strings.Pets.MoodLabel.ToString(pet.Mood, moodCap);
+            var moodName = GetMoodDisplayName(pet.Mood);
+            _moodLabel.Text = Strings.Pets.MoodLabelDetailed.ToString(pet.MoodValue, moodCap, moodName);
             _moodLabel.IsHidden = false;
 
             var careText = FormatCareDuration(pet.CareMilliseconds);
@@ -461,6 +462,15 @@ namespace Intersect.Client.Interface.Game.Pets
             Strings.ItemDescription.Vitals.TryGetValue((int)vital, out var label)
                 ? label.ToString().TrimEnd(':')
                 : vital.ToString();
+
+        private static string GetMoodDisplayName(PetMood mood) => mood switch
+        {
+            PetMood.Miserable => Strings.Pets.MoodStateMiserable.ToString(),
+            PetMood.Irritable => Strings.Pets.MoodStateIrritable.ToString(),
+            PetMood.Happy => Strings.Pets.MoodStateHappy.ToString(),
+            PetMood.Joyful => Strings.Pets.MoodStateJoyful.ToString(),
+            _ => Strings.Pets.MoodStateContent.ToString(),
+        };
 
         private static string GetBehaviorLabel(PetState behavior) => behavior switch
         {
