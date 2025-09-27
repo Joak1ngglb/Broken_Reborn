@@ -194,7 +194,21 @@ namespace Intersect.Server.AI.Pets
                 return;
             }
 
-            // 4) Posicionamiento según behavior
+            var currentTarget = _bb.CurrentTarget;
+            var hasValidTarget = IsValidEnemy(currentTarget);
+            if (!hasValidTarget)
+            {
+                _bb.CurrentTarget = null;
+            }
+
+            if (hasValidTarget && currentTarget != null)
+            {
+                // Mantener persecución o posicionamiento en torno al objetivo actual
+                MoveIntoAttackRange(currentTarget);
+                return;
+            }
+
+            // 4) Posicionamiento según behavior cuando no hay objetivo válido
             switch (_pet.Behavior)
             {
                 case PetState.Follow:
