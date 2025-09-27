@@ -24,6 +24,8 @@ public partial class PlayerPet : IPlayerOwned
 
     public Guid PetInstanceId { get; set; }
 
+    public PetGender Gender { get; set; } = PetGender.Unspecified;
+
     public string CustomName { get; set; } = string.Empty;
 
     public int Level { get; set; } = 1;

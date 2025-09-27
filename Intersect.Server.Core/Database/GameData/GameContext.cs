@@ -131,6 +131,11 @@ public abstract partial class GameContext : IntersectDbContext<GameContext>, IGa
         {
             FixQuestTaskCompletionEventsMigration.Run(this);
         }
+
+        if (migrations.IndexOf("20240601000000_PetGenderSpritesMigration") > -1)
+        {
+            PetSpriteGenderMigration.Run(this);
+        }
     }
 
     internal static partial class Queries

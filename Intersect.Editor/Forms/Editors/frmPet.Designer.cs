@@ -86,8 +86,12 @@ namespace Intersect.Editor.Forms.Editors
             lblHP = new Label();
             nudHp = new DarkNumericUpDown();
             grpGeneral = new DarkGroupBox();
-            lblPic = new Label();
-            cmbSprite = new DarkComboBox();
+            lblMaleSprite = new Label();
+            cmbMaleSprite = new DarkComboBox();
+            lblFemaleSprite = new Label();
+            cmbFemaleSprite = new DarkComboBox();
+            rdoPreviewMale = new DarkRadioButton();
+            rdoPreviewFemale = new DarkRadioButton();
             picPet = new PictureBox();
             lblBaseMaturity = new Label();
             nudBaseMaturity = new DarkNumericUpDown();
@@ -949,8 +953,12 @@ namespace Intersect.Editor.Forms.Editors
             // 
             grpGeneral.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpGeneral.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            grpGeneral.Controls.Add(lblPic);
-            grpGeneral.Controls.Add(cmbSprite);
+            grpGeneral.Controls.Add(rdoPreviewFemale);
+            grpGeneral.Controls.Add(rdoPreviewMale);
+            grpGeneral.Controls.Add(lblFemaleSprite);
+            grpGeneral.Controls.Add(cmbFemaleSprite);
+            grpGeneral.Controls.Add(lblMaleSprite);
+            grpGeneral.Controls.Add(cmbMaleSprite);
             grpGeneral.Controls.Add(picPet);
             grpGeneral.Controls.Add(lblBaseMaturity);
             grpGeneral.Controls.Add(nudBaseMaturity);
@@ -968,39 +976,90 @@ namespace Intersect.Editor.Forms.Editors
             grpGeneral.ForeColor = System.Drawing.Color.Gainsboro;
             grpGeneral.Location = new System.Drawing.Point(7, 8);
             grpGeneral.Name = "grpGeneral";
-            grpGeneral.Size = new Size(280, 256);
+            grpGeneral.Size = new Size(280, 300);
             grpGeneral.TabIndex = 0;
             grpGeneral.TabStop = false;
             grpGeneral.Text = "General";
             // 
-            // lblPic
-            // 
-            lblPic.AutoSize = true;
-            lblPic.Location = new System.Drawing.Point(13, 92);
-            lblPic.Name = "lblPic";
-            lblPic.Size = new Size(37, 15);
-            lblPic.TabIndex = 7;
-            lblPic.Text = "Sprite";
-            // 
-            // cmbSprite
-            // 
-            cmbSprite.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            cmbSprite.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            cmbSprite.BorderStyle = ButtonBorderStyle.Solid;
-            cmbSprite.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
-            cmbSprite.DrawDropdownHoverOutline = false;
-            cmbSprite.DrawFocusRectangle = false;
-            cmbSprite.DrawMode = DrawMode.OwnerDrawVariable;
-            cmbSprite.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbSprite.FlatStyle = FlatStyle.Flat;
-            cmbSprite.ForeColor = System.Drawing.Color.Gainsboro;
-            cmbSprite.Location = new System.Drawing.Point(60, 90);
-            cmbSprite.Name = "cmbSprite";
-            cmbSprite.Size = new Size(122, 24);
-            cmbSprite.TabIndex = 3;
-            cmbSprite.Text = null;
-            cmbSprite.TextPadding = new Padding(2);
-            cmbSprite.SelectedIndexChanged += cmbSprite_SelectedIndexChanged;
+            // lblMaleSprite
+            //
+            lblMaleSprite.AutoSize = true;
+            lblMaleSprite.Location = new System.Drawing.Point(13, 92);
+            lblMaleSprite.Name = "lblMaleSprite";
+            lblMaleSprite.Size = new Size(71, 15);
+            lblMaleSprite.TabIndex = 7;
+            lblMaleSprite.Text = "Male Sprite";
+            //
+            // cmbMaleSprite
+            //
+            cmbMaleSprite.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbMaleSprite.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbMaleSprite.BorderStyle = ButtonBorderStyle.Solid;
+            cmbMaleSprite.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbMaleSprite.DrawDropdownHoverOutline = false;
+            cmbMaleSprite.DrawFocusRectangle = false;
+            cmbMaleSprite.DrawMode = DrawMode.OwnerDrawVariable;
+            cmbMaleSprite.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbMaleSprite.FlatStyle = FlatStyle.Flat;
+            cmbMaleSprite.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbMaleSprite.Location = new System.Drawing.Point(60, 90);
+            cmbMaleSprite.Name = "cmbMaleSprite";
+            cmbMaleSprite.Size = new Size(122, 24);
+            cmbMaleSprite.TabIndex = 3;
+            cmbMaleSprite.Text = null;
+            cmbMaleSprite.TextPadding = new Padding(2);
+            cmbMaleSprite.SelectedIndexChanged += cmbMaleSprite_SelectedIndexChanged;
+            //
+            // lblFemaleSprite
+            //
+            lblFemaleSprite.AutoSize = true;
+            lblFemaleSprite.Location = new System.Drawing.Point(13, 122);
+            lblFemaleSprite.Name = "lblFemaleSprite";
+            lblFemaleSprite.Size = new Size(81, 15);
+            lblFemaleSprite.TabIndex = 8;
+            lblFemaleSprite.Text = "Female Sprite";
+            //
+            // cmbFemaleSprite
+            //
+            cmbFemaleSprite.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbFemaleSprite.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbFemaleSprite.BorderStyle = ButtonBorderStyle.Solid;
+            cmbFemaleSprite.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbFemaleSprite.DrawDropdownHoverOutline = false;
+            cmbFemaleSprite.DrawFocusRectangle = false;
+            cmbFemaleSprite.DrawMode = DrawMode.OwnerDrawVariable;
+            cmbFemaleSprite.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbFemaleSprite.FlatStyle = FlatStyle.Flat;
+            cmbFemaleSprite.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbFemaleSprite.Location = new System.Drawing.Point(60, 120);
+            cmbFemaleSprite.Name = "cmbFemaleSprite";
+            cmbFemaleSprite.Size = new Size(122, 24);
+            cmbFemaleSprite.TabIndex = 4;
+            cmbFemaleSprite.Text = null;
+            cmbFemaleSprite.TextPadding = new Padding(2);
+            cmbFemaleSprite.SelectedIndexChanged += cmbFemaleSprite_SelectedIndexChanged;
+            //
+            // rdoPreviewMale
+            //
+            rdoPreviewMale.AutoSize = true;
+            rdoPreviewMale.Location = new System.Drawing.Point(188, 122);
+            rdoPreviewMale.Name = "rdoPreviewMale";
+            rdoPreviewMale.Size = new Size(100, 19);
+            rdoPreviewMale.TabIndex = 5;
+            rdoPreviewMale.TabStop = true;
+            rdoPreviewMale.Text = "Preview Male";
+            rdoPreviewMale.Checked = true;
+            rdoPreviewMale.CheckedChanged += rdoPreviewMale_CheckedChanged;
+            //
+            // rdoPreviewFemale
+            //
+            rdoPreviewFemale.AutoSize = true;
+            rdoPreviewFemale.Location = new System.Drawing.Point(188, 147);
+            rdoPreviewFemale.Name = "rdoPreviewFemale";
+            rdoPreviewFemale.Size = new Size(110, 19);
+            rdoPreviewFemale.TabIndex = 6;
+            rdoPreviewFemale.Text = "Preview Female";
+            rdoPreviewFemale.CheckedChanged += rdoPreviewFemale_CheckedChanged;
             // 
             // picPet
             // 
@@ -1014,7 +1073,7 @@ namespace Intersect.Editor.Forms.Editors
             // lblBaseMaturity
             // 
             lblBaseMaturity.AutoSize = true;
-            lblBaseMaturity.Location = new System.Drawing.Point(13, 191);
+            lblBaseMaturity.Location = new System.Drawing.Point(13, 236);
             lblBaseMaturity.Name = "lblBaseMaturity";
             lblBaseMaturity.Size = new Size(79, 15);
             lblBaseMaturity.TabIndex = 13;
@@ -1024,18 +1083,18 @@ namespace Intersect.Editor.Forms.Editors
             // 
             nudBaseMaturity.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudBaseMaturity.ForeColor = System.Drawing.Color.Gainsboro;
-            nudBaseMaturity.Location = new System.Drawing.Point(110, 187);
+            nudBaseMaturity.Location = new System.Drawing.Point(110, 232);
             nudBaseMaturity.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
             nudBaseMaturity.Name = "nudBaseMaturity";
             nudBaseMaturity.Size = new Size(105, 23);
-            nudBaseMaturity.TabIndex = 6;
+            nudBaseMaturity.TabIndex = 9;
             nudBaseMaturity.Value = new decimal(new int[] { 0, 0, 0, 0 });
             nudBaseMaturity.ValueChanged += nudBaseMaturity_ValueChanged;
             // 
             // lblBaseMood
             // 
             lblBaseMood.AutoSize = true;
-            lblBaseMood.Location = new System.Drawing.Point(13, 161);
+            lblBaseMood.Location = new System.Drawing.Point(13, 206);
             lblBaseMood.Name = "lblBaseMood";
             lblBaseMood.Size = new Size(66, 15);
             lblBaseMood.TabIndex = 12;
@@ -1045,18 +1104,18 @@ namespace Intersect.Editor.Forms.Editors
             // 
             nudBaseMood.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudBaseMood.ForeColor = System.Drawing.Color.Gainsboro;
-            nudBaseMood.Location = new System.Drawing.Point(110, 157);
+            nudBaseMood.Location = new System.Drawing.Point(110, 202);
             nudBaseMood.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
             nudBaseMood.Name = "nudBaseMood";
             nudBaseMood.Size = new Size(105, 23);
-            nudBaseMood.TabIndex = 5;
+            nudBaseMood.TabIndex = 8;
             nudBaseMood.Value = new decimal(new int[] { 0, 0, 0, 0 });
             nudBaseMood.ValueChanged += nudBaseMood_ValueChanged;
             // 
             // lblBaseEnergy
             // 
             lblBaseEnergy.AutoSize = true;
-            lblBaseEnergy.Location = new System.Drawing.Point(13, 131);
+            lblBaseEnergy.Location = new System.Drawing.Point(13, 176);
             lblBaseEnergy.Name = "lblBaseEnergy";
             lblBaseEnergy.Size = new Size(70, 15);
             lblBaseEnergy.TabIndex = 11;
@@ -1066,18 +1125,18 @@ namespace Intersect.Editor.Forms.Editors
             // 
             nudBaseEnergy.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudBaseEnergy.ForeColor = System.Drawing.Color.Gainsboro;
-            nudBaseEnergy.Location = new System.Drawing.Point(110, 127);
+            nudBaseEnergy.Location = new System.Drawing.Point(110, 172);
             nudBaseEnergy.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
             nudBaseEnergy.Name = "nudBaseEnergy";
             nudBaseEnergy.Size = new Size(105, 23);
-            nudBaseEnergy.TabIndex = 4;
+            nudBaseEnergy.TabIndex = 7;
             nudBaseEnergy.Value = new decimal(new int[] { 0, 0, 0, 0 });
             nudBaseEnergy.ValueChanged += nudBaseEnergy_ValueChanged;
             // 
             // lblFeedingItem
             // 
             lblFeedingItem.AutoSize = true;
-            lblFeedingItem.Location = new System.Drawing.Point(13, 221);
+            lblFeedingItem.Location = new System.Drawing.Point(13, 266);
             lblFeedingItem.Name = "lblFeedingItem";
             lblFeedingItem.Size = new Size(76, 15);
             lblFeedingItem.TabIndex = 16;
@@ -1095,10 +1154,10 @@ namespace Intersect.Editor.Forms.Editors
             cmbFeedingItem.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbFeedingItem.FlatStyle = FlatStyle.Flat;
             cmbFeedingItem.ForeColor = System.Drawing.Color.Gainsboro;
-            cmbFeedingItem.Location = new System.Drawing.Point(110, 217);
+            cmbFeedingItem.Location = new System.Drawing.Point(110, 264);
             cmbFeedingItem.Name = "cmbFeedingItem";
             cmbFeedingItem.Size = new Size(164, 24);
-            cmbFeedingItem.TabIndex = 7;
+            cmbFeedingItem.TabIndex = 10;
             cmbFeedingItem.Text = null;
             cmbFeedingItem.TextPadding = new Padding(2);
             cmbFeedingItem.SelectedIndexChanged += cmbFeedingItem_SelectedIndexChanged;
@@ -1617,8 +1676,12 @@ namespace Intersect.Editor.Forms.Editors
         private Label lblHP;
         private DarkNumericUpDown nudHp;
         private DarkGroupBox grpGeneral;
-        private Label lblPic;
-        private DarkComboBox cmbSprite;
+        private Label lblMaleSprite;
+        private DarkComboBox cmbMaleSprite;
+        private Label lblFemaleSprite;
+        private DarkComboBox cmbFemaleSprite;
+        private DarkRadioButton rdoPreviewMale;
+        private DarkRadioButton rdoPreviewFemale;
         private PictureBox picPet;
         private DarkButton btnAddFolder;
         private Label lblFolder;

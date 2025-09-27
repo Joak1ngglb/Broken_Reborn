@@ -1394,6 +1394,8 @@ public partial class Player : Entity
             playerPet.Vitals[index] = pet.GetVital(vital);
         }
 
+        playerPet.Gender = pet.Gender;
+
         if (playerPet.PetInstanceId == Guid.Empty && pet.PetInstanceId != Guid.Empty)
         {
             playerPet.PetInstanceId = pet.PetInstanceId;
@@ -1819,6 +1821,8 @@ public partial class Player : Entity
             CareMilliseconds = (long)Math.Max(0, descriptor.BaseMaturity)
                                 * Pet.CareMillisecondsPerMaturityPoint,
         };
+
+        playerPet.Gender = Randomization.Next(0, 2) == 0 ? PetGender.Male : PetGender.Female;
 
         var initialName = petData.PetNameOverride;
         if (!string.IsNullOrWhiteSpace(initialName))

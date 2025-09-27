@@ -18,6 +18,8 @@ public sealed class Pet : Entity
 
     private PetDescriptor? _cachedDescriptor;
     private Guid _descriptorId;
+    private bool _shouldRefreshSprite = true;
+    private string? _lastResolvedSprite;
 
     private int[] _statPointAllocations = Array.Empty<int>();
 
@@ -57,6 +59,7 @@ public sealed class Pet : Entity
 
             _descriptorId = value;
             _cachedDescriptor = null;
+            _shouldRefreshSprite = true;
         }
     }
 
@@ -67,12 +70,12 @@ public sealed class Pet : Entity
     {
         get
         {
-            if (_cachedDescriptor == null && DescriptorId != Guid.Empty)
+            if (TryResolveDescriptor(out var descriptor) && _shouldRefreshSprite)
             {
-                PetDescriptor.Lookup.TryGetValue(DescriptorId, out _cachedDescriptor);
+                UpdateSpriteFromDescriptor(force: true);
             }
 
-            return _cachedDescriptor;
+            return descriptor;
         }
     }
 
@@ -93,6 +96,23 @@ public sealed class Pet : Entity
     ///     Returns <c>true</c> when the local player owns this pet.
     /// </summary>
     public bool IsOwnedByLocalPlayer => IsOwner(Globals.Me);
+
+    private PetGender _gender = PetGender.Unspecified;
+
+    public PetGender Gender
+    {
+        get => _gender;
+        private set
+        {
+            if (_gender == value)
+            {
+                return;
+            }
+
+            _gender = value;
+            _shouldRefreshSprite = true;
+        }
+    }
 
     public long Experience { get; private set; }
 
@@ -123,7 +143,14 @@ public sealed class Pet : Entity
     /// <param name="descriptorId">Identifier of the descriptor that spawned the pet.</param>
     /// <param name="despawnable">Indicates whether the pet can despawn automatically.</param>
     /// <param name="behavior">Behaviour reported by the server.</param>
-    public void ApplyMetadata(Guid ownerId, Guid descriptorId, bool despawnable, PetState behavior)
+    /// <param name="gender">Gender assigned by the server.</param>
+    public void ApplyMetadata(
+        Guid ownerId,
+        Guid descriptorId,
+        bool despawnable,
+        PetState behavior,
+        PetGender gender
+    )
     {
         if (behavior is not (PetState.Follow or PetState.Stay or PetState.Defend or PetState.Passive))
         {
@@ -136,13 +163,20 @@ public sealed class Pet : Entity
         const bool normalizedDespawnable = true;
         var despawnableChanged = Despawnable != normalizedDespawnable;
         var behaviorChanged = Behavior != behavior;
+        var genderChanged = Gender != gender;
 
         OwnerId = ownerId;
         DescriptorId = descriptorId;
         Despawnable = normalizedDespawnable;
         Behavior = behavior;
+        Gender = gender;
 
-        if (ownerChanged || descriptorChanged || despawnableChanged || behaviorChanged)
+        if (descriptorChanged || genderChanged || _shouldRefreshSprite)
+        {
+            UpdateSpriteFromDescriptor(force: descriptorChanged || genderChanged);
+        }
+
+        if (ownerChanged || descriptorChanged || despawnableChanged || behaviorChanged || genderChanged)
         {
             Globals.NotifyPetMetadataApplied(this);
         }
@@ -208,6 +242,9 @@ public sealed class Pet : Entity
         CareMilliseconds = 0;
         WhimsFulfilled = 0;
         LastWhimFulfillmentTicks = 0;
+        Gender = PetGender.Unspecified;
+        _lastResolvedSprite = null;
+        _shouldRefreshSprite = true;
     }
 
     /// <inheritdoc />
@@ -220,14 +257,50 @@ public sealed class Pet : Entity
             return;
         }
 
+        _lastResolvedSprite = Sprite;
+
         ApplyMetadata(
             petPacket.OwnerId,
             petPacket.DescriptorId,
             petPacket.Despawnable,
-            petPacket.Behavior
+            petPacket.Behavior,
+            petPacket.Gender
         );
-}
+    }
 
     private static int ClampAttribute(int value, int baseValue) =>
         Math.Clamp(value, 0, Math.Max(DefaultAttributeCap, baseValue));
+
+    private bool TryResolveDescriptor(out PetDescriptor? descriptor)
+    {
+        if (_cachedDescriptor == null && DescriptorId != Guid.Empty)
+        {
+            PetDescriptor.Lookup.TryGetValue(DescriptorId, out _cachedDescriptor);
+        }
+
+        descriptor = _cachedDescriptor;
+        return descriptor != null;
+    }
+
+    private void UpdateSpriteFromDescriptor(bool force = false)
+    {
+        if (!TryResolveDescriptor(out var descriptor))
+        {
+            _shouldRefreshSprite = true;
+            return;
+        }
+
+        var resolvedSprite = descriptor.GetSpriteForGender(Gender);
+        resolvedSprite ??= string.Empty;
+
+        if (!force && string.Equals(_lastResolvedSprite, resolvedSprite, StringComparison.Ordinal))
+        {
+            _shouldRefreshSprite = false;
+            return;
+        }
+
+        _lastResolvedSprite = resolvedSprite;
+        Sprite = resolvedSprite;
+        _shouldRefreshSprite = false;
+    }
 }

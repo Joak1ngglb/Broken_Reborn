@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using DarkUI.Controls;
 using DarkUI.Forms;
@@ -17,6 +20,9 @@ using Intersect.Framework.Core.GameObjects.Pets;
 using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.GameObjects;
 using Intersect.Utilities;
+using Microsoft.Xna.Framework.Graphics;
+using XnaColor = Microsoft.Xna.Framework.Color;
+using XnaRectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace Intersect.Editor.Forms.Editors;
 
@@ -34,6 +40,7 @@ public partial class FrmPet : EditorForm
     private string? _copiedItem;
     private PetDescriptor? _editorItem;
     private bool _isClosing;
+    private bool _suppressPreviewUpdate;
 
     public FrmPet()
     {
@@ -275,11 +282,12 @@ public partial class FrmPet : EditorForm
 
     private void frmPet_Load(object sender, EventArgs e)
     {
-        cmbSprite.Items.Clear();
-        cmbSprite.Items.Add(Strings.General.None);
-        cmbSprite.Items.AddRange(
-            GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
+        var entitySprites = GameContentManager.GetSmartSortedTextureNames(
+            GameContentManager.TextureType.Entity
         );
+
+        InitializeSpriteCombo(cmbMaleSprite, entitySprites);
+        InitializeSpriteCombo(cmbFemaleSprite, entitySprites);
 
         cmbFeedingItem.Items.Clear();
         cmbFeedingItem.Items.Add(Strings.General.None);
@@ -364,7 +372,10 @@ public partial class FrmPet : EditorForm
         lblBaseMood.Text = Strings.Pets.basemood;
         lblBaseMaturity.Text = Strings.Pets.basematurity;
         lblFeedingItem.Text = Strings.Pets.feedingitem;
-        lblPic.Text = Strings.Pets.sprite;
+        lblMaleSprite.Text = Strings.Pets.malesprite;
+        lblFemaleSprite.Text = Strings.Pets.femalesprite;
+        rdoPreviewMale.Text = Strings.Pets.previewmale;
+        rdoPreviewFemale.Text = Strings.Pets.previewfemale;
         lblHP.Text = $"{Strings.Combat.vitals[(int)Vital.Health]}:";
         lblMana.Text = $"{Strings.Combat.vitals[(int)Vital.Mana]}:";
         lblStr.Text = $"{Strings.Combat.stats[(int)Stat.Attack]}:";
@@ -396,6 +407,119 @@ public partial class FrmPet : EditorForm
         btnRemove.Text = Strings.Pets.removespell;
         btnSave.Text = Strings.Pets.save;
         btnCancel.Text = Strings.Pets.cancel;
+    }
+
+    private static void InitializeSpriteCombo(DarkComboBox combo, string[] sprites)
+    {
+        combo.Items.Clear();
+        combo.Items.Add(Strings.General.None);
+        combo.Items.AddRange(sprites);
+
+        if (combo.Items.Count > 0)
+        {
+            combo.SelectedIndex = 0;
+        }
+    }
+
+    private static void SetSpriteSelection(DarkComboBox combo, string value)
+    {
+        var index = combo.FindString(value);
+        combo.SelectedIndex = index >= 0 ? index : 0;
+    }
+
+    private void UpdateDescriptorFallbackSprite()
+    {
+        if (_editorItem == null)
+        {
+            return;
+        }
+
+        var fallback = _editorItem.MaleSprite;
+        if (string.IsNullOrWhiteSpace(fallback))
+        {
+            fallback = _editorItem.FemaleSprite;
+        }
+
+        _editorItem.Sprite = fallback ?? string.Empty;
+    }
+
+    private string GetPreviewSpriteName()
+    {
+        return rdoPreviewFemale.Checked
+            ? TextUtils.SanitizeNone(cmbFemaleSprite.Text)
+            : TextUtils.SanitizeNone(cmbMaleSprite.Text);
+    }
+
+    private void UpdatePreview()
+    {
+        if (_suppressPreviewUpdate || _editorItem == null)
+        {
+            return;
+        }
+
+        picPet.BackgroundImage?.Dispose();
+        picPet.BackgroundImage = null;
+
+        var spriteName = GetPreviewSpriteName();
+        if (string.IsNullOrWhiteSpace(spriteName))
+        {
+            return;
+        }
+
+        var texture = GameContentManager.GetTexture(GameContentManager.TextureType.Entity, spriteName);
+        if (texture == null)
+        {
+            return;
+        }
+
+        var frames = Math.Max(1, Options.Instance.Sprites.NormalFrames);
+        var directions = Math.Max(1, Options.Instance.Sprites.Directions);
+        var frameWidth = texture.Width / frames;
+        var frameHeight = texture.Height / directions;
+
+        if (frameWidth <= 0 || frameHeight <= 0)
+        {
+            return;
+        }
+
+        var colors = new XnaColor[frameWidth * frameHeight];
+        var sourceRectangle = new XnaRectangle(0, 0, frameWidth, frameHeight);
+        texture.GetData(0, sourceRectangle, colors, 0, colors.Length);
+
+        var pixelData = new byte[colors.Length * 4];
+        for (var i = 0; i < colors.Length; i++)
+        {
+            var color = colors[i];
+            var offset = i * 4;
+            pixelData[offset] = color.B;
+            pixelData[offset + 1] = color.G;
+            pixelData[offset + 2] = color.R;
+            pixelData[offset + 3] = color.A;
+        }
+
+        using var frameBitmap = new Bitmap(frameWidth, frameHeight, PixelFormat.Format32bppArgb);
+        var bitmapData = frameBitmap.LockBits(
+            new Rectangle(0, 0, frameWidth, frameHeight),
+            ImageLockMode.WriteOnly,
+            PixelFormat.Format32bppArgb
+        );
+        Marshal.Copy(pixelData, 0, bitmapData.Scan0, pixelData.Length);
+        frameBitmap.UnlockBits(bitmapData);
+
+        var previewBitmap = new Bitmap(picPet.Width, picPet.Height);
+        using (var graphics = Graphics.FromImage(previewBitmap))
+        {
+            graphics.FillRectangle(Brushes.Black, new Rectangle(0, 0, previewBitmap.Width, previewBitmap.Height));
+            var destination = new Rectangle(
+                (previewBitmap.Width - frameBitmap.Width) / 2,
+                (previewBitmap.Height - frameBitmap.Height) / 2,
+                frameBitmap.Width,
+                frameBitmap.Height
+            );
+            graphics.DrawImage(frameBitmap, destination);
+        }
+
+        picPet.BackgroundImage = previewBitmap;
     }
 
     private void AssignEditorItem(Guid id)
@@ -466,17 +590,24 @@ public partial class FrmPet : EditorForm
         if (_editorItem != null)
         {
             pnlContainer.Show();
+            _suppressPreviewUpdate = true;
+            try
+            {
+                SetSpriteSelection(cmbMaleSprite, TextUtils.NullToNone(_editorItem.MaleSprite));
+                SetSpriteSelection(cmbFemaleSprite, TextUtils.NullToNone(_editorItem.FemaleSprite));
+
+                var useMalePreview = !string.IsNullOrWhiteSpace(_editorItem.MaleSprite)
+                                     || string.IsNullOrWhiteSpace(_editorItem.FemaleSprite);
+                rdoPreviewMale.Checked = useMalePreview;
+                rdoPreviewFemale.Checked = !useMalePreview;
+            }
+            finally
+            {
+                _suppressPreviewUpdate = false;
+            }
+
             txtName.Text = _editorItem.Name;
             cmbFolder.Text = _editorItem.Folder;
-            var spriteIndex = cmbSprite.FindString(TextUtils.NullToNone(_editorItem.Sprite));
-            if (spriteIndex >= 0)
-            {
-                cmbSprite.SelectedIndex = spriteIndex;
-            }
-            else if (cmbSprite.Items.Count > 0)
-            {
-                cmbSprite.SelectedIndex = 0;
-            }
             nudBaseEnergy.Value = Math.Max(nudBaseEnergy.Minimum, Math.Min(nudBaseEnergy.Maximum, _editorItem.BaseEnergy));
             nudBaseMood.Value = Math.Max(nudBaseMood.Minimum, Math.Min(nudBaseMood.Maximum, _editorItem.BaseMood));
             nudBaseMaturity.Value = Math.Max(nudBaseMaturity.Minimum, Math.Min(nudBaseMaturity.Maximum, _editorItem.BaseMaturity));
@@ -543,10 +674,15 @@ public partial class FrmPet : EditorForm
                 _changed.Add(_editorItem);
                 _editorItem.MakeBackup();
             }
+
+            UpdateDescriptorFallbackSprite();
+            UpdatePreview();
         }
         else
         {
             pnlContainer.Hide();
+            picPet.BackgroundImage?.Dispose();
+            picPet.BackgroundImage = null;
         }
 
         var hasItem = _editorItem != null;
@@ -565,14 +701,52 @@ public partial class FrmPet : EditorForm
         lstGameObjects.UpdateText(txtName.Text);
     }
 
-    private void cmbSprite_SelectedIndexChanged(object sender, EventArgs e)
+    private void cmbMaleSprite_SelectedIndexChanged(object sender, EventArgs e)
     {
-        if (_editorItem == null)
+        if (_editorItem == null || cmbMaleSprite.SelectedIndex < 0)
         {
             return;
         }
 
-        _editorItem.Sprite = TextUtils.SanitizeNone(cmbSprite.Text);
+        _editorItem.MaleSprite = TextUtils.SanitizeNone(cmbMaleSprite.Text);
+        UpdateDescriptorFallbackSprite();
+
+        if (!_suppressPreviewUpdate)
+        {
+            UpdatePreview();
+        }
+    }
+
+    private void cmbFemaleSprite_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || cmbFemaleSprite.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        _editorItem.FemaleSprite = TextUtils.SanitizeNone(cmbFemaleSprite.Text);
+        UpdateDescriptorFallbackSprite();
+
+        if (!_suppressPreviewUpdate)
+        {
+            UpdatePreview();
+        }
+    }
+
+    private void rdoPreviewMale_CheckedChanged(object sender, EventArgs e)
+    {
+        if (!_suppressPreviewUpdate && rdoPreviewMale.Checked)
+        {
+            UpdatePreview();
+        }
+    }
+
+    private void rdoPreviewFemale_CheckedChanged(object sender, EventArgs e)
+    {
+        if (!_suppressPreviewUpdate && rdoPreviewFemale.Checked)
+        {
+            UpdatePreview();
+        }
     }
 
     private void cmbFeedingItem_SelectedIndexChanged(object sender, EventArgs e)

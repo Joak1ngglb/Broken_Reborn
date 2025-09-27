@@ -127,6 +127,44 @@ public partial class PetDescriptor : DatabaseObject<PetDescriptor>, IFolderable
 
     public string Sprite { get; set; } = string.Empty;
 
+    [Column("MaleSprite")]
+    [JsonProperty(nameof(MaleSprite))]
+    public string MaleSprite { get; set; } = string.Empty;
+
+    [Column("FemaleSprite")]
+    [JsonProperty(nameof(FemaleSprite))]
+    public string FemaleSprite { get; set; } = string.Empty;
+
+    public string GetSpriteForGender(PetGender gender)
+    {
+        return gender switch
+        {
+            PetGender.Male when !string.IsNullOrWhiteSpace(MaleSprite) => MaleSprite,
+            PetGender.Female when !string.IsNullOrWhiteSpace(FemaleSprite) => FemaleSprite,
+            _ => ResolveFallbackSprite(),
+        };
+    }
+
+    private string ResolveFallbackSprite()
+    {
+        if (!string.IsNullOrWhiteSpace(Sprite))
+        {
+            return Sprite;
+        }
+
+        if (!string.IsNullOrWhiteSpace(MaleSprite))
+        {
+            return MaleSprite;
+        }
+
+        if (!string.IsNullOrWhiteSpace(FemaleSprite))
+        {
+            return FemaleSprite;
+        }
+
+        return string.Empty;
+    }
+
     [Column("Spells"), JsonIgnore]
     public string SpellsJson
     {
