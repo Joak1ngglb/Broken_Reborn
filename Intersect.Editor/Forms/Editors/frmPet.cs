@@ -98,6 +98,16 @@ public partial class FrmPet : EditorForm
             _statControls[Stat.Agility] = nudAgi;
         }
 
+        if (nudDamages != null)
+        {
+            _statControls[Stat.Damages] = nudDamages;
+        }
+
+        if (nudCures != null)
+        {
+            _statControls[Stat.Cures] = nudCures;
+        }
+
         foreach (var (stat, control) in _statControls)
         {
             control.Minimum = 0;
@@ -355,6 +365,16 @@ public partial class FrmPet : EditorForm
         lblBaseMaturity.Text = Strings.Pets.basematurity;
         lblFeedingItem.Text = Strings.Pets.feedingitem;
         lblPic.Text = Strings.Pets.sprite;
+        lblHP.Text = $"{Strings.Combat.vitals[(int)Vital.Health]}:";
+        lblMana.Text = $"{Strings.Combat.vitals[(int)Vital.Mana]}:";
+        lblStr.Text = $"{Strings.Combat.stats[(int)Stat.Attack]}:";
+        lblMag.Text = $"{Strings.Combat.stats[(int)Stat.Intelligence]}:";
+        lblDef.Text = $"{Strings.Combat.stats[(int)Stat.Defense]}:";
+        lblMR.Text = $"{Strings.Combat.stats[(int)Stat.Vitality]}:";
+        lblSpd.Text = $"{Strings.Combat.stats[(int)Stat.Speed]}:";
+        lblAgility.Text = $"{Strings.Combat.stats[(int)Stat.Agility]}:";
+        lblDamages.Text = $"{Strings.Combat.stats[(int)Stat.Damages]}:";
+        lblCures.Text = $"{Strings.Combat.stats[(int)Stat.Cures]}:";
 
         grpStats.Text = Strings.Pets.stats;
         grpRegen.Text = Strings.Pets.vitalregen;
@@ -617,6 +637,10 @@ public partial class FrmPet : EditorForm
     private void nudSpd_ValueChanged(object sender, EventArgs e) => UpdateStat(Stat.Speed, nudSpd);
 
     private void nudAgi_ValueChanged(object sender, EventArgs e) => UpdateStat(Stat.Agility, nudAgi);
+
+    private void nudDamages_ValueChanged(object sender, EventArgs e) => UpdateStat(Stat.Damages, nudDamages);
+
+    private void nudCures_ValueChanged(object sender, EventArgs e) => UpdateStat(Stat.Cures, nudCures);
 
     private void cmbAttackAnimation_SelectedIndexChanged(object sender, EventArgs e)
     {

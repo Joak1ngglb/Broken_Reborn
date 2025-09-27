@@ -65,7 +65,11 @@ namespace Intersect.Editor.Forms.Editors
             lblHpRegen = new Label();
             nudHpRegen = new DarkNumericUpDown();
             grpStats = new DarkGroupBox();
-            label1 = new Label();
+            lblCures = new Label();
+            nudCures = new DarkNumericUpDown();
+            lblDamages = new Label();
+            nudDamages = new DarkNumericUpDown();
+            lblAgility = new Label();
             nudAgi = new DarkNumericUpDown();
             lblSpd = new Label();
             nudSpd = new DarkNumericUpDown();
@@ -104,6 +108,7 @@ namespace Intersect.Editor.Forms.Editors
             cmbSpell = new DarkComboBox();
             lstSpells = new ListBox();
             DarkGroupBox4 = new DarkGroupBox();
+            pnlPetlevel = new Panel();
             nudMaxLevel = new DarkNumericUpDown();
             DarkLabel12 = new DarkLabel();
             nudPetPnts = new DarkNumericUpDown();
@@ -125,7 +130,6 @@ namespace Intersect.Editor.Forms.Editors
             toolStripItemPaste = new ToolStripButton();
             toolStripSeparator3 = new ToolStripSeparator();
             toolStripItemUndo = new ToolStripButton();
-            pnlPetlevel = new Panel();
             grpPets.SuspendLayout();
             pnlContainer.SuspendLayout();
             grpAnimation.SuspendLayout();
@@ -141,6 +145,8 @@ namespace Intersect.Editor.Forms.Editors
             ((System.ComponentModel.ISupportInitialize)nudMpRegen).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudHpRegen).BeginInit();
             grpStats.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudCures).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudDamages).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudAgi).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudSpd).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudMR).BeginInit();
@@ -156,11 +162,11 @@ namespace Intersect.Editor.Forms.Editors
             ((System.ComponentModel.ISupportInitialize)nudBaseEnergy).BeginInit();
             grpSpells.SuspendLayout();
             DarkGroupBox4.SuspendLayout();
+            pnlPetlevel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudMaxLevel).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudPetPnts).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudPetExp).BeginInit();
             toolStrip.SuspendLayout();
-            pnlPetlevel.SuspendLayout();
             SuspendLayout();
             // 
             // grpPets
@@ -701,7 +707,11 @@ namespace Intersect.Editor.Forms.Editors
             // 
             grpStats.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpStats.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            grpStats.Controls.Add(label1);
+            grpStats.Controls.Add(lblCures);
+            grpStats.Controls.Add(nudCures);
+            grpStats.Controls.Add(lblDamages);
+            grpStats.Controls.Add(nudDamages);
+            grpStats.Controls.Add(lblAgility);
             grpStats.Controls.Add(nudAgi);
             grpStats.Controls.Add(lblSpd);
             grpStats.Controls.Add(nudSpd);
@@ -720,19 +730,61 @@ namespace Intersect.Editor.Forms.Editors
             grpStats.ForeColor = System.Drawing.Color.Gainsboro;
             grpStats.Location = new System.Drawing.Point(7, 265);
             grpStats.Name = "grpStats";
-            grpStats.Size = new Size(280, 224);
+            grpStats.Size = new Size(280, 271);
             grpStats.TabIndex = 1;
             grpStats.TabStop = false;
             grpStats.Text = "Stats";
             // 
-            // label1
+            // lblCures
             // 
-            label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(149, 174);
-            label1.Name = "label1";
-            label1.Size = new Size(41, 15);
-            label1.TabIndex = 0;
-            label1.Text = "Agility";
+            lblCures.AutoSize = true;
+            lblCures.Location = new System.Drawing.Point(149, 222);
+            lblCures.Name = "lblCures";
+            lblCures.Size = new Size(37, 15);
+            lblCures.TabIndex = 16;
+            lblCures.Text = "Cures";
+            // 
+            // nudCures
+            // 
+            nudCures.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudCures.ForeColor = System.Drawing.Color.Gainsboro;
+            nudCures.Location = new System.Drawing.Point(151, 241);
+            nudCures.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nudCures.Name = "nudCures";
+            nudCures.Size = new Size(105, 23);
+            nudCures.TabIndex = 9;
+            nudCures.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudCures.ValueChanged += nudCures_ValueChanged;
+            // 
+            // lblDamages
+            // 
+            lblDamages.AutoSize = true;
+            lblDamages.Location = new System.Drawing.Point(13, 222);
+            lblDamages.Name = "lblDamages";
+            lblDamages.Size = new Size(56, 15);
+            lblDamages.TabIndex = 15;
+            lblDamages.Text = "Damages";
+            // 
+            // nudDamages
+            // 
+            nudDamages.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudDamages.ForeColor = System.Drawing.Color.Gainsboro;
+            nudDamages.Location = new System.Drawing.Point(16, 241);
+            nudDamages.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nudDamages.Name = "nudDamages";
+            nudDamages.Size = new Size(105, 23);
+            nudDamages.TabIndex = 8;
+            nudDamages.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudDamages.ValueChanged += nudDamages_ValueChanged;
+            // 
+            // lblAgility
+            // 
+            lblAgility.AutoSize = true;
+            lblAgility.Location = new System.Drawing.Point(149, 174);
+            lblAgility.Name = "lblAgility";
+            lblAgility.Size = new Size(41, 15);
+            lblAgility.TabIndex = 0;
+            lblAgility.Text = "Agility";
             // 
             // nudAgi
             // 
@@ -751,9 +803,9 @@ namespace Intersect.Editor.Forms.Editors
             lblSpd.AutoSize = true;
             lblSpd.Location = new System.Drawing.Point(13, 174);
             lblSpd.Name = "lblSpd";
-            lblSpd.Size = new Size(72, 15);
+            lblSpd.Size = new Size(39, 15);
             lblSpd.TabIndex = 8;
-            lblSpd.Text = "Move Speed";
+            lblSpd.Text = "Speed";
             // 
             // nudSpd
             // 
@@ -772,9 +824,9 @@ namespace Intersect.Editor.Forms.Editors
             lblMR.AutoSize = true;
             lblMR.Location = new System.Drawing.Point(149, 126);
             lblMR.Name = "lblMR";
-            lblMR.Size = new Size(73, 15);
+            lblMR.Size = new Size(43, 15);
             lblMR.TabIndex = 9;
-            lblMR.Text = "Magic Resist";
+            lblMR.Text = "Vitality";
             // 
             // nudMR
             // 
@@ -814,9 +866,9 @@ namespace Intersect.Editor.Forms.Editors
             lblMag.AutoSize = true;
             lblMag.Location = new System.Drawing.Point(149, 77);
             lblMag.Name = "lblMag";
-            lblMag.Size = new Size(40, 15);
+            lblMag.Size = new Size(68, 15);
             lblMag.TabIndex = 11;
-            lblMag.Text = "Magic";
+            lblMag.Text = "Intelligence";
             // 
             // nudMag
             // 
@@ -835,9 +887,9 @@ namespace Intersect.Editor.Forms.Editors
             lblStr.AutoSize = true;
             lblStr.Location = new System.Drawing.Point(13, 77);
             lblStr.Name = "lblStr";
-            lblStr.Size = new Size(52, 15);
+            lblStr.Size = new Size(41, 15);
             lblStr.TabIndex = 12;
-            lblStr.Text = "Strength";
+            lblStr.Text = "Attack";
             // 
             // nudStr
             // 
@@ -1119,7 +1171,7 @@ namespace Intersect.Editor.Forms.Editors
             grpSpells.Controls.Add(cmbSpell);
             grpSpells.Controls.Add(lstSpells);
             grpSpells.ForeColor = System.Drawing.Color.Gainsboro;
-            grpSpells.Location = new System.Drawing.Point(7, 499);
+            grpSpells.Location = new System.Drawing.Point(7, 546);
             grpSpells.Name = "grpSpells";
             grpSpells.Size = new Size(280, 234);
             grpSpells.TabIndex = 6;
@@ -1194,14 +1246,28 @@ namespace Intersect.Editor.Forms.Editors
             DarkGroupBox4.TabStop = false;
             DarkGroupBox4.Text = "Leveling";
             // 
+            // pnlPetlevel
+            // 
+            pnlPetlevel.Controls.Add(DarkLabel11);
+            pnlPetlevel.Controls.Add(nudMaxLevel);
+            pnlPetlevel.Controls.Add(nudPetExp);
+            pnlPetlevel.Controls.Add(DarkLabel12);
+            pnlPetlevel.Controls.Add(DarkLabel13);
+            pnlPetlevel.Controls.Add(nudPetPnts);
+            pnlPetlevel.Location = new System.Drawing.Point(7, 48);
+            pnlPetlevel.Margin = new Padding(4, 3, 4, 3);
+            pnlPetlevel.Name = "pnlPetlevel";
+            pnlPetlevel.Size = new Size(276, 136);
+            pnlPetlevel.TabIndex = 2;
+            // 
             // nudMaxLevel
             // 
             nudMaxLevel.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudMaxLevel.ForeColor = System.Drawing.Color.Gainsboro;
-            nudMaxLevel.Location = new System.Drawing.Point(142, 48);
+            nudMaxLevel.Location = new System.Drawing.Point(153, 49);
             nudMaxLevel.Margin = new Padding(4, 3, 4, 3);
             nudMaxLevel.Name = "nudMaxLevel";
-            nudMaxLevel.Size = new Size(87, 23);
+            nudMaxLevel.Size = new Size(109, 23);
             nudMaxLevel.TabIndex = 6;
             nudMaxLevel.Value = new decimal(new int[] { 100, 0, 0, 0 });
             nudMaxLevel.ValueChanged += nudMaxLevel_ValueChanged;
@@ -1210,7 +1276,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             DarkLabel12.AutoSize = true;
             DarkLabel12.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
-            DarkLabel12.Location = new System.Drawing.Point(6, 50);
+            DarkLabel12.Location = new System.Drawing.Point(12, 51);
             DarkLabel12.Margin = new Padding(4, 0, 4, 0);
             DarkLabel12.Name = "DarkLabel12";
             DarkLabel12.Size = new Size(63, 15);
@@ -1221,20 +1287,20 @@ namespace Intersect.Editor.Forms.Editors
             // 
             nudPetPnts.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudPetPnts.ForeColor = System.Drawing.Color.Gainsboro;
-            nudPetPnts.Location = new System.Drawing.Point(142, 80);
+            nudPetPnts.Location = new System.Drawing.Point(153, 81);
             nudPetPnts.Margin = new Padding(4, 3, 4, 3);
             nudPetPnts.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
             nudPetPnts.Name = "nudPetPnts";
-            nudPetPnts.Size = new Size(87, 23);
+            nudPetPnts.Size = new Size(109, 23);
             nudPetPnts.TabIndex = 4;
-            nudPetPnts.Value = new decimal(new int[] { 10, 0, 0, 0 });
+            nudPetPnts.Value = new decimal(new int[] { 0, 0, 0, 0 });
             nudPetPnts.ValueChanged += nudPetPnts_ValueChanged;
             // 
             // DarkLabel13
             // 
             DarkLabel13.AutoSize = true;
             DarkLabel13.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
-            DarkLabel13.Location = new System.Drawing.Point(5, 81);
+            DarkLabel13.Location = new System.Drawing.Point(11, 82);
             DarkLabel13.Margin = new Padding(4, 0, 4, 0);
             DarkLabel13.Name = "DarkLabel13";
             DarkLabel13.Size = new Size(93, 15);
@@ -1245,10 +1311,10 @@ namespace Intersect.Editor.Forms.Editors
             // 
             nudPetExp.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudPetExp.ForeColor = System.Drawing.Color.Gainsboro;
-            nudPetExp.Location = new System.Drawing.Point(142, 15);
+            nudPetExp.Location = new System.Drawing.Point(153, 16);
             nudPetExp.Margin = new Padding(4, 3, 4, 3);
             nudPetExp.Name = "nudPetExp";
-            nudPetExp.Size = new Size(87, 23);
+            nudPetExp.Size = new Size(109, 23);
             nudPetExp.TabIndex = 1;
             nudPetExp.Value = new decimal(new int[] { 100, 0, 0, 0 });
             nudPetExp.ValueChanged += nudPetExp_ValueChanged;
@@ -1257,7 +1323,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             DarkLabel11.AutoSize = true;
             DarkLabel11.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
-            DarkLabel11.Location = new System.Drawing.Point(5, 16);
+            DarkLabel11.Location = new System.Drawing.Point(11, 17);
             DarkLabel11.Margin = new Padding(4, 0, 4, 0);
             DarkLabel11.Name = "DarkLabel11";
             DarkLabel11.Size = new Size(69, 15);
@@ -1267,7 +1333,7 @@ namespace Intersect.Editor.Forms.Editors
             // optDoNotLevel
             // 
             optDoNotLevel.AutoSize = true;
-            optDoNotLevel.Location = new System.Drawing.Point(151, 22);
+            optDoNotLevel.Location = new System.Drawing.Point(161, 22);
             optDoNotLevel.Margin = new Padding(4, 3, 4, 3);
             optDoNotLevel.Name = "optDoNotLevel";
             optDoNotLevel.Size = new Size(119, 19);
@@ -1278,7 +1344,7 @@ namespace Intersect.Editor.Forms.Editors
             // optLevel
             // 
             optLevel.AutoSize = true;
-            optLevel.Location = new System.Drawing.Point(9, 22);
+            optLevel.Location = new System.Drawing.Point(19, 22);
             optLevel.Margin = new Padding(4, 3, 4, 3);
             optLevel.Name = "optLevel";
             optLevel.Size = new Size(128, 19);
@@ -1417,20 +1483,6 @@ namespace Intersect.Editor.Forms.Editors
             toolStripItemUndo.Text = "Undo";
             toolStripItemUndo.Click += toolStripItemUndo_Click;
             // 
-            // pnlPetlevel
-            // 
-            pnlPetlevel.Controls.Add(nudMaxLevel);
-            pnlPetlevel.Controls.Add(DarkLabel12);
-            pnlPetlevel.Controls.Add(nudPetPnts);
-            pnlPetlevel.Controls.Add(DarkLabel13);
-            pnlPetlevel.Controls.Add(nudPetExp);
-            pnlPetlevel.Controls.Add(DarkLabel11);
-            pnlPetlevel.Location = new System.Drawing.Point(7, 48);
-            pnlPetlevel.Margin = new Padding(4, 3, 4, 3);
-            pnlPetlevel.Name = "pnlPetlevel";
-            pnlPetlevel.Size = new Size(258, 136);
-            pnlPetlevel.TabIndex = 2;
-            // 
             // FrmPet
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -1472,6 +1524,8 @@ namespace Intersect.Editor.Forms.Editors
             ((System.ComponentModel.ISupportInitialize)nudHpRegen).EndInit();
             grpStats.ResumeLayout(false);
             grpStats.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nudCures).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudDamages).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudAgi).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudSpd).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudMR).EndInit();
@@ -1489,13 +1543,13 @@ namespace Intersect.Editor.Forms.Editors
             grpSpells.ResumeLayout(false);
             DarkGroupBox4.ResumeLayout(false);
             DarkGroupBox4.PerformLayout();
+            pnlPetlevel.ResumeLayout(false);
+            pnlPetlevel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nudMaxLevel).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudPetPnts).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudPetExp).EndInit();
             toolStrip.ResumeLayout(false);
             toolStrip.PerformLayout();
-            pnlPetlevel.ResumeLayout(false);
-            pnlPetlevel.PerformLayout();
             ResumeLayout(false);
         }
         private DarkGroupBox grpPets;
@@ -1542,7 +1596,7 @@ namespace Intersect.Editor.Forms.Editors
         private Label lblHpRegen;
         private DarkNumericUpDown nudHpRegen;
         private DarkGroupBox grpStats;
-        private Label label1;
+        private Label lblAgility;
         private DarkNumericUpDown nudAgi;
         private Label lblSpd;
         private DarkNumericUpDown nudSpd;
@@ -1554,6 +1608,10 @@ namespace Intersect.Editor.Forms.Editors
         private DarkNumericUpDown nudMag;
         private Label lblStr;
         private DarkNumericUpDown nudStr;
+        private Label lblDamages;
+        private DarkNumericUpDown nudDamages;
+        private Label lblCures;
+        private DarkNumericUpDown nudCures;
         private Label lblMana;
         private DarkNumericUpDown nudMana;
         private Label lblHP;
