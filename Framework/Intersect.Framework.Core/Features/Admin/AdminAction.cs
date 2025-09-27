@@ -30,5 +30,9 @@ public enum AdminAction
 
     SetAccess,
 
+    GiveItem,
+
+    SpawnItem,
+
     ReturnToOverworld,
 }

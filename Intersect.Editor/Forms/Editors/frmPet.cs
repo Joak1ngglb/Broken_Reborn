@@ -16,6 +16,10 @@ using Intersect.Framework.Core.GameObjects.Pets;
 using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.GameObjects;
 using Intersect.Utilities;
+using Microsoft.Xna.Framework.Graphics;
+using Graphics = System.Drawing.Graphics;
+using XnaColor = Microsoft.Xna.Framework.Color;
+using XnaRectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace Intersect.Editor.Forms.Editors;
 
