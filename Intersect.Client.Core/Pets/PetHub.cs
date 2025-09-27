@@ -912,6 +912,8 @@ RaiseEvents:
 
         public int Maturity { get; init; }
 
+        public long CareMilliseconds { get; init; }
+
         public PetProgressSnapshot Clone() => new()
         {
             PetId = PetId,
@@ -923,6 +925,7 @@ RaiseEvents:
             Energy = Energy,
             Mood = Mood,
             Maturity = Maturity,
+            CareMilliseconds = CareMilliseconds,
         };
     }
 
@@ -937,6 +940,7 @@ RaiseEvents:
         Energy = pet.Energy,
         Mood = pet.Mood,
         Maturity = pet.Maturity,
+        CareMilliseconds = pet.CareMilliseconds,
     };
 
     private PetProgressSnapshot? GetSnapshot(Guid petId)

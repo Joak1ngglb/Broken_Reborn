@@ -23,6 +23,9 @@ public sealed class Pet : Entity
     private const int FollowDistance = 1;
     private const long PathUpdateInterval = 100;
     private const long TargetLostGracePeriod = 2000;
+    internal const long CareMillisecondsPerMaturityPoint = 60_000;
+    private const long CombatCareBonusMilliseconds = 15_000;
+    private const long CareSyncIntervalMilliseconds = 15_000;
     private int _followPathFailureCount;
     private long _lastFollowFailureTime;
 
@@ -41,6 +44,8 @@ public sealed class Pet : Entity
     private long _combatTimeout;
     private long _lastTargetSeenTime;
     private long _nextPathUpdate;
+    private long _totalCareMilliseconds;
+    private long _nextCareSyncTime;
 
     private bool _metadataDirty;
 
@@ -92,6 +97,8 @@ public sealed class Pet : Entity
     public int Mood => _mood;
 
     public int Maturity => _maturity;
+
+    public long CareMilliseconds => _totalCareMilliseconds;
 
     private static int ClampAttribute(int value, int descriptorBase) =>
         Math.Clamp(value, MinAttributeValue, Math.Max(MaxAttributeValue, descriptorBase));
@@ -377,9 +384,83 @@ public sealed class Pet : Entity
 
         var maturity = persistedPet.Maturity < 0 ? Descriptor.BaseMaturity : persistedPet.Maturity;
         SetMaturity(maturity, persist: false, notify: false);
+
+        var persistedCare = Math.Max(0, persistedPet.CareMilliseconds);
+        var minimumCare = (long)Math.Max(0, Maturity) * CareMillisecondsPerMaturityPoint;
+        _totalCareMilliseconds = Math.Max(persistedCare, minimumCare);
+
+        EnsureMaturityFromCare(persist: false);
     }
 
     public override EntityType GetEntityType() => EntityType.Pet;
+
+    private void EnsureMaturityFromCare(bool persist)
+    {
+        if (Descriptor == null)
+        {
+            return;
+        }
+
+        var maturityCap = Math.Max(MaxAttributeValue, Descriptor.BaseMaturity);
+        var careBasedMaturity = _totalCareMilliseconds / CareMillisecondsPerMaturityPoint;
+        var expected = (int)Math.Min(maturityCap, Math.Min(int.MaxValue, careBasedMaturity));
+        if (expected > _maturity)
+        {
+            SetMaturity(expected, persist, notify: persist);
+        }
+        else
+        {
+            var minimumCare = (long)Math.Max(0, _maturity) * CareMillisecondsPerMaturityPoint;
+            if (_totalCareMilliseconds < minimumCare)
+            {
+                _totalCareMilliseconds = minimumCare;
+            }
+        }
+    }
+
+    private void AdvanceCare(long milliseconds, bool forcePersist = false)
+    {
+        if (milliseconds <= 0 || Descriptor == null)
+        {
+            return;
+        }
+
+        var previousTotal = _totalCareMilliseconds;
+
+        try
+        {
+            checked
+            {
+                _totalCareMilliseconds += milliseconds;
+            }
+        }
+        catch (OverflowException)
+        {
+            _totalCareMilliseconds = long.MaxValue;
+        }
+
+        var previousMaturity = _maturity;
+        EnsureMaturityFromCare(persist: true);
+
+        var maturityChanged = previousMaturity != _maturity;
+        if (maturityChanged)
+        {
+            _nextCareSyncTime = Timing.Global.Milliseconds + CareSyncIntervalMilliseconds;
+            return;
+        }
+
+        if (_totalCareMilliseconds == previousTotal)
+        {
+            return;
+        }
+
+        var now = Timing.Global.Milliseconds;
+        if (forcePersist || now >= _nextCareSyncTime)
+        {
+            Owner?.PersistPetProgress(this);
+            _nextCareSyncTime = now + CareSyncIntervalMilliseconds;
+        }
+    }
 
     public bool TrySpendStatPoint(Stat stat, int amount = 1)
     {
@@ -606,6 +687,8 @@ public sealed class Pet : Entity
             UpdateTarget(owner, timeMs);
             UpdateState(owner);
         }
+
+        AdvanceCare(timeMs);
 
         switch (State)
         {
@@ -1645,7 +1728,12 @@ public sealed class Pet : Entity
         {
             owner = null;
         }
-        owner?.KilledEntity(entity);
+        owner?.HandlePetKill(this, entity);
+    }
+
+    internal void RegisterCombatCare()
+    {
+        AdvanceCare(CombatCareBonusMilliseconds, forcePersist: true);
     }
 
     internal bool MetadataDirty => _metadataDirty;

@@ -38,6 +38,8 @@ public partial class PlayerPet : IPlayerOwned
 
     public int Maturity { get; set; } = -1;
 
+    public long CareMilliseconds { get; set; } = 0;
+
     [NotMapped]
     public int[] BaseStats { get; set; } = new int[Enum.GetValues<Stat>().Length];
 

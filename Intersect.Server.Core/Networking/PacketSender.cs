@@ -1078,7 +1078,8 @@ public static partial class PacketSender
                 allocations.ToArray(),
                 pet.Energy,
                 pet.Mood,
-                pet.Maturity
+                pet.Maturity,
+                pet.CareMilliseconds
             ),
             TransmissionMode.Any
         );

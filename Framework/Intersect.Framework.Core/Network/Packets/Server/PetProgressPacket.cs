@@ -22,7 +22,8 @@ public sealed class PetProgressPacket : IntersectPacket
         int[] statPointAllocations,
         int energy,
         int mood,
-        int maturity
+        int maturity,
+        long careMilliseconds
     )
     {
         PetId = petId;
@@ -33,6 +34,7 @@ public sealed class PetProgressPacket : IntersectPacket
         Energy = energy;
         Mood = mood;
         Maturity = maturity;
+        CareMilliseconds = Math.Max(0, careMilliseconds);
     }
 
     [Key(0)]
@@ -58,4 +60,7 @@ public sealed class PetProgressPacket : IntersectPacket
 
     [Key(7)]
     public int Maturity { get; set; }
+
+    [Key(8)]
+    public long CareMilliseconds { get; set; }
 }

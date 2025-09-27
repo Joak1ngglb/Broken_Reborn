@@ -392,7 +392,8 @@ namespace Intersect.Client.Interface.Game.Pets
             _moodLabel.Text = Strings.Pets.MoodLabel.ToString(pet.Mood, moodCap);
             _moodLabel.IsHidden = false;
 
-            _maturityLabel.Text = Strings.Pets.MaturityLabel.ToString(pet.Maturity, maturityCap);
+            var careText = FormatCareDuration(pet.CareMilliseconds);
+            _maturityLabel.Text = Strings.Pets.MaturityTimeLabel.ToString(pet.Maturity, maturityCap, careText);
             _maturityLabel.IsHidden = false;
         }
 
@@ -471,6 +472,21 @@ namespace Intersect.Client.Interface.Game.Pets
         };
 
         private static string FormatNumber(long value) => value.ToString("N0", CultureInfo.CurrentCulture);
+
+        private static string FormatCareDuration(long milliseconds)
+        {
+            if (milliseconds <= 0)
+            {
+                return "00:00:00";
+            }
+
+            var span = TimeSpan.FromMilliseconds(milliseconds);
+            var totalHours = (int)Math.Min(Math.Floor(span.TotalHours), 9999);
+            var minutes = span.Minutes;
+            var seconds = span.Seconds;
+
+            return $"{totalHours:D2}:{minutes:D2}:{seconds:D2}";
+        }
 
         private Label CreateDetailLabel(Base parent, string name, int y)
         {

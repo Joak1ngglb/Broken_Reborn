@@ -27,6 +27,7 @@
     "EnergyLabel": "Energía: {0}/{1}",
     "MoodLabel": "Ánimo: {0}/{1}",
     "MaturityLabel": "Madurez: {0}/{1}",
+    "MaturityTimeLabel": "Madurez: {0}/{1} ({2})",
     "VitalsHeader": "Vitales",
     "VitalFormat": "{0}: {1}/{2}",
     "StatsHeader": "Estadísticas",

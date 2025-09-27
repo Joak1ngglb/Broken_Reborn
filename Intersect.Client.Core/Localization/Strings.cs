@@ -1342,6 +1342,9 @@ public static partial class Strings
         public static LocalizedString MaturityLabel = @"Maturity: {0}/{1}";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MaturityTimeLabel = @"Maturity: {0}/{1} ({2})";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString VitalsHeader = @"Vitals";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

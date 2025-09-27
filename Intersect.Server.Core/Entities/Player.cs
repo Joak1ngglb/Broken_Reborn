@@ -1375,6 +1375,7 @@ public partial class Player : Entity
         playerPet.Energy = pet.Energy;
         playerPet.Mood = pet.Mood;
         playerPet.Maturity = pet.Maturity;
+        playerPet.CareMilliseconds = pet.CareMilliseconds;
 
         var statCount = Enum.GetValues<Stat>().Length;
         for (var index = 0; index < statCount; index++)
@@ -1394,6 +1395,26 @@ public partial class Player : Entity
         if (playerPet.PetInstanceId == Guid.Empty && pet.PetInstanceId != Guid.Empty)
         {
             playerPet.PetInstanceId = pet.PetInstanceId;
+        }
+    }
+
+    internal void HandlePetKill(Pet pet, Entity entity)
+    {
+        if (pet == null || entity == null)
+        {
+            return;
+        }
+
+        if (pet.OwnerId != Id)
+        {
+            return;
+        }
+
+        KilledEntity(entity);
+
+        if (!pet.IsDisposed)
+        {
+            pet.RegisterCombatCare();
         }
     }
 
@@ -1793,6 +1814,8 @@ public partial class Player : Entity
                 Pet.MinAttributeValue,
                 Math.Max(Pet.MaxAttributeValue, descriptor.BaseMaturity)
             ),
+            CareMilliseconds = (long)Math.Max(0, descriptor.BaseMaturity)
+                                * Pet.CareMillisecondsPerMaturityPoint,
         };
 
         var initialName = petData.PetNameOverride;

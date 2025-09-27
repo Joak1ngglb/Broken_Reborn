@@ -108,6 +108,8 @@ public sealed class Pet : Entity
 
     public int Maturity { get; private set; }
 
+    public long CareMilliseconds { get; private set; }
+
     /// <summary>
     ///     Applies the metadata provided by the server to this pet instance.
     /// </summary>
@@ -147,7 +149,8 @@ public sealed class Pet : Entity
         int[]? statPointAllocations,
         int energy,
         int mood,
-        int maturity
+        int maturity,
+        long careMilliseconds
     )
     {
         Experience = Math.Max(0, experience);
@@ -167,6 +170,7 @@ public sealed class Pet : Entity
         Energy = ClampAttribute(energy, Descriptor?.BaseEnergy ?? DefaultAttributeCap);
         Mood = ClampAttribute(mood, Descriptor?.BaseMood ?? DefaultAttributeCap);
         Maturity = ClampAttribute(maturity, Descriptor?.BaseMaturity ?? DefaultAttributeCap);
+        CareMilliseconds = Math.Max(0, careMilliseconds);
 
         Globals.NotifyPetProgressApplied(this);
     }
@@ -188,6 +192,7 @@ public sealed class Pet : Entity
         Energy = 0;
         Mood = 0;
         Maturity = 0;
+        CareMilliseconds = 0;
     }
 
     /// <inheritdoc />
