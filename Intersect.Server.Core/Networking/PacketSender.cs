@@ -1027,6 +1027,7 @@ public static partial class PacketSender
                     DescriptorId = pet.Descriptor?.Id ?? Guid.Empty,
                     Despawnable = pet.Despawnable,
                     Behavior = pet.Behavior,
+                    Gender = pet.Gender,
                 }
             );
         }

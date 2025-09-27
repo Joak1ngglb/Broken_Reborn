@@ -42,4 +42,7 @@ public sealed class PetEntityUpdate
 
     [Key(5)]
     public PetState Behavior { get; set; }
+
+    [Key(6)]
+    public PetGender Gender { get; set; }
 }

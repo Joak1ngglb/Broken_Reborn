@@ -447,7 +447,7 @@ internal sealed partial class PacketHandler
                 continue;
             }
 
-            pet.ApplyMetadata(update.OwnerId, update.DescriptorId, update.Despawnable, update.Behavior);
+            pet.ApplyMetadata(update.OwnerId, update.DescriptorId, update.Despawnable, update.Behavior, update.Gender);
         }
     }
 
@@ -470,7 +470,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        pet.ApplyMetadata(pet.OwnerId, pet.DescriptorId, pet.Despawnable, packet.Behavior);
+        pet.ApplyMetadata(pet.OwnerId, pet.DescriptorId, pet.Despawnable, packet.Behavior, pet.Gender);
     }
 
     public void HandlePacket(IPacketSender packetSender, PetProgressPacket packet)
