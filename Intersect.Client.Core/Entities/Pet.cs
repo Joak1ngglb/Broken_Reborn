@@ -108,6 +108,14 @@ public sealed class Pet : Entity
 
     public int Maturity { get; private set; }
 
+    public PetMood MoodState { get; private set; } = PetMood.Content;
+
+    public int WhimsFulfilled { get; private set; }
+
+    public long LastWhimFulfilledAt { get; private set; }
+
+    public bool AreInteractionsLocked => Energy <= 0 || PetMoodUtility.RequiresRest(MoodState);
+
     /// <summary>
     ///     Applies the metadata provided by the server to this pet instance.
     /// </summary>
@@ -147,7 +155,10 @@ public sealed class Pet : Entity
         int[]? statPointAllocations,
         int energy,
         int mood,
-        int maturity
+        int maturity,
+        PetMood moodState,
+        int whimsFulfilled,
+        long lastWhimFulfilledAt
     )
     {
         Experience = Math.Max(0, experience);
@@ -167,6 +178,15 @@ public sealed class Pet : Entity
         Energy = ClampAttribute(energy, Descriptor?.BaseEnergy ?? DefaultAttributeCap);
         Mood = ClampAttribute(mood, Descriptor?.BaseMood ?? DefaultAttributeCap);
         Maturity = ClampAttribute(maturity, Descriptor?.BaseMaturity ?? DefaultAttributeCap);
+
+        if (!Enum.IsDefined(typeof(PetMood), moodState))
+        {
+            moodState = PetMoodUtility.FromAttribute(Mood, Descriptor?.BaseMood ?? DefaultAttributeCap);
+        }
+
+        MoodState = moodState;
+        WhimsFulfilled = Math.Max(0, whimsFulfilled);
+        LastWhimFulfilledAt = Math.Max(0, lastWhimFulfilledAt);
 
         Globals.NotifyPetProgressApplied(this);
     }
@@ -188,6 +208,9 @@ public sealed class Pet : Entity
         Energy = 0;
         Mood = 0;
         Maturity = 0;
+        MoodState = PetMood.Content;
+        WhimsFulfilled = 0;
+        LastWhimFulfilledAt = 0;
     }
 
     /// <inheritdoc />

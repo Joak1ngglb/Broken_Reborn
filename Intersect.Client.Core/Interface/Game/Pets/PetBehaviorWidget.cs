@@ -23,6 +23,7 @@ public sealed class PetBehaviorWidget : RadioButtonGroup
 
     private readonly Dictionary<PetState, LabeledRadioButton> _options = new();
     private bool _suppressSelectionChanged;
+    private bool _interactionsLocked;
 
     public PetBehaviorWidget(Base parent) : base(parent)
     {
@@ -124,7 +125,7 @@ public sealed class PetBehaviorWidget : RadioButtonGroup
 
             foreach (var (behavior, option) in _options)
             {
-                option.IsDisabled = !hasPet;
+                option.IsDisabled = !hasPet || _interactionsLocked;
                 option.IsChecked = hasPet && activeBehavior == behavior;
             }
 
@@ -140,5 +141,16 @@ public sealed class PetBehaviorWidget : RadioButtonGroup
         {
             _suppressSelectionChanged = false;
         }
+    }
+
+    public void SetInteractionsLocked(bool locked)
+    {
+        if (_interactionsLocked == locked)
+        {
+            return;
+        }
+
+        _interactionsLocked = locked;
+        RefreshState();
     }
 }

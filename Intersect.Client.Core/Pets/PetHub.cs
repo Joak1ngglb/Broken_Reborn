@@ -123,11 +123,16 @@ public sealed class PetHub
                 return false;
             }
 
+            if (_activePet is Pet activePet && activePet.AreInteractionsLocked)
+            {
+                return false;
+            }
+
             _invokeRequested = true;
             petName = GetEquippedPetDisplayName();
         }
 
-        Intersect.Client.Networking. Network.SendPacket(new SpawnPetRequestPacket(openPetHub));
+        Intersect.Client.Networking.Network.SendPacket(new SpawnPetRequestPacket(openPetHub));
         QueuePetMessage(Strings.Pets.SummonRequested, petName);
         return true;
     }
@@ -147,7 +152,7 @@ public sealed class PetHub
             petName = GetEquippedPetDisplayName();
         }
 
-        Intersect.Client.Networking. Network.SendPacket(new DespawnPetRequestPacket(closePetHub));
+        Intersect.Client.Networking.Network.SendPacket(new DespawnPetRequestPacket(closePetHub));
         QueuePetMessage(Strings.Pets.DismissRequested, petName);
         return true;
     }
@@ -484,6 +489,11 @@ RaiseEvents:
                 return false;
             }
 
+            if (pet is Pet typedPet && typedPet.AreInteractionsLocked)
+            {
+                return false;
+            }
+
             if (pet.IsDisposed)
             {
                 petToClear = pet.Id;
@@ -746,6 +756,14 @@ RaiseEvents:
 
         public int Maturity { get; init; }
 
+        public PetMood MoodState { get; init; }
+
+        public int WhimsFulfilled { get; init; }
+
+        public long LastWhimFulfilledAt { get; init; }
+
+        public bool LockActions { get; init; }
+
         public PetProgressSnapshot Clone() => new()
         {
             PetId = PetId,
@@ -757,6 +775,10 @@ RaiseEvents:
             Energy = Energy,
             Mood = Mood,
             Maturity = Maturity,
+            MoodState = MoodState,
+            WhimsFulfilled = WhimsFulfilled,
+            LastWhimFulfilledAt = LastWhimFulfilledAt,
+            LockActions = LockActions,
         };
     }
 
@@ -771,6 +793,10 @@ RaiseEvents:
         Energy = pet.Energy,
         Mood = pet.Mood,
         Maturity = pet.Maturity,
+        MoodState = pet.MoodState,
+        WhimsFulfilled = pet.WhimsFulfilled,
+        LastWhimFulfilledAt = pet.LastWhimFulfilledAt,
+        LockActions = pet.AreInteractionsLocked,
     };
 
     private PetProgressSnapshot? GetSnapshot(Guid petId)

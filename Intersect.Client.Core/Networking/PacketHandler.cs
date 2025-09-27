@@ -492,7 +492,10 @@ internal sealed partial class PacketHandler
             packet.StatPointAllocations,
             packet.Energy,
             packet.Mood,
-            packet.Maturity
+            packet.Maturity,
+            packet.MoodState,
+            packet.WhimsFulfilled,
+            packet.LastWhimFulfilledAt
         );
     }
 

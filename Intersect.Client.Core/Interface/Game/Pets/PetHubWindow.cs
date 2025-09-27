@@ -209,6 +209,7 @@ namespace Intersect.Client.Interface.Game.Pets
             Globals.PetHub.ActivePetChanged += OnPetHubStateChanged;
             Globals.PetHub.BehaviorChanged += OnPetHubStateChanged;
             Globals.PetHub.SpawnStateChanged += OnPetHubStateChanged;
+            Globals.PetProgressChanged += OnPetProgressChanged;
         }
 
         protected override void OnClose(Base control, EventArgs args)
@@ -234,6 +235,7 @@ namespace Intersect.Client.Interface.Game.Pets
                 Globals.PetHub.ActivePetChanged -= OnPetHubStateChanged;
                 Globals.PetHub.BehaviorChanged -= OnPetHubStateChanged;
                 Globals.PetHub.SpawnStateChanged -= OnPetHubStateChanged;
+                Globals.PetProgressChanged -= OnPetProgressChanged;
             }
 
             base.Dispose(disposing);
@@ -241,6 +243,21 @@ namespace Intersect.Client.Interface.Game.Pets
 
         private void OnPetHubStateChanged()
         {
+            RefreshState();
+        }
+
+        private void OnPetProgressChanged(Pet pet)
+        {
+            if (pet == null)
+            {
+                return;
+            }
+
+            if (Globals.PetHub.ActivePet is not Pet active || active.Id != pet.Id)
+            {
+                return;
+            }
+
             RefreshState();
         }
 
@@ -265,8 +282,11 @@ namespace Intersect.Client.Interface.Game.Pets
             _behaviorWidget.IsHidden = !hasPet;
 
             // Según tu semántica previa: invocar deshabilitado si ya está solicitada/activa; dismiss habilitado cuando está activa
-            _invokeButton.IsDisabled = isSpawnRequested;
+            var interactionsLocked = pet.AreInteractionsLocked;
+
+            _invokeButton.IsDisabled = isSpawnRequested || interactionsLocked;
             _dismissButton.IsDisabled = !isSpawnRequested;
+            _behaviorWidget.SetInteractionsLocked(interactionsLocked);
 
             if (!hasPet || pet == null)
             {
@@ -346,7 +366,14 @@ namespace Intersect.Client.Interface.Game.Pets
             _energyLabel.Text = Strings.Pets.EnergyLabel.ToString(pet.Energy, energyCap);
             _energyLabel.IsHidden = false;
 
-            _moodLabel.Text = Strings.Pets.MoodLabel.ToString(pet.Mood, moodCap);
+            var moodLabel = Strings.Pets.MoodLabel.ToString(pet.Mood, moodCap);
+            var moodStateName = pet.MoodState.ToString();
+            if (!string.IsNullOrWhiteSpace(moodStateName))
+            {
+                moodLabel = $"{moodLabel} ({moodStateName})";
+            }
+
+            _moodLabel.Text = moodLabel;
             _moodLabel.IsHidden = false;
 
             _maturityLabel.Text = Strings.Pets.MaturityLabel.ToString(pet.Maturity, maturityCap);

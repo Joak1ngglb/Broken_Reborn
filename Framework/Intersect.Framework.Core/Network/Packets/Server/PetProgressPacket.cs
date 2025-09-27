@@ -1,4 +1,5 @@
 using System;
+using Intersect.Framework.Core.GameObjects.Pets;
 using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
@@ -22,7 +23,10 @@ public sealed class PetProgressPacket : IntersectPacket
         int[] statPointAllocations,
         int energy,
         int mood,
-        int maturity
+        int maturity,
+        PetMood moodState,
+        int whimsFulfilled,
+        long lastWhimFulfilledAt
     )
     {
         PetId = petId;
@@ -33,6 +37,9 @@ public sealed class PetProgressPacket : IntersectPacket
         Energy = energy;
         Mood = mood;
         Maturity = maturity;
+        MoodState = moodState;
+        WhimsFulfilled = whimsFulfilled;
+        LastWhimFulfilledAt = lastWhimFulfilledAt;
     }
 
     [Key(0)]
@@ -58,4 +65,13 @@ public sealed class PetProgressPacket : IntersectPacket
 
     [Key(7)]
     public int Maturity { get; set; }
+
+    [Key(8)]
+    public PetMood MoodState { get; set; }
+
+    [Key(9)]
+    public int WhimsFulfilled { get; set; }
+
+    [Key(10)]
+    public long LastWhimFulfilledAt { get; set; }
 }

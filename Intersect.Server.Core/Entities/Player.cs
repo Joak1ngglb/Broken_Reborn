@@ -1359,6 +1359,8 @@ public partial class Player : Entity
         playerPet.Energy = pet.Energy;
         playerPet.Mood = pet.Mood;
         playerPet.Maturity = pet.Maturity;
+        playerPet.WhimsFulfilled = pet.WhimsFulfilled;
+        playerPet.LastWhimFulfilledAt = pet.LastWhimFulfilledAt;
 
         var statCount = Enum.GetValues<Stat>().Length;
         for (var index = 0; index < statCount; index++)
@@ -1569,6 +1571,16 @@ public partial class Player : Entity
         return true;
     }
 
+    public void RegisterPetWhimFulfilled(Pet pet)
+    {
+        if (pet == null || pet.OwnerId != Id)
+        {
+            return;
+        }
+
+        pet.RegisterWhimFulfillment();
+    }
+
     public bool DismissActivePet(bool closePetHub = false)
     {
         // 1) Disable the hub flag so UpdatePetState does not respawn the pet automatically.
@@ -1774,6 +1786,8 @@ public partial class Player : Entity
                 Pet.MinAttributeValue,
                 Math.Max(Pet.MaxAttributeValue, descriptor.BaseMaturity)
             ),
+            WhimsFulfilled = 0,
+            LastWhimFulfilledAt = 0,
         };
 
         var initialName = petData.PetNameOverride;
@@ -1839,6 +1853,16 @@ public partial class Player : Entity
                 Pet.MinAttributeValue,
                 Math.Max(Pet.MaxAttributeValue, baseMaturity)
             );
+        }
+
+        if (playerPet.WhimsFulfilled < 0)
+        {
+            playerPet.WhimsFulfilled = 0;
+        }
+
+        if (playerPet.LastWhimFulfilledAt < 0)
+        {
+            playerPet.LastWhimFulfilledAt = 0;
         }
 
         var baseStats = playerPet.BaseStats ?? Array.Empty<int>();
@@ -4616,6 +4640,30 @@ public partial class Player : Entity
             }
 
             var useEvent = itemBase.GetEventTrigger(ItemEventTrigger.OnUse);
+
+            if (target is Pet petTarget && petTarget.OwnerId == Id)
+            {
+                if (itemBase.ItemType == ItemType.Consumable && itemBase.Consumable != null)
+                {
+                    if (petTarget.AreInteractionsLocked)
+                    {
+                        return;
+                    }
+
+                    var energyDelta = (int)Math.Clamp(itemBase.Consumable.Value, -Pet.MaxAttributeValue, Pet.MaxAttributeValue);
+                    var moodDelta = Math.Clamp(itemBase.Consumable.Percentage, -Pet.MaxAttributeValue, Pet.MaxAttributeValue);
+
+                    if (petTarget.TryRegisterFeeding(energyDelta, moodDelta))
+                    {
+                        if (TryTakeItem(Items[slot], 1) && useEvent != default)
+                        {
+                            EnqueueStartCommonEvent(useEvent);
+                        }
+
+                        return;
+                    }
+                }
+            }
 
             switch (itemBase.ItemType)
             {

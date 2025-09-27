@@ -12,13 +12,14 @@ using Intersect.Network.Packets.Server;
 using Intersect.Server.AI.Pets;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities.Pathfinding;
+using Intersect.Server.Entities.Pets;
 using Intersect.Server.Framework.Items;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
 namespace Intersect.Server.Entities;
 
-public sealed class Pet : Entity
+public sealed class Pet : Entity, IPet
 {
     private const int FollowDistance = 1;
     private const long PathUpdateInterval = 100;
@@ -62,8 +63,12 @@ public sealed class Pet : Entity
     private int _energy;
     private int _mood;
     private int _maturity;
+    private int _whimsFulfilled;
+    private long _lastWhimFulfilledAt;
 
     public PetDescriptor Descriptor { get; private set; }
+
+    public PetCareBrain CareBrain { get; }
 
     public int ExperienceRate { get; private set; }
 
@@ -91,7 +96,17 @@ public sealed class Pet : Entity
 
     public int Mood => _mood;
 
+    public int MoodValue => _mood;
+
+    public PetMood MoodState => PetMoodUtility.FromAttribute(_mood, Descriptor?.BaseMood ?? MaxAttributeValue);
+
     public int Maturity => _maturity;
+
+    public int WhimsFulfilled => _whimsFulfilled;
+
+    public long LastWhimFulfilledAt => _lastWhimFulfilledAt;
+
+    public bool AreInteractionsLocked => Energy <= 0 || PetMoodUtility.RequiresRest(MoodState);
 
     private static int ClampAttribute(int value, int descriptorBase) =>
         Math.Clamp(value, MinAttributeValue, Math.Max(MaxAttributeValue, descriptorBase));
@@ -305,6 +320,7 @@ public sealed class Pet : Entity
         _pathfinder = new Pathfinder(this);
 
         Brain = new PetAIController(new PetRuntimeAdapter(this));
+        CareBrain = new PetCareBrain(this);
 
         Behavior = PetState.Follow;
 
@@ -377,6 +393,9 @@ public sealed class Pet : Entity
 
         var maturity = persistedPet.Maturity < 0 ? Descriptor.BaseMaturity : persistedPet.Maturity;
         SetMaturity(maturity, persist: false, notify: false);
+
+        _whimsFulfilled = Math.Max(0, persistedPet.WhimsFulfilled);
+        _lastWhimFulfilledAt = persistedPet.LastWhimFulfilledAt;
     }
 
     public override EntityType GetEntityType() => EntityType.Pet;
@@ -624,6 +643,52 @@ public sealed class Pet : Entity
 
         Brain.Update(timeMs);
     }
+
+    internal bool ApplyCareDeltas(int energyDelta, int moodDelta)
+    {
+        var changed = false;
+
+        if (energyDelta != 0)
+        {
+            changed |= ModifyEnergy(energyDelta, persist: false, notify: false);
+        }
+
+        if (moodDelta != 0)
+        {
+            changed |= ModifyMood(moodDelta, persist: false, notify: false);
+        }
+
+        return changed;
+    }
+
+    internal void FinalizeCareApplication(bool incrementWhim)
+    {
+        if (incrementWhim)
+        {
+            _whimsFulfilled++;
+            _lastWhimFulfilledAt = Timing.Global.Milliseconds;
+        }
+
+        PacketSender.SendPetProgress(this);
+        Owner?.PersistPetProgress(this);
+    }
+
+    public bool TryRegisterFeeding(int energyDelta, int moodDelta)
+    {
+        return CareBrain.TryRegisterFeeding(energyDelta, moodDelta);
+    }
+
+    public bool TryRegisterAffection(int moodDelta)
+    {
+        return CareBrain.TryRegisterAffection(moodDelta);
+    }
+
+    public void RegisterWhimFulfillment()
+    {
+        CareBrain.RegisterWhimFulfillment();
+    }
+
+    PetMood IPet.Mood => MoodState;
 
     public override void ProcessRegen()
     {
