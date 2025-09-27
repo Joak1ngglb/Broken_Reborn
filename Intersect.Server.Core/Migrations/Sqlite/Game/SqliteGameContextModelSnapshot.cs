@@ -651,6 +651,9 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                     b.Property<int>("ExperienceRate")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("FemaleSprite")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Folder")
                         .HasColumnType("TEXT");
 
@@ -688,6 +691,9 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                     b.Property<string>("SpellsJson")
                         .HasColumnType("TEXT")
                         .HasColumnName("Spells");
+
+                    b.Property<string>("MaleSprite")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Sprite")
                         .HasColumnType("TEXT");

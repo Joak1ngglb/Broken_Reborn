@@ -24,4 +24,7 @@ public sealed class PetEntityPacket : EntityPacket
 
     [Key(28)]
     public PetState Behavior { get; set; }
+
+    [Key(29)]
+    public PetGender Gender { get; set; }
 }

@@ -558,6 +558,21 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Property<string>("CustomName")
                         .HasColumnType("TEXT");
 
+                    b.Property<long>("CareMilliseconds")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0L);
+
+                    b.Property<int>("Energy")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(-1);
+
+                    b.Property<int>("Gender")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
                     b.Property<long>("Experience")
                         .HasColumnType("INTEGER");
 
@@ -567,6 +582,16 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Property<string>("MaxVitalsJson")
                         .HasColumnType("TEXT")
                         .HasColumnName("PetMaxVitals");
+
+                    b.Property<int>("Mood")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(-1);
+
+                    b.Property<int>("Maturity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(-1);
 
                     b.Property<Guid>("PetDescriptorId")
                         .HasColumnType("TEXT");
@@ -584,8 +609,18 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Property<int>("StatPoints")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long>("LastWhimFulfillmentTicks")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0L);
+
                     b.Property<long>("TimeCreated")
                         .HasColumnType("INTEGER");
+
+                    b.Property<int>("WhimsFulfilled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("VitalsJson")
                         .HasColumnType("TEXT")

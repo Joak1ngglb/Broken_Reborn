@@ -17,6 +17,7 @@ using Intersect.Server.Framework.Items;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.Utilities;
 namespace Intersect.Server.Entities;
 
 public sealed class Pet : Entity, IPet
@@ -109,6 +110,23 @@ public sealed class Pet : Entity, IPet
     public int WhimsFulfilled => _whimsFulfilled;
 
     public long LastWhimFulfillmentTicks => _lastWhimFulfillmentTicks;
+
+    private PetGender _gender = PetGender.Unspecified;
+
+    public PetGender Gender
+    {
+        get => _gender;
+        private set
+        {
+            if (_gender == value)
+            {
+                return;
+            }
+
+            _gender = value;
+            MarkMetadataDirty();
+        }
+    }
 
     public long CareMilliseconds => _totalCareMilliseconds;
 
@@ -333,6 +351,8 @@ public sealed class Pet : Entity, IPet
 
         PetInstanceId = persistedPet?.PetInstanceId ?? Guid.Empty;
 
+        InitializeGender(descriptor, persistedPet);
+
         ExperienceRate = Math.Max(0, descriptor.ExperienceRate);
         StatPointsPerLevel = Math.Max(0, descriptor.StatPointsPerLevel);
         MaxLevel = Math.Max(1, descriptor.MaxLevel);
@@ -355,7 +375,6 @@ public sealed class Pet : Entity, IPet
         Name = string.IsNullOrWhiteSpace(owner.ActivePet?.CustomName)
             ? descriptor.Name
             : owner.ActivePet.CustomName;
-        Sprite = descriptor.Sprite;
         Level = Math.Clamp(descriptor.Level, 1, Math.Max(1, MaxLevel));
         Immunities = descriptor.Immunities?.ToList() ?? [];
 
@@ -771,10 +790,46 @@ public sealed class Pet : Entity, IPet
         petPacket.DescriptorId = Descriptor.Id;
         petPacket.Behavior = Behavior;
         petPacket.Despawnable = Despawnable;
+        petPacket.Gender = Gender;
 
         ResetMetadataDirty();
 
         return petPacket;
+    }
+
+    private void InitializeGender(PetDescriptor descriptor, PlayerPet? persistedPet)
+    {
+        ArgumentNullException.ThrowIfNull(descriptor);
+
+        var resolvedGender = persistedPet?.Gender switch
+        {
+            PetGender.Male or PetGender.Female => persistedPet.Gender,
+            _ => Randomization.Next(0, 2) == 0 ? PetGender.Male : PetGender.Female,
+        };
+
+        Gender = resolvedGender;
+
+        ApplySprite(descriptor.GetSpriteForGender(Gender));
+
+        if (persistedPet != null && persistedPet.Gender != Gender)
+        {
+            persistedPet.Gender = Gender;
+
+            // Persist immediately so migrated pets retain their assigned gender.
+            Owner?.PersistPetProgress(this);
+        }
+    }
+
+    private void ApplySprite(string? sprite)
+    {
+        var resolvedSprite = sprite ?? string.Empty;
+        if (string.Equals(Sprite, resolvedSprite, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        Sprite = resolvedSprite;
+        MarkMetadataDirty();
     }
 
     public override void Update(long timeMs)

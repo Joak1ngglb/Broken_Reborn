@@ -1,3 +1,4 @@
+using Intersect.Enums;
 using Intersect.Extensions;
 using Intersect.Server.Database.PlayerData.Api;
 using Intersect.Server.Database.PlayerData.Migrations;
@@ -116,6 +117,7 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
         modelBuilder.Entity<PlayerPet>().Property(pet => pet.CareMilliseconds).HasDefaultValue(0L);
         modelBuilder.Entity<PlayerPet>().Property(pet => pet.WhimsFulfilled).HasDefaultValue(0);
         modelBuilder.Entity<PlayerPet>().Property(pet => pet.LastWhimFulfillmentTicks).HasDefaultValue(0L);
+        modelBuilder.Entity<PlayerPet>().Property(pet => pet.Gender).HasDefaultValue(PetGender.Unspecified);
         modelBuilder.Entity<Player>()
             .HasOne(p => p.ActivePet)
             .WithMany()
@@ -180,6 +182,11 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
         if (migrations.IndexOf("20220331140427_GuildBankMaxSlotsMigration") > -1)
         {
             GuildBankMaxSlotMigration.Run(this);
+        }
+
+        if (migrations.IndexOf("20240601000001_PlayerPetGenderMigration") > -1)
+        {
+            PlayerPetGenderMigration.Run(this);
         }
     }
 
