@@ -821,6 +821,24 @@ public static partial class Strings
         public static LocalizedString Sprite = @"Sprite:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Item = @"Item";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Quantity = @"Quantity";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString AllowOverflow = @"Allow bank overflow";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ReserveSpawn = @"Reserve spawn for player";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString GiveItem = @"Give Item";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SpawnItem = @"Spawn Item";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Title = @"Administration";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Intersect.Admin.Actions;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
@@ -11,6 +13,7 @@ using Intersect.Client.Interface.Shared;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Core;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Reflection;
 using Microsoft.Extensions.Logging;
@@ -27,6 +30,16 @@ public partial class AdminWindow : Window
 
     private readonly Panel _actionPanel;
     private readonly Table _actionTable;
+    private readonly Panel _itemActionPanel;
+    private readonly LabeledComboBox _itemDropdown;
+    private readonly Panel _itemQuantityPanel;
+    private readonly Label _itemQuantityLabel;
+    private readonly TextBoxNumeric _itemQuantityInput;
+    private readonly LabeledCheckBox _itemOverflowCheckbox;
+    private readonly LabeledCheckBox _itemReserveCheckbox;
+    private readonly Panel _itemButtonsPanel;
+    private readonly Button _giveItemButton;
+    private readonly Button _spawnItemButton;
     private readonly Button _banButton;
     private readonly IFont? _defaultFont;
     private readonly TexturePicker _faceTexturePicker;
@@ -93,6 +106,7 @@ public partial class AdminWindow : Window
             PlaceholderText = Strings.AdminWindow.NamePlaceholder,
         };
         Interface.FocusComponents.Add(_nameInput);
+        _nameInput.TextChanged += (_, _) => UpdateItemActionControls();
 
         #endregion Name Input
 
@@ -251,6 +265,106 @@ public partial class AdminWindow : Window
 
         #endregion Quick Admin Actions
 
+        #region Item Actions
+
+        _itemActionPanel = new Panel(this, nameof(_itemActionPanel))
+        {
+            Dock = Pos.Top,
+            ShouldDrawBackground = false,
+            Margin = new Margin(0, 8, 0, 0),
+        };
+
+        _itemDropdown = new LabeledComboBox(_itemActionPanel, nameof(_itemDropdown))
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            TextPadding = new Padding(8, 4, 0, 4),
+            Label = Strings.AdminWindow.Item,
+        };
+
+        PopulateItemDropdown();
+        _itemDropdown.ItemSelected += (_, _) => UpdateItemActionControls();
+
+        _itemQuantityPanel = new Panel(_itemActionPanel, nameof(_itemQuantityPanel))
+        {
+            Dock = Pos.Top,
+            ShouldDrawBackground = false,
+            Margin = new Margin(0, 4, 0, 0),
+        };
+
+        _itemQuantityLabel = new Label(_itemQuantityPanel, nameof(_itemQuantityLabel))
+        {
+            Dock = Pos.Left,
+            Font = _defaultFont,
+            FontSize = 12,
+            Margin = new Margin(0, 0, 4, 0),
+            Text = Strings.AdminWindow.Quantity,
+            TextAlign = Pos.Left | Pos.CenterV,
+        };
+
+        _itemQuantityInput = new TextBoxNumeric(_itemQuantityPanel, nameof(_itemQuantityInput))
+        {
+            Dock = Pos.Fill,
+            Font = _defaultFont,
+            FontSize = 12,
+            Padding = new Padding(8, 4),
+        };
+        _itemQuantityInput.SetRange(1, int.MaxValue);
+        _itemQuantityInput.Value = 1;
+        _itemQuantityInput.ValueChanged += (_, _) => UpdateItemActionControls();
+        Interface.FocusComponents.Add(_itemQuantityInput);
+
+        _itemOverflowCheckbox = new LabeledCheckBox(_itemActionPanel, nameof(_itemOverflowCheckbox))
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Margin = new Margin(0, 4, 0, 0),
+            Text = Strings.AdminWindow.AllowOverflow,
+        };
+
+        _itemReserveCheckbox = new LabeledCheckBox(_itemActionPanel, nameof(_itemReserveCheckbox))
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Margin = new Margin(0, 4, 0, 0),
+            Text = Strings.AdminWindow.ReserveSpawn,
+        };
+
+        _itemButtonsPanel = new Panel(_itemActionPanel, nameof(_itemButtonsPanel))
+        {
+            Dock = Pos.Top,
+            ShouldDrawBackground = false,
+            Margin = new Margin(0, 4, 0, 0),
+        };
+
+        _giveItemButton = new Button(_itemButtonsPanel, nameof(_giveItemButton))
+        {
+            Dock = Pos.Left,
+            Font = _defaultFont,
+            FontSize = 12,
+            MinimumSize = new Point(120, 0),
+            Padding = new Padding(8, 4),
+            Text = Strings.AdminWindow.GiveItem,
+            Margin = new Margin(0, 0, 8, 0),
+        };
+        _giveItemButton.Clicked += GiveItemButtonOnClicked;
+
+        _spawnItemButton = new Button(_itemButtonsPanel, nameof(_spawnItemButton))
+        {
+            Dock = Pos.Left,
+            Font = _defaultFont,
+            FontSize = 12,
+            MinimumSize = new Point(120, 0),
+            Padding = new Padding(8, 4),
+            Text = Strings.AdminWindow.SpawnItem,
+        };
+        _spawnItemButton.Clicked += SpawnItemButtonOnClicked;
+
+        #endregion Item Actions
+
         #region Sprite/Face Pickers
 
         _spriteTexturePicker = new TexturePicker(this, nameof(_spriteTexturePicker))
@@ -314,7 +428,36 @@ public partial class AdminWindow : Window
 
         #endregion Map List
 
+        UpdateItemActionControls();
+
         SkipRender();
+    }
+
+    private void PopulateItemDropdown()
+    {
+        _itemDropdown.ClearItems();
+
+        var noneItem = _itemDropdown.AddItem(Strings.AdminWindow.None, userData: Guid.Empty);
+
+        foreach (var descriptor in ItemDescriptor.Lookup.Values
+                     .OfType<ItemDescriptor>()
+                     .OrderBy(descriptor => descriptor?.Name ?? string.Empty, StringComparer.CurrentCultureIgnoreCase))
+        {
+            if (descriptor == null)
+            {
+                continue;
+            }
+
+            var displayName = descriptor.Name;
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                displayName = descriptor.Id.ToString();
+            }
+
+            _ = _itemDropdown.AddItem(displayName, userData: descriptor.Id);
+        }
+
+        _itemDropdown.SelectedItem = noneItem;
     }
 
     protected override void EnsureInitialized()
@@ -327,6 +470,52 @@ public partial class AdminWindow : Window
     }
 
     #region Action Handlers
+
+    private bool TryGetItemActionParameters(out string playerName, out Guid itemId, out int quantity)
+    {
+        playerName = PlayerName ?? string.Empty;
+        if (playerName.Length == 0)
+        {
+            itemId = Guid.Empty;
+            quantity = 0;
+            return false;
+        }
+
+        if (!(_itemDropdown.SelectedItem?.UserData is Guid selectedItemId) || selectedItemId == Guid.Empty)
+        {
+            itemId = Guid.Empty;
+            quantity = 0;
+            return false;
+        }
+
+        quantity = (int)Math.Max(1, Math.Round(_itemQuantityInput.Value));
+        itemId = selectedItemId;
+        return true;
+    }
+
+    private void GiveItemButtonOnClicked(Base sender, MouseButtonState args)
+    {
+        if (!TryGetItemActionParameters(out var playerName, out var itemId, out var quantity))
+        {
+            return;
+        }
+
+        PacketSender.SendAdminAction(
+            new GiveItemAction(playerName, itemId, quantity, _itemOverflowCheckbox.IsChecked)
+        );
+    }
+
+    private void SpawnItemButtonOnClicked(Base sender, MouseButtonState args)
+    {
+        if (!TryGetItemActionParameters(out var playerName, out var itemId, out var quantity))
+        {
+            return;
+        }
+
+        PacketSender.SendAdminAction(
+            new SpawnItemAction(playerName, itemId, quantity, _itemReserveCheckbox.IsChecked)
+        );
+    }
 
     private void UnbanButtonOnClicked(Base s, MouseButtonState e)
     {
@@ -401,7 +590,11 @@ public partial class AdminWindow : Window
     public string? PlayerName
     {
         get => _nameInput.Text?.Trim();
-        set => _nameInput.Text = value;
+        set
+        {
+            _nameInput.Text = value;
+            UpdateItemActionControls();
+        }
     }
 
     private void FaceTexturePickerOnSubmitted(TexturePicker sender, ValueChangedEventArgs<string?> arguments)
@@ -512,6 +705,23 @@ public partial class AdminWindow : Window
                 _banOrMuteWindow?.Dispose();
             }
         );
+    }
+
+    private void UpdateItemActionControls()
+    {
+        if (_giveItemButton == null || _spawnItemButton == null)
+        {
+            return;
+        }
+
+        var hasPlayer = PlayerName is { Length: > 0 };
+        var quantityValid = _itemQuantityInput?.Value >= 1;
+        var hasItem = _itemDropdown?.SelectedItem?.UserData is Guid selectedItemId && selectedItemId != Guid.Empty;
+
+        var shouldEnable = hasPlayer && quantityValid && hasItem;
+
+        _giveItemButton.IsDisabled = !shouldEnable;
+        _spawnItemButton.IsDisabled = !shouldEnable;
     }
 
     private void MapSortCheckboxOnCheckChanged(ICheckbox sender, ValueChangedEventArgs<bool> eventArgs)

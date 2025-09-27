@@ -1,11 +1,15 @@
+using System;
 using Intersect.Admin.Actions;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Server.Database;
 using Intersect.Server.Database.Logging.Entities;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Security;
 using Intersect.Server.Entities;
 using Intersect.Server.Localization;
 using Intersect.Server.Networking;
+using Intersect.Server.Maps;
 
 namespace Intersect.Server.Admin.Actions
 {
@@ -463,6 +467,156 @@ namespace Intersect.Server.Admin.Actions
                     target, Strings.Player.BeenWarpedTo.ToString(player.Name), ChatMessageType.Notice, player.Name
                 );
             }
+        }
+
+        //GiveItem
+        public static void ProcessAction(Player player, GiveItemAction action)
+        {
+            if (!player.Power.IsAdmin)
+            {
+                PacketSender.SendChatMsg(player, Strings.Account.NotAllowed, ChatMessageType.Admin, Color.Red);
+
+                return;
+            }
+
+            if (action.Quantity <= 0)
+            {
+                PacketSender.SendChatMsg(player, Strings.Player.InvalidQuantity, ChatMessageType.Admin, Color.Red);
+
+                return;
+            }
+
+            if (!ItemDescriptor.TryGet(action.ItemId, out var descriptor))
+            {
+                PacketSender.SendChatMsg(player, Strings.Player.InvalidItem, ChatMessageType.Admin, Color.Red);
+
+                return;
+            }
+
+            var target = Player.FindOnline(action.Name);
+            if (target == null)
+            {
+                PacketSender.SendChatMsg(player, Strings.Player.Offline, ChatMessageType.Admin, Color.Red);
+
+                return;
+            }
+
+            if (player.Power.CompareTo(target.Power) < 1)
+            {
+                PacketSender.SendChatMsg(
+                    player, Strings.Account.NotAllowed.ToString(target.Name), ChatMessageType.Admin, Color.Red
+                );
+
+                return;
+            }
+
+            var descriptorName = descriptor?.Name ?? action.ItemId.ToString();
+            if (!target.TryGiveItem(action.ItemId, action.Quantity, ItemHandling.Normal, action.AllowBankOverflow))
+            {
+                PacketSender.SendChatMsg(
+                    player,
+                    Strings.Player.ItemGiveFailed.ToString(action.Quantity, descriptorName, target.Name),
+                    ChatMessageType.Admin,
+                    Color.Red
+                );
+
+                return;
+            }
+
+            PacketSender.SendChatMsg(
+                player,
+                Strings.Player.ItemGiveSuccess.ToString(action.Quantity, descriptorName, target.Name),
+                ChatMessageType.Admin,
+                Color.Green
+            );
+
+            PacketSender.SendChatMsg(
+                target,
+                Strings.Player.ItemReceivedFromAdmin.ToString(player.Name, action.Quantity, descriptorName),
+                ChatMessageType.Admin,
+                Color.Green
+            );
+        }
+
+        //SpawnItem
+        public static void ProcessAction(Player player, SpawnItemAction action)
+        {
+            if (!player.Power.IsAdmin)
+            {
+                PacketSender.SendChatMsg(player, Strings.Account.NotAllowed, ChatMessageType.Admin, Color.Red);
+
+                return;
+            }
+
+            if (action.Quantity <= 0)
+            {
+                PacketSender.SendChatMsg(player, Strings.Player.InvalidQuantity, ChatMessageType.Admin, Color.Red);
+
+                return;
+            }
+
+            if (!ItemDescriptor.TryGet(action.ItemId, out var descriptor))
+            {
+                PacketSender.SendChatMsg(player, Strings.Player.InvalidItem, ChatMessageType.Admin, Color.Red);
+
+                return;
+            }
+
+            var target = Player.FindOnline(action.Name);
+            if (target == null)
+            {
+                PacketSender.SendChatMsg(player, Strings.Player.Offline, ChatMessageType.Admin, Color.Red);
+
+                return;
+            }
+
+            if (player.Power.CompareTo(target.Power) < 1)
+            {
+                PacketSender.SendChatMsg(
+                    player, Strings.Account.NotAllowed.ToString(target.Name), ChatMessageType.Admin, Color.Red
+                );
+
+                return;
+            }
+
+            if (!MapController.TryGetInstanceFromMap(target.MapId, target.MapInstanceId, out var mapInstance) ||
+                mapInstance == null)
+            {
+                var descriptorNameMissing = descriptor?.Name ?? action.ItemId.ToString();
+                PacketSender.SendChatMsg(
+                    player,
+                    Strings.Player.ItemSpawnFailed.ToString(action.Quantity, descriptorNameMissing, target.Name),
+                    ChatMessageType.Admin,
+                    Color.Red
+                );
+
+                return;
+            }
+
+            var descriptorName = descriptor?.Name ?? action.ItemId.ToString();
+            var spawnedItem = new Item(action.ItemId, action.Quantity);
+            mapInstance.SpawnItem(
+                null,
+                target.X,
+                target.Y,
+                spawnedItem,
+                action.Quantity,
+                action.ReserveForTarget ? target.Id : Guid.Empty
+            );
+
+            PacketSender.SendChatMsg(
+                player,
+                Strings.Player.ItemSpawnSuccess.ToString(action.Quantity, descriptorName, target.Name),
+                ChatMessageType.Admin,
+                Color.Green
+            );
+
+            PacketSender.SendChatMsg(
+                target,
+                Strings.Player.ItemSpawnedNearYou.ToString(player.Name, action.Quantity, descriptorName),
+                ChatMessageType.Admin,
+                Color.Green
+            );
         }
 
         //ReturnToOverworld
