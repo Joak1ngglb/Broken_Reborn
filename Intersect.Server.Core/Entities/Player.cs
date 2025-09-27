@@ -1369,7 +1369,8 @@ public partial class Player : Entity
 
         EnsurePlayerPetArraySizes(playerPet);
 
-        playerPet.Level = Math.Clamp(pet.Level, 1, pet.MaxLevel);
+        var maxLevel = Math.Max(1, pet.MaxLevel);
+        playerPet.Level = Math.Clamp(pet.Level, 1, maxLevel);
         playerPet.Experience = Math.Max(0, pet.Experience);
         playerPet.StatPoints = Math.Max(0, pet.StatPoints);
         playerPet.Energy = pet.Energy;
