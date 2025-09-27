@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.GameObjects;
 using Intersect.Models;
@@ -68,6 +69,16 @@ public partial class PetDescriptor : DatabaseObject<PetDescriptor>, IFolderable
     {
         get => AnimationDescriptor.Get(IdleAnimationId);
         set => IdleAnimationId = value?.Id ?? Guid.Empty;
+    }
+
+    [Column("FeedingItem")]
+    public Guid FeedingItemId { get; set; }
+
+    [NotMapped, JsonIgnore]
+    public ItemDescriptor? FeedingItem
+    {
+        get => ItemDescriptor.Get(FeedingItemId);
+        set => FeedingItemId = value?.Id ?? Guid.Empty;
     }
 
     public int AttackSpeedModifier { get; set; }

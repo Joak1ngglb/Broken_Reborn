@@ -12,6 +12,7 @@ using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Pets;
 using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.GameObjects;
@@ -270,6 +271,14 @@ public partial class FrmPet : EditorForm
             GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
         );
 
+        cmbFeedingItem.Items.Clear();
+        cmbFeedingItem.Items.Add(Strings.General.None);
+        cmbFeedingItem.Items.AddRange(ItemDescriptor.Names);
+        if (cmbFeedingItem.Items.Count > 0)
+        {
+            cmbFeedingItem.SelectedIndex = 0;
+        }
+
         cmbAttackAnimation.Items.Clear();
         cmbAttackAnimation.Items.Add(Strings.General.None);
         cmbAttackAnimation.Items.AddRange(AnimationDescriptor.Names);
@@ -344,6 +353,7 @@ public partial class FrmPet : EditorForm
         lblBaseEnergy.Text = Strings.Pets.baseenergy;
         lblBaseMood.Text = Strings.Pets.basemood;
         lblBaseMaturity.Text = Strings.Pets.basematurity;
+        lblFeedingItem.Text = Strings.Pets.feedingitem;
         lblPic.Text = Strings.Pets.sprite;
 
         grpStats.Text = Strings.Pets.stats;
@@ -450,6 +460,7 @@ public partial class FrmPet : EditorForm
             nudBaseEnergy.Value = Math.Max(nudBaseEnergy.Minimum, Math.Min(nudBaseEnergy.Maximum, _editorItem.BaseEnergy));
             nudBaseMood.Value = Math.Max(nudBaseMood.Minimum, Math.Min(nudBaseMood.Maximum, _editorItem.BaseMood));
             nudBaseMaturity.Value = Math.Max(nudBaseMaturity.Minimum, Math.Min(nudBaseMaturity.Maximum, _editorItem.BaseMaturity));
+            SetComboIndex(cmbFeedingItem, ItemDescriptor.ListIndex(_editorItem.FeedingItemId) + 1, 0);
             SetComboIndex(cmbAttackAnimation, AnimationDescriptor.ListIndex(_editorItem.AttackAnimationId) + 1, 0);
             SetComboIndex(cmbDeathAnimation, AnimationDescriptor.ListIndex(_editorItem.DeathAnimationId) + 1, 0);
             SetComboIndex(cmbDamageType, _editorItem.DamageType);
@@ -542,6 +553,19 @@ public partial class FrmPet : EditorForm
         }
 
         _editorItem.Sprite = TextUtils.SanitizeNone(cmbSprite.Text);
+    }
+
+    private void cmbFeedingItem_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || cmbFeedingItem.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        var selectedIndex = cmbFeedingItem.SelectedIndex;
+        _editorItem.FeedingItemId = selectedIndex <= 0
+            ? Guid.Empty
+            : ItemDescriptor.IdFromList(selectedIndex - 1);
     }
 
     private void nudHp_ValueChanged(object sender, EventArgs e) => UpdateVital(Vital.Health, nudHp);

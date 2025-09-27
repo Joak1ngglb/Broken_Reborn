@@ -4951,6 +4951,7 @@ Tick timer saved in server config.json.";
         public static LocalizedString basemood = @"Base Mood:";
 
         public static LocalizedString basematurity = @"Base Maturity:";
+        public static LocalizedString feedingitem = @"Feeding Item:";
 
         public static LocalizedString level = @"Level:";
 
