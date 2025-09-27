@@ -1738,8 +1738,10 @@ public partial class Player : Entity
         {
             playerPet = Pets.FirstOrDefault(pet => pet.PetInstanceId == instanceId);
         }
-
-        playerPet ??= Pets.FirstOrDefault(pet => pet.PetDescriptorId == descriptor.Id);
+        else
+        {
+            playerPet = Pets.FirstOrDefault(pet => pet.PetDescriptorId == descriptor.Id);
+        }
 
         if (playerPet == null)
         {
