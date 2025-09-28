@@ -23,17 +23,23 @@ namespace Intersect.Server.AI.Pets
         public int DefendTriggerRangeTiles { get; set; } = 8;    // rango para reaccionar al agresor
 
         // Curación y soporte
-        public int HealOwnerThresholdPercent { get; set; } = 50; // si dueño < 50% HP intenta curar
+        public int HealOwnerThresholdPercent { get; set; } = 50; // compatibilidad retro; usa histéresis
         public int HealSelfThresholdPercent { get; set; } = 40;  // si pet < 40% HP intenta curarse
         public int MinManaPercentToCast { get; set; } = 15;      // si mana < 15% evita castear
+        public int ManaReserveForEmergencyPercent { get; set; } = 20; // reserva para curas
+        public int HealOwnerThresholdEnterPercent { get; set; } = 50; // umbral activar
+        public int HealOwnerThresholdExitPercent { get; set; } = 60;  // umbral salir (histéresis)
 
         // Cadencias
         public long ThinkIntervalMs { get; set; } = 200;         // período de evaluación
         public long RetargetIntervalMs { get; set; } = 600;      // cambio de objetivo
         public long RepathIntervalMs { get; set; } = 250;        // mover/seguir
+        public long GlobalCooldownMs { get; set; } = 300;        // GCD general
 
         // Seguridad
         public bool NeverPullAggroAlone { get; set; } = true;    // si owner no está en combate, evita iniciar combates lejos
+        public int PanicFleeBelowSelfPercent { get; set; } = 20;
+        public int PanicFleeTiles { get; set; } = 3;
     }
 
     /// <summary>
@@ -50,12 +56,16 @@ namespace Intersect.Server.AI.Pets
 
         public Entity? CurrentTarget;
         public long CurrentTargetSince;
+
+        public readonly Dictionary<Guid, long> BlacklistUntil = new(); // entityId -> ms
+        public readonly Dictionary<Guid, int> Threat = new(); // entityId -> threat
     }
 
     public interface IPetBrain
     {
         void Update(long timeMs);
         void OnOwnerDamaged(Entity? attacker);
+        void OnHit(Entity attacker, int damage);
         void OnBehaviorChanged(PetState newBehavior);
         void OnDied();
         void Reset();
@@ -107,11 +117,18 @@ namespace Intersect.Server.AI.Pets
         // Cooldowns por spell
         private readonly Dictionary<Guid, long> _spellCdUntil = new();
 
+        private long _gcdUntilMs;
+        private bool _lastHealedOwner;
+        private int _consecutivePathFails;
+        private (int x, int y) _lastPos;
+
         public PetAIController(IPetRuntime pet, PetAIConfig? cfg = null)
         {
             _pet = pet ?? throw new ArgumentNullException(nameof(pet));
             _cfg = cfg ?? new PetAIConfig();
         }
+
+        public Action<string>? OnDebug { get; set; }
 
         public void Reset()
         {
@@ -123,6 +140,12 @@ namespace Intersect.Server.AI.Pets
             _bb.CurrentTarget = null;
             _bb.CurrentTargetSince = 0;
             _spellCdUntil.Clear();
+            _bb.BlacklistUntil.Clear();
+            _bb.Threat.Clear();
+            _gcdUntilMs = 0;
+            _lastHealedOwner = false;
+            _consecutivePathFails = 0;
+            _lastPos = default;
         }
 
         public void OnDied()
@@ -148,6 +171,18 @@ namespace Intersect.Server.AI.Pets
 
             _bb.LastOwnerAttacker = attacker;
             _bb.LastOwnerDamagedAt = Timing.Global.Milliseconds;
+            AddThreat(attacker, amount: 10);
+            Log($"Owner damaged by {attacker.Id}, threat now {_bb.Threat[attacker.Id]}");
+        }
+
+        public void OnHit(Entity attacker, int damage)
+        {
+            if (attacker == null || attacker.IsDisposed || attacker.IsDead)
+            {
+                return;
+            }
+
+            AddThreat(attacker, Math.Max(1, damage / 5));
         }
 
         public void Update(long timeMs)
@@ -181,6 +216,11 @@ namespace Intersect.Server.AI.Pets
 
             // 1) Curar (dueño o pet) si hace falta
             if (TryHealIfNeeded(owner))
+            {
+                return;
+            }
+
+            if (PanicFleeIfNecessary(owner))
             {
                 return;
             }
@@ -239,24 +279,40 @@ namespace Intersect.Server.AI.Pets
         // ---------- Decisiones de Curación ----------
         private bool TryHealIfNeeded(Player owner)
         {
-            // Evitar gastar maná muy bajo
-            if (Percent(_pet.Vitals[(int)Vital.Mana], _pet.MaxVitals[(int)Vital.Mana]) < _cfg.MinManaPercentToCast)
+            var manaPct = Percent(_pet.Vitals[(int)Vital.Mana], _pet.MaxVitals[(int)Vital.Mana]);
+            if (manaPct < _cfg.MinManaPercentToCast)
             {
                 return false;
             }
 
-            // ¿Se puede curar? (dueño primero)
             var ownerHpPct = Percent(owner.GetVital(Vital.Health), owner.GetMaxVital(Vital.Health));
-            if (ownerHpPct < _cfg.HealOwnerThresholdPercent)
+            var enterThreshold = _cfg.HealOwnerThresholdEnterPercent;
+            if (enterThreshold <= 0)
+            {
+                enterThreshold = _cfg.HealOwnerThresholdPercent;
+            }
+
+            var exitThreshold = _cfg.HealOwnerThresholdExitPercent;
+            if (exitThreshold <= 0)
+            {
+                exitThreshold = Math.Max(enterThreshold + 5, enterThreshold);
+            }
+
+            var needHealOwner = ownerHpPct < enterThreshold;
+            var safeOwner = ownerHpPct > exitThreshold;
+
+            if (needHealOwner || (_lastHealedOwner && !safeOwner))
             {
                 var heal = FindBestHealSpell(targetSelf: false);
                 if (heal != null && TryCastWithCd(heal, owner))
                 {
+                    _lastHealedOwner = true;
                     return true;
                 }
             }
 
-            // Curarse a sí misma si está mal
+            _lastHealedOwner = false;
+
             var selfHpPct = Percent(_pet.Vitals[(int)Vital.Health], _pet.MaxVitals[(int)Vital.Health]);
             if (selfHpPct < _cfg.HealSelfThresholdPercent)
             {
@@ -327,14 +383,12 @@ namespace Intersect.Server.AI.Pets
         // ---------- Selección de Objetivo ----------
         private void UpdateTarget(long timeMs, Player owner)
         {
-            // Si behavior es Passive/Stay, no mantener target
             if (_pet.Behavior is PetState.Passive or PetState.Stay)
             {
                 _bb.CurrentTarget = null;
                 return;
             }
 
-            // no retargetear tan seguido
             if (timeMs < _bb.LastRetargetTime + _cfg.RetargetIntervalMs)
             {
                 return;
@@ -342,47 +396,72 @@ namespace Intersect.Server.AI.Pets
 
             _bb.LastRetargetTime = timeMs;
 
-            // 1) Si el owner fue dañado recientemente, ese agresor tiene prioridad
-            var attacker = _bb.LastOwnerAttacker;
-            var recent = _bb.LastOwnerDamagedAt > 0 && (timeMs - _bb.LastOwnerDamagedAt) < Options.Instance.Combat.CombatTime;
-            if (recent && IsValidEnemy(attacker))
+            var now = timeMs;
+
+            var stickMs = 1500;
+            if (IsValidEnemy(_bb.CurrentTarget) && (now - _bb.CurrentTargetSince) < stickMs)
             {
-                _bb.CurrentTarget = attacker;
-                _bb.CurrentTargetSince = timeMs;
                 return;
             }
 
-            // 2) Si ya hay target pero murió o se fue muy lejos, límpialo
-            if (!IsValidEnemy(_bb.CurrentTarget))
+            if (_bb.CurrentTarget != null && IsBlacklisted(_bb.CurrentTarget, now))
             {
                 _bb.CurrentTarget = null;
             }
 
-            // 3) Si no hay target, busca uno cercano (si behavior lo permite)
-            if (_bb.CurrentTarget == null)
+            var recent = _bb.LastOwnerDamagedAt > 0 && (now - _bb.LastOwnerDamagedAt) < Options.Instance.Combat.CombatTime;
+            if (recent && IsValidEnemy(_bb.LastOwnerAttacker) && !IsBlacklisted(_bb.LastOwnerAttacker!, now))
             {
-                var ownerInCombat = owner.CombatTimer > Timing.Global.Milliseconds;
+                _bb.CurrentTarget = _bb.LastOwnerAttacker;
+                _bb.CurrentTargetSince = now;
+                Log($"Targeting owner's aggressor {_bb.CurrentTarget.Id}");
+                return;
+            }
 
-                // En Defend/Folllow, busca enemigos cerca del owner/pet
-                var candidates = NearbyHostiles(maxTiles: _cfg.ChaseRangeTiles)
-                    .OrderBy(e => TileDist(e.X, e.Y, owner.X, owner.Y))
-                    .ToArray();
+            var ownerTarget = owner.Target;
+            if (IsValidEnemy(ownerTarget) && !IsBlacklisted(ownerTarget!, now) &&
+                WithinTiles(ownerTarget!.X, ownerTarget.Y, owner.X, owner.Y, _cfg.DefendTriggerRangeTiles))
+            {
+                _bb.CurrentTarget = ownerTarget;
+                _bb.CurrentTargetSince = now;
+                AddThreat(ownerTarget!, 3);
+                Log($"Assisting owner on target {_bb.CurrentTarget.Id}");
+                return;
+            }
 
-                if (_cfg.NeverPullAggroAlone && !ownerInCombat)
-                {
-                    candidates = candidates.Where(e => WithinTiles(e.X, e.Y, owner.X, owner.Y, 3)).ToArray();
-                }
+            var ht = HighestThreatNearOwner(owner, _cfg.ChaseRangeTiles);
+            if (ht != null)
+            {
+                _bb.CurrentTarget = ht;
+                _bb.CurrentTargetSince = now;
+                Log($"Targeting highest threat {_bb.CurrentTarget.Id}");
+                return;
+            }
 
-                _bb.CurrentTarget = candidates.FirstOrDefault();
-                if (_bb.CurrentTarget != null)
-                {
-                    _bb.CurrentTargetSince = timeMs;
-                }
+            var ownerInCombat = owner.CombatTimer > Timing.Global.Milliseconds;
+            var candidates = NearbyHostiles(_cfg.ChaseRangeTiles)
+                .Where(e => !IsBlacklisted(e, now))
+                .OrderBy(e => TileDist(e.X, e.Y, owner.X, owner.Y))
+                .ToArray();
+
+            if (_cfg.NeverPullAggroAlone && !ownerInCombat)
+            {
+                candidates = candidates.Where(e => WithinTiles(e.X, e.Y, owner.X, owner.Y, 3)).ToArray();
+            }
+
+            _bb.CurrentTarget = candidates.FirstOrDefault();
+            if (_bb.CurrentTarget != null)
+            {
+                _bb.CurrentTargetSince = now;
+                Log($"Fallback targeting {_bb.CurrentTarget.Id}");
             }
         }
 
         private bool IsValidEnemy(Entity? e)
-            => e != null && !e.IsDisposed && !e.IsDead && _pet.Owner != null && !_pet.Owner.IsAllyOf(e);
+            => e != null && SameScene(e) && !e.IsDisposed && !e.IsDead && _pet.Owner != null && !_pet.Owner.IsAllyOf(e);
+
+        private bool SameScene(Entity e)
+            => e != null && e.MapId == _pet.MapId && e.MapInstanceId == _pet.MapInstanceId;
 
         private IEnumerable<Entity> NearbyHostiles(int maxTiles)
         {
@@ -394,6 +473,11 @@ namespace Intersect.Server.AI.Pets
             foreach (var entity in instance.GetEntities())
             {
                 if (entity == null || entity.IsDisposed || entity.IsDead)
+                {
+                    continue;
+                }
+
+                if (IsBlacklisted(entity, Timing.Global.Milliseconds))
                 {
                     continue;
                 }
@@ -421,6 +505,12 @@ namespace Intersect.Server.AI.Pets
                 return false;
             }
 
+            var owner = _pet.Owner;
+            if (owner == null)
+            {
+                return false;
+            }
+
             // ¿tenemos maná decente?
             if (Percent(_pet.Vitals[(int)Vital.Mana], _pet.MaxVitals[(int)Vital.Mana]) < _cfg.MinManaPercentToCast)
             {
@@ -428,22 +518,45 @@ namespace Intersect.Server.AI.Pets
                 return MoveIntoAttackRange(target);
             }
 
+            if (IsSafeZone())
+            {
+                _bb.CurrentTarget = null;
+                Log("In safe zone, clearing target");
+                return false;
+            }
+
             // elegir spell ofensivo
             var spell = FindBestAttackSpell(target);
-            if (spell != null && TryCastWithCd(spell, target))
+            if (spell != null && !FriendlyFireRisk(spell, _pet.Owner!, target) && TryCastWithCd(spell, target))
             {
                 return true;
             }
 
             // si no se pudo castear (rango/LOS), intenta posicionarse
-            return MoveIntoAttackRange(target);
+            var moved = MoveIntoAttackRange(target);
+
+            if (!moved && !_pet.IsInLineOfSight(target))
+            {
+                Blacklist(target, Timing.Global.Milliseconds, ms: 1000);
+                Log($"Blacklist {target.Id} for LOS");
+            }
+
+            return moved;
         }
 
         private bool MoveIntoAttackRange(Entity target)
         {
-            if (!WithinTiles(_pet.X, _pet.Y, target.X, target.Y, tiles: 1))
+            var preferDist = 2;
+            var dist = TileDist(_pet.X, _pet.Y, target.X, target.Y);
+
+            if (dist > preferDist)
             {
                 return MoveToward(target.X, target.Y);
+            }
+
+            if (dist < 1)
+            {
+                return _pet.TryStepAwayFrom(target, 1);
             }
 
             _pet.TryFace(target);
@@ -527,12 +640,28 @@ namespace Intersect.Server.AI.Pets
             }
 
             var now = Timing.Global.Milliseconds;
+            if (now < _gcdUntilMs)
+            {
+                return false;
+            }
+
             if (_spellCdUntil.TryGetValue(spell.Id, out var until) && now < until)
             {
                 return false;
             }
 
-            if (!_pet.CanCast(spell, out _))
+            if (!_pet.CanCast(spell, out var reason))
+            {
+                if (!string.IsNullOrEmpty(reason))
+                {
+                    Log($"Cannot cast {spell.Id}: {reason}");
+                }
+
+                return false;
+            }
+
+            var manaPct = Percent(_pet.Vitals[(int)Vital.Mana], _pet.MaxVitals[(int)Vital.Mana]);
+            if (manaPct < _cfg.ManaReserveForEmergencyPercent && IsOffensiveSpell(spell))
             {
                 return false;
             }
@@ -542,6 +671,8 @@ namespace Intersect.Server.AI.Pets
             {
                 var cdMs = Math.Max(0, spell.CooldownDuration);
                 _spellCdUntil[spell.Id] = now + cdMs;
+                _gcdUntilMs = now + _cfg.GlobalCooldownMs;
+                Log($"Cast {spell.Id} on {target?.Id}");
             }
 
             return ok;
@@ -573,7 +704,31 @@ namespace Intersect.Server.AI.Pets
 
             _bb.LastPathTime = now;
 
-            return _pet.TryMoveToward(tx, ty);
+            var ok = _pet.TryMoveToward(tx, ty);
+
+            if (!ok)
+            {
+                _consecutivePathFails++;
+                if (_bb.CurrentTarget is { } t && _consecutivePathFails >= 3)
+                {
+                    Blacklist(t, now, 1200);
+                    _consecutivePathFails = 0;
+                    Log($"Path failed, blacklisting {t.Id}");
+                }
+            }
+            else
+            {
+                _consecutivePathFails = 0;
+            }
+
+            if ((_pet.X, _pet.Y) == _lastPos && _bb.CurrentTarget is { } cur)
+            {
+                _pet.TryStepAwayFrom(cur, 1);
+            }
+
+            _lastPos = (_pet.X, _pet.Y);
+
+            return ok;
         }
 
         // ---------- Helpers geométricos ----------
@@ -585,5 +740,142 @@ namespace Intersect.Server.AI.Pets
 
         private static int Percent(long cur, long max)
             => max <= 0 ? 0 : (int)((cur * 100L) / max);
+
+        private void AddThreat(Entity e, int amount = 1)
+        {
+            if (e == null)
+            {
+                return;
+            }
+
+            if (!_bb.Threat.TryGetValue(e.Id, out var t))
+            {
+                t = 0;
+            }
+
+            _bb.Threat[e.Id] = Math.Clamp(t + amount, 0, 1_000_000);
+        }
+
+        private bool IsBlacklisted(Entity e, long now)
+            => _bb.BlacklistUntil.TryGetValue(e.Id, out var until) && now < until;
+
+        private void Blacklist(Entity e, long now, int ms = 2000)
+        {
+            _bb.BlacklistUntil[e.Id] = now + ms;
+        }
+
+        private Entity? HighestThreatNearOwner(Player owner, int maxTiles)
+        {
+            if (!MapController.TryGetInstanceFromMap(_pet.MapId, _pet.MapInstanceId, out var inst))
+            {
+                return null;
+            }
+
+            var now = Timing.Global.Milliseconds;
+
+            return inst.GetEntities()
+                .Where(e => IsValidEnemy(e) && !IsBlacklisted(e!, now))
+                .Where(e => WithinTiles(e.X, e.Y, owner.X, owner.Y, maxTiles))
+                .OrderByDescending(e => _bb.Threat.TryGetValue(e.Id, out var t) ? t : 0)
+                .ThenBy(e => TileDist(e.X, e.Y, owner.X, owner.Y))
+                .FirstOrDefault();
+        }
+
+        private bool IsSafeZone()
+        {
+            var controller = MapController.Get(_pet.MapId);
+            return controller?.ZoneType == MapZone.Safe;
+        }
+
+        private bool FriendlyFireRisk(SpellDescriptor s, Player owner, Entity target)
+        {
+            if (s?.Combat == null)
+            {
+                return false;
+            }
+
+            if (s.Combat.Friendly)
+            {
+                return false;
+            }
+
+            var range = s.Combat.GetEffectiveCastRange(null);
+            if (range <= 0)
+            {
+                range = 1;
+            }
+
+            if (s.Combat.TargetType is SpellTargetType.AoE or SpellTargetType.Projectile)
+            {
+                if (WithinTiles(owner.X, owner.Y, target.X, target.Y, Math.Max(1, range)))
+                {
+                    return true;
+                }
+
+                if (MapController.TryGetInstanceFromMap(_pet.MapId, _pet.MapInstanceId, out var inst))
+                {
+                    foreach (var entity in inst.GetEntities())
+                    {
+                        if (entity == null || entity.IsDisposed || entity.IsDead)
+                        {
+                            continue;
+                        }
+
+                        if (!owner.IsAllyOf(entity))
+                        {
+                            continue;
+                        }
+
+                        if (WithinTiles(entity.X, entity.Y, target.X, target.Y, Math.Max(1, range)))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool PanicFleeIfNecessary(Player owner)
+        {
+            var hpPct = Percent(_pet.Vitals[(int)Vital.Health], _pet.MaxVitals[(int)Vital.Health]);
+            if (hpPct >= _cfg.PanicFleeBelowSelfPercent)
+            {
+                return false;
+            }
+
+            var shield = _pet.GetUsableSpells().FirstOrDefault(IsDefensiveBuff);
+            if (shield != null && TryCastWithCd(shield, _pet as Entity))
+            {
+                Log("Panic defensive buff");
+                return true;
+            }
+
+            if (MoveToward(owner.X, owner.Y))
+            {
+                Log("Panic flee toward owner");
+                return true;
+            }
+
+            if (_bb.CurrentTarget != null && _pet.TryStepAwayFrom(_bb.CurrentTarget, _cfg.PanicFleeTiles))
+            {
+                Log("Panic step away from target");
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsDefensiveBuff(SpellDescriptor s)
+        {
+            return s?.Combat != null && s.Combat.Friendly && s.Combat.TargetType == SpellTargetType.Self &&
+                   (s.Combat.ArmorDiff > 0 || s.Combat.ResistDiff > 0 || s.Combat.BarrierAmount > 0);
+        }
+
+        private void Log(string msg)
+        {
+            OnDebug?.Invoke($"[PetAI {_pet.Id}] {msg}");
+        }
     }
 }
