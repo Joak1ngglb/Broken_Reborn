@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Intersect.Admin.Actions;
 using Intersect.Client.Core;
@@ -23,6 +24,8 @@ namespace Intersect.Client.Interface.Game.Admin;
 
 public partial class AdminWindow : Window
 {
+    private const int MailAttachmentSlotCount = BroadcastMailAction.MaxAttachments;
+
     private readonly LabeledComboBox _accessDropdown;
 
     private readonly Panel _accessPanel;
@@ -40,6 +43,17 @@ public partial class AdminWindow : Window
     private readonly Panel _itemButtonsPanel;
     private readonly Button _giveItemButton;
     private readonly Button _spawnItemButton;
+    private readonly Panel _mailBroadcastPanel;
+    private readonly Label _mailBroadcastHeader;
+    private readonly Label _mailSubjectLabel;
+    private readonly TextBox _mailSubjectInput;
+    private readonly Label _mailMessageLabel;
+    private readonly MultilineTextBox _mailMessageInput;
+    private readonly LabeledComboBox[] _mailAttachmentDropdowns;
+    private readonly TextBoxNumeric[] _mailAttachmentQuantityInputs;
+    private readonly LabeledCheckBox _mailOnlineOnlyCheckbox;
+    private readonly Panel _mailButtonsPanel;
+    private readonly Button _mailSendButton;
     private readonly Button _banButton;
     private readonly IFont? _defaultFont;
     private readonly TexturePicker _faceTexturePicker;
@@ -81,6 +95,9 @@ public partial class AdminWindow : Window
         MinimumSize = new Point(396, 600);
         InnerPanelPadding = new Padding(8);
         InnerPanel.DockChildSpacing = new Padding(8);
+
+        _mailAttachmentDropdowns = new LabeledComboBox[MailAttachmentSlotCount];
+        _mailAttachmentQuantityInputs = new TextBoxNumeric[MailAttachmentSlotCount];
 
         #region Name Input
 
@@ -283,7 +300,7 @@ public partial class AdminWindow : Window
             Label = Strings.AdminWindow.Item,
         };
 
-        PopulateItemDropdown();
+        PopulateItemDropdown(_itemDropdown);
         _itemDropdown.ItemSelected += (_, _) => UpdateItemActionControls();
 
         _itemQuantityPanel = new Panel(_itemActionPanel, nameof(_itemQuantityPanel))
@@ -365,6 +382,148 @@ public partial class AdminWindow : Window
 
         #endregion Item Actions
 
+        #region Mail Broadcast
+
+        _mailBroadcastPanel = new Panel(this, nameof(_mailBroadcastPanel))
+        {
+            Dock = Pos.Top,
+            ShouldDrawBackground = false,
+            Margin = new Margin(0, 8, 0, 0),
+        };
+
+        _mailBroadcastHeader = new Label(_mailBroadcastPanel, nameof(_mailBroadcastHeader))
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Text = Strings.AdminWindow.MailBroadcast,
+        };
+
+        _mailSubjectLabel = new Label(_mailBroadcastPanel, nameof(_mailSubjectLabel))
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Margin = new Margin(0, 4, 0, 0),
+            Text = Strings.AdminWindow.MailSubject,
+        };
+
+        _mailSubjectInput = new TextBox(_mailBroadcastPanel, nameof(_mailSubjectInput))
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Margin = new Margin(0, 4, 0, 0),
+        };
+        Interface.FocusComponents.Add(_mailSubjectInput);
+        _mailSubjectInput.TextChanged += (_, _) => UpdateItemActionControls();
+
+        _mailMessageLabel = new Label(_mailBroadcastPanel, nameof(_mailMessageLabel))
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Margin = new Margin(0, 4, 0, 0),
+            Text = Strings.AdminWindow.MailMessage,
+        };
+
+        _mailMessageInput = new MultilineTextBox(_mailBroadcastPanel)
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Margin = new Margin(0, 4, 0, 0),
+        };
+        _mailMessageInput.Name = nameof(_mailMessageInput);
+        _mailMessageInput.Height = 120;
+        _mailMessageInput.TextChanged += (_, _) => UpdateItemActionControls();
+        Interface.FocusComponents.Add(_mailMessageInput);
+
+        for (var index = 0; index < MailAttachmentSlotCount; index++)
+        {
+            var dropdown = new LabeledComboBox(
+                _mailBroadcastPanel,
+                $"{nameof(_mailAttachmentDropdowns)}{index}"
+            )
+            {
+                Dock = Pos.Top,
+                Font = _defaultFont,
+                FontSize = 12,
+                Margin = new Margin(0, 4, 0, 0),
+                TextPadding = new Padding(8, 4, 0, 4),
+                Label = Strings.AdminWindow.MailAttachmentItem.ToString(index + 1),
+            };
+            PopulateItemDropdown(dropdown);
+            dropdown.ItemSelected += (_, _) => UpdateItemActionControls();
+            Interface.FocusComponents.Add(dropdown);
+            _mailAttachmentDropdowns[index] = dropdown;
+
+            var quantityPanel = new Panel(
+                _mailBroadcastPanel,
+                $"{nameof(_mailAttachmentQuantityInputs)}Panel{index}"
+            )
+            {
+                Dock = Pos.Top,
+                ShouldDrawBackground = false,
+                Margin = new Margin(0, 4, 0, 0),
+            };
+
+            _ = new Label(quantityPanel, $"{nameof(_mailAttachmentQuantityInputs)}Label{index}")
+            {
+                Dock = Pos.Left,
+                Font = _defaultFont,
+                FontSize = 12,
+                Margin = new Margin(0, 0, 4, 0),
+                Text = Strings.AdminWindow.MailAttachmentQuantity.ToString(index + 1),
+                TextAlign = Pos.Left | Pos.CenterV,
+            };
+
+            var quantityInput = new TextBoxNumeric(
+                quantityPanel,
+                $"{nameof(_mailAttachmentQuantityInputs)}{index}"
+            )
+            {
+                Dock = Pos.Fill,
+                Font = _defaultFont,
+                FontSize = 12,
+                Padding = new Padding(8, 4),
+            };
+            quantityInput.SetRange(1, int.MaxValue);
+            quantityInput.Value = 1;
+            quantityInput.ValueChanged += (_, _) => UpdateItemActionControls();
+            Interface.FocusComponents.Add(quantityInput);
+            _mailAttachmentQuantityInputs[index] = quantityInput;
+        }
+
+        _mailOnlineOnlyCheckbox = new LabeledCheckBox(_mailBroadcastPanel, nameof(_mailOnlineOnlyCheckbox))
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Margin = new Margin(0, 4, 0, 0),
+            Text = Strings.AdminWindow.MailOnlineOnly,
+        };
+
+        _mailButtonsPanel = new Panel(_mailBroadcastPanel, nameof(_mailButtonsPanel))
+        {
+            Dock = Pos.Top,
+            ShouldDrawBackground = false,
+            Margin = new Margin(0, 4, 0, 0),
+        };
+
+        _mailSendButton = new Button(_mailButtonsPanel, nameof(_mailSendButton))
+        {
+            Dock = Pos.Left,
+            Font = _defaultFont,
+            FontSize = 12,
+            MinimumSize = new Point(120, 0),
+            Padding = new Padding(8, 4),
+            Text = Strings.AdminWindow.MailSend,
+        };
+        _mailSendButton.Clicked += SendMailBroadcastButtonOnClicked;
+
+        #endregion Mail Broadcast
+
         #region Sprite/Face Pickers
 
         _spriteTexturePicker = new TexturePicker(this, nameof(_spriteTexturePicker))
@@ -433,11 +592,11 @@ public partial class AdminWindow : Window
         SkipRender();
     }
 
-    private void PopulateItemDropdown()
+    private void PopulateItemDropdown(LabeledComboBox dropdown)
     {
-        _itemDropdown.ClearItems();
+        dropdown.ClearItems();
 
-        var noneItem = _itemDropdown.AddItem(Strings.AdminWindow.None, userData: Guid.Empty);
+        var noneItem = dropdown.AddItem(Strings.AdminWindow.None, userData: Guid.Empty);
 
         foreach (var descriptor in ItemDescriptor.Lookup.Values
                      .OfType<ItemDescriptor>()
@@ -454,10 +613,10 @@ public partial class AdminWindow : Window
                 displayName = descriptor.Id.ToString();
             }
 
-            _ = _itemDropdown.AddItem(displayName, userData: descriptor.Id);
+            _ = dropdown.AddItem(displayName, userData: descriptor.Id);
         }
 
-        _itemDropdown.SelectedItem = noneItem;
+        dropdown.SelectedItem = noneItem;
     }
 
     protected override void EnsureInitialized()
@@ -515,6 +674,58 @@ public partial class AdminWindow : Window
         PacketSender.SendAdminAction(
             new SpawnItemAction(playerName, itemId, quantity, _itemReserveCheckbox.IsChecked)
         );
+    }
+
+    private void SendMailBroadcastButtonOnClicked(Base sender, MouseButtonState args)
+    {
+        var subject = _mailSubjectInput?.Text?.Trim() ?? string.Empty;
+        var message = _mailMessageInput?.Text?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(subject) || string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        var attachments = CollectMailBroadcastAttachments();
+        if (attachments.Count == 0)
+        {
+            return;
+        }
+
+        PacketSender.SendAdminAction(
+            new BroadcastMailAction(
+                subject,
+                message,
+                attachments,
+                _mailOnlineOnlyCheckbox?.IsChecked ?? false
+            )
+        );
+    }
+
+    private List<BroadcastMailAttachment> CollectMailBroadcastAttachments()
+    {
+        var attachments = new List<BroadcastMailAttachment>();
+
+        for (var index = 0; index < _mailAttachmentDropdowns.Length; index++)
+        {
+            var dropdown = _mailAttachmentDropdowns[index];
+            var quantityInput = _mailAttachmentQuantityInputs[index];
+
+            if (!(dropdown?.SelectedItem?.UserData is Guid itemId) || itemId == Guid.Empty)
+            {
+                continue;
+            }
+
+            var quantity = (int)Math.Max(1, Math.Round(quantityInput?.Value ?? 0));
+            if (quantity <= 0)
+            {
+                continue;
+            }
+
+            attachments.Add(new BroadcastMailAttachment(itemId, quantity));
+        }
+
+        return attachments;
     }
 
     private void UnbanButtonOnClicked(Base s, MouseButtonState e)
@@ -709,19 +920,46 @@ public partial class AdminWindow : Window
 
     private void UpdateItemActionControls()
     {
-        if (_giveItemButton == null || _spawnItemButton == null)
+        if (_giveItemButton != null && _spawnItemButton != null)
         {
-            return;
+            var hasPlayer = PlayerName is { Length: > 0 };
+            var quantityValid = _itemQuantityInput?.Value >= 1;
+            var hasItem = _itemDropdown?.SelectedItem?.UserData is Guid selectedItemId && selectedItemId != Guid.Empty;
+
+            var shouldEnable = hasPlayer && quantityValid && hasItem;
+
+            _giveItemButton.IsDisabled = !shouldEnable;
+            _spawnItemButton.IsDisabled = !shouldEnable;
         }
 
-        var hasPlayer = PlayerName is { Length: > 0 };
-        var quantityValid = _itemQuantityInput?.Value >= 1;
-        var hasItem = _itemDropdown?.SelectedItem?.UserData is Guid selectedItemId && selectedItemId != Guid.Empty;
+        if (_mailSendButton != null)
+        {
+            var hasSubject = !string.IsNullOrWhiteSpace(_mailSubjectInput?.Text);
+            var hasMessage = !string.IsNullOrWhiteSpace(_mailMessageInput?.Text);
+            var hasAttachmentItem = false;
+            var quantitiesValid = true;
 
-        var shouldEnable = hasPlayer && quantityValid && hasItem;
+            for (var index = 0; index < _mailAttachmentDropdowns.Length; index++)
+            {
+                var dropdown = _mailAttachmentDropdowns[index];
+                var quantityInput = _mailAttachmentQuantityInputs[index];
 
-        _giveItemButton.IsDisabled = !shouldEnable;
-        _spawnItemButton.IsDisabled = !shouldEnable;
+                if (!(dropdown?.SelectedItem?.UserData is Guid attachmentItemId) || attachmentItemId == Guid.Empty)
+                {
+                    continue;
+                }
+
+                hasAttachmentItem = true;
+
+                if ((quantityInput?.Value ?? 0) < 1)
+                {
+                    quantitiesValid = false;
+                    break;
+                }
+            }
+
+            _mailSendButton.IsDisabled = !(hasSubject && hasMessage && hasAttachmentItem && quantitiesValid);
+        }
     }
 
     private void MapSortCheckboxOnCheckChanged(ICheckbox sender, ValueChangedEventArgs<bool> eventArgs)

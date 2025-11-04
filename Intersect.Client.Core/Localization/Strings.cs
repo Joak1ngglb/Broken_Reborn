@@ -839,6 +839,27 @@ public static partial class Strings
         public static LocalizedString SpawnItem = @"Spawn Item";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MailBroadcast = @"Mail Broadcast";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MailSubject = @"Subject";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MailMessage = @"Message";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MailAttachmentItem = @"Attachment {00} item";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MailAttachmentQuantity = @"Attachment {00} quantity";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MailOnlineOnly = @"Only online players";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MailSend = @"Send Mail";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Title = @"Administration";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

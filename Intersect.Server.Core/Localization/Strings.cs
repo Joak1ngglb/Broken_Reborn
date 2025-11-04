@@ -1498,6 +1498,30 @@ public static partial class Strings
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString invaliditem = @"The selected item is invalid or cannot be attached to the mail.";
 
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastsent = @"Broadcast mail sent.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastfailed = @"Failed to send broadcast mail.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastmissingtitle = @"Mail subject is required.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastmissingmessage = @"Mail message is required.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastmissingitem = @"At least one mail attachment item is required.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastinvalidquantity = @"Mail attachment quantities must be greater than zero.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcasttoomanyattachments = @"Mail broadcast can include at most {00} attachment items.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastnorecipients = @"There were no recipients for the broadcast mail.";
+
     }
 
     public static MarketNamespace Market => Root.Market;

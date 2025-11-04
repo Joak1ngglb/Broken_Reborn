@@ -35,4 +35,6 @@ public enum AdminAction
     SpawnItem,
 
     ReturnToOverworld,
+
+    BroadcastMail,
 }

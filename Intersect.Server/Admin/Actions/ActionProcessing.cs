@@ -1,15 +1,20 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Intersect.Admin.Actions;
+using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Server.Database;
 using Intersect.Server.Database.Logging.Entities;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Security;
+using Intersect.Server.Core.Database.PlayerData.Players;
 using Intersect.Server.Entities;
 using Intersect.Server.Localization;
 using Intersect.Server.Networking;
 using Intersect.Server.Maps;
+using Microsoft.EntityFrameworkCore;
 
 namespace Intersect.Server.Admin.Actions
 {
@@ -521,27 +526,183 @@ namespace Intersect.Server.Admin.Actions
                 );
 
                 return;
-            }
-
-            PacketSender.SendChatMsg(
-                player,
-                Strings.Player.ItemGiveSuccess.ToString(action.Quantity, descriptorName, target.Name),
-                ChatMessageType.Admin,
-                Color.Green
-            );
-
-            PacketSender.SendChatMsg(
-                target,
-                Strings.Player.ItemReceivedFromAdmin.ToString(player.Name, action.Quantity, descriptorName),
-                ChatMessageType.Admin,
-                Color.Green
-            );
         }
 
-        //SpawnItem
-        public static void ProcessAction(Player player, SpawnItemAction action)
+        PacketSender.SendChatMsg(
+            player,
+            Strings.Player.ItemGiveSuccess.ToString(action.Quantity, descriptorName, target.Name),
+            ChatMessageType.Admin,
+            Color.Green
+        );
+
+        PacketSender.SendChatMsg(
+            target,
+            Strings.Player.ItemReceivedFromAdmin.ToString(player.Name, action.Quantity, descriptorName),
+            ChatMessageType.Admin,
+            Color.Green
+        );
+    }
+
+    //BroadcastMail
+    public static void ProcessAction(Player player, BroadcastMailAction action)
+    {
+        if (!player.Power.IsAdmin)
         {
-            if (!player.Power.IsAdmin)
+            PacketSender.SendChatMsg(player, Strings.Account.NotAllowed, ChatMessageType.Admin, Color.Red);
+
+            return;
+        }
+
+        var subject = action.Title?.Trim() ?? string.Empty;
+        var message = action.Message?.Trim() ?? string.Empty;
+        var attachments = action.Attachments?.Where(attachment => attachment != null).ToList() ?? new List<BroadcastMailAttachment>();
+
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            PacketSender.SendChatMsg(player, Strings.Mails.broadcastmissingtitle, ChatMessageType.Admin, Color.Red);
+
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            PacketSender.SendChatMsg(player, Strings.Mails.broadcastmissingmessage, ChatMessageType.Admin, Color.Red);
+
+            return;
+        }
+
+        if (attachments.Count == 0)
+        {
+            PacketSender.SendChatMsg(player, Strings.Mails.broadcastmissingitem, ChatMessageType.Admin, Color.Red);
+
+            return;
+        }
+
+        if (attachments.Count > BroadcastMailAction.MaxAttachments)
+        {
+            PacketSender.SendChatMsg(
+                player,
+                Strings.Mails.broadcasttoomanyattachments.ToString(BroadcastMailAction.MaxAttachments),
+                ChatMessageType.Admin,
+                Color.Red
+            );
+
+            return;
+        }
+
+        foreach (var attachment in attachments)
+        {
+            if (attachment.ItemId == Guid.Empty || !ItemDescriptor.TryGet(attachment.ItemId, out _))
+            {
+                PacketSender.SendChatMsg(player, Strings.Mails.broadcastmissingitem, ChatMessageType.Admin, Color.Red);
+
+                return;
+            }
+
+            if (attachment.Quantity <= 0)
+            {
+                PacketSender.SendChatMsg(player, Strings.Mails.broadcastinvalidquantity, ChatMessageType.Admin, Color.Red);
+
+                return;
+            }
+        }
+
+        var attachmentDefinitions = attachments
+            .Select(attachment => (attachment.ItemId, attachment.Quantity))
+            .ToList();
+
+        if (attachmentDefinitions.Count == 0)
+        {
+            PacketSender.SendChatMsg(player, Strings.Mails.broadcastmissingitem, ChatMessageType.Admin, Color.Red);
+
+            return;
+        }
+
+        try
+        {
+            using var context = DbInterface.CreatePlayerContext(readOnly: false);
+
+            var processedRecipients = new HashSet<Guid>();
+            var mailEntries = new List<MailBox>();
+            var onlineDeliveries = new List<(Player Recipient, MailBox Mail)>();
+            var onlinePlayersById = Player.OnlinePlayers.ToDictionary(p => p.Id);
+
+            void QueueMail(Guid recipientId)
+            {
+                if (!processedRecipients.Add(recipientId))
+                {
+                    return;
+                }
+
+                var mail = new MailBox
+                {
+                    PlayerId = recipientId,
+                    SenderId = player.Id,
+                    Title = subject,
+                    Message = message,
+                    Attachments = attachmentDefinitions
+                        .Select(definition => new MailAttachment
+                        {
+                            ItemId = definition.ItemId,
+                            Quantity = definition.Quantity,
+                        })
+                        .ToList(),
+                };
+
+                mailEntries.Add(mail);
+                context.Player_MailBox.Add(mail);
+
+                if (onlinePlayersById.TryGetValue(recipientId, out var onlineRecipient))
+                {
+                    onlineDeliveries.Add((onlineRecipient, mail));
+                }
+            }
+
+            if (action.OnlineOnly)
+            {
+                foreach (var onlineRecipient in onlinePlayersById.Values)
+                {
+                    QueueMail(onlineRecipient.Id);
+                }
+            }
+            else
+            {
+                foreach (var recipientId in context.Players.AsNoTracking().Select(p => p.Id))
+                {
+                    QueueMail(recipientId);
+                }
+            }
+
+            if (mailEntries.Count == 0)
+            {
+                PacketSender.SendChatMsg(player, Strings.Mails.broadcastnorecipients, ChatMessageType.Admin, Color.Red);
+
+                return;
+            }
+
+            context.SaveChanges();
+
+            foreach (var (recipient, mail) in onlineDeliveries)
+            {
+                mail.SenderPlayer = player;
+                recipient.MailBoxs.Add(mail);
+                PacketSender.SendChatMsg(recipient, Strings.Mails.newmail, ChatMessageType.Trading, Color.Green);
+                PacketSender.SendOpenMailBox(recipient);
+            }
+
+            PacketSender.SendChatMsg(player, Strings.Mails.broadcastsent, ChatMessageType.Admin, Color.Green);
+        }
+        catch (Exception exception)
+        {
+            ApplicationContext.CurrentContext.Logger.LogError(exception, "Failed to broadcast mail");
+            PacketSender.SendChatMsg(player, Strings.Mails.broadcastfailed, ChatMessageType.Admin, Color.Red);
+        }
+    }
+
+    //SpawnItem
+    public static void ProcessAction(Player player, SpawnItemAction action)
+    {
+        if (!player.Power.IsAdmin)
             {
                 PacketSender.SendChatMsg(player, Strings.Account.NotAllowed, ChatMessageType.Admin, Color.Red);
 

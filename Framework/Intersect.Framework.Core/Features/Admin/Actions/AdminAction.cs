@@ -19,6 +19,7 @@ namespace Intersect.Admin.Actions;
 [Union(13, typeof(ReturnToOverworldAction))]
 [Union(14, typeof(GiveItemAction))]
 [Union(15, typeof(SpawnItemAction))]
+[Union(16, typeof(BroadcastMailAction))]
 public abstract partial class AdminAction
 {
     [Key(0)]
