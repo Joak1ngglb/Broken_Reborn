@@ -46,7 +46,7 @@ public partial class AdminWindow : Window
     private readonly Button _giveItemButton;
     private readonly Button _spawnItemButton;
     private readonly ScrollControl _leftColumn;
-    private readonly Panel _leftColumnContent;
+    private readonly TabControl _leftTabs;
     private readonly Panel _mailBroadcastPanel;
     private readonly Label _mailBroadcastHeader;
     private readonly Label _mailSubjectLabel;
@@ -92,7 +92,7 @@ public partial class AdminWindow : Window
         nameof(AdminWindow)
     )
     {
-        _defaultFont = Current.GetFont(TitleLabel.FontName);
+        _defaultFont = Skin?.DefaultFont ?? Current.GetFont(TitleLabel.FontName);
 
         IsResizable = false;
         TitleLabel.FontSize = 14;
@@ -119,19 +119,40 @@ public partial class AdminWindow : Window
         };
         _leftColumn.SetOverflow(OverflowBehavior.Hidden, OverflowBehavior.Auto);
 
-        _leftColumnContent = new Panel(_leftColumn, nameof(_leftColumnContent))
+        _leftTabs = new TabControl(_leftColumn, nameof(_leftTabs))
         {
-            Dock = Pos.Top,
-            DockChildSpacing = new Padding(0, 12, 0, 0),
+            Dock = Pos.Fill,
             ShouldDrawBackground = false,
         };
+
+        ScrollControl AddTab(string name)
+        {
+            var page = _leftTabs.AddPage(name).Page;
+            page.Dock = Pos.Fill;
+
+            var scroll = new ScrollControl(page, $"{name}Scroll")
+            {
+                Dock = Pos.Fill,
+                AutoHideBars = true,
+                ShouldDrawBackground = false,
+                InnerPanelPadding = Padding.Zero,
+            };
+            scroll.SetOverflow(OverflowBehavior.Hidden, OverflowBehavior.Auto);
+            scroll.InnerPanel.DockChildSpacing = new Padding(0, 12, 0, 0);
+            return scroll;
+        }
+
+        var actionsTab = AddTab(Strings.AdminWindow.QuickActions);
+        var itemsTab = AddTab(Strings.AdminWindow.ItemManagement);
+        var mailTab = AddTab(Strings.AdminWindow.MailBroadcast);
+        var appearTab = AddTab(Strings.AdminWindow.Appearance);
 
         _mailAttachmentDropdowns = new LabeledComboBox[MailAttachmentSlotCount];
         _mailAttachmentQuantityInputs = new TextBoxNumeric[MailAttachmentSlotCount];
 
         #region Name Input
 
-        _namePanel = new Panel(_leftColumnContent, nameof(_namePanel))
+        _namePanel = new Panel(actionsTab, nameof(_namePanel))
         {
             Dock = Pos.Top, ShouldDrawBackground = false,
         };
@@ -159,7 +180,7 @@ public partial class AdminWindow : Window
 
         #region Access
 
-        _accessPanel = new Panel(_leftColumnContent, nameof(_accessPanel))
+        _accessPanel = new Panel(actionsTab, nameof(_accessPanel))
         {
             Dock = Pos.Top, ShouldDrawBackground = false,
         };
@@ -192,7 +213,7 @@ public partial class AdminWindow : Window
 
         #region Quick Admin Actions
 
-        var quickActionsSection = new Panel(_leftColumnContent, "QuickActionsSection")
+        var quickActionsSection = new Panel(actionsTab, "QuickActionsSection")
         {
             Dock = Pos.Top,
             DockChildSpacing = new Padding(0, 8, 0, 0),
@@ -230,95 +251,68 @@ public partial class AdminWindow : Window
 
         _warpMeToPlayerButton = new Button(_actionPanel, nameof(_warpMeToPlayerButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.WarpMeToPlayer,
         };
+        StyleButton(_warpMeToPlayerButton);
         _warpMeToPlayerButton.Clicked += WarpMeToPlayerButtonOnClicked;
 
         _kickPlayerButton = new Button(_actionPanel, nameof(_kickPlayerButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.KickPlayer,
         };
+        StyleButton(_kickPlayerButton);
         _kickPlayerButton.Clicked += KickPlayerButtonOnClicked;
 
         _killPlayerButton = new Button(_actionPanel, nameof(_killPlayerButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.KillPlayer,
         };
+        StyleButton(_killPlayerButton);
         _killPlayerButton.Clicked += KillPlayerButtonOnClicked;
 
         _warpPlayerToMeButton = new Button(_actionPanel, nameof(_warpPlayerToMeButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.WarpPlayerToMe,
         };
+        StyleButton(_warpPlayerToMeButton);
         _warpPlayerToMeButton.Clicked += WarpPlayerToMeButtonOnClicked;
 
         _muteButton = new Button(_actionPanel, nameof(_muteButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.Mute,
         };
+        StyleButton(_muteButton);
         _muteButton.Clicked += MuteButtonOnClicked;
 
         _unmuteButton = new Button(_actionPanel, nameof(_unmuteButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.Unmute,
         };
+        StyleButton(_unmuteButton);
         _unmuteButton.Clicked += UnmuteButtonOnClicked;
 
         _leaveInstanceButton = new Button(_actionPanel, nameof(_leaveInstanceButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.LeaveInstance,
         };
+        StyleButton(_leaveInstanceButton);
         _leaveInstanceButton.Clicked += LeaveInstanceButtonOnClicked;
 
         _banButton = new Button(_actionPanel, nameof(_banButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.Ban,
         };
+        StyleButton(_banButton);
         _banButton.Clicked += BanButtonOnClicked;
 
         _unbanButton = new Button(_actionPanel, nameof(_unbanButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.Unban,
         };
+        StyleButton(_unbanButton);
         _unbanButton.Clicked += UnbanButtonOnClicked;
 
-        var rowsAdded = _actionTable.AddCells(
+        _actionTable.AddCells(
             _warpMeToPlayerButton,
             _kickPlayerButton,
             _killPlayerButton,
@@ -330,6 +324,24 @@ public partial class AdminWindow : Window
             _unbanButton
         );
 
+#if DEBUG
+        foreach (var button in new[]
+                 {
+                     _warpMeToPlayerButton,
+                     _kickPlayerButton,
+                     _killPlayerButton,
+                     _warpPlayerToMeButton,
+                     _muteButton,
+                     _unmuteButton,
+                     _leaveInstanceButton,
+                     _banButton,
+                     _unbanButton,
+                 })
+        {
+            button.IsDisabled = false;
+        }
+#endif
+
         _actionPanel.SizeToChildren(recursive: true);
         quickActionsSection.SizeToChildren(recursive: true);
 
@@ -337,7 +349,7 @@ public partial class AdminWindow : Window
 
         #region Item Actions
 
-        var itemActionsSection = new Panel(_leftColumnContent, "ItemActionsSection")
+        var itemActionsSection = new Panel(itemsTab, "ItemActionsSection")
         {
             Dock = Pos.Top,
             DockChildSpacing = new Padding(0, 8, 0, 0),
@@ -428,33 +440,32 @@ public partial class AdminWindow : Window
         _giveItemButton = new Button(_itemButtonsPanel, nameof(_giveItemButton))
         {
             Dock = Pos.Left,
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.GiveItem,
-            Margin = new Margin(0, 0, 8, 0),
         };
+        StyleButton(_giveItemButton);
         _giveItemButton.Clicked += GiveItemButtonOnClicked;
 
         _spawnItemButton = new Button(_itemButtonsPanel, nameof(_spawnItemButton))
         {
             Dock = Pos.Left,
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.SpawnItem,
         };
+        StyleButton(_spawnItemButton);
+
         _spawnItemButton.Clicked += SpawnItemButtonOnClicked;
 
         itemActionsSection.SizeToChildren(recursive: true);
+
+#if DEBUG
+        _giveItemButton.IsDisabled = false;
+        _spawnItemButton.IsDisabled = false;
+#endif
 
         #endregion Item Actions
 
         #region Mail Broadcast
 
-        _mailBroadcastPanel = new Panel(_leftColumnContent, nameof(_mailBroadcastPanel))
+        _mailBroadcastPanel = new Panel(mailTab, nameof(_mailBroadcastPanel))
         {
             Dock = Pos.Top,
             DockChildSpacing = new Padding(0, 4, 0, 0),
@@ -505,7 +516,7 @@ public partial class AdminWindow : Window
             Margin = new Margin(0, 4, 0, 0),
         };
         _mailMessageInput.Name = nameof(_mailMessageInput);
-        _mailMessageInput.Height = 120;
+        _mailMessageInput.Height = 140;
         _mailMessageInput.TextChanged += (_, _) => UpdateItemActionControls();
         Interface.FocusComponents.Add(_mailMessageInput);
 
@@ -584,19 +595,22 @@ public partial class AdminWindow : Window
         _mailSendButton = new Button(_mailButtonsPanel, nameof(_mailSendButton))
         {
             Dock = Pos.Left,
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.MailSend,
         };
+        StyleButton(_mailSendButton);
         _mailSendButton.Clicked += SendMailBroadcastButtonOnClicked;
+
+        _mailBroadcastPanel.SizeToChildren(recursive: true);
+
+#if DEBUG
+        _mailSendButton.IsDisabled = false;
+#endif
 
         #endregion Mail Broadcast
 
         #region Sprite/Face Pickers
 
-        var appearanceSection = new Panel(_leftColumnContent, "AppearanceSection")
+        var appearanceSection = new Panel(appearTab, "AppearanceSection")
         {
             Dock = Pos.Top,
             DockChildSpacing = new Padding(0, 8, 0, 0),
@@ -687,6 +701,17 @@ public partial class AdminWindow : Window
         UpdateItemActionControls();
 
         SkipRender();
+    }
+
+    private static Padding StdPad(int x = 8, int y = 4) => new Padding(x, y);
+
+    private void StyleButton(Button button)
+    {
+        button.MinimumSize = new Point(120, 28);
+        button.Padding = StdPad();
+        button.Margin = new Margin(0, 0, 8, 0);
+        button.Font = _defaultFont;
+        button.FontSize = 12;
     }
 
     private void PopulateItemDropdown(LabeledComboBox dropdown)
