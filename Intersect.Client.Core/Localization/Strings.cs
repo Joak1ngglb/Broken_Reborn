@@ -785,6 +785,9 @@ public static partial class Strings
         public static LocalizedString KillPlayer = @"Kill";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString QuickActions = @"Quick Actions";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString MapList = @"Map List";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -818,10 +821,16 @@ public static partial class Strings
         public static LocalizedString SetSprite = @"Set Sprite";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Appearance = @"Appearance";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Sprite = @"Sprite:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Item = @"Item";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ItemManagement = @"Item Management";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Quantity = @"Quantity";

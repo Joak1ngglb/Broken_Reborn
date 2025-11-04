@@ -26,6 +26,8 @@ public partial class AdminWindow : Window
 {
     private const int MailAttachmentSlotCount = BroadcastMailAction.MaxAttachments;
 
+    private readonly Panel _contentPanel;
+
     private readonly LabeledComboBox _accessDropdown;
 
     private readonly Panel _accessPanel;
@@ -43,6 +45,8 @@ public partial class AdminWindow : Window
     private readonly Panel _itemButtonsPanel;
     private readonly Button _giveItemButton;
     private readonly Button _spawnItemButton;
+    private readonly ScrollControl _leftColumn;
+    private readonly Panel _leftColumnContent;
     private readonly Panel _mailBroadcastPanel;
     private readonly Label _mailBroadcastHeader;
     private readonly Label _mailSubjectLabel;
@@ -64,6 +68,7 @@ public partial class AdminWindow : Window
 
     private readonly Panel _mapListPanel;
     private readonly Panel _mapListPanelHeader;
+    private readonly Panel _mapTreeContainer;
     private readonly LabeledCheckBox _mapSortCheckbox;
     private readonly Button _muteButton;
     private readonly TextBox _nameInput;
@@ -92,16 +97,41 @@ public partial class AdminWindow : Window
         IsResizable = false;
         TitleLabel.FontSize = 14;
 
-        MinimumSize = new Point(396, 600);
+        MinimumSize = new Point(720, 600);
         InnerPanelPadding = new Padding(8);
         InnerPanel.DockChildSpacing = new Padding(8);
+
+        _contentPanel = new Panel(this, nameof(_contentPanel))
+        {
+            Dock = Pos.Fill,
+            ShouldDrawBackground = false,
+            DockChildSpacing = new Padding(8),
+        };
+
+        _leftColumn = new ScrollControl(_contentPanel, nameof(_leftColumn))
+        {
+            AutoHideBars = true,
+            Dock = Pos.Left,
+            InnerPanelPadding = Padding.Zero,
+            Margin = new Margin(0, 0, 8, 0),
+            ShouldDrawBackground = false,
+            Width = 360,
+        };
+        _leftColumn.SetOverflow(OverflowBehavior.Hidden, OverflowBehavior.Auto);
+
+        _leftColumnContent = new Panel(_leftColumn, nameof(_leftColumnContent))
+        {
+            Dock = Pos.Top,
+            DockChildSpacing = new Padding(0, 12, 0, 0),
+            ShouldDrawBackground = false,
+        };
 
         _mailAttachmentDropdowns = new LabeledComboBox[MailAttachmentSlotCount];
         _mailAttachmentQuantityInputs = new TextBoxNumeric[MailAttachmentSlotCount];
 
         #region Name Input
 
-        _namePanel = new Panel(this, nameof(_namePanel))
+        _namePanel = new Panel(_leftColumnContent, nameof(_namePanel))
         {
             Dock = Pos.Top, ShouldDrawBackground = false,
         };
@@ -129,7 +159,7 @@ public partial class AdminWindow : Window
 
         #region Access
 
-        _accessPanel = new Panel(this, nameof(_accessPanel))
+        _accessPanel = new Panel(_leftColumnContent, nameof(_accessPanel))
         {
             Dock = Pos.Top, ShouldDrawBackground = false,
         };
@@ -162,21 +192,41 @@ public partial class AdminWindow : Window
 
         #region Quick Admin Actions
 
-        _actionPanel = new Panel(this, nameof(_actionPanel))
+        var quickActionsSection = new Panel(_leftColumnContent, "QuickActionsSection")
         {
-            Dock = Pos.Top, ShouldDrawBackground = false,
+            Dock = Pos.Top,
+            DockChildSpacing = new Padding(0, 8, 0, 0),
+            ShouldDrawBackground = false,
+        };
+
+        _ = new Label(quickActionsSection, "QuickActionsLabel")
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Text = Strings.AdminWindow.QuickActions,
+        };
+
+        _actionPanel = new Panel(quickActionsSection, nameof(_actionPanel))
+        {
+            Dock = Pos.Top,
+            ShouldDrawBackground = false,
         };
 
         _actionTable = new Table(_actionPanel, nameof(_actionTable))
         {
             CellSpacing = new Point(8, 8),
             ColumnCount = 3,
-            Dock = Pos.Fill,
+            Dock = Pos.Top,
             FitRowHeightToContents = true,
             Font = _defaultFont,
             FontSize = 12,
             SizeToContents = true,
         };
+        _actionTable.AutoSizeToContentWidth = true;
+        _actionTable.AutoSizeToContentHeight = true;
+        _actionTable.AutoSizeToContentWidthOnChildResize = true;
+        _actionTable.AutoSizeToContentHeightOnChildResize = true;
 
         _warpMeToPlayerButton = new Button(_actionPanel, nameof(_warpMeToPlayerButton))
         {
@@ -280,15 +330,33 @@ public partial class AdminWindow : Window
             _unbanButton
         );
 
+        _actionPanel.SizeToChildren(recursive: true);
+        quickActionsSection.SizeToChildren(recursive: true);
+
         #endregion Quick Admin Actions
 
         #region Item Actions
 
-        _itemActionPanel = new Panel(this, nameof(_itemActionPanel))
+        var itemActionsSection = new Panel(_leftColumnContent, "ItemActionsSection")
         {
             Dock = Pos.Top,
+            DockChildSpacing = new Padding(0, 8, 0, 0),
             ShouldDrawBackground = false,
-            Margin = new Margin(0, 8, 0, 0),
+        };
+
+        _ = new Label(itemActionsSection, "ItemActionsLabel")
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Text = Strings.AdminWindow.ItemManagement,
+        };
+
+        _itemActionPanel = new Panel(itemActionsSection, nameof(_itemActionPanel))
+        {
+            Dock = Pos.Top,
+            DockChildSpacing = new Padding(0, 4, 0, 0),
+            ShouldDrawBackground = false,
         };
 
         _itemDropdown = new LabeledComboBox(_itemActionPanel, nameof(_itemDropdown))
@@ -380,15 +448,17 @@ public partial class AdminWindow : Window
         };
         _spawnItemButton.Clicked += SpawnItemButtonOnClicked;
 
+        itemActionsSection.SizeToChildren(recursive: true);
+
         #endregion Item Actions
 
         #region Mail Broadcast
 
-        _mailBroadcastPanel = new Panel(this, nameof(_mailBroadcastPanel))
+        _mailBroadcastPanel = new Panel(_leftColumnContent, nameof(_mailBroadcastPanel))
         {
             Dock = Pos.Top,
+            DockChildSpacing = new Padding(0, 4, 0, 0),
             ShouldDrawBackground = false,
-            Margin = new Margin(0, 8, 0, 0),
         };
 
         _mailBroadcastHeader = new Label(_mailBroadcastPanel, nameof(_mailBroadcastHeader))
@@ -526,7 +596,22 @@ public partial class AdminWindow : Window
 
         #region Sprite/Face Pickers
 
-        _spriteTexturePicker = new TexturePicker(this, nameof(_spriteTexturePicker))
+        var appearanceSection = new Panel(_leftColumnContent, "AppearanceSection")
+        {
+            Dock = Pos.Top,
+            DockChildSpacing = new Padding(0, 8, 0, 0),
+            ShouldDrawBackground = false,
+        };
+
+        _ = new Label(appearanceSection, "AppearanceLabel")
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Text = Strings.AdminWindow.Appearance,
+        };
+
+        _spriteTexturePicker = new TexturePicker(appearanceSection, nameof(_spriteTexturePicker))
         {
             Dock = Pos.Top,
             Font = _defaultFont,
@@ -537,29 +622,36 @@ public partial class AdminWindow : Window
         };
         _spriteTexturePicker.Submitted += SpriteTexturePickerOnSubmitted;
 
-        _faceTexturePicker = new TexturePicker(this, nameof(_faceTexturePicker))
+        _faceTexturePicker = new TexturePicker(appearanceSection, nameof(_faceTexturePicker))
         {
             Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
             ButtonText = Strings.AdminWindow.SetFace,
             LabelText = Strings.AdminWindow.Face,
+            Margin = new Margin(0, 4, 0, 0),
             TextureType = TextureType.Face,
         };
         _faceTexturePicker.Submitted += FaceTexturePickerOnSubmitted;
+
+        appearanceSection.SizeToChildren(recursive: true);
 
         #endregion Sprite/Face Pickers
 
         #region Map List
 
-        _mapListPanel = new Panel(this, nameof(_mapListPanel))
+        _mapListPanel = new Panel(_contentPanel, nameof(_mapListPanel))
         {
-            Dock = Pos.Fill, ShouldDrawBackground = false,
+            Dock = Pos.Fill,
+            DockChildSpacing = new Padding(0, 8, 0, 0),
+            ShouldDrawBackground = false,
         };
 
         _mapListPanelHeader = new Panel(_mapListPanel, nameof(_mapListPanelHeader))
         {
-            Dock = Pos.Top, ShouldDrawBackground = false,
+            Dock = Pos.Top,
+            DockChildSpacing = new Padding(8, 0, 0, 0),
+            ShouldDrawBackground = false,
         };
 
         _mapListLabel = new Label(_mapListPanelHeader, nameof(_mapListLabel))
@@ -575,6 +667,7 @@ public partial class AdminWindow : Window
             Dock = Pos.Right,
             Font = _defaultFont,
             FontSize = 12,
+            Margin = new Margin(8, 0, 0, 0),
             Text = Strings.AdminWindow.SortMapList,
             TooltipText = Strings.AdminWindow.SortMapListTooltip,
             TooltipFont = _defaultFont,
@@ -583,7 +676,11 @@ public partial class AdminWindow : Window
 
         _mapSortCheckbox.CheckChanged += MapSortCheckboxOnCheckChanged;
 
-        _mapListPanel.SizeToChildren(recursive: true);
+        _mapTreeContainer = new Panel(_mapListPanel, nameof(_mapTreeContainer))
+        {
+            Dock = Pos.Fill,
+            ShouldDrawBackground = false,
+        };
 
         #endregion Map List
 
@@ -971,7 +1068,7 @@ public partial class AdminWindow : Window
     {
         _mapTree?.DelayedDelete();
 
-        _mapTree = new TreeControl(_mapListPanel, nameof(_mapTree))
+        _mapTree = new TreeControl(_mapTreeContainer, nameof(_mapTree))
         {
             Dock = Pos.Fill,
             Font = _defaultFont,
