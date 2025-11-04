@@ -830,7 +830,7 @@ public static partial class Strings
         public static LocalizedString Item = @"Item";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public static LocalizedString ItemManagement = @"Item Management";
+        public static LocalizedString ItemManagement = @"Items";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Quantity = @"Quantity";
