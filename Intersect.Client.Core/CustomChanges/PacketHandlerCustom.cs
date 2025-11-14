@@ -37,6 +37,7 @@ using Intersect.Network.Packets.Client;
 using Intersect.Framework.Core.GameObjects.Guild;
 using Serilog;
 using Intersect.Client.Controllers;
+using Intersect.Network.Packets.Shops;
 
 namespace Intersect.Client.Networking;
 
@@ -316,5 +317,34 @@ internal sealed partial class PacketHandler
             Interface.Interface.GameUi.CloseMarket();
             Interface.Interface.GameUi.OpenSellMarket();  // muestra tu inventario para poner objetos a la venta
         }
+    }
+
+    public void HandlePacket(IPacketSender packetSender, PlayerShopWindowPacket packet)
+    {
+        if (packet.OpenCreator)
+        {
+            Interface.Interface.GameUi.OpenPlayerShopCreationWindow();
+        }
+
+        if (packet.CloseCreator)
+        {
+            Interface.Interface.GameUi.ClosePlayerShopCreationWindow();
+        }
+
+        if (packet.CloseBrowser)
+        {
+            Interface.Interface.GameUi.ClosePlayerShopBrowseWindow();
+        }
+    }
+
+    public void HandlePacket(IPacketSender packetSender, PlayerShopSnapshotPacket packet)
+    {
+        if (packet?.Snapshot == null)
+        {
+            Interface.Interface.GameUi.ClosePlayerShopBrowseWindow();
+            return;
+        }
+
+        Interface.Interface.EnqueueInGame(gameInterface => gameInterface.OpenPlayerShopBrowseWindow(packet.Snapshot));
     }
 }
