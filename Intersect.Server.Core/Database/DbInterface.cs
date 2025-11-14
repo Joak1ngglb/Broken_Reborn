@@ -30,6 +30,7 @@ using Intersect.Server.Database.GameData;
 using Intersect.Server.Database.Logging;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Players;
+using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Database.PlayerData.Security;
 using Intersect.Server.Entities;
 using Intersect.Server.General;
@@ -432,6 +433,8 @@ public static partial class DbInterface
         CacheUserVariableEventTextLookups();
 
         CheckPlayerDatabaseCaseInsensitiveCollisions();
+
+        PlayerShopManager.LoadActiveShops();
 
         return true;
     }

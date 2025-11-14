@@ -3,6 +3,7 @@ using Intersect.Server.Database.PlayerData.Api;
 using Intersect.Server.Database.PlayerData.Migrations;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Database.PlayerData.SeedData;
+using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,6 +55,9 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
     public DbSet<KillLog> Player_KillLogs { get; set; }
     public DbSet<MarketListing> Market_Listings { get; set; }
     public DbSet<MarketTransaction> Market_Transactions { get; set; }
+    public DbSet<PlayerShop> Player_Shops { get; set; }
+    public DbSet<PlayerShopItem> Player_ShopItems { get; set; }
+    public DbSet<PlayerShopTransaction> Player_ShopTransactions { get; set; }
 
     internal async ValueTask Commit(
         bool commit = false,
@@ -138,6 +142,45 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
                .WithOne(m => m.Player)
                .HasForeignKey(m => m.PlayerId)
                .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Player>()
+            .HasMany(player => player.PlayerShops)
+            .WithOne(shop => shop.Owner)
+            .HasForeignKey(shop => shop.OwnerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PlayerShop>()
+            .HasMany(shop => shop.Items)
+            .WithOne(item => item.Shop)
+            .HasForeignKey(item => item.ShopId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PlayerShop>()
+            .HasMany(shop => shop.Transactions)
+            .WithOne(transaction => transaction.Shop)
+            .HasForeignKey(transaction => transaction.ShopId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PlayerShop>()
+            .HasIndex(shop => new { shop.OwnerId, shop.Status });
+
+        modelBuilder.Entity<PlayerShop>()
+            .HasIndex(shop => new { shop.MapId, shop.Status });
+
+        modelBuilder.Entity<PlayerShop>()
+            .HasIndex(shop => shop.ExpiresAt);
+
+        modelBuilder.Entity<PlayerShopTransaction>()
+            .HasOne(transaction => transaction.Owner)
+            .WithMany()
+            .HasForeignKey(transaction => transaction.OwnerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PlayerShopTransaction>()
+            .HasOne(transaction => transaction.ShopItem)
+            .WithMany()
+            .HasForeignKey(transaction => transaction.ShopItemId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Relación Player → MailBox (mails enviados)
         modelBuilder.Entity<MailBox>()
