@@ -15,6 +15,7 @@ using Intersect.Client.Interface.Game.Hotbar;
 using Intersect.Client.Interface.Game.Inventory;
 using Intersect.Client.Interface.Game.Mail;
 using Intersect.Client.Interface.Game.Shop;
+using Intersect.Client.Interface.Game.Shops;
 using Intersect.Client.Interface.Game.Trades;
 using Intersect.Client.Interface.Menu;
 using Intersect.Client.Interface.Shared;
@@ -27,6 +28,7 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Client.Interface.Game.Spells;
 using Intersect.Client.Interface.Game.Market;
 using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.Shops;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -144,6 +146,8 @@ public partial class GameInterface : MutableInterface
     private MailBoxWindow mMailBoxWindow;
    public MarketWindow mMarketWindow;
     public SellMarketWindow mSellMarketWindow;
+    public PlayerShopWindow mPlayerShopWindow;
+    public PlayerShopBrowseWindow mPlayerShopBrowseWindow;
 
     public EscapeMenuWindow EscapeMenu => _escapeMenu ??= new EscapeMenuWindow(GameCanvas, GetOrCreateSettingsWindow)
     {
@@ -529,6 +533,8 @@ public partial class GameInterface : MutableInterface
         _bestiaryWindow?.Update();
         mMailBoxWindow?.UpdateMail();
         mSellMarketWindow?.Update();
+        mPlayerShopWindow?.Update();
+        mPlayerShopBrowseWindow?.Update();
         var questDescriptorId = Globals.QuestOffers.FirstOrDefault();
         if (questDescriptorId == default)
         {
@@ -903,6 +909,67 @@ public partial class GameInterface : MutableInterface
     {
         mSellMarketWindow?.Close();
         mSellMarketWindow = null;
+    }
+
+    public void OpenPlayerShopCreationWindow()
+    {
+        mPlayerShopWindow?.Close();
+        mPlayerShopWindow = new PlayerShopWindow(GameCanvas);
+        mPlayerShopWindow.Closed += PlayerShopWindowOnClosed;
+        mPlayerShopWindow.Show();
+    }
+
+    public void ClosePlayerShopCreationWindow()
+    {
+        if (mPlayerShopWindow == null)
+        {
+            return;
+        }
+
+        mPlayerShopWindow.Close();
+        mPlayerShopWindow = null;
+    }
+
+    public void OpenPlayerShopBrowseWindow(ShopSnapshot snapshot)
+    {
+        if (mPlayerShopBrowseWindow == null)
+        {
+            mPlayerShopBrowseWindow = new PlayerShopBrowseWindow(GameCanvas, snapshot);
+            mPlayerShopBrowseWindow.Closed += PlayerShopBrowseWindowOnClosed;
+        }
+        else
+        {
+            mPlayerShopBrowseWindow.UpdateSnapshot(snapshot);
+        }
+
+        mPlayerShopBrowseWindow.Show();
+    }
+
+    public void ClosePlayerShopBrowseWindow()
+    {
+        if (mPlayerShopBrowseWindow == null)
+        {
+            return;
+        }
+
+        mPlayerShopBrowseWindow.Close();
+        mPlayerShopBrowseWindow = null;
+    }
+
+    private void PlayerShopWindowOnClosed(PlayerShopWindow window)
+    {
+        if (mPlayerShopWindow == window)
+        {
+            mPlayerShopWindow = null;
+        }
+    }
+
+    private void PlayerShopBrowseWindowOnClosed(PlayerShopBrowseWindow window)
+    {
+        if (mPlayerShopBrowseWindow == window)
+        {
+            mPlayerShopBrowseWindow = null;
+        }
     }
 
 
