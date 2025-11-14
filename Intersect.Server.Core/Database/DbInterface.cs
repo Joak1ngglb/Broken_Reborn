@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -2016,22 +2017,45 @@ public static partial class DbInterface
 
     public static void SaveUpdatedServerVariables()
     {
-        if (UpdatedServerVariables.Count > 0)
+        if (UpdatedServerVariables.IsEmpty)
         {
-            using (var context = CreateGameContext(readOnly: false))
-            {
-                foreach (var variable in UpdatedServerVariables)
-                {
-                    var serverVar = variable.Value;
-                    if (serverVar != null)
-                    {
-                        context.ServerVariables.Update(variable.Value);
-                    }
-                    UpdatedServerVariables.TryRemove(variable.Key, out ServerVariableDescriptor obj);
-                }
-                context.SaveChanges();
-            }
+            return;
         }
+
+        var pendingVariables = UpdatedServerVariables.ToArray();
+        if (pendingVariables.Length == 0)
+        {
+            return;
+        }
+
+        using var context = CreateGameContext(readOnly: false);
+        var pendingIds = pendingVariables.Select(pair => pair.Key).ToArray();
+        var existingIds = context.ServerVariables
+            .Where(variable => pendingIds.Contains(variable.Id))
+            .Select(variable => variable.Id)
+            .ToHashSet();
+
+        foreach (var (id, variable) in pendingVariables)
+        {
+            if (variable == null)
+            {
+                UpdatedServerVariables.TryRemove(id, out _);
+                continue;
+            }
+
+            if (existingIds.Contains(id))
+            {
+                context.ServerVariables.Update(variable);
+            }
+            else
+            {
+                context.ServerVariables.Add(variable);
+            }
+
+            UpdatedServerVariables.TryRemove(id, out _);
+        }
+
+        context.SaveChanges();
     }
 
     public static void HandleMigrationCommand()
