@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Network.Packets.Shops;
 using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
@@ -24,6 +26,7 @@ public static class PlayerShopManager
     {
         using var context = DbInterface.CreatePlayerContext(readOnly: true, explicitLoad: true);
         var shops = context.Player_Shops
+            .Include(shop => shop.Owner)
             .Include(shop => shop.Items)
             .AsNoTracking()
             .Where(shop => shop.Status == PlayerShopStatus.Active)
@@ -52,6 +55,8 @@ public static class PlayerShopManager
     {
         ArgumentNullException.ThrowIfNull(owner);
 
+        var ownerName = owner?.Name ?? string.Empty;
+
         var shop = new PlayerShop
         {
             OwnerId = owner.Id,
@@ -73,7 +78,7 @@ public static class PlayerShopManager
         context.Player_Shops.Add(shop);
         context.SaveChanges();
 
-        var runtime = new PlayerShopRuntime(shop);
+        var runtime = new PlayerShopRuntime(shop, ownerName);
         ActiveShops[shop.Id] = runtime;
 
         return runtime;
@@ -83,6 +88,7 @@ public static class PlayerShopManager
     {
         using var context = DbInterface.CreatePlayerContext(readOnly: false);
         var shop = context.Player_Shops
+            .Include(s => s.Owner)
             .Include(s => s.Items)
             .FirstOrDefault(s => s.Id == shopId && s.Status == PlayerShopStatus.Active);
 
@@ -114,57 +120,76 @@ public static class PlayerShopManager
         return true;
     }
 
-    public static bool LogTransaction(Guid shopId, Guid shopItemId, string buyerName, int quantity, int unitPrice)
+    public static bool TryCommitPurchase(
+        Guid shopId,
+        Guid shopItemId,
+        string buyerName,
+        int quantity,
+        out long pendingGold
+    )
     {
+        pendingGold = 0;
+
         using var context = DbInterface.CreatePlayerContext(readOnly: false);
-        var shop = context.Player_Shops
-            .Include(s => s.Items)
-            .FirstOrDefault(s => s.Id == shopId);
+        using var transaction = context.Database.BeginTransaction(IsolationLevel.Serializable);
+        var item = context.Player_ShopItems
+            .Include(i => i.Shop)
+            .FirstOrDefault(i => i.ShopId == shopId && i.Id == shopItemId);
 
-        if (shop == null)
+        if (item?.Shop == null)
         {
+            transaction.Rollback();
             return false;
         }
 
-        var item = shop.Items.FirstOrDefault(i => i.Id == shopItemId);
-        if (item == null)
+        if (item.IsSold || item.Quantity < quantity)
         {
+            transaction.Rollback();
             return false;
         }
 
-        var totalPrice = checked(quantity * unitPrice);
-        item.IsSold = true;
-        item.SoldAt = DateTime.UtcNow;
+        var totalPrice = checked(quantity * item.PricePerUnit);
 
-        var transaction = new PlayerShopTransaction
+        item.Quantity -= quantity;
+        if (item.Quantity <= 0)
         {
-            ShopId = shop.Id,
+            item.Quantity = 0;
+            item.IsSold = true;
+            item.SoldAt = DateTime.UtcNow;
+        }
+
+        var logEntry = new PlayerShopTransaction
+        {
+            ShopId = item.ShopId,
             ShopItemId = item.Id,
-            OwnerId = shop.OwnerId,
+            OwnerId = item.Shop.OwnerId,
             ItemId = item.ItemId,
             BuyerName = buyerName,
             Quantity = quantity,
-            UnitPrice = unitPrice,
+            UnitPrice = item.PricePerUnit,
             TotalPrice = totalPrice,
             ItemProperties = new ItemProperties(item.Properties),
         };
 
-        shop.PendingGold += totalPrice;
-        context.Player_ShopTransactions.Add(transaction);
-        context.SaveChanges();
+        var rowsAffected = context.Database.ExecuteSqlInterpolated(
+            $"UPDATE Player_Shops SET PendingGold = PendingGold + {totalPrice} WHERE Id = {item.ShopId}"
+        );
 
-        if (ActiveShops.TryGetValue(shopId, out var runtime))
+        if (rowsAffected != 1)
         {
-            lock (runtime.SyncRoot)
-            {
-                if (runtime.TryGetItem(shopItemId, out var runtimeItem))
-                {
-                    runtimeItem.MarkSold();
-                }
-
-                runtime.UpdatePendingGold(shop.PendingGold);
-            }
+            transaction.Rollback();
+            return false;
         }
+
+        context.Player_ShopTransactions.Add(logEntry);
+        context.SaveChanges();
+        transaction.Commit();
+
+        pendingGold = context.Player_Shops
+            .AsNoTracking()
+            .Where(s => s.Id == item.ShopId)
+            .Select(s => (long?)s.PendingGold)
+            .FirstOrDefault() ?? 0;
 
         return true;
     }
@@ -174,20 +199,55 @@ public static class PlayerShopManager
         pendingGold = 0;
 
         using var context = DbInterface.CreatePlayerContext(readOnly: false);
-        var shop = context.Player_Shops.FirstOrDefault(s => s.Id == shopId);
-        if (shop == null)
+        const int maxAttempts = 5;
+        var encounteredBalance = false;
+
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
         {
-            return false;
+            var balance = context.Player_Shops
+                .AsNoTracking()
+                .Where(s => s.Id == shopId)
+                .Select(s => new { s.PendingGold })
+                .FirstOrDefault();
+
+            if (balance == null)
+            {
+                return false;
+            }
+
+            if (balance.PendingGold <= 0)
+            {
+                return false;
+            }
+
+            encounteredBalance = true;
+
+            var rows = context.Database.ExecuteSqlInterpolated(
+                $"UPDATE Player_Shops SET PendingGold = PendingGold - {balance.PendingGold} WHERE Id = {shopId} AND PendingGold = {balance.PendingGold}"
+            );
+
+            if (rows == 0)
+            {
+                continue;
+            }
+
+            pendingGold = balance.PendingGold;
+            break;
         }
 
-        if (shop.PendingGold <= 0)
+        if (pendingGold <= 0)
         {
+            if (encounteredBalance)
+            {
+                Log.Warning(
+                    "Failed to payout player shop {ShopId} after {Attempts} attempts due to concurrent updates.",
+                    shopId,
+                    maxAttempts
+                );
+            }
+
             return false;
         }
-
-        pendingGold = shop.PendingGold;
-        shop.PendingGold = 0;
-        context.SaveChanges();
 
         if (ActiveShops.TryGetValue(shopId, out var runtime))
         {
@@ -242,6 +302,51 @@ public static class PlayerShopManager
         return expired.Count;
     }
 
+    public static bool TryBuildSnapshot(Guid shopId, out ShopSnapshot snapshot)
+    {
+        if (!ActiveShops.TryGetValue(shopId, out var runtime))
+        {
+            snapshot = default;
+            return false;
+        }
+
+        snapshot = BuildSnapshot(runtime);
+        return true;
+    }
+
+    public static ShopSnapshot BuildSnapshot(PlayerShopRuntime runtime)
+    {
+        ArgumentNullException.ThrowIfNull(runtime);
+
+        var snapshot = new ShopSnapshot
+        {
+            ShopId = runtime.ShopId,
+            Name = runtime.Title,
+            OwnerName = runtime.OwnerName,
+        };
+
+        foreach (var item in runtime.Items)
+        {
+            if (item.IsSold || item.Quantity <= 0)
+            {
+                continue;
+            }
+
+            snapshot.Items.Add(
+                new PlayerShopItemSnapshot
+                {
+                    ShopItemId = item.Id,
+                    ItemId = item.Item.ItemId,
+                    Quantity = item.Quantity,
+                    PricePerUnit = item.PricePerUnit,
+                    Properties = new ItemProperties(item.Item.Properties),
+                }
+            );
+        }
+
+        return snapshot;
+    }
+
     public readonly record struct PlayerShopStock(Guid ItemId, int Quantity, int PricePerUnit, ItemProperties? Properties)
     {
         public PlayerShopItem ToEntity()
@@ -260,7 +365,7 @@ public static class PlayerShopManager
     {
         private readonly Dictionary<Guid, PlayerShopItemRuntime> _items;
 
-        internal PlayerShopRuntime(PlayerShop shop)
+        internal PlayerShopRuntime(PlayerShop shop, string? ownerName = null)
         {
             ShopId = shop.Id;
             OwnerId = shop.OwnerId;
@@ -269,6 +374,7 @@ public static class PlayerShopManager
             Y = shop.Y;
             Z = shop.Z;
             Title = shop.Title;
+            OwnerName = ownerName ?? shop.Owner?.Name ?? string.Empty;
             Status = shop.Status;
             PendingGold = shop.PendingGold;
             CreatedAt = shop.CreatedAt;
@@ -282,6 +388,8 @@ public static class PlayerShopManager
         public Guid ShopId { get; }
 
         public Guid OwnerId { get; }
+
+        public string OwnerName { get; }
 
         public Guid MapId { get; }
 
@@ -352,17 +460,39 @@ public static class PlayerShopManager
 
         public Item Item { get; }
 
-        public int Quantity { get; }
+        public int Quantity { get; private set; }
 
         public int PricePerUnit { get; }
 
         public bool IsSold { get; private set; }
 
+        internal void ReduceQuantity(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            Quantity = Math.Max(0, Quantity - amount);
+            if (Quantity == 0)
+            {
+                MarkSold();
+            }
+        }
+
         internal void MarkSold()
         {
             IsSold = true;
+            Quantity = 0;
         }
 
         public Item CloneItem() => new(Item);
+
+        public Item CloneItem(int quantity)
+        {
+            var clone = new Item(Item);
+            clone.Quantity = quantity;
+            return clone;
+        }
     }
 }
