@@ -788,6 +788,9 @@ public static partial class Strings
         public static LocalizedString QuickActions = @"Quick Actions";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString AdditionalInterfaces = @"Additional Tools";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString MapList = @"Map List";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
