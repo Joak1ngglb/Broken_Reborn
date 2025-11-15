@@ -21,6 +21,9 @@ public class PlayerShop : IPlayerOwned
     [Required]
     public Guid MapId { get; set; }
 
+    [Required]
+    public Guid MapInstanceId { get; set; }
+
     public int X { get; set; }
 
     public int Y { get; set; }

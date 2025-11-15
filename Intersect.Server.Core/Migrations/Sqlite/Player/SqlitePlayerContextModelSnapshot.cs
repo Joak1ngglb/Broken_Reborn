@@ -943,6 +943,9 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Property<Guid>("MapId")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid>("MapInstanceId")
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("PendingGold")
                         .HasColumnType("INTEGER");
 

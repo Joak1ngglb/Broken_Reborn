@@ -892,7 +892,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        if (runtime.MapId != player.MapId)
+        if (runtime.MapId != player.MapId || runtime.MapInstanceId != player.MapInstanceId)
         {
             PacketSender.SendChatMsg(player, "Debes estar junto a la tienda para verla.", ChatMessageType.Error, CustomColors.Alerts.Error);
             return;
@@ -1036,7 +1036,11 @@ internal sealed partial class PacketHandler
 
     private static bool IsWithinPlayerShopInteractionRange(Player player, PlayerShopManager.PlayerShopRuntime runtime)
     {
-        if (player.MapId != runtime.MapId || player.Z != runtime.Z)
+        if (
+            player.MapId != runtime.MapId
+            || player.MapInstanceId != runtime.MapInstanceId
+            || player.Z != runtime.Z
+        )
         {
             return false;
         }

@@ -240,6 +240,10 @@ namespace Intersect.Server.Migrations.MySql.Player
                         .HasColumnType("char(36)")
                         .UseCollation("ascii_general_ci");
 
+                    b.Property<Guid>("MapInstanceId")
+                        .HasColumnType("char(36)")
+                        .UseCollation("ascii_general_ci");
+
                     b.Property<long>("PendingGold")
                         .HasColumnType("bigint");
 

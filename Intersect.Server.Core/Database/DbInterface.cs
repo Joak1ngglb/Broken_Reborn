@@ -436,6 +436,7 @@ public static partial class DbInterface
         CheckPlayerDatabaseCaseInsensitiveCollisions();
 
         PlayerShopManager.LoadActiveShops();
+        PlayerShopManager.RespawnActiveShopEntities();
 
         return true;
     }
