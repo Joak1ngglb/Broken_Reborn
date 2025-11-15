@@ -281,6 +281,29 @@ public static class PlayerShopManager
         return true;
     }
 
+    private static void RestorePendingGold(Guid shopId, long amount)
+    {
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        using var context = DbInterface.CreatePlayerContext(readOnly: false);
+        var rows = context.Database.ExecuteSqlInterpolated(
+            $"UPDATE Player_Shops SET PendingGold = PendingGold + {amount} WHERE Id = {shopId}"
+        );
+
+        if (rows <= 0)
+        {
+            return;
+        }
+
+        if (ActiveShops.TryGetValue(shopId, out var runtime))
+        {
+            runtime.UpdatePendingGold(runtime.PendingGold + amount);
+        }
+    }
+
     public static bool CloseShop(Guid shopId, PlayerShopStatus status = PlayerShopStatus.Closed)
     {
         using var context = DbInterface.CreatePlayerContext(readOnly: false);
@@ -475,12 +498,16 @@ public static class PlayerShopManager
 
                 goldPaid = pendingGold;
                 runtime.UpdatePendingGold(0);
-                DeliverCurrency(player, runtime.ShopId, currencyDescriptor.Id, goldPaid);
+                if (!DeliverCurrency(player, runtime.ShopId, currencyDescriptor.Id, goldPaid))
+                {
+                    RestorePendingGold(runtime.ShopId, goldPaid);
+                    return false;
+                }
             }
 
-            if (unsoldItems.Count > 0)
+            if (unsoldItems.Count > 0 && !DeliverItems(player, runtime.ShopId, unsoldItems))
             {
-                DeliverItems(player, runtime.ShopId, unsoldItems);
+                return false;
             }
 
             CloseShop(runtime.ShopId, PlayerShopStatus.Closed);
@@ -642,11 +669,11 @@ public static class PlayerShopManager
             .FirstOrDefault(descriptor => descriptor.ItemType == ItemType.Currency);
     }
 
-    private static void DeliverCurrency(Player player, Guid shopId, Guid currencyItemId, long amount)
+    private static bool DeliverCurrency(Player player, Guid shopId, Guid currencyItemId, long amount)
     {
         if (player == null || amount <= 0)
         {
-            return;
+            return true;
         }
 
         var remaining = amount;
@@ -659,16 +686,17 @@ public static class PlayerShopManager
             remaining -= chunk;
         }
 
-        DeliverItems(player, shopId, stacks);
+        return DeliverItems(player, shopId, stacks);
     }
 
-    private static void DeliverItems(Player player, Guid shopId, IEnumerable<Item> items)
+    private static bool DeliverItems(Player player, Guid shopId, IEnumerable<Item> items)
     {
         if (player == null)
         {
-            return;
+            return false;
         }
 
+        var success = true;
         foreach (var item in items)
         {
             if (item == null)
@@ -681,6 +709,7 @@ public static class PlayerShopManager
                 continue;
             }
 
+            success = false;
             Log.Warning(
                 "Failed to deliver item {ItemId} x{Quantity} to player {PlayerId} while closing shop {ShopId}",
                 item.ItemId,
@@ -689,5 +718,7 @@ public static class PlayerShopManager
                 shopId
             );
         }
+
+        return success;
     }
 }
