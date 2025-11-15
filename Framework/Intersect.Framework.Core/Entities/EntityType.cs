@@ -10,5 +10,7 @@ public enum EntityType
 
     Projectile = 3,
 
-    Event = 4,
+    PlayerShop = 4,
+
+    Event = 5,
 }

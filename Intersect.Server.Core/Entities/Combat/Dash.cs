@@ -114,6 +114,7 @@ public partial class Dash
                                 return;
 
                             case EntityType.Event:
+                            case EntityType.PlayerShop:
                             case EntityType.Player:
                                 return;
 

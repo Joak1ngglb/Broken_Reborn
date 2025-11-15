@@ -11,6 +11,7 @@ using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Database;
+using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Entities.Events;
 using Intersect.Server.Networking;
 using Intersect.Utilities;
@@ -383,12 +384,15 @@ public partial class MapInstance : IMapInstance
         AddEntity(player);
         player.LastMapEntered = mMapController.Id;
 
+        PlayerShopManager.EnsurePlayerShops(this);
+
         // Send the entities/items of this current MapInstance to the player
         SendMapEntitiesTo(player);
 
         // send the entities/items of the SURROUNDING maps on this instance to the player
         foreach (var surroundingMapInstance in MapController.GetSurroundingMapInstances(mMapController.Id, MapInstanceId, false))
         {
+            PlayerShopManager.EnsurePlayerShops(surroundingMapInstance);
             surroundingMapInstance.SendMapEntitiesTo(player);
             PacketSender.SendMapItems(player, surroundingMapInstance.GetController().Id);
         }
