@@ -319,6 +319,17 @@ public partial class EntityBox
                 EntityLevel.Show();
 
                 break;
+            case EntityType.PlayerShop:
+                EventDesc.Hide();
+                ExpBackground.Hide();
+                ExpBar.Hide();
+                ExpLbl.Hide();
+                ExpTitle.Hide();
+                _contextMenuButton.Hide();
+                EntityMap.Hide();
+                EntityLevel.Hide();
+
+                break;
             case EntityType.Event:
                 EventDesc.Show();
                 EntityLevel.Hide();
