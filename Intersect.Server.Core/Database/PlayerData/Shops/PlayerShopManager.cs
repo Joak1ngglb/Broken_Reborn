@@ -19,6 +19,30 @@ public static class PlayerShopManager
 {
     private static readonly ConcurrentDictionary<Guid, PlayerShopRuntime> ActiveShops = new();
 
+    private static PlayerShopRuntime ActivateRuntime(PlayerShopRuntime runtime, Player? owner = null)
+    {
+        if (runtime == null)
+        {
+            return runtime!;
+        }
+
+        SpawnShopOnExistingInstances(runtime);
+        UpdatePlayerActiveShop(runtime.OwnerId, runtime.ShopId, PlayerShopStatus.Active, owner);
+
+        return runtime;
+    }
+
+    private static void RegisterActiveShop(PlayerShopRuntime runtime, Player? owner = null)
+    {
+        if (runtime == null)
+        {
+            return;
+        }
+
+        ActiveShops[runtime.ShopId] = runtime;
+        ActivateRuntime(runtime, owner);
+    }
+
     private static void SpawnShopOnExistingInstances(PlayerShopRuntime runtime)
     {
         if (runtime == null)
@@ -164,9 +188,7 @@ public static class PlayerShopManager
         foreach (var shop in shops)
         {
             var runtime = new PlayerShopRuntime(shop);
-            ActiveShops[shop.Id] = runtime;
-            UpdatePlayerActiveShop(shop.OwnerId, shop.Id, PlayerShopStatus.Active);
-            SpawnShopOnExistingInstances(runtime);
+            RegisterActiveShop(runtime);
         }
 
         Log.Information("Loaded {Count} active player shops", ActiveShops.Count);
@@ -209,10 +231,7 @@ public static class PlayerShopManager
         context.SaveChanges();
 
         var runtime = new PlayerShopRuntime(shop, ownerName);
-        ActiveShops[shop.Id] = runtime;
-        SpawnShopOnExistingInstances(runtime);
-
-        UpdatePlayerActiveShop(owner.Id, shop.Id, PlayerShopStatus.Active, owner);
+        RegisterActiveShop(runtime, owner);
 
         return runtime;
     }
@@ -242,11 +261,11 @@ public static class PlayerShopManager
 
         ActiveShops.AddOrUpdate(
             shopId,
-            _ => new PlayerShopRuntime(shop),
-            (_, existing) =>
+            _ => ActivateRuntime(new PlayerShopRuntime(shop, shop.Owner?.Name), shop.Owner),
+            (_, runtime) =>
             {
-                existing.ReplaceItems(shop.Items);
-                return existing;
+                runtime.ReplaceItems(shop.Items);
+                return runtime;
             }
         );
 
