@@ -10,6 +10,7 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
 using Intersect.Client.Framework.Gwen.Control.Layout;
 using Intersect.Client.General;
+using Intersect.Client.Interface;
 using Intersect.Client.Interface.Shared;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
@@ -42,6 +43,7 @@ public partial class AdminWindow : Window
     private readonly Button _kickPlayerButton;
     private readonly Button _killPlayerButton;
     private readonly Button _leaveInstanceButton;
+    private readonly Button _mailBroadcastButton;
     private readonly Label _mapListLabel;
 
     private readonly Panel _mapListPanel;
@@ -54,6 +56,7 @@ public partial class AdminWindow : Window
     private readonly Panel? _leftHeader;
     private readonly Panel _namePanel;
 
+    private readonly Button _spawnItemButton;
     private readonly TexturePicker _spriteTexturePicker;
     private readonly Button _unbanButton;
     private readonly Button _unmuteButton;
@@ -269,6 +272,26 @@ public partial class AdminWindow : Window
         StyleButton(_leaveInstanceButton);
         _leaveInstanceButton.Clicked += LeaveInstanceButtonOnClicked;
 
+        _spawnItemButton = new Button(_actionPanel, nameof(_spawnItemButton))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+            MinimumSize = new Point(120, 0),
+            Padding = new Padding(8, 4),
+            Text = Strings.AdminWindow.SpawnItem,
+        };
+        _spawnItemButton.Clicked += SpawnItemButtonOnClicked;
+
+        _mailBroadcastButton = new Button(_actionPanel, nameof(_mailBroadcastButton))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+            MinimumSize = new Point(120, 0),
+            Padding = new Padding(8, 4),
+            Text = Strings.AdminWindow.MailBroadcast,
+        };
+        _mailBroadcastButton.Clicked += MailBroadcastButtonOnClicked;
+
         _banButton = new Button(_actionPanel, nameof(_banButton))
         {
             Text = Strings.AdminWindow.Ban,
@@ -291,6 +314,8 @@ public partial class AdminWindow : Window
             _muteButton,
             _unmuteButton,
             _leaveInstanceButton,
+            _spawnItemButton,
+            _mailBroadcastButton,
             _banButton,
             _unbanButton
         );
@@ -482,26 +507,15 @@ public partial class AdminWindow : Window
     }
 
     #region Action Handlers
-
-
-
-
-
-
-
-    private void OpenItemWindowButtonOnClicked(Base sender, MouseButtonState args)
+ private void SpawnItemButtonOnClicked(Base sender, MouseButtonState e)
     {
-        Interface.GameUi.OpenAdminItemManagementWindow();
+        Interface.Interface.GameUi.OpenAdminItemManagementWindow();
     }
 
-    private void OpenMailWindowButtonOnClicked(Base sender, MouseButtonState args)
+    private void MailBroadcastButtonOnClicked(Base sender, MouseButtonState e)
     {
-        Interface.GameUi.OpenAdminMailBroadcastWindow();
+        Interface.Interface.GameUi.OpenAdminMailBroadcastWindow();
     }
-
-
-
-
 
     private void UnbanButtonOnClicked(Base s, MouseButtonState e)
     {
