@@ -11,6 +11,7 @@ using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Database;
+using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Entities.Events;
 using Intersect.Server.Networking;
 using Intersect.Utilities;
@@ -252,6 +253,7 @@ public partial class MapInstance : IMapInstance
         SpawnMapResources();
         RefreshEventsCache();
         SpawnGlobalEvents();
+        PlayerShopManager.SpawnShopsForInstance(this);
     }
 
     /// <summary>
@@ -330,6 +332,11 @@ public partial class MapInstance : IMapInstance
         }
 
         mCachedEntities = mEntities.Values.ToArray();
+    }
+
+    public bool ContainsEntity(Guid entityId)
+    {
+        return mEntities.ContainsKey(entityId);
     }
 
     /// <summary>

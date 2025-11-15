@@ -8,6 +8,8 @@ using Intersect.Network.Packets.Shops;
 using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
+using Intersect.Server.Maps;
+using Intersect.Server.Networking;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -16,6 +18,119 @@ namespace Intersect.Server.Database.PlayerData.Shops;
 public static class PlayerShopManager
 {
     private static readonly ConcurrentDictionary<Guid, PlayerShopRuntime> ActiveShops = new();
+    private static readonly ConcurrentDictionary<Guid, PlayerShopEntity> ActiveShopEntities = new();
+
+    internal static void SpawnShopsForInstance(MapInstance mapInstance)
+    {
+        if (mapInstance == null)
+        {
+            return;
+        }
+
+        foreach (var runtime in ActiveShops.Values)
+        {
+            if (runtime.MapId != mapInstance.MapId)
+            {
+                continue;
+            }
+
+            var shouldSpawn = runtime.MapInstanceId == mapInstance.MapInstanceId;
+
+            if (!shouldSpawn && mapInstance.MapInstanceId == MapInstance.OverworldInstanceId)
+            {
+                if (!MapController.TryGetInstanceFromMap(runtime.MapId, runtime.MapInstanceId, out _))
+                {
+                    runtime.UpdateMapInstanceId(MapInstance.OverworldInstanceId);
+                    shouldSpawn = true;
+                }
+            }
+
+            if (!shouldSpawn)
+            {
+                continue;
+            }
+
+            EnsureShopEntity(runtime, mapInstance);
+        }
+    }
+
+    private static void EnsureShopEntity(PlayerShopRuntime runtime, MapInstance mapInstance)
+    {
+        if (runtime == null || mapInstance == null)
+        {
+            return;
+        }
+
+        if (ActiveShopEntities.TryGetValue(runtime.ShopId, out var existing))
+        {
+            if (existing.MapInstanceId == mapInstance.MapInstanceId && mapInstance.ContainsEntity(existing.Id))
+            {
+                return;
+            }
+
+            DespawnShopEntity(runtime.ShopId, existing);
+        }
+
+        var entity = new PlayerShopEntity(runtime, mapInstance.MapInstanceId);
+        mapInstance.AddEntity(entity);
+        runtime.UpdateMapInstanceId(mapInstance.MapInstanceId);
+        ActiveShopEntities[runtime.ShopId] = entity;
+
+        PacketSender.SendEntityDataToProximity(entity);
+        PacketSender.SendEntityPositionToAll(entity);
+    }
+
+    private static void TrySpawnShopEntity(PlayerShopRuntime runtime, Guid? mapInstanceIdOverride = null)
+    {
+        if (runtime == null)
+        {
+            return;
+        }
+
+        var targetInstanceId = mapInstanceIdOverride ?? runtime.MapInstanceId;
+
+        if (!MapController.TryGetInstanceFromMap(runtime.MapId, targetInstanceId, out var mapInstance))
+        {
+            if (targetInstanceId != MapInstance.OverworldInstanceId &&
+                MapController.TryGetInstanceFromMap(runtime.MapId, MapInstance.OverworldInstanceId, out mapInstance))
+            {
+                runtime.UpdateMapInstanceId(MapInstance.OverworldInstanceId);
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        EnsureShopEntity(runtime, mapInstance);
+    }
+
+    private static void DespawnAllShopEntities()
+    {
+        foreach (var shopId in ActiveShopEntities.Keys.ToArray())
+        {
+            DespawnShopEntity(shopId);
+        }
+    }
+
+    private static void DespawnShopEntity(Guid shopId, PlayerShopEntity? entity = null)
+    {
+        entity ??= ActiveShopEntities.TryGetValue(shopId, out var existing) ? existing : null;
+
+        if (entity == null)
+        {
+            return;
+        }
+
+        ActiveShopEntities.TryRemove(shopId, out _);
+
+        if (MapController.TryGetInstanceFromMap(entity.MapId, entity.MapInstanceId, out var mapInstance))
+        {
+            mapInstance.RemoveEntity(entity);
+        }
+
+        PacketSender.SendEntityLeave(entity);
+    }
 
     private static void UpdatePlayerActiveShop(Guid ownerId, Guid? shopId, PlayerShopStatus? status, Player? owner = null)
     {
@@ -53,12 +168,15 @@ public static class PlayerShopManager
             .Where(shop => shop.Status == PlayerShopStatus.Active)
             .ToList();
 
+        DespawnAllShopEntities();
         ActiveShops.Clear();
 
         foreach (var shop in shops)
         {
-            ActiveShops[shop.Id] = new PlayerShopRuntime(shop);
+            var runtime = new PlayerShopRuntime(shop);
+            ActiveShops[shop.Id] = runtime;
             UpdatePlayerActiveShop(shop.OwnerId, shop.Id, PlayerShopStatus.Active);
+            TrySpawnShopEntity(runtime);
         }
 
         Log.Information("Loaded {Count} active player shops", ActiveShops.Count);
@@ -100,10 +218,11 @@ public static class PlayerShopManager
         context.Player_Shops.Add(shop);
         context.SaveChanges();
 
-        var runtime = new PlayerShopRuntime(shop, ownerName);
+        var runtime = new PlayerShopRuntime(shop, ownerName, owner.MapInstanceId);
         ActiveShops[shop.Id] = runtime;
 
         UpdatePlayerActiveShop(owner.Id, shop.Id, PlayerShopStatus.Active, owner);
+        TrySpawnShopEntity(runtime, owner.MapInstanceId);
 
         return runtime;
     }
@@ -300,6 +419,7 @@ public static class PlayerShopManager
         }
 
         UpdatePlayerActiveShop(runtime?.OwnerId ?? shop.OwnerId, null, status);
+        DespawnShopEntity(shopId);
 
         return true;
     }
@@ -324,6 +444,7 @@ public static class PlayerShopManager
             shop.ClosedAt = now;
             owners.Add(shop.OwnerId);
             ActiveShops.TryRemove(shop.Id, out _);
+            DespawnShopEntity(shop.Id);
         }
 
         context.SaveChanges();
@@ -504,7 +625,7 @@ public static class PlayerShopManager
     {
         private readonly Dictionary<Guid, PlayerShopItemRuntime> _items;
 
-        internal PlayerShopRuntime(PlayerShop shop, string? ownerName = null)
+        internal PlayerShopRuntime(PlayerShop shop, string? ownerName = null, Guid? mapInstanceId = null)
         {
             ShopId = shop.Id;
             OwnerId = shop.OwnerId;
@@ -518,6 +639,7 @@ public static class PlayerShopManager
             PendingGold = shop.PendingGold;
             CreatedAt = shop.CreatedAt;
             ExpiresAt = shop.ExpiresAt;
+            MapInstanceId = mapInstanceId ?? MapInstance.OverworldInstanceId;
             _items = shop.Items?.ToDictionary(item => item.Id, item => new PlayerShopItemRuntime(item))
                 ?? new Dictionary<Guid, PlayerShopItemRuntime>();
         }
@@ -548,6 +670,8 @@ public static class PlayerShopManager
 
         public DateTime? ExpiresAt { get; }
 
+        public Guid MapInstanceId { get; private set; }
+
         public IReadOnlyCollection<PlayerShopItemRuntime> Items => _items.Values;
 
         internal void ReplaceItems(IEnumerable<PlayerShopItem> items)
@@ -577,6 +701,14 @@ public static class PlayerShopManager
             lock (SyncRoot)
             {
                 Status = status;
+            }
+        }
+
+        internal void UpdateMapInstanceId(Guid mapInstanceId)
+        {
+            lock (SyncRoot)
+            {
+                MapInstanceId = mapInstanceId;
             }
         }
     }
