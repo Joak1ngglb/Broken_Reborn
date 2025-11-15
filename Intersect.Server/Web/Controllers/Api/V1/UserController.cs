@@ -1,6 +1,8 @@
+using System;
 using System.Net;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Security;
 using Intersect.Server.Collections.Indexing;
@@ -13,6 +15,7 @@ using Intersect.Server.Entities;
 using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Server.Networking;
+using Intersect.Server.Maps;
 using Intersect.Server.Notifications;
 using Intersect.Server.Web.Http;
 using Intersect.Server.Web.Types;
@@ -845,6 +848,126 @@ namespace Intersect.Server.Web.Controllers.Api.V1
                     }
 
                     break;
+
+                case AdminAction.GiveItem:
+                    if (player == null)
+                    {
+                        return NotFound(Strings.Player.Offline.ToString());
+                    }
+
+                    if (actionParameters.Quantity <= 0)
+                    {
+                        return BadRequest(Strings.Player.InvalidQuantity.ToString());
+                    }
+
+                    if (!ItemDescriptor.TryGet(actionParameters.ItemId, out var giveDescriptor))
+                    {
+                        return BadRequest(Strings.Player.InvalidItem.ToString());
+                    }
+
+                    if (actionPerformer.Power.CompareTo(player.Power) < 0)
+                    {
+                        return BadRequest(Strings.Account.NotAllowed.ToString(player.Name));
+                    }
+
+                    if (!player.TryGiveItem(
+                            actionParameters.ItemId,
+                            actionParameters.Quantity,
+                            ItemHandling.Normal,
+                            actionParameters.AllowBankOverflow
+                        ))
+                    {
+                        var giveDescriptorName = giveDescriptor?.Name ?? actionParameters.ItemId.ToString();
+                        return BadRequest(
+                            Strings.Player.ItemGiveFailed.ToString(
+                                actionParameters.Quantity,
+                                giveDescriptorName,
+                                player.Name
+                            )
+                        );
+                    }
+
+                    var givenDescriptorName = giveDescriptor?.Name ?? actionParameters.ItemId.ToString();
+                    PacketSender.SendChatMsg(
+                        player,
+                        Strings.Player.ItemReceivedFromAdmin.ToString(
+                            actionPerformer.Name,
+                            actionParameters.Quantity,
+                            givenDescriptorName
+                        ),
+                        ChatMessageType.Admin
+                    );
+
+                    return Ok(
+                        Strings.Player.ItemGiveSuccess.ToString(
+                            actionParameters.Quantity,
+                            givenDescriptorName,
+                            player.Name
+                        )
+                    );
+
+                case AdminAction.SpawnItem:
+                    if (player == null)
+                    {
+                        return NotFound(Strings.Player.Offline.ToString());
+                    }
+
+                    if (actionParameters.Quantity <= 0)
+                    {
+                        return BadRequest(Strings.Player.InvalidQuantity.ToString());
+                    }
+
+                    if (!ItemDescriptor.TryGet(actionParameters.ItemId, out var spawnDescriptor))
+                    {
+                        return BadRequest(Strings.Player.InvalidItem.ToString());
+                    }
+
+                    if (actionPerformer.Power.CompareTo(player.Power) < 0)
+                    {
+                        return BadRequest(Strings.Account.NotAllowed.ToString(player.Name));
+                    }
+
+                    if (!MapController.TryGetInstanceFromMap(player.MapId, player.MapInstanceId, out var mapInstance) ||
+                        mapInstance == null)
+                    {
+                        var spawnDescriptorName = spawnDescriptor?.Name ?? actionParameters.ItemId.ToString();
+                        return BadRequest(
+                            Strings.Player.ItemSpawnFailed.ToString(
+                                actionParameters.Quantity,
+                                spawnDescriptorName,
+                                player.Name
+                            )
+                        );
+                    }
+
+                    var itemDescriptorName = spawnDescriptor?.Name ?? actionParameters.ItemId.ToString();
+                    var spawnedItem = new Item(actionParameters.ItemId, actionParameters.Quantity);
+                    mapInstance.SpawnItem(
+                        null,
+                        player.X,
+                        player.Y,
+                        spawnedItem,
+                        actionParameters.Quantity,
+                        actionParameters.ReserveForTarget ? player.Id : Guid.Empty
+                    );
+
+                    PacketSender.SendChatMsg(
+                        player,
+                        Strings.Player.ItemSpawnedNearYou.ToString(
+                            actionPerformer.Name,
+                            actionParameters.Quantity,
+                            itemDescriptorName
+                        ),
+                        ChatMessageType.Admin
+                    );
+
+                    return Ok(
+                        Strings.Player.ItemSpawnSuccess.ToString(
+                            actionParameters.Quantity,
+                            itemDescriptorName,
+                            player.Name
+                        )
+                    );
 
                 case AdminAction.WarpMeTo:
                 case AdminAction.WarpToMe:
