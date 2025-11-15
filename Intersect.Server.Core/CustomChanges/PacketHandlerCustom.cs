@@ -923,6 +923,12 @@ internal sealed partial class PacketHandler
             return;
         }
 
+        if (!IsWithinPlayerShopInteractionRange(player, runtime))
+        {
+            PacketSender.SendChatMsg(player, "Debes estar junto a la tienda para comprar.", ChatMessageType.Error, CustomColors.Alerts.Error);
+            return;
+        }
+
         var currencyDescriptor = GetDefaultCurrencyDescriptor();
         if (currencyDescriptor == null)
         {
@@ -1030,5 +1036,23 @@ internal sealed partial class PacketHandler
         }
 
         return false;
+    }
+
+    private const int PlayerShopInteractionRange = 1;
+
+    private static bool IsWithinPlayerShopInteractionRange(Player player, PlayerShopManager.PlayerShopRuntime runtime)
+    {
+        if (player.MapId != runtime.MapId || player.Z != runtime.Z)
+        {
+            return false;
+        }
+
+        if (!MapController.TryGet(runtime.MapId, out var shopMap))
+        {
+            return false;
+        }
+
+        var distance = player.GetDistanceTo(shopMap, runtime.X, runtime.Y);
+        return distance <= PlayerShopInteractionRange;
     }
 }
