@@ -374,7 +374,7 @@ public partial class MultilineTextBox : Label
         MakeCaretVisible();
 
         var pA = GetCharacterPosition(CursorPosition);
-        var pB = GetCharacterPosition(mCursorEnd);
+        var pB = GetCharacterPosition(CursorEnd);
 
         //m_SelectionBounds.X = Math.Min(pA.X, pB.X);
         //m_SelectionBounds.Y = TextY - 1;
@@ -1132,14 +1132,17 @@ public partial class MultilineTextBox : Label
     {
         if (_textLines.Count == 0)
         {
-            return new Point(0, 0);
+            return new Point(_textElement.X, _textElement.Y + Padding.Top);
         }
 
-        var currLine = _textLines[cursorPosition.Y]
-            .Substring(0, Math.Min(cursorPosition.X, _textLines[cursorPosition.Y].Length));
+        var lineIndex = Math.Max(0, Math.Min(cursorPosition.Y, _textLines.Count - 1));
+        var charIndex = Math.Max(0, Math.Min(cursorPosition.X, _textLines[lineIndex].Length));
+
+        var currLine = _textLines[lineIndex]
+            .Substring(0, charIndex);
 
         var sub = string.Empty;
-        for (var i = 0; i < cursorPosition.Y; i++)
+        for (var i = 0; i < lineIndex; i++)
         {
             sub += _textLines[i] + "\n";
         }

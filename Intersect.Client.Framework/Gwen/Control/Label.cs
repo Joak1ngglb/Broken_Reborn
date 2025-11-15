@@ -786,7 +786,7 @@ public partial class Label : Base, ILabel, IFontProvider
 
     protected virtual Point GetContentSize()
     {
-        return _textElement.Size;
+        return _textElement == null ? default : _textElement.Size;
     }
 
     protected virtual Padding GetContentPadding() => Padding + _textPadding;
@@ -805,6 +805,12 @@ public partial class Label : Base, ILabel, IFontProvider
 
     public virtual bool SizeToContents(out Point contentSize)
     {
+        if (_textElement == null)
+        {
+            contentSize = Size;
+            return false;
+        }
+
         _textElement.SizeToChildren();
 
         contentSize = MeasureShrinkToContents();
