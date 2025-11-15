@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Intersect.Compression;
 using Intersect.Core;
 using Intersect.Enums;
@@ -475,6 +476,11 @@ public partial class MapController : MapDescriptor
             entities.AddRange(mapInstance.Value.GetEntities());
         }
         return entities;
+    }
+
+    public IReadOnlyCollection<MapInstance> GetInstances()
+    {
+        return mInstances.Values.ToArray();
     }
 
     /// <summary>
