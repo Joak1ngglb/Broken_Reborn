@@ -929,7 +929,8 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        var currencyDescriptor = GetDefaultCurrencyDescriptor();
+        var currencyDescriptor = PlayerShopManager.ResolveGlobalCurrencyDescriptor();
+
         if (currencyDescriptor == null)
         {
             PacketSender.SendChatMsg(player, "La moneda del mundo no está configurada.", ChatMessageType.Error, CustomColors.Alerts.Error);
@@ -999,13 +1000,6 @@ internal sealed partial class PacketHandler
 
             PacketSender.SendPlayerShopSnapshot(player, PlayerShopManager.BuildSnapshot(runtime));
         }
-    }
-
-    private static ItemDescriptor? GetDefaultCurrencyDescriptor()
-    {
-        return ItemDescriptor.Lookup.Values
-            .OfType<ItemDescriptor>()
-            .FirstOrDefault(descriptor => descriptor.ItemType == ItemType.Currency);
     }
 
     private static bool TryRemoveCurrency(Player player, Guid currencyId, int amount, out int removedAmount)

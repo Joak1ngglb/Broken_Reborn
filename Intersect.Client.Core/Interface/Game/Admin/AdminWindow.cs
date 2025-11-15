@@ -372,6 +372,7 @@ public partial class AdminWindow : Window
             Text = Strings.AdminWindow.ItemManagement,
         };
         StyleButton(_openItemWindowButton);
+
         _openItemWindowButton.Clicked += SpawnItemButtonOnClicked;
         _openMailWindowButton = new Button(externalButtonsPanel, nameof(_openMailWindowButton))
         {
@@ -379,8 +380,8 @@ public partial class AdminWindow : Window
             Text = Strings.AdminWindow.MailBroadcast,
         };
         StyleButton(_openMailWindowButton);
-        _openMailWindowButton.Clicked += MailBroadcastButtonOnClicked;
 
+        _openMailWindowButton.Clicked += MailBroadcastButtonOnClicked;
         externalInterfacesSection.SizeToChildren(recursive: true);
 
         #endregion Additional Interfaces
@@ -504,6 +505,25 @@ public partial class AdminWindow : Window
     }
 
     #region Action Handlers
+ private void SpawnItemButtonOnClicked(Base sender, MouseButtonState e)
+    {
+        Interface.Interface.GameUi.OpenAdminItemManagementWindow();
+    }
+
+    private void MailBroadcastButtonOnClicked(Base sender, MouseButtonState e)
+    {
+        Interface.Interface.GameUi.OpenAdminMailBroadcastWindow();
+    }
+
+ private void SpawnItemButtonOnClicked(Base sender, MouseButtonState e)
+    {
+        Interface.Interface.GameUi.OpenAdminItemManagementWindow();
+    }
+
+    private void MailBroadcastButtonOnClicked(Base sender, MouseButtonState e)
+    {
+        Interface.Interface.GameUi.OpenAdminMailBroadcastWindow();
+    }
 
  private void SpawnItemButtonOnClicked(Base sender, MouseButtonState e)
     {

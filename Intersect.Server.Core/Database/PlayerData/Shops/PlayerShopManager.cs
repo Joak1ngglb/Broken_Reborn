@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Shops;
 using Intersect.Server.Database;
@@ -394,6 +395,111 @@ public static class PlayerShopManager
         }
     }
 
+    public sealed record PlayerShopFinalizationSummary(
+        Guid ShopId,
+        string ShopName,
+        long GoldPaid,
+        int ReturnedStackCount,
+        int ReturnedItemQuantity,
+        ShopSnapshot Snapshot
+    );
+
+    public static bool TryFinalizeActiveShop(Player player, out PlayerShopFinalizationSummary? summary)
+    {
+        summary = null;
+
+        if (player == null)
+        {
+            return false;
+        }
+
+        if (!player.ActivePlayerShopId.HasValue || player.ActivePlayerShopStatus != PlayerShopStatus.Active)
+        {
+            return false;
+        }
+
+        var shopId = player.ActivePlayerShopId.Value;
+
+        if (!ActiveShops.TryGetValue(shopId, out var runtime))
+        {
+            using var context = DbInterface.CreatePlayerContext(readOnly: true, explicitLoad: true);
+            var entity = context.Player_Shops
+                .Include(shop => shop.Items)
+                .Include(shop => shop.Owner)
+                .FirstOrDefault(shop => shop.Id == shopId && shop.Status == PlayerShopStatus.Active);
+
+            if (entity == null)
+            {
+                return false;
+            }
+
+            runtime = new PlayerShopRuntime(entity, entity.Owner?.Name);
+        }
+
+        lock (runtime.SyncRoot)
+        {
+            var snapshot = BuildSnapshot(runtime);
+            var unsoldItems = runtime.Items
+                .Where(item => !item.IsSold && item.Quantity > 0)
+                .Select(item => item.CloneItem())
+                .ToList();
+
+            var returnedStackCount = unsoldItems.Count;
+            var returnedItemQuantity = unsoldItems.Sum(item => item.Quantity);
+
+            long goldPaid = 0;
+            if (runtime.PendingGold > 0)
+            {
+                var currencyDescriptor = ResolveGlobalCurrencyDescriptor();
+                if (currencyDescriptor == null)
+                {
+                    Log.Warning(
+                        "Cannot finalize player shop {ShopId} for {PlayerId} because no global currency exists",
+                        runtime.ShopId,
+                        player.Id
+                    );
+
+                    return false;
+                }
+
+                if (!TryPayout(runtime.ShopId, out var pendingGold) || pendingGold <= 0)
+                {
+                    Log.Warning(
+                        "Failed to payout pending gold for shop {ShopId} owned by {OwnerId}",
+                        runtime.ShopId,
+                        runtime.OwnerId
+                    );
+
+                    return false;
+                }
+
+                goldPaid = pendingGold;
+                runtime.UpdatePendingGold(0);
+                DeliverCurrency(player, runtime.ShopId, currencyDescriptor.Id, goldPaid);
+            }
+
+            if (unsoldItems.Count > 0)
+            {
+                DeliverItems(player, runtime.ShopId, unsoldItems);
+            }
+
+            CloseShop(runtime.ShopId, PlayerShopStatus.Closed);
+            player.ActivePlayerShopId = null;
+            player.ActivePlayerShopStatus = null;
+
+            summary = new PlayerShopFinalizationSummary(
+                runtime.ShopId,
+                runtime.Title,
+                goldPaid,
+                returnedStackCount,
+                returnedItemQuantity,
+                snapshot
+            );
+
+            return true;
+        }
+    }
+
     public sealed class PlayerShopRuntime
     {
         private readonly Dictionary<Guid, PlayerShopItemRuntime> _items;
@@ -526,6 +632,62 @@ public static class PlayerShopManager
             var clone = new Item(Item);
             clone.Quantity = quantity;
             return clone;
+        }
+    }
+
+    internal static ItemDescriptor? ResolveGlobalCurrencyDescriptor()
+    {
+        return ItemDescriptor.Lookup.Values
+            .OfType<ItemDescriptor>()
+            .FirstOrDefault(descriptor => descriptor.ItemType == ItemType.Currency);
+    }
+
+    private static void DeliverCurrency(Player player, Guid shopId, Guid currencyItemId, long amount)
+    {
+        if (player == null || amount <= 0)
+        {
+            return;
+        }
+
+        var remaining = amount;
+        var stacks = new List<Item>();
+
+        while (remaining > 0)
+        {
+            var chunk = (int)Math.Min(remaining, int.MaxValue);
+            stacks.Add(new Item(currencyItemId, chunk));
+            remaining -= chunk;
+        }
+
+        DeliverItems(player, shopId, stacks);
+    }
+
+    private static void DeliverItems(Player player, Guid shopId, IEnumerable<Item> items)
+    {
+        if (player == null)
+        {
+            return;
+        }
+
+        foreach (var item in items)
+        {
+            if (item == null)
+            {
+                continue;
+            }
+
+            if (player.TryGiveItem(item, ItemHandling.Normal, bankOverflow: true, slot: -1, sendUpdate: false))
+            {
+                continue;
+            }
+
+            Log.Warning(
+                "Failed to deliver item {ItemId} x{Quantity} to player {PlayerId} while closing shop {ShopId}",
+                item.ItemId,
+                item.Quantity,
+                player.Id,
+                shopId
+            );
         }
     }
 }
