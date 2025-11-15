@@ -31,6 +31,7 @@ using Intersect.Server.Database;
 using Intersect.Server.Database.Logging.Entities;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Players;
+using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Database.PlayerData.Security;
 using Intersect.Server.Entities.Events;
 using Intersect.Server.Framework.Entities;
@@ -80,6 +81,10 @@ public partial class Player : Entity
 
     //Name, X, Y, Dir, Etc all in the base Entity Class
     public Guid ClassId { get; set; }
+
+    public Guid? ActivePlayerShopId { get; set; }
+
+    public PlayerShopStatus? ActivePlayerShopStatus { get; set; }
 
     [NotMapped]
     public string ClassName => ClassDescriptor.GetName(ClassId);
