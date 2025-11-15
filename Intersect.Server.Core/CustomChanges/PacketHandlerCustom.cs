@@ -735,6 +735,18 @@ internal sealed partial class PacketHandler
             return;
         }
 
+        if (player.ActivePlayerShopId.HasValue && player.ActivePlayerShopStatus == PlayerShopStatus.Active)
+        {
+            PacketSender.SendChatMsg(
+                player,
+                "❌ Ya tienes una tienda activa.",
+                ChatMessageType.Error,
+                CustomColors.Alerts.Error
+            );
+            PacketSender.SendPlayerShopWindow(player, false, true, false);
+            return;
+        }
+
         if (player.MapId == Guid.Empty)
         {
             PacketSender.SendChatMsg(player, "❌ No puedes abrir una tienda aquí.", ChatMessageType.Error, CustomColors.Alerts.Error);

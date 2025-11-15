@@ -16,6 +16,26 @@ public static class PlayerShopManager
 {
     private static readonly ConcurrentDictionary<Guid, PlayerShopRuntime> ActiveShops = new();
 
+    private static void UpdatePlayerActiveShop(Guid ownerId, Guid? shopId, PlayerShopStatus? status, Player? owner = null)
+    {
+        if (ownerId == Guid.Empty)
+        {
+            return;
+        }
+
+        owner ??= Player.FindOnline(ownerId);
+        if (owner != null)
+        {
+            owner.ActivePlayerShopId = shopId;
+            owner.ActivePlayerShopStatus = status;
+        }
+
+        using var context = DbInterface.CreatePlayerContext(readOnly: false);
+        context.Database.ExecuteSqlInterpolated(
+            $"UPDATE Players SET ActivePlayerShopId = {shopId}, ActivePlayerShopStatus = {status} WHERE Id = {ownerId}"
+        );
+    }
+
     public static IReadOnlyCollection<PlayerShopRuntime> GetActiveShops()
         => ActiveShops.Values.ToList().AsReadOnly();
 
@@ -37,6 +57,7 @@ public static class PlayerShopManager
         foreach (var shop in shops)
         {
             ActiveShops[shop.Id] = new PlayerShopRuntime(shop);
+            UpdatePlayerActiveShop(shop.OwnerId, shop.Id, PlayerShopStatus.Active);
         }
 
         Log.Information("Loaded {Count} active player shops", ActiveShops.Count);
@@ -80,6 +101,8 @@ public static class PlayerShopManager
 
         var runtime = new PlayerShopRuntime(shop, ownerName);
         ActiveShops[shop.Id] = runtime;
+
+        UpdatePlayerActiveShop(owner.Id, shop.Id, PlayerShopStatus.Active, owner);
 
         return runtime;
     }
@@ -275,6 +298,8 @@ public static class PlayerShopManager
             runtime.UpdateStatus(status);
         }
 
+        UpdatePlayerActiveShop(runtime?.OwnerId ?? shop.OwnerId, null, status);
+
         return true;
     }
 
@@ -291,14 +316,22 @@ public static class PlayerShopManager
             return 0;
         }
 
+        var owners = new List<Guid>(expired.Count);
         foreach (var shop in expired)
         {
             shop.Status = PlayerShopStatus.Expired;
             shop.ClosedAt = now;
+            owners.Add(shop.OwnerId);
             ActiveShops.TryRemove(shop.Id, out _);
         }
 
         context.SaveChanges();
+
+        foreach (var ownerId in owners)
+        {
+            UpdatePlayerActiveShop(ownerId, null, PlayerShopStatus.Expired);
+        }
+
         return expired.Count;
     }
 

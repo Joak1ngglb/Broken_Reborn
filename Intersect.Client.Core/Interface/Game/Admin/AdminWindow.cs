@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Intersect.Admin.Actions;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
@@ -20,6 +23,8 @@ namespace Intersect.Client.Interface.Game.Admin;
 
 public partial class AdminWindow : Window
 {
+    private readonly Panel _contentPanel;
+
     private readonly LabeledComboBox _accessDropdown;
 
     private readonly Panel _accessPanel;
@@ -27,6 +32,10 @@ public partial class AdminWindow : Window
 
     private readonly Panel _actionPanel;
     private readonly Table _actionTable;
+    private readonly Button _openItemWindowButton;
+    private readonly Button _openMailWindowButton;
+    private readonly ScrollControl _leftColumn;
+    private readonly TabControl _leftTabs;
     private readonly Button _banButton;
     private readonly IFont? _defaultFont;
     private readonly TexturePicker _faceTexturePicker;
@@ -37,11 +46,12 @@ public partial class AdminWindow : Window
 
     private readonly Panel _mapListPanel;
     private readonly Panel _mapListPanelHeader;
+    private readonly Panel _mapTreeContainer;
     private readonly LabeledCheckBox _mapSortCheckbox;
     private readonly Button _muteButton;
     private readonly TextBox _nameInput;
     private readonly Label _nameLabel;
-
+    private readonly Panel? _leftHeader;
     private readonly Panel _namePanel;
 
     private readonly TexturePicker _spriteTexturePicker;
@@ -52,7 +62,6 @@ public partial class AdminWindow : Window
 
     private BanMuteBox? _banOrMuteWindow;
     private TreeControl? _mapTree;
-
     public AdminWindow(Base gameCanvas) : base(
         gameCanvas,
         Strings.AdminWindow.Title,
@@ -60,18 +69,62 @@ public partial class AdminWindow : Window
         nameof(AdminWindow)
     )
     {
-        _defaultFont = Current.GetFont(TitleLabel.FontName);
+        _defaultFont = Skin?.DefaultFont ?? Current.GetFont(TitleLabel.FontName);
 
         IsResizable = false;
         TitleLabel.FontSize = 14;
 
-        MinimumSize = new Point(396, 600);
+        MinimumSize = new Point(720, 600);
         InnerPanelPadding = new Padding(8);
         InnerPanel.DockChildSpacing = new Padding(8);
 
+        _contentPanel = new Panel(this, nameof(_contentPanel))
+        {
+            Dock = Pos.Fill,
+            ShouldDrawBackground = false,
+            DockChildSpacing = new Padding(8),
+        };
+
+        _leftColumn = new ScrollControl(_contentPanel, nameof(_leftColumn))
+        {
+            AutoHideBars = true,
+            Dock = Pos.Left,
+            InnerPanelPadding = Padding.Zero,
+            Margin = new Margin(0, 0, 8, 0),
+            ShouldDrawBackground = false,
+            Width = 360,
+        };
+        _leftColumn.SetOverflow(OverflowBehavior.Hidden, OverflowBehavior.Auto);
+
+        _leftTabs = new TabControl(_leftColumn, nameof(_leftTabs))
+        {
+            Dock = Pos.Fill,
+            ShouldDrawBackground = false,
+        };
+
+        ScrollControl AddTab(string name)
+        {
+            var page = _leftTabs.AddPage(name).Page;
+            page.Dock = Pos.Fill;
+
+            var scroll = new ScrollControl(page, $"{name}Scroll")
+            {
+                Dock = Pos.Fill,
+                AutoHideBars = true,
+                ShouldDrawBackground = false,
+                InnerPanelPadding = Padding.Zero,
+            };
+            scroll.SetOverflow(OverflowBehavior.Hidden, OverflowBehavior.Auto);
+            scroll.InnerPanel.DockChildSpacing = new Padding(0, 12, 0, 0);
+            return scroll;
+        }
+
+        var actionsTab = AddTab(Strings.AdminWindow.QuickActions);
+        var appearTab = AddTab(Strings.AdminWindow.Appearance);
+
         #region Name Input
 
-        _namePanel = new Panel(this, nameof(_namePanel))
+        _namePanel = new Panel(actionsTab, nameof(_namePanel))
         {
             Dock = Pos.Top, ShouldDrawBackground = false,
         };
@@ -98,7 +151,7 @@ public partial class AdminWindow : Window
 
         #region Access
 
-        _accessPanel = new Panel(this, nameof(_accessPanel))
+        _accessPanel = new Panel(actionsTab, nameof(_accessPanel))
         {
             Dock = Pos.Top, ShouldDrawBackground = false,
         };
@@ -131,113 +184,106 @@ public partial class AdminWindow : Window
 
         #region Quick Admin Actions
 
-        _actionPanel = new Panel(this, nameof(_actionPanel))
+        var quickActionsSection = new Panel(actionsTab, "QuickActionsSection")
         {
-            Dock = Pos.Top, ShouldDrawBackground = false,
+            Dock = Pos.Top,
+            DockChildSpacing = new Padding(0, 8, 0, 0),
+            ShouldDrawBackground = false,
+        };
+
+        _ = new Label(quickActionsSection, "QuickActionsLabel")
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Text = Strings.AdminWindow.QuickActions,
+        };
+
+        _actionPanel = new Panel(quickActionsSection, nameof(_actionPanel))
+        {
+            Dock = Pos.Top,
+            ShouldDrawBackground = false,
         };
 
         _actionTable = new Table(_actionPanel, nameof(_actionTable))
         {
             CellSpacing = new Point(8, 8),
             ColumnCount = 3,
-            Dock = Pos.Fill,
+            Dock = Pos.Top,
             FitRowHeightToContents = true,
             Font = _defaultFont,
             FontSize = 12,
             SizeToContents = true,
         };
+        _actionTable.AutoSizeToContentWidth = true;
+        _actionTable.AutoSizeToContentHeight = true;
+        _actionTable.AutoSizeToContentWidthOnChildResize = true;
+        _actionTable.AutoSizeToContentHeightOnChildResize = true;
 
         _warpMeToPlayerButton = new Button(_actionPanel, nameof(_warpMeToPlayerButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.WarpMeToPlayer,
         };
+        StyleButton(_warpMeToPlayerButton);
         _warpMeToPlayerButton.Clicked += WarpMeToPlayerButtonOnClicked;
 
         _kickPlayerButton = new Button(_actionPanel, nameof(_kickPlayerButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.KickPlayer,
         };
+        StyleButton(_kickPlayerButton);
         _kickPlayerButton.Clicked += KickPlayerButtonOnClicked;
 
         _killPlayerButton = new Button(_actionPanel, nameof(_killPlayerButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.KillPlayer,
         };
+        StyleButton(_killPlayerButton);
         _killPlayerButton.Clicked += KillPlayerButtonOnClicked;
 
         _warpPlayerToMeButton = new Button(_actionPanel, nameof(_warpPlayerToMeButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.WarpPlayerToMe,
         };
+        StyleButton(_warpPlayerToMeButton);
         _warpPlayerToMeButton.Clicked += WarpPlayerToMeButtonOnClicked;
 
         _muteButton = new Button(_actionPanel, nameof(_muteButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.Mute,
         };
+        StyleButton(_muteButton);
         _muteButton.Clicked += MuteButtonOnClicked;
 
         _unmuteButton = new Button(_actionPanel, nameof(_unmuteButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.Unmute,
         };
+        StyleButton(_unmuteButton);
         _unmuteButton.Clicked += UnmuteButtonOnClicked;
 
         _leaveInstanceButton = new Button(_actionPanel, nameof(_leaveInstanceButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.LeaveInstance,
         };
+        StyleButton(_leaveInstanceButton);
         _leaveInstanceButton.Clicked += LeaveInstanceButtonOnClicked;
 
         _banButton = new Button(_actionPanel, nameof(_banButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.Ban,
         };
+        StyleButton(_banButton);
         _banButton.Clicked += BanButtonOnClicked;
 
         _unbanButton = new Button(_actionPanel, nameof(_unbanButton))
         {
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(120, 0),
-            Padding = new Padding(8, 4),
             Text = Strings.AdminWindow.Unban,
         };
+        StyleButton(_unbanButton);
         _unbanButton.Clicked += UnbanButtonOnClicked;
 
-        var rowsAdded = _actionTable.AddCells(
+        _actionTable.AddCells(
             _warpMeToPlayerButton,
             _kickPlayerButton,
             _killPlayerButton,
@@ -249,11 +295,92 @@ public partial class AdminWindow : Window
             _unbanButton
         );
 
+#if DEBUG
+        foreach (var button in new[]
+                 {
+                     _warpMeToPlayerButton,
+                     _kickPlayerButton,
+                     _killPlayerButton,
+                     _warpPlayerToMeButton,
+                     _muteButton,
+                     _unmuteButton,
+                     _leaveInstanceButton,
+                     _banButton,
+                     _unbanButton,
+                 })
+        {
+            button.IsDisabled = false;
+        }
+#endif
+
+        _actionPanel.SizeToChildren(recursive: true);
+        quickActionsSection.SizeToChildren(recursive: true);
+
         #endregion Quick Admin Actions
+
+        #region Additional Interfaces
+
+        var externalInterfacesSection = new Panel(actionsTab, "ExternalInterfacesSection")
+        {
+            Dock = Pos.Top,
+            ShouldDrawBackground = false,
+            DockChildSpacing = new Padding(0, 8, 0, 0),
+        };
+
+        _ = new Label(externalInterfacesSection, "ExternalInterfacesLabel")
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Text = Strings.AdminWindow.AdditionalInterfaces,
+        };
+
+        var externalButtonsPanel = new Panel(externalInterfacesSection, "ExternalButtonsPanel")
+        {
+            Dock = Pos.Top,
+            ShouldDrawBackground = false,
+        };
+
+        _openItemWindowButton = new Button(externalButtonsPanel, nameof(_openItemWindowButton))
+        {
+            Dock = Pos.Left,
+            Text = Strings.AdminWindow.ItemManagement,
+        };
+        StyleButton(_openItemWindowButton);
+        _openItemWindowButton.Clicked += OpenItemWindowButtonOnClicked;
+
+        _openMailWindowButton = new Button(externalButtonsPanel, nameof(_openMailWindowButton))
+        {
+            Dock = Pos.Left,
+            Text = Strings.AdminWindow.MailBroadcast,
+        };
+        StyleButton(_openMailWindowButton);
+        _openMailWindowButton.Clicked += OpenMailWindowButtonOnClicked;
+
+        externalInterfacesSection.SizeToChildren(recursive: true);
+
+        #endregion Additional Interfaces
+
+
 
         #region Sprite/Face Pickers
 
-        _spriteTexturePicker = new TexturePicker(this, nameof(_spriteTexturePicker))
+        var appearanceSection = new Panel(appearTab, "AppearanceSection")
+        {
+            Dock = Pos.Top,
+            DockChildSpacing = new Padding(0, 8, 0, 0),
+            ShouldDrawBackground = false,
+        };
+
+        _ = new Label(appearanceSection, "AppearanceLabel")
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Text = Strings.AdminWindow.Appearance,
+        };
+
+        _spriteTexturePicker = new TexturePicker(appearanceSection, nameof(_spriteTexturePicker))
         {
             Dock = Pos.Top,
             Font = _defaultFont,
@@ -264,29 +391,36 @@ public partial class AdminWindow : Window
         };
         _spriteTexturePicker.Submitted += SpriteTexturePickerOnSubmitted;
 
-        _faceTexturePicker = new TexturePicker(this, nameof(_faceTexturePicker))
+        _faceTexturePicker = new TexturePicker(appearanceSection, nameof(_faceTexturePicker))
         {
             Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
             ButtonText = Strings.AdminWindow.SetFace,
             LabelText = Strings.AdminWindow.Face,
+            Margin = new Margin(0, 4, 0, 0),
             TextureType = TextureType.Face,
         };
         _faceTexturePicker.Submitted += FaceTexturePickerOnSubmitted;
+
+        appearanceSection.SizeToChildren(recursive: true);
 
         #endregion Sprite/Face Pickers
 
         #region Map List
 
-        _mapListPanel = new Panel(this, nameof(_mapListPanel))
+        _mapListPanel = new Panel(_contentPanel, nameof(_mapListPanel))
         {
-            Dock = Pos.Fill, ShouldDrawBackground = false,
+            Dock = Pos.Fill,
+            DockChildSpacing = new Padding(0, 8, 0, 0),
+            ShouldDrawBackground = false,
         };
 
         _mapListPanelHeader = new Panel(_mapListPanel, nameof(_mapListPanelHeader))
         {
-            Dock = Pos.Top, ShouldDrawBackground = false,
+            Dock = Pos.Top,
+            DockChildSpacing = new Padding(8, 0, 0, 0),
+            ShouldDrawBackground = false,
         };
 
         _mapListLabel = new Label(_mapListPanelHeader, nameof(_mapListLabel))
@@ -302,6 +436,7 @@ public partial class AdminWindow : Window
             Dock = Pos.Right,
             Font = _defaultFont,
             FontSize = 12,
+            Margin = new Margin(8, 0, 0, 0),
             Text = Strings.AdminWindow.SortMapList,
             TooltipText = Strings.AdminWindow.SortMapListTooltip,
             TooltipFont = _defaultFont,
@@ -310,12 +445,29 @@ public partial class AdminWindow : Window
 
         _mapSortCheckbox.CheckChanged += MapSortCheckboxOnCheckChanged;
 
-        _mapListPanel.SizeToChildren(recursive: true);
+        _mapTreeContainer = new Panel(_mapListPanel, nameof(_mapTreeContainer))
+        {
+            Dock = Pos.Fill,
+            ShouldDrawBackground = false,
+        };
 
         #endregion Map List
 
         SkipRender();
     }
+
+    private static Padding StdPad(int x = 8, int y = 4) => new Padding(x, y);
+
+    private void StyleButton(Button button)
+    {
+        button.MinimumSize = new Point(120, 28);
+        button.Padding = StdPad();
+        button.Margin = new Margin(0, 0, 8, 0);
+        button.Font = _defaultFont;
+        button.FontSize = 12;
+    }
+
+
 
     protected override void EnsureInitialized()
     {
@@ -323,10 +475,33 @@ public partial class AdminWindow : Window
 
         LoadJsonUi(UI.InGame, Graphics.Renderer?.GetResolutionString(), saveOutput: true);
 
+        // Asegura layout correcto aunque el JSON no tenga todo
+        ForcePostJsonLayout();
+
         UpdateMapList();
     }
 
     #region Action Handlers
+
+
+
+
+
+
+
+    private void OpenItemWindowButtonOnClicked(Base sender, MouseButtonState args)
+    {
+        Interface.GameUi.OpenAdminItemManagementWindow();
+    }
+
+    private void OpenMailWindowButtonOnClicked(Base sender, MouseButtonState args)
+    {
+        Interface.GameUi.OpenAdminMailBroadcastWindow();
+    }
+
+
+
+
 
     private void UnbanButtonOnClicked(Base s, MouseButtonState e)
     {
@@ -401,7 +576,10 @@ public partial class AdminWindow : Window
     public string? PlayerName
     {
         get => _nameInput.Text?.Trim();
-        set => _nameInput.Text = value;
+        set
+        {
+            _nameInput.Text = value;
+        }
     }
 
     private void FaceTexturePickerOnSubmitted(TexturePicker sender, ValueChangedEventArgs<string?> arguments)
@@ -514,6 +692,8 @@ public partial class AdminWindow : Window
         );
     }
 
+
+
     private void MapSortCheckboxOnCheckChanged(ICheckbox sender, ValueChangedEventArgs<bool> eventArgs)
     {
         UpdateMapList();
@@ -523,7 +703,7 @@ public partial class AdminWindow : Window
     {
         _mapTree?.DelayedDelete();
 
-        _mapTree = new TreeControl(_mapListPanel, nameof(_mapTree))
+        _mapTree = new TreeControl(_mapTreeContainer, nameof(_mapTree))
         {
             Dock = Pos.Fill,
             Font = _defaultFont,
@@ -612,6 +792,64 @@ public partial class AdminWindow : Window
         }
 
         PacketSender.SendAdminAction(new WarpToMapAction(mapId));
+    }
+    /// <summary>
+    /// Reaplica un layout seguro después de cargar/mergear el JSON.
+    /// Garantiza que los contenedores críticos queden con Dock/Width/Margins correctos,
+    /// aun cuando el JSON no defina o cambie estos valores.
+    /// </summary>
+    private void ForcePostJsonLayout()
+    {
+        // Columna izquierda
+        if (_leftColumn != null)
+        {
+            _leftColumn.Dock = Pos.Left;
+            _leftColumn.Width = 360;
+            _leftColumn.Margin = new Margin(0, 0, 8, 0);
+            _leftColumn.ShouldDrawBackground = false;
+            _leftColumn.SetOverflow(OverflowBehavior.Hidden, OverflowBehavior.Auto);
+            // Asegura que su InnerPanel no “coma” espacio inesperado
+            _leftColumn.InnerPanelPadding = Padding.Zero;
+        }
+
+        // Header fijo
+        if (_leftHeader != null)
+        {
+            _leftHeader.Dock = Pos.Top;
+            _leftHeader.DockChildSpacing = new Padding(0, 12, 0, 0);
+            _leftHeader.ShouldDrawBackground = false;
+        }
+
+        // Tabs
+        if (_leftTabs != null)
+        {
+            _leftTabs.Dock = Pos.Fill;
+            _leftTabs.ShouldDrawBackground = false;
+            _leftTabs.Font ??= _defaultFont;
+            if (_leftTabs.FontSize <= 0) _leftTabs.FontSize = 12;
+        }
+
+        // Panel de mapas a la derecha
+        if (_mapListPanel != null)
+        {
+            _mapListPanel.Dock = Pos.Fill;
+            _mapListPanel.ShouldDrawBackground = false;
+        }
+        if (_mapListPanelHeader != null)
+        {
+            _mapListPanelHeader.Dock = Pos.Top;
+            _mapListPanelHeader.ShouldDrawBackground = false;
+        }
+        if (_mapTreeContainer != null)
+        {
+            _mapTreeContainer.Dock = Pos.Fill;
+            _mapTreeContainer.ShouldDrawBackground = false;
+        }
+
+        // Recalcular tamaños y disposición
+        _contentPanel?.SizeToChildren(recursive: true);
+        InnerPanel?.SizeToChildren(recursive: true);
+        SizeToChildren(recursive: true);
     }
 
     #endregion
