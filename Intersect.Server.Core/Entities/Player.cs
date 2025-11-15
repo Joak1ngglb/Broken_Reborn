@@ -1903,6 +1903,16 @@ public partial class Player : Entity
             return;
         }
 
+        if (target is PlayerShopEntity shopEntity)
+        {
+            if (PlayerShopManager.TryBuildSnapshot(shopEntity.ShopId, out var snapshot))
+            {
+                PacketSender.SendPlayerShopSnapshot(this, snapshot);
+            }
+
+            return;
+        }
+
         List<Item> items;
         var weapon = TryGetEquippedItem(Options.Instance.Equipment.WeaponSlot, out items)
             ? items.FirstOrDefault()?.Descriptor
