@@ -45,6 +45,10 @@ public partial class GameInterface : MutableInterface
 
     private AdminWindow? mAdminWindow;
 
+    private AdminItemManagementWindow? _adminItemManagementWindow;
+
+    private AdminMailBroadcastWindow? _adminMailBroadcastWindow;
+
     private BagWindow _bagWindow;
 
     private BankWindow? _bankWindow;
@@ -280,6 +284,52 @@ public partial class GameInterface : MutableInterface
         }
 
         return mAdminWindow.IsVisibleInParent;
+    }
+
+    public void OpenAdminItemManagementWindow()
+    {
+        if (_adminItemManagementWindow == null)
+        {
+            _adminItemManagementWindow = new AdminItemManagementWindow();
+            _adminItemManagementWindow.Disposed += (_, _) => _adminItemManagementWindow = null;
+        }
+
+        _adminItemManagementWindow.Show();
+        _adminItemManagementWindow.BringToFront();
+    }
+
+    public void OpenAdminMailBroadcastWindow()
+    {
+        if (_adminMailBroadcastWindow == null)
+        {
+            _adminMailBroadcastWindow = new AdminMailBroadcastWindow();
+            _adminMailBroadcastWindow.Disposed += (_, _) => _adminMailBroadcastWindow = null;
+        }
+
+        _adminMailBroadcastWindow.Show();
+        _adminMailBroadcastWindow.BringToFront();
+    }
+
+    private bool CloseAdminItemManagementWindow()
+    {
+        if (_adminItemManagementWindow is not { } window || !window.IsVisibleInTree)
+        {
+            return false;
+        }
+
+        window.Close();
+        return true;
+    }
+
+    private bool CloseAdminMailBroadcastWindow()
+    {
+        if (_adminMailBroadcastWindow is not { } window || !window.IsVisibleInTree)
+        {
+            return false;
+        }
+
+        window.Close();
+        return true;
     }
 
     //Shop
@@ -764,12 +814,31 @@ public partial class GameInterface : MutableInterface
             closedWindows = true;
         }
 
+        if (CloseAdminItemManagementWindow())
+        {
+            closedWindows = true;
+        }
+
+        if (CloseAdminMailBroadcastWindow())
+        {
+            closedWindows = true;
+        }
+
         return closedWindows;
     }
 
     //Dispose
     public void Dispose()
     {
+        _adminItemManagementWindow?.Dispose();
+        _adminItemManagementWindow = null;
+
+        _adminMailBroadcastWindow?.Dispose();
+        _adminMailBroadcastWindow = null;
+
+        mAdminWindow?.Dispose();
+        mAdminWindow = null;
+
         CloseBagWindow();
         CloseBank();
         CloseCraftingTable();
