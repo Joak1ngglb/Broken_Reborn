@@ -1,3 +1,5 @@
+using System;
+
 namespace Intersect.Server.Web.Types;
 
 public partial struct AdminActionParameters
@@ -15,4 +17,12 @@ public partial struct AdminActionParameters
     public byte Y { get; set; }
 
     public Guid MapId { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public int Quantity { get; set; }
+
+    public bool AllowBankOverflow { get; set; }
+
+    public bool ReserveForTarget { get; set; }
 }

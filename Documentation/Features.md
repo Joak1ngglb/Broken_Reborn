@@ -14,4 +14,8 @@ The homepage is accessible at [http://localhost:5400](http://localhost:5400) for
 
 ![Homepage Leaderboard](Features.HomepageLeaderboard.png)
 
+### Admin Commands
+
+Server administrators can now distribute items without leaving the admin window. The client includes item selectors that let you give items directly to a player (with optional bank overflow) or spawn items at their feet with an optional pickup reservation for that player.
+
 [API]: https://docs.freemmorpgmaker.com/en-US/api/v1/introduction/setup/

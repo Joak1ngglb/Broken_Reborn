@@ -1219,6 +1219,30 @@ public static partial class Strings
         public readonly LocalizedString PlayerNotFound = @"The player '{00}' was not found!";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString InvalidItem = @"Invalid item selected.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString InvalidQuantity = @"Quantity must be greater than zero.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString ItemGiveFailed = @"Unable to give {00}x {01} to {02}.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString ItemGiveSuccess = @"You have given {00}x {01} to {02}.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString ItemReceivedFromAdmin = @"{00} gave you {01}x {02}.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString ItemSpawnFailed = @"Unable to spawn {00}x {01} for {02}.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString ItemSpawnSuccess = @"You spawned {00}x {01} for {02}.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString ItemSpawnedNearYou = @"{00} spawned {01}x {02} near you.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString PowerChanged = @"Your power has been modified!";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1473,6 +1497,30 @@ public static partial class Strings
         public readonly LocalizedString mailnotfound = @"Mail not found!";
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString invaliditem = @"The selected item is invalid or cannot be attached to the mail.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastsent = @"Broadcast mail sent.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastfailed = @"Failed to send broadcast mail.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastmissingtitle = @"Mail subject is required.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastmissingmessage = @"Mail message is required.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastmissingitem = @"At least one mail attachment item is required.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastinvalidquantity = @"Mail attachment quantities must be greater than zero.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcasttoomanyattachments = @"Mail broadcast can include at most {00} attachment items.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString broadcastnorecipients = @"There were no recipients for the broadcast mail.";
 
     }
 
