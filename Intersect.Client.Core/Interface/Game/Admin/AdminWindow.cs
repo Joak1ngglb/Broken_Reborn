@@ -278,7 +278,7 @@ public partial class AdminWindow : Window
 
         #region Additional Interfaces
 
-        var externalInterfacesSection = new Panel(actionsTab, "ExternalInterfacesSection")
+        var externalInterfacesSection = new Panel(this, "ExternalInterfacesSection")
         {
             Dock = Pos.Top,
             ShouldDrawBackground = false,
