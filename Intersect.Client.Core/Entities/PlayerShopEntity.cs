@@ -1,5 +1,12 @@
 using System;
+using System.Collections.Generic;
+using Intersect.Client.Core;
+using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.GenericClasses;
+using Intersect.Client.Framework.Graphics;
+using Intersect.Client.General;
 using Intersect.Enums;
+using Intersect.Framework.Core;
 using Intersect.Framework.Core.Entities;
 using Intersect.Network.Packets.Server;
 
@@ -7,6 +14,8 @@ namespace Intersect.Client.Entities;
 
 public sealed class PlayerShopEntity : Entity
 {
+    private IGameTexture? _decorationTexture;
+
     public PlayerShopEntity(Guid id, PlayerShopEntityPacket packet) : base(id, packet, EntityType.PlayerShop)
     {
         EnsureSprite();
@@ -24,6 +33,8 @@ public sealed class PlayerShopEntity : Entity
         }
 
         ShopId = shopEntityPacket.ShopId;
+        Gender = shopEntityPacket.Gender;
+        Equipment = NormalizeEquipment(shopEntityPacket.Equipment);
 
         EnsureSprite();
     }
@@ -32,6 +43,7 @@ public sealed class PlayerShopEntity : Entity
     {
         EnsureSprite();
         base.Draw();
+        DrawDecoration();
     }
 
     private void EnsureSprite()
@@ -45,5 +57,60 @@ public sealed class PlayerShopEntity : Entity
         {
             LoadTextures(Sprite);
         }
+    }
+
+    private static Dictionary<int, List<Guid>> NormalizeEquipment(Dictionary<int, List<Guid>>? equipment)
+    {
+        var slotCount = Options.Instance.Equipment.Slots.Count;
+        var normalized = new Dictionary<int, List<Guid>>(slotCount);
+
+        if (equipment != null)
+        {
+            foreach (var pair in equipment)
+            {
+                normalized[pair.Key] = pair.Value != null ? new List<Guid>(pair.Value) : new List<Guid>();
+            }
+        }
+
+        for (var slotIndex = 0; slotIndex < slotCount; slotIndex++)
+        {
+            if (!normalized.ContainsKey(slotIndex))
+            {
+                normalized[slotIndex] = new List<Guid>();
+            }
+        }
+
+        return normalized;
+    }
+
+    private IGameTexture? EnsureDecorationTexture()
+    {
+        _decorationTexture ??= Globals.ContentManager.GetTexture(
+            TextureType.Sprites,
+            PlayerShopEntityConstants.DefaultSprite
+        );
+
+        return _decorationTexture;
+    }
+
+    private void DrawDecoration()
+    {
+        var decoration = EnsureDecorationTexture();
+        if (decoration == null)
+        {
+            return;
+        }
+
+        var frameWidth = decoration.Width / Options.Instance.Sprites.NormalFrames;
+        var frameHeight = decoration.Height / Options.Instance.Sprites.Directions;
+        var srcRectangle = new FloatRect(0, (int)Direction.Down * frameHeight, frameWidth, frameHeight);
+        var destRectangle = new FloatRect(
+            (float)Math.Ceiling(WorldPos.X + WorldPos.Width / 2f - frameWidth / 2f),
+            (float)Math.Ceiling(WorldPos.Y + WorldPos.Height - frameHeight * 0.3f),
+            frameWidth,
+            frameHeight
+        );
+
+        Graphics.DrawGameTexture(decoration, srcRectangle, destRectangle, Color.White);
     }
 }
