@@ -19,6 +19,7 @@ using Intersect.GameObjects;
 using Intersect.Models;
 using Intersect.Network;
 using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.Shops;
 using Intersect.Server.Database;
 using Intersect.Server.Database.Logging.Entities;
 using Intersect.Server.Database.PlayerData;
@@ -319,5 +320,25 @@ public static partial class PacketSender
     {
         // Opción futura si quieres permitir cerrarla desde el servidor
         player.SendPacket(new MarketWindowPacket(false, false));
+    }
+
+    public static void SendPlayerShopWindow(Player player, bool openCreator, bool closeCreator, bool closeBrowser)
+    {
+        if (player == null)
+        {
+            return;
+        }
+
+        player.SendPacket(new PlayerShopWindowPacket(openCreator, closeCreator, closeBrowser));
+    }
+
+    public static void SendPlayerShopSnapshot(Player player, ShopSnapshot snapshot)
+    {
+        if (player == null || snapshot == null)
+        {
+            return;
+        }
+
+        player.SendPacket(new PlayerShopSnapshotPacket(snapshot));
     }
 }

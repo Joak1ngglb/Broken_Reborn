@@ -615,6 +615,11 @@ public abstract partial class Entity : IEntity
                     entityType = EntityType.Resource;
                     blockingEntity = mapEntity;
                     return false;
+                case PlayerShopEntity:
+                    blockerType = MovementBlockerType.Entity;
+                    entityType = EntityType.PlayerShop;
+                    blockingEntity = mapEntity;
+                    return false;
             }
         }
 

@@ -13,6 +13,7 @@ using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.GameObjects;
 using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData.Players;
+using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Networking;
 using Serilog;
 namespace Intersect.Server.Entities
@@ -263,6 +264,9 @@ namespace Intersect.Server.Entities
         [NotMapped] public bool InMailBox;
         [JsonIgnore]
         public virtual List<MailBox> MailBoxs { get; set; } = new List<MailBox>();
+
+        [JsonIgnore]
+        public virtual List<PlayerShop> PlayerShops { get; set; } = new();
 
         public void OpenMailBox()
         {
