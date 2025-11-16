@@ -1,4 +1,5 @@
 using System;
+using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
@@ -36,8 +37,8 @@ public sealed class PlayerShopBrowseItemRow : Base
 
         _icon = new ImagePanel(this, "PlayerShopBrowseIcon")
         {
-            Alignment = [Alignments.Left, Alignments.Center],
-            Size = new Point(48, 48),
+           
+            Size = new Point(32, 32),
             Margin = new Margin(6, 6, 10, 6),
         };
 
@@ -64,7 +65,21 @@ public sealed class PlayerShopBrowseItemRow : Base
             Minimum = 1,
         };
         _quantityInput.SetBounds(300, 20, 80, 26);
-        _quantityInput.ValueChanged += (_, args) => UpdateTotal((int)args.Value);
+
+        // Clamp y actualización de total sin comportamientos raros
+        _quantityInput.ValueChanged += (_, args) =>
+        {
+            var raw = (int)args.Value;
+            var max = Math.Max(1, _snapshot.Quantity);
+            var clamped = Math.Clamp(raw, 1, max);
+
+            if (clamped != raw)
+            {
+                _quantityInput.Value = clamped;
+            }
+
+            UpdateTotal(clamped);
+        };
 
         _totalLabel = new Label(this, "PlayerShopBrowseTotal")
         {
@@ -78,22 +93,19 @@ public sealed class PlayerShopBrowseItemRow : Base
         };
         _buyButton.SetBounds(520, 18, 100, 32);
         _buyButton.Clicked += (_, _) => _owner.RequestPurchase(this);
-
+        LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
         UpdateRow();
     }
 
     public PlayerShopItemSnapshot Snapshot => _snapshot;
 
-    public int RequestedQuantity => Math.Clamp((int)_quantityInput.Value, 1, Math.Max(1, _snapshot.Quantity));
+    public int RequestedQuantity =>
+        Math.Clamp((int)_quantityInput.Value, 1, Math.Max(1, _snapshot.Quantity));
 
-    public void UpdateSnapshot(PlayerShopItemSnapshot snapshot)
-    {
-        _snapshot = snapshot;
-        UpdateRow();
-    }
 
     private void UpdateRow()
     {
+        // Nombre + icono del item
         if (!ItemDescriptor.TryGet(_snapshot.ItemId, out var descriptor))
         {
             _nameLabel.Text = Strings.PlayerShops.UnknownItem;
@@ -102,29 +114,53 @@ public sealed class PlayerShopBrowseItemRow : Base
         else
         {
             _nameLabel.Text = descriptor.Name ?? Strings.PlayerShops.UnknownItem;
-            var texture = GameContentManager.Current.GetTexture(Framework.Content.TextureType.Item, descriptor.Icon);
+            var texture = GameContentManager.Current.GetTexture(
+                Framework.Content.TextureType.Item,
+                descriptor.Icon
+            );
             _icon.Texture = texture;
             _icon.RenderColor = descriptor.Color;
         }
 
+        // Datos de precio y cantidad
         _priceLabel.Text = Strings.PlayerShops.BrowserPriceEach.ToString(_snapshot.PricePerUnit);
         _availableLabel.Text = Strings.PlayerShops.BrowserAvailable.ToString(_snapshot.Quantity);
-        _quantityInput.SetRange(1, Math.Max(1, _snapshot.Quantity));
-        if (_quantityInput.Value > _snapshot.Quantity)
-        {
-            _quantityInput.Value = Math.Max(1, _snapshot.Quantity);
-        }
 
-        UpdateTotal(RequestedQuantity);
-        _buyButton.Disable();
-        if (_snapshot.Quantity > 0)
+        var max = Math.Max(1, _snapshot.Quantity);
+        _quantityInput.SetRange(1, max);
+
+        if (_snapshot.Quantity <= 0)
         {
+            // Sin stock -> deshabilitar compra y mostrar total en 0
+            _quantityInput.Value = 1;
+            _quantityInput.Disable();
+
+            _buyButton.Disable();
+            _totalLabel.Text = Strings.PlayerShops.BrowserTotal.ToString(0);
+        }
+        else
+        {
+            // Con stock -> habilitar compra y ajustar cantidad si estaba fuera de rango
+            if (_quantityInput.Value < 1 || _quantityInput.Value > _snapshot.Quantity)
+            {
+                _quantityInput.Value = 1;
+            }
+
+            _quantityInput.Enable();
             _buyButton.Enable();
+
+            UpdateTotal(RequestedQuantity);
         }
     }
 
     private void UpdateTotal(int quantity)
     {
+        if (_snapshot.Quantity <= 0)
+        {
+            _totalLabel.Text = Strings.PlayerShops.BrowserTotal.ToString(0);
+            return;
+        }
+
         var clamped = Math.Clamp(quantity, 1, Math.Max(1, _snapshot.Quantity));
         _totalLabel.Text = Strings.PlayerShops.BrowserTotal.ToString(clamped * _snapshot.PricePerUnit);
     }
