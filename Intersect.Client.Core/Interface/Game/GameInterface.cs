@@ -15,6 +15,7 @@ using Intersect.Client.Interface.Game.Hotbar;
 using Intersect.Client.Interface.Game.Inventory;
 using Intersect.Client.Interface.Game.Mail;
 using Intersect.Client.Interface.Game.Shop;
+using Intersect.Client.Interface.Game.Shops;
 using Intersect.Client.Interface.Game.Trades;
 using Intersect.Client.Interface.Menu;
 using Intersect.Client.Interface.Shared;
@@ -27,6 +28,7 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Client.Interface.Game.Spells;
 using Intersect.Client.Interface.Game.Market;
 using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.Shops;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -144,6 +146,8 @@ public partial class GameInterface : MutableInterface
     private MailBoxWindow mMailBoxWindow;
    public MarketWindow mMarketWindow;
     public SellMarketWindow mSellMarketWindow;
+    private PlayerShopWindow? _playerShopWindow;
+    public PlayerShopBrowseWindow mPlayerShopBrowseWindow;
 
     public EscapeMenuWindow EscapeMenu => _escapeMenu ??= new EscapeMenuWindow(GameCanvas, GetOrCreateSettingsWindow)
     {
@@ -155,6 +159,16 @@ public partial class GameInterface : MutableInterface
     public TargetContextMenu TargetContextMenu => _targetContextMenu ??= new TargetContextMenu(GameCanvas) {IsHidden = true};
 
     public AnnouncementWindow AnnouncementWindow => _announcementWindow ??= new AnnouncementWindow(GameCanvas) { IsHidden = true };
+
+    public PlayerShopWindow PlayerShopWindow => _playerShopWindow ??= CreatePlayerShopWindow();
+
+    private PlayerShopWindow CreatePlayerShopWindow()
+    {
+        var window = new PlayerShopWindow(GameCanvas);
+        window.Closed += (_, _) => PlayerShopWindowOnClosed(window);
+        window.Disposed += (_, _) => PlayerShopWindowOnClosed(window);
+        return window;
+    }
 
     public ItemDescriptionWindow? ItemDescriptionWindow
     {
@@ -529,6 +543,8 @@ public partial class GameInterface : MutableInterface
         _bestiaryWindow?.Update();
         mMailBoxWindow?.UpdateMail();
         mSellMarketWindow?.Update();
+        _playerShopWindow?.Update();
+        mPlayerShopBrowseWindow?.Update();
         var questDescriptorId = Globals.QuestOffers.FirstOrDefault();
         if (questDescriptorId == default)
         {
@@ -903,6 +919,66 @@ public partial class GameInterface : MutableInterface
     {
         mSellMarketWindow?.Close();
         mSellMarketWindow = null;
+    }
+
+    public void OpenPlayerShopCreationWindow()
+    {
+        PlayerShopWindow.OpenForConfiguration();
+    }
+
+    public void ClosePlayerShopCreationWindow()
+    {
+        if (_playerShopWindow == null)
+        {
+            return;
+        }
+
+        _playerShopWindow.Close();
+        _playerShopWindow = null;
+    }
+
+    public void OpenPlayerShopBrowseWindow(ShopSnapshot snapshot)
+    {
+        if (mPlayerShopBrowseWindow == null)
+        {
+            var window = new PlayerShopBrowseWindow(GameCanvas, snapshot);
+            window.Closed += (_, _) => PlayerShopBrowseWindowOnClosed(window);
+            window.Disposed += (_, _) => PlayerShopBrowseWindowOnClosed(window);
+            mPlayerShopBrowseWindow = window;
+        }
+        else
+        {
+            mPlayerShopBrowseWindow.UpdateSnapshot(snapshot);
+        }
+
+        mPlayerShopBrowseWindow.Show();
+    }
+
+    public void ClosePlayerShopBrowseWindow()
+    {
+        if (mPlayerShopBrowseWindow == null)
+        {
+            return;
+        }
+
+        mPlayerShopBrowseWindow.Close();
+        mPlayerShopBrowseWindow = null;
+    }
+
+    private void PlayerShopWindowOnClosed(PlayerShopWindow window)
+    {
+        if (_playerShopWindow == window)
+        {
+            _playerShopWindow = null;
+        }
+    }
+
+    private void PlayerShopBrowseWindowOnClosed(PlayerShopBrowseWindow window)
+    {
+        if (mPlayerShopBrowseWindow == window)
+        {
+            mPlayerShopBrowseWindow = null;
+        }
     }
 
 

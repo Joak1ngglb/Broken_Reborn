@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Intersect.Enums;
 using Intersect.GameObjects;
 using Intersect.Network;
@@ -9,6 +10,7 @@ using Intersect.Server.Database.Logging.Entities;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Database.PlayerData.Security;
+using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Entities;
 using Intersect.Server.General;
 using Intersect.Server.Localization;
@@ -675,9 +677,11 @@ internal sealed partial class PacketHandler
             if (Player.FindOnline(chr.Id) != null)
             {
                 client.LoadCharacter(chr);
+                var shopSummary = FinalizePlayerShopIfNeeded(client.Entity);
                 client.Entity.SetOnline();
 
                 PacketSender.SendJoinGame(client);
+                NotifyPlayerShopFinalization(client.Entity, shopSummary);
                 return;
             }
         }
@@ -703,8 +707,10 @@ internal sealed partial class PacketHandler
                 explicitLoad: true
             );
             client.LoadCharacter(character);
+            var shopSummary = FinalizePlayerShopIfNeeded(client.Entity);
             client.Entity.SetOnline();
             PacketSender.SendJoinGame(client);
+            NotifyPlayerShopFinalization(client.Entity, shopSummary);
         }
     }
 
@@ -1647,6 +1653,7 @@ internal sealed partial class PacketHandler
         }
 
         client.LoadCharacter(newChar);
+        var creationShopSummary = FinalizePlayerShopIfNeeded(client.Entity);
 
         newChar.SetVital(Vital.Health, classBase.BaseVital[(int)Vital.Health]);
         newChar.SetVital(Vital.Mana, classBase.BaseVital[(int)Vital.Mana]);
@@ -1687,6 +1694,7 @@ internal sealed partial class PacketHandler
         newChar.SetOnline();
 
         PacketSender.SendJoinGame(client);
+        NotifyPlayerShopFinalization(client.Entity, creationShopSummary);
     }
 
     //PickupItemPacket
@@ -2625,6 +2633,8 @@ internal sealed partial class PacketHandler
 
         client.LoadCharacter(character);
 
+        var selectionShopSummary = FinalizePlayerShopIfNeeded(client.Entity);
+
         UserActivityHistory.LogActivity(
             client.User?.Id ?? Guid.Empty,
             client?.Entity?.Id ?? Guid.Empty,
@@ -2639,6 +2649,7 @@ internal sealed partial class PacketHandler
             client.Entity?.SetOnline();
 
             PacketSender.SendJoinGame(client);
+            NotifyPlayerShopFinalization(client.Entity, selectionShopSummary);
         }
         catch (Exception exception)
         {
@@ -3299,6 +3310,49 @@ internal sealed partial class PacketHandler
         }
     }
 
-  
+    private static PlayerShopManager.PlayerShopFinalizationSummary? FinalizePlayerShopIfNeeded(Player? player)
+    {
+        if (player == null)
+        {
+            return null;
+        }
+
+        PlayerShopManager.TryFinalizeActiveShop(player, out var summary);
+        return summary;
+    }
+
+    private static void NotifyPlayerShopFinalization(
+        Player? player,
+        PlayerShopManager.PlayerShopFinalizationSummary? summary
+    )
+    {
+        if (player == null || summary == null)
+        {
+            return;
+        }
+
+        var details = new List<string>();
+        if (summary.GoldPaid > 0)
+        {
+            details.Add($"💰 {summary.GoldPaid} oro entregado");
+        }
+
+        if (summary.ReturnedItemQuantity > 0)
+        {
+            details.Add($"📦 {summary.ReturnedItemQuantity} artículos devueltos");
+        }
+
+        var detailText = details.Count > 0 ? string.Join(" · ", details) : "sin ventas pendientes";
+        var message = $"📋 Tu tienda \"{summary.ShopName}\" ha sido cerrada: {detailText}.";
+
+        PacketSender.SendChatMsg(player, message, ChatMessageType.Trading, CustomColors.Alerts.Accepted);
+
+        if (summary.ReturnedStackCount > 0 && summary.Snapshot != null)
+        {
+            PacketSender.SendPlayerShopSnapshot(player, summary.Snapshot);
+        }
+    }
+
+
     #endregion
 }
