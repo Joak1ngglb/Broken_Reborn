@@ -35,6 +35,8 @@ public partial class AdminWindow : Window
     private readonly Button _killPlayerButton;
     private readonly Button _leaveInstanceButton;
     private readonly Button _mailBroadcastButton;
+    private readonly Button _openItemWindowButton;
+    private readonly Button _openMailWindowButton;
     private readonly Label _mapListLabel;
 
     private readonly Panel _mapListPanel;
@@ -691,6 +693,15 @@ public partial class AdminWindow : Window
         }
 
         PacketSender.SendAdminAction(new WarpToMapAction(mapId));
+    }
+
+    private void StyleButton(Button button)
+    {
+        button.Font = _defaultFont;
+        button.FontSize = 12;
+        button.MinimumSize = new Point(140, 32);
+        button.Padding = new Padding(8, 4);
+        button.Margin = new Margin(0, 0, 8, 0);
     }
 
     #endregion
