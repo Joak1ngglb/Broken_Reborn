@@ -13,7 +13,9 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Models;
 using Intersect.Network.Packets.Client;
 using System.Collections.Generic;
+using System.Linq;
 using Intersect.Network.Packets;
+using Intersect.Network.Packets.Shops;
 using AdminAction = Intersect.Admin.Actions.AdminAction;
 
 namespace Intersect.Client.Networking;
@@ -190,6 +192,26 @@ public static partial class PacketSender
         }
 
         Network.SendPacket(new EventInputVariablePacket(eventId, default, default, default, true));
+    }
+
+    public static void SendCreatePlayerShop(
+        string name,
+        IEnumerable<PlayerShopStockPayload> stock,
+        string? decoration
+    )
+    {
+        var payloads = stock?.ToList() ?? new List<PlayerShopStockPayload>();
+        Network.SendPacket(new CreatePlayerShopPacket(name ?? string.Empty, payloads, decoration));
+    }
+
+    public static void SendBrowsePlayerShop(Guid shopId)
+    {
+        Network.SendPacket(new BrowsePlayerShopPacket(shopId));
+    }
+
+    public static void SendBuyPlayerShopItem(Guid shopId, Guid shopItemId, int quantity)
+    {
+        Network.SendPacket(new BuyPlayerShopItemPacket(shopId, shopItemId, quantity));
     }
 
     public static void SendUserRegistration(string username, string password, string email)

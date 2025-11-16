@@ -31,6 +31,7 @@ using Intersect.Server.Database;
 using Intersect.Server.Database.Logging.Entities;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Players;
+using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Database.PlayerData.Security;
 using Intersect.Server.Entities.Events;
 using Intersect.Server.Framework.Entities;
@@ -80,6 +81,10 @@ public partial class Player : Entity
 
     //Name, X, Y, Dir, Etc all in the base Entity Class
     public Guid ClassId { get; set; }
+
+    public Guid? ActivePlayerShopId { get; set; }
+
+    public PlayerShopStatus? ActivePlayerShopStatus { get; set; }
 
     [NotMapped]
     public string ClassName => ClassDescriptor.GetName(ClassId);
@@ -1895,6 +1900,16 @@ public partial class Player : Entity
 
         if (target is EventPage)
         {
+            return;
+        }
+
+        if (target is PlayerShopEntity shopEntity)
+        {
+            if (PlayerShopManager.TryBuildSnapshot(shopEntity.ShopId, out var snapshot))
+            {
+                PacketSender.SendPlayerShopSnapshot(this, snapshot);
+            }
+
             return;
         }
 
@@ -6229,6 +6244,11 @@ public partial class Player : Entity
     }
     private void AddEquipmentSlot(int equipmentSlot, int inventorySlot)
     {
+        if (equipmentSlot < 0 || equipmentSlot >= Options.Instance.Equipment.EquipmentSlots.Count)
+        {
+            return;
+        }
+
         if (!Equipment.ContainsKey(equipmentSlot))
         {
             Equipment[equipmentSlot] = new List<int>();
