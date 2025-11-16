@@ -30,6 +30,7 @@ public sealed partial class TargetContextMenu : ContextMenu
     private readonly MenuItem _guildMenuItem;
     private readonly MenuItem _privateMessageMenuItem;
     private readonly MenuItem _inspectMenuItem;
+    private readonly MenuItem _organizeShopMenuItem;
     private readonly Player? _me;
     private IEntity? _entity;
 
@@ -66,6 +67,9 @@ public sealed partial class TargetContextMenu : ContextMenu
         _inspectMenuItem = AddItem(Strings.EntityContextMenu.InspectPlayer);
         _inspectMenuItem.Clicked += inspect_Clicked;
 
+        _organizeShopMenuItem = AddItem(Strings.EntityContextMenu.ManagePlayerShop);
+        _organizeShopMenuItem.Clicked += OrganizeShopMenuItemOnClicked;
+
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString());
         BuildContextMenu();
     }
@@ -91,7 +95,7 @@ public sealed partial class TargetContextMenu : ContextMenu
                 newY = posY + button.Height;
                 break;
 
-            case Player player when player != _me:
+            case Player player:
                 var mousePos = Graphics.ConvertToWorldPoint(Globals.InputManager.MousePosition);
                 if (!player.WorldPos.Contains(mousePos.X, mousePos.Y))
                 {
@@ -154,12 +158,17 @@ public sealed partial class TargetContextMenu : ContextMenu
             AddChild(_nameDivider);
         }
 
-        AddChild(_tradeMenuItem);
-        AddChild(_partyMenuItem);
-        AddChild(_friendMenuItem);
-
-        if (_entity is Player player && player != _me)
+        if (_entity is Player player)
         {
+            if (player == _me)
+            {
+                AddChild(_organizeShopMenuItem);
+                return;
+            }
+
+            AddChild(_tradeMenuItem);
+            AddChild(_partyMenuItem);
+            AddChild(_friendMenuItem);
             AddChild(_inspectMenuItem);
 
             if (string.IsNullOrWhiteSpace(player.Guild) && (_me?.GuildRank?.Permissions?.Invite ?? false))
@@ -168,6 +177,12 @@ public sealed partial class TargetContextMenu : ContextMenu
             }
 
             AddChild(_privateMessageMenuItem);
+        }
+        else
+        {
+            AddChild(_tradeMenuItem);
+            AddChild(_partyMenuItem);
+            AddChild(_friendMenuItem);
         }
     }
 
@@ -269,5 +284,10 @@ public sealed partial class TargetContextMenu : ContextMenu
         }
 
         Interface.GameUi.GameMenu?.ToggleCharacterWindow(player);
+    }
+
+    private static void OrganizeShopMenuItemOnClicked(Base sender, MouseButtonState arguments)
+    {
+        Interface.GameUi.PlayerShopWindow?.OpenForConfiguration();
     }
 }

@@ -1931,7 +1931,7 @@ public partial class Player : Entity, IPlayer
                     }
                 }
 
-                if (en.Value.Type is EntityType.GlobalEntity or EntityType.Player)
+                if (en.Value.Type is EntityType.GlobalEntity or EntityType.Player or EntityType.PlayerShop)
                 {
                     // Already in our list?
                     if (mlastTargetList.TryGetValue(en.Value, out var value))
@@ -2055,6 +2055,9 @@ public partial class Player : Entity, IPlayer
                 break;
             case Event:
                 TargetBox?.SetEntity(targetEntity, EntityType.Event);
+                break;
+            case PlayerShopEntity:
+                TargetBox?.SetEntity(targetEntity, EntityType.PlayerShop);
                 break;
             default:
                 TargetBox?.SetEntity(targetEntity, EntityType.GlobalEntity);

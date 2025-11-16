@@ -11,6 +11,7 @@ using Intersect.Framework.Core;
 using Intersect.Server.Metrics;
 using Intersect.Server.Networking;
 using Intersect.Server.Database.PlayerData.Players;
+using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Utilities;
 using Intersect.Server.Database.PlayerData.Api;
 using Intersect.Server.Core.MapInstancing;
@@ -32,6 +33,7 @@ internal sealed partial class LogicService
         private long _nextClearExpiredTokens;
         private long _nextHonorDecayCheck;
         private long _nextMarketCleanup;
+        private long _nextPlayerShopCleanup;
 
         /// <summary>
         /// We lock on this in order to stop maps from entering the update queue. This is only done when the editor is saving/modifying game maps or the map grids are being rebuilt.
@@ -136,6 +138,28 @@ internal sealed partial class LogicService
                         });
 #pragma warning restore CA2008 // Do not create tasks without passing a TaskScheduler
                         _nextMarketCleanup = startTime + 86400000;
+                    }
+
+                    if (startTime > _nextPlayerShopCleanup)
+                    {
+#pragma warning disable CA2008 // Do not create tasks without passing a TaskScheduler
+                        _ = Task.Run(() =>
+                        {
+                            try
+                            {
+                                var closed = PlayerShopManager.CloseExpiredShops();
+                                if (closed > 0)
+                                {
+                                    Log.Information("Closed {Count} expired player shops", closed);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Error(ex, "Error cleaning expired player shops");
+                            }
+                        });
+#pragma warning restore CA2008 // Do not create tasks without passing a TaskScheduler
+                        _nextPlayerShopCleanup = startTime + 3600000;
                     }
 
 

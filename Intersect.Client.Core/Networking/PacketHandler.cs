@@ -414,6 +414,27 @@ internal sealed partial class PacketHandler
         }
     }
 
+    //PlayerShopEntityPacket
+    public void HandlePacket(IPacketSender packetSender, PlayerShopEntityPacket packet)
+    {
+        if (Globals.TryGetEntity(EntityType.PlayerShop, packet.EntityId, out var entity))
+        {
+            entity.Load(packet);
+            return;
+        }
+
+        var shopEntity = new PlayerShopEntity(packet.EntityId, packet);
+        if (!Globals.Entities.TryAdd(shopEntity.Id, shopEntity))
+        {
+            ApplicationContext.CurrentContext.Logger.LogError(
+                "Failed to register new {EntityType} {EntityId} ({EntityName})",
+                EntityType.PlayerShop,
+                packet.EntityId,
+                packet.Name
+            );
+        }
+    }
+
     //ProjectileEntityPacket
     public void HandlePacket(IPacketSender packetSender, ProjectileEntityPacket packet)
     {
