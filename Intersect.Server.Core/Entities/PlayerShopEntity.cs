@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.Entities;
@@ -11,6 +13,8 @@ namespace Intersect.Server.Entities;
 
 public sealed class PlayerShopEntity : Entity
 {
+    private readonly Dictionary<int, List<Guid>> _equipment;
+
     public PlayerShopEntity(
         PlayerShopManager.PlayerShopRuntime runtime,
         Guid mapInstanceId,
@@ -33,12 +37,20 @@ public sealed class PlayerShopEntity : Entity
         OwnerName = runtime.OwnerName;
 
         Sprite = string.IsNullOrWhiteSpace(sprite)
-            ? PlayerShopEntityConstants.DefaultSprite
+            ? runtime.Sprite
             : sprite;
-        Face = face ?? string.Empty;
+        Face = face ?? runtime.Face ?? string.Empty;
+        Color = runtime.Color;
+        Gender = runtime.Gender;
         NameColor = nameColor ?? Color.White;
         HeaderLabel = headerLabel ?? new Label(runtime.Title, Color.White);
         FooterLabel = footerLabel ?? new Label(runtime.OwnerName, Color.White);
+
+        _equipment = runtime.Equipment?.ToDictionary(
+                pair => pair.Key,
+                pair => pair.Value != null ? new List<Guid>(pair.Value) : new List<Guid>()
+            )
+            ?? new Dictionary<int, List<Guid>>();
 
         Passable = false;
         HideName = false;
@@ -49,6 +61,10 @@ public sealed class PlayerShopEntity : Entity
     public Guid OwnerId { get; }
 
     public string OwnerName { get; }
+
+    public Gender Gender { get; }
+
+    public IReadOnlyDictionary<int, List<Guid>> Equipment => _equipment;
 
     public override EntityType GetEntityType() => EntityType.PlayerShop;
 
@@ -67,6 +83,11 @@ public sealed class PlayerShopEntity : Entity
         }
 
         playerShopEntityPacket.ShopId = ShopId;
+        playerShopEntityPacket.Gender = Gender;
+        playerShopEntityPacket.Equipment = _equipment.ToDictionary(
+            pair => pair.Key,
+            pair => pair.Value != null ? new List<Guid>(pair.Value) : new List<Guid>()
+        );
 
         return playerShopEntityPacket;
     }

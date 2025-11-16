@@ -759,9 +759,10 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        var normalizedName = string.IsNullOrWhiteSpace(packet.Name)
-            ? $"{player.Name} - Tienda"
+        var customName = string.IsNullOrWhiteSpace(packet.Name)
+            ? "Tienda"
             : packet.Name.Trim();
+        var normalizedName = $"{player.Name} - {customName}";
 
         var inventoryUsage = new Dictionary<int, int>();
         var stockEntries = new List<PlayerShopManager.PlayerShopStock>();

@@ -6,7 +6,6 @@ using Intersect.Client.Entities;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
-
 using Intersect.Client.General;
 using Intersect.Client.Interface;
 using Intersect.Client.Localization;
@@ -17,6 +16,7 @@ using Intersect.GameObjects;
 using Intersect.Network.Packets.Shops;
 using Intersect.Client.Items;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Client.Interface.Game.Market;
 
 namespace Intersect.Client.Interface.Game.Shops;
 
@@ -30,7 +30,7 @@ public sealed class PlayerShopWindow : Window
     private Label _selectedLabel;
     private Label _statusLabel;
     private Button _clearSlotButton;
-    private  Button _cancelButton;
+    private Button _cancelButton;
     private Button _merchantModeButton;
     private Label _hintLabel;
 
@@ -45,8 +45,10 @@ public sealed class PlayerShopWindow : Window
     public PlayerShopWindow(Canvas parent)
         : base(parent, Strings.PlayerShops.CreatorTitle, false, nameof(PlayerShopWindow))
     {
-        SetSize(780, 520);
-        DisableResizing();
+        // Ventana más compacta
+        SetSize(720, 460);
+        IsResizable = false;
+
         Closed += WindowOnClosed;
         Disposed += WindowOnClosed;
 
@@ -63,98 +65,106 @@ public sealed class PlayerShopWindow : Window
 
         _uiInitialized = true;
 
+        // Nombre de la tienda
         var nameLabel = new Label(this, "PlayerShopNameLabel")
         {
             Text = Strings.PlayerShops.ShopNameLabel,
         };
-        nameLabel.SetBounds(20, 30, 200, 20);
+        nameLabel.SetBounds(20, 20, 200, 18);
 
         _shopNameInput = new TextBox(this, "PlayerShopNameInput")
         {
             PlaceholderText = Strings.PlayerShops.ShopNamePlaceholder,
         };
-        _shopNameInput.SetBounds(20, 50, 300, 28);
+        _shopNameInput.SetBounds(20, 40, 300, 24);
         _shopNameInput.TextChanged += (_, _) => ValidateInputs();
 
+        // Hint compacto debajo del nombre
         _hintLabel = new Label(this, "PlayerShopHint")
         {
             Text = Strings.PlayerShops.Hint,
         };
-        _hintLabel.SetBounds(20, 86, 320, 40);
+        _hintLabel.SetBounds(20, 68, 320, 32);
         _hintLabel.SetTextColor(Color.Gray, ComponentState.Normal);
 
+        // Inventario (izquierda)
         _inventoryScroll = new ScrollControl(this, "PlayerShopInventoryScroll");
-        _inventoryScroll.SetBounds(20, 130, 320, 360);
+        _inventoryScroll.SetBounds(20, 110, 320, 320);
         _inventoryScroll.EnableScroll(false, true);
 
+        // Slots de la tienda (derecha arriba)
         _listingScroll = new ScrollControl(this, "PlayerShopListingScroll");
-        _listingScroll.SetBounds(360, 30, 180, 300);
+        _listingScroll.SetBounds(360, 20, 180, 260);
         _listingScroll.EnableScroll(false, true);
 
+        // Info de slot seleccionado
         _selectedLabel = new Label(this, "PlayerShopSelectedLabel")
         {
             Text = Strings.PlayerShops.SelectSlot,
         };
-        _selectedLabel.SetBounds(360, 340, 360, 20);
+        _selectedLabel.SetBounds(360, 290, 340, 18);
 
+        // Inputs de cantidad y precio (en línea)
         _quantityInput = new TextBoxNumeric(this, "PlayerShopQuantityInput")
         {
             Minimum = 1,
         };
-        _quantityInput.SetBounds(360, 370, 150, 28);
+        _quantityInput.SetBounds(360, 330, 120, 24);
         _quantityInput.ValueChanged += (_, args) => OnQuantityChanged((int)args.Value);
 
         _priceInput = new TextBoxNumeric(this, "PlayerShopPriceInput")
         {
             Minimum = 1,
         };
-        _priceInput.SetBounds(530, 370, 150, 28);
+        _priceInput.SetBounds(500, 330, 120, 24);
         _priceInput.ValueChanged += (_, args) => OnPriceChanged((int)args.Value);
 
         var quantityLabel = new Label(this, "PlayerShopQuantityLabel")
         {
             Text = Strings.PlayerShops.QuantityInput,
         };
-        quantityLabel.SetBounds(360, 350, 150, 18);
+        quantityLabel.SetBounds(360, 312, 120, 16);
 
         var priceLabel = new Label(this, "PlayerShopPriceLabel")
         {
             Text = Strings.PlayerShops.PriceInput,
         };
-        priceLabel.SetBounds(530, 350, 150, 18);
+        priceLabel.SetBounds(500, 312, 120, 16);
 
+        // Botones inferiores (más compactos)
         _clearSlotButton = new Button(this, "PlayerShopClearSlot")
         {
             Text = Strings.PlayerShops.ClearSlot,
         };
-        _clearSlotButton.SetBounds(360, 410, 150, 32);
+        _clearSlotButton.SetBounds(360, 360, 120, 30);
         _clearSlotButton.Clicked += (_, _) => ClearSelectedSlot();
 
         _cancelButton = new Button(this, "PlayerShopCancelButton")
         {
             Text = Strings.PlayerShops.Cancel,
         };
-        _cancelButton.SetBounds(360, 450, 150, 32);
+        _cancelButton.SetBounds(500, 360, 120, 30);
         _cancelButton.Clicked += (_, _) => Close();
 
         _merchantModeButton = new Button(this, "PlayerShopCreateButton")
         {
             Text = Strings.PlayerShops.CreateShop,
         };
-        _merchantModeButton.SetBounds(530, 410, 210, 72);
+        _merchantModeButton.SetBounds(360, 396, 260, 40);
         _merchantModeButton.Clicked += (_, _) => TryCreateShop();
 
+        // Status abajo de todo
         _statusLabel = new Label(this, "PlayerShopStatus")
         {
             Text = Strings.PlayerShops.StatusReady,
         };
-        _statusLabel.SetBounds(360, 500, 380, 20);
+        _statusLabel.SetBounds(20, 430, 680, 20);
         _statusLabel.SetTextColor(Color.ForestGreen, ComponentState.Normal);
 
+        LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString());
         InitInventorySlots();
         InitListingSlots();
-
-        LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString());
+        UpdateSelectedSlotUi();
     }
 
     private void WindowOnClosed(Base? sender, EventArgs args)
@@ -178,10 +188,20 @@ public sealed class PlayerShopWindow : Window
         for (var i = 0; i < max; i++)
         {
             var slot = new PlayerShopInventoryItem(this, _inventoryScroll, i, new ContextMenu(this));
+
+            // Asegura tamaño para evitar divisiones por cero en grids
+            if (slot.Width <= 0 || slot.Height <= 0)
+            {
+                slot.SetSize(36, 36);
+            }
+
             _inventorySlots.Add(slot);
         }
 
-        PopulateSlotContainer.Populate(_inventoryScroll, _inventorySlots.Cast<SlotItem>().ToList());
+        if (_inventorySlots.Count > 0)
+        {
+            PopulateSlotContainer.Populate(_inventoryScroll, _inventorySlots.Cast<SlotItem>().ToList());
+        }
     }
 
     private void InitListingSlots()
@@ -253,14 +273,19 @@ public sealed class PlayerShopWindow : Window
         {
             var descriptor = ItemDescriptor.TryGet(listing.ItemId, out var desc) ? desc : null;
             var name = descriptor?.Name ?? Strings.PlayerShops.EmptySlot;
+
             _selectedLabel.Text = Strings.PlayerShops.SelectedItemLabel.ToString(name);
+
             _quantityInput.Enable();
             _priceInput.Enable();
             _clearSlotButton.Enable();
+
             var max = Math.Max(1, listing.MaxQuantity);
             _quantityInput.SetRange(1, max);
             _quantityInput.Value = Math.Clamp(listing.DesiredQuantity, 1, max);
-            _priceInput.SetRange(1, double.NaN);
+
+            // Usar double.MaxValue en vez de NaN
+            _priceInput.SetRange(1, double.MaxValue);
             _priceInput.Value = Math.Max(1, listing.PricePerUnit);
         }
         else
@@ -367,6 +392,7 @@ public sealed class PlayerShopWindow : Window
 
         var payloads = new List<PlayerShopStockPayload>();
         var usageBySlot = new Dictionary<int, int>();
+
         foreach (var listing in activeListings)
         {
             if (listing.DesiredQuantity <= 0)
@@ -479,6 +505,12 @@ public sealed class PlayerShopWindow : Window
         {
             return false;
         }
+
+        // Si quieres obligar a que tenga nombre, descomenta:
+        // if (string.IsNullOrWhiteSpace(_shopNameInput.Text))
+        // {
+        //     return false;
+        // }
 
         return listings.All(listing => listing.DesiredQuantity > 0 && listing.PricePerUnit > 0);
     }

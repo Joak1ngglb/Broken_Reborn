@@ -1,8 +1,12 @@
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using Intersect.Configuration;
 using Intersect.Enums;
+using Intersect.Framework.Core;
+using Intersect.Framework.Core.Entities;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Shops;
 using Intersect.Server.Database;
@@ -55,6 +59,19 @@ public static class PlayerShopManager
 
         ActiveShops[runtime.ShopId] = runtime;
         ActivateRuntime(runtime, owner, spawnEntity);
+    }
+
+    private static bool IsLocationOccupied(Guid mapId, Guid mapInstanceId, int x, int y, int z)
+    {
+        return ActiveShops.Values.Any(
+            shop =>
+                shop.MapId == mapId
+                && shop.MapInstanceId == mapInstanceId
+                && shop.X == x
+                && shop.Y == y
+                && shop.Z == z
+                && shop.Status == PlayerShopStatus.Active
+        );
     }
 
     private static bool TrySpawnShopEntity(PlayerShopRuntime runtime, MapInstance? mapInstance = null)
@@ -185,7 +202,7 @@ public static class PlayerShopManager
 
         foreach (var shop in shops)
         {
-            var runtime = new PlayerShopRuntime(shop);
+            var runtime = new PlayerShopRuntime(shop, shop.Owner?.Name, shop.Owner);
             RegisterActiveShop(runtime, spawnEntity: false);
         }
 
@@ -226,6 +243,11 @@ public static class PlayerShopManager
             throw new InvalidOperationException("Player shops can only be created on non-instanced maps.");
         }
 
+        if (IsLocationOccupied(mapId, owner.MapInstanceId, x, y, z))
+        {
+            throw new InvalidOperationException("Ya existe una tienda en esta ubicación.");
+        }
+
         IReadOnlyList<ReservedInventoryItem> reservations = Array.Empty<ReservedInventoryItem>();
 
         try
@@ -259,7 +281,7 @@ public static class PlayerShopManager
             context.Player_Shops.Add(shop);
             context.SaveChanges();
 
-            var runtime = new PlayerShopRuntime(shop, ownerName);
+            var runtime = new PlayerShopRuntime(shop, ownerName, owner);
             RegisterActiveShop(runtime, owner);
 
             return runtime;
@@ -300,7 +322,7 @@ public static class PlayerShopManager
 
         ActiveShops.AddOrUpdate(
             shopId,
-            _ => ActivateRuntime(new PlayerShopRuntime(shop, shop.Owner?.Name), shop.Owner),
+            _ => ActivateRuntime(new PlayerShopRuntime(shop, shop.Owner?.Name, shop.Owner), shop.Owner),
             (_, runtime) =>
             {
                 runtime.ReplaceItems(shop.Items);
@@ -447,6 +469,38 @@ public static class PlayerShopManager
                 owner.Id
             );
         }
+    }
+
+    private static Dictionary<int, List<Guid>> BuildEquipmentSnapshot(Player? owner)
+    {
+        var slotCount = Options.Instance.Equipment.Slots.Count;
+        var snapshot = new Dictionary<int, List<Guid>>(slotCount);
+
+        for (var slotIndex = 0; slotIndex < slotCount; slotIndex++)
+        {
+            var equippedItems = new List<Guid>();
+
+            if (owner?.Equipment != null && owner.Equipment.TryGetValue(slotIndex, out var inventorySlots))
+            {
+                foreach (var inventoryIndex in inventorySlots ?? Enumerable.Empty<int>())
+                {
+                    if (inventoryIndex < 0 || inventoryIndex >= owner.Items.Count)
+                    {
+                        continue;
+                    }
+
+                    var slot = owner.Items[inventoryIndex];
+                    if (slot?.ItemId != Guid.Empty)
+                    {
+                        equippedItems.Add(slot.ItemId);
+                    }
+                }
+            }
+
+            snapshot[slotIndex] = equippedItems;
+        }
+
+        return snapshot;
     }
 
     public static bool TryCommitPurchase(
@@ -797,7 +851,7 @@ public static class PlayerShopManager
                 return false;
             }
 
-            runtime = new PlayerShopRuntime(entity, entity.Owner?.Name);
+            runtime = new PlayerShopRuntime(entity, entity.Owner?.Name, entity.Owner);
         }
 
         lock (runtime.SyncRoot)
@@ -872,8 +926,9 @@ public static class PlayerShopManager
     public sealed class PlayerShopRuntime
     {
         private readonly Dictionary<Guid, PlayerShopItemRuntime> _items;
+        private readonly Dictionary<int, List<Guid>> _equipment;
 
-        internal PlayerShopRuntime(PlayerShop shop, string? ownerName = null)
+        internal PlayerShopRuntime(PlayerShop shop, string? ownerName = null, Player? owner = null)
         {
             ShopId = shop.Id;
             OwnerId = shop.OwnerId;
@@ -888,6 +943,16 @@ public static class PlayerShopManager
             PendingGold = shop.PendingGold;
             CreatedAt = shop.CreatedAt;
             ExpiresAt = shop.ExpiresAt;
+
+            var appearanceSource = owner ?? shop.Owner;
+            Sprite = !string.IsNullOrWhiteSpace(appearanceSource?.Sprite)
+                ? appearanceSource.Sprite
+                : PlayerShopEntityConstants.DefaultSprite;
+            Face = appearanceSource?.Face ?? string.Empty;
+            Color = appearanceSource?.Color ?? Color.White;
+            Gender = appearanceSource?.Gender ?? Gender.Male;
+            _equipment = BuildEquipmentSnapshot(appearanceSource);
+
             _items = shop.Items?.ToDictionary(item => item.Id, item => new PlayerShopItemRuntime(item))
                 ?? new Dictionary<Guid, PlayerShopItemRuntime>();
         }
@@ -911,6 +976,16 @@ public static class PlayerShopManager
         public int Z { get; }
 
         public string Title { get; }
+
+        public string Sprite { get; }
+
+        public string Face { get; }
+
+        public Color Color { get; }
+
+        public Gender Gender { get; }
+
+        public IReadOnlyDictionary<int, List<Guid>> Equipment => _equipment;
 
         public PlayerShopStatus Status { get; private set; }
 
