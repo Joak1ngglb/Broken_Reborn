@@ -6244,6 +6244,11 @@ public partial class Player : Entity
     }
     private void AddEquipmentSlot(int equipmentSlot, int inventorySlot)
     {
+        if (equipmentSlot < 0 || equipmentSlot >= Options.Instance.Equipment.EquipmentSlots.Count)
+        {
+            return;
+        }
+
         if (!Equipment.ContainsKey(equipmentSlot))
         {
             Equipment[equipmentSlot] = new List<int>();
