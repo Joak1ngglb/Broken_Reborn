@@ -30,6 +30,7 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.Security;
+using Intersect.Framework.Core.Entities;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Core;
 using Intersect;
@@ -763,6 +764,15 @@ internal sealed partial class PacketHandler
             ? "Tienda"
             : packet.Name.Trim();
         var normalizedName = $"{player.Name} - {customName}";
+        var decoration = packet.Decoration;
+        if (string.IsNullOrWhiteSpace(decoration))
+        {
+            decoration = PlayerShopEntityConstants.DefaultDecoration;
+        }
+        else
+        {
+            decoration = decoration.Trim();
+        }
 
         var inventoryUsage = new Dictionary<int, int>();
         var stockEntries = new List<PlayerShopManager.PlayerShopStock>();
@@ -842,7 +852,8 @@ internal sealed partial class PacketHandler
                 z: player.Z,
                 stock: stockEntries,
                 expiresAt: DateTime.UtcNow.AddDays(1),
-                title: normalizedName
+                title: normalizedName,
+                decoration: decoration
             );
 
             PacketSender.SendChatMsg(player, "🛒 Tu tienda quedó activa.", ChatMessageType.Trading, CustomColors.Alerts.Accepted);

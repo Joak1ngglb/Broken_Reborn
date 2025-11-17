@@ -194,10 +194,14 @@ public static partial class PacketSender
         Network.SendPacket(new EventInputVariablePacket(eventId, default, default, default, true));
     }
 
-    public static void SendCreatePlayerShop(string name, IEnumerable<PlayerShopStockPayload> stock)
+    public static void SendCreatePlayerShop(
+        string name,
+        IEnumerable<PlayerShopStockPayload> stock,
+        string? decoration
+    )
     {
         var payloads = stock?.ToList() ?? new List<PlayerShopStockPayload>();
-        Network.SendPacket(new CreatePlayerShopPacket(name ?? string.Empty, payloads));
+        Network.SendPacket(new CreatePlayerShopPacket(name ?? string.Empty, payloads, decoration));
     }
 
     public static void SendBrowsePlayerShop(Guid shopId)

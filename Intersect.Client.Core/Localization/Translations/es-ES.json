@@ -19,6 +19,7 @@
     "ShopNameLabel": "Nombre de la tienda",
     "ShopNamePlaceholder": "Ingresa un nombre llamativo",
     "Hint": "Arrastra objetos a los espacios para configurar tu tienda.",
+    "DecorationLabel": "Gráfico de tienda",
     "SelectSlot": "Selecciona un espacio para editar.",
     "QuantityInput": "Cantidad",
     "PriceInput": "Precio por unidad",

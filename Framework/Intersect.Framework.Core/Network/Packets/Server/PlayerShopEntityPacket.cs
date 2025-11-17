@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using MessagePack;
 using Intersect.Enums;
+using Intersect.Framework.Core.Entities;
 
 namespace Intersect.Network.Packets.Server;
 
@@ -20,4 +21,7 @@ public partial class PlayerShopEntityPacket : EntityPacket
 
     [Key(26)]
     public Dictionary<int, List<Guid>> Equipment { get; set; } = new();
+
+    [Key(27)]
+    public string Decoration { get; set; } = PlayerShopEntityConstants.DefaultDecoration;
 }

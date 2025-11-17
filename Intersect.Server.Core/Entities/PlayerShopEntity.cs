@@ -22,7 +22,8 @@ public sealed class PlayerShopEntity : Entity
         string? face = null,
         Color? nameColor = null,
         Label? headerLabel = null,
-        Label? footerLabel = null
+        Label? footerLabel = null,
+        string? decoration = null
     ) : base(runtime?.ShopId ?? throw new ArgumentNullException(nameof(runtime)), mapInstanceId)
     {
         MapId = runtime.MapId;
@@ -45,6 +46,9 @@ public sealed class PlayerShopEntity : Entity
         NameColor = nameColor ?? Color.White;
         HeaderLabel = headerLabel ?? new Label(runtime.Title, Color.White);
         FooterLabel = footerLabel ?? new Label(runtime.OwnerName, Color.White);
+        Decoration = string.IsNullOrWhiteSpace(decoration)
+            ? runtime.Decoration
+            : decoration;
 
         _equipment = runtime.Equipment?.ToDictionary(
                 pair => pair.Key,
@@ -63,6 +67,8 @@ public sealed class PlayerShopEntity : Entity
     public string OwnerName { get; }
 
     public Gender Gender { get; }
+
+    public string Decoration { get; }
 
     public IReadOnlyDictionary<int, List<Guid>> Equipment => _equipment;
 
@@ -88,6 +94,7 @@ public sealed class PlayerShopEntity : Entity
             pair => pair.Key,
             pair => pair.Value != null ? new List<Guid>(pair.Value) : new List<Guid>()
         );
+        playerShopEntityPacket.Decoration = Decoration;
 
         return playerShopEntityPacket;
     }

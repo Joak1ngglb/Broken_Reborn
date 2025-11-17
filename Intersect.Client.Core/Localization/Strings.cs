@@ -422,6 +422,9 @@ public static partial class Strings
         public static LocalizedString Hint = @"Drag items into the slots to configure your shop.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString DecorationLabel = @"Decoration";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString SelectSlot = @"Select a listing slot to edit.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

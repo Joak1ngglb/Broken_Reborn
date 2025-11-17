@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
+using Intersect.Framework.Core.Entities;
 
 namespace Intersect.Server.Database.PlayerData.Shops;
 
@@ -41,6 +42,8 @@ public class PlayerShop : IPlayerOwned
     public DateTime? ExpiresAt { get; set; }
 
     public DateTime? ClosedAt { get; set; }
+
+    public string Decoration { get; set; } = PlayerShopEntityConstants.DefaultDecoration;
 
     public virtual List<PlayerShopItem> Items { get; set; } = new();
 

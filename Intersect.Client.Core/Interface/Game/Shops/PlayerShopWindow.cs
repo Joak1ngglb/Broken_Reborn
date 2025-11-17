@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using Intersect.Client.Core;
 using Intersect.Client.Entities;
+using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -17,6 +19,7 @@ using Intersect.Network.Packets.Shops;
 using Intersect.Client.Items;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Client.Interface.Game.Market;
+using Intersect.Framework.Core.Entities;
 
 namespace Intersect.Client.Interface.Game.Shops;
 
@@ -33,9 +36,12 @@ public sealed class PlayerShopWindow : Window
     private Button _cancelButton;
     private Button _merchantModeButton;
     private Label _hintLabel;
+    private LabeledComboBox _decorationSelector;
 
     private readonly List<PlayerShopInventoryItem> _inventorySlots = new();
     private readonly List<PlayerShopListingSlot> _listingSlots = new();
+
+    private string _selectedDecoration = PlayerShopEntityConstants.DefaultDecoration;
 
     private PlayerShopListingSlot? _selectedSlot;
     private bool _inventorySubscribed;
@@ -86,6 +92,14 @@ public sealed class PlayerShopWindow : Window
         };
         _hintLabel.SetBounds(20, 68, 320, 32);
         _hintLabel.SetTextColor(Color.Gray, ComponentState.Normal);
+
+        _decorationSelector = new LabeledComboBox(this, "PlayerShopDecorationSelector")
+        {
+            AutoSizeToContents = false,
+            Label = Strings.PlayerShops.DecorationLabel,
+        };
+        _decorationSelector.SetBounds(560, 20, 140, 64);
+        _decorationSelector.ItemSelected += (_, args) => OnDecorationSelected(args.SelectedUserData as string);
 
         // Inventario (izquierda)
         _inventoryScroll = new ScrollControl(this, "PlayerShopInventoryScroll");
@@ -162,6 +176,7 @@ public sealed class PlayerShopWindow : Window
         _statusLabel.SetTextColor(Color.ForestGreen, ComponentState.Normal);
 
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString());
+        PopulateDecorationSelector();
         InitInventorySlots();
         InitListingSlots();
         UpdateSelectedSlotUi();
@@ -306,6 +321,13 @@ public sealed class PlayerShopWindow : Window
         UpdateMerchantModeButtonState();
     }
 
+    private void OnDecorationSelected(string? decorationName)
+    {
+        _selectedDecoration = string.IsNullOrWhiteSpace(decorationName)
+            ? PlayerShopEntityConstants.DefaultDecoration
+            : decorationName;
+    }
+
     private void OnInventoryUpdated(Player player, int slotIndex)
     {
         foreach (var listing in _listingSlots)
@@ -437,7 +459,7 @@ public sealed class PlayerShopWindow : Window
             }
         }
 
-        PacketSender.SendCreatePlayerShop(name, payloads);
+        PacketSender.SendCreatePlayerShop(name, payloads, _selectedDecoration);
         _pendingSubmission = true;
         UpdateMerchantModeButtonState();
         DisplayStatus(Strings.PlayerShops.StatusSubmitting, false);
@@ -450,8 +472,45 @@ public sealed class PlayerShopWindow : Window
         _pendingSubmission = false;
         DisplayStatus(Strings.PlayerShops.StatusReady, false);
         RefreshListingState();
+        PopulateDecorationSelector();
         UpdateMerchantModeButtonState();
         Show();
+    }
+
+    private void PopulateDecorationSelector()
+    {
+        _decorationSelector.ClearItems();
+
+        var options = GameContentManager.Current.GetTextureNames(TextureType.Entity)
+            .Where(name =>
+            {
+                var normalized = name.Replace('\\', '/');
+                return normalized.StartsWith("stores/", StringComparison.OrdinalIgnoreCase);
+            })
+            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (options.Count == 0)
+        {
+            options.Add(PlayerShopEntityConstants.DefaultDecoration);
+        }
+
+        foreach (var option in options)
+        {
+            var displayName = Path.GetFileName(GameContentManager.RemoveExtension(option));
+            displayName = string.IsNullOrWhiteSpace(displayName) ? option : displayName;
+            _decorationSelector.AddItem(displayName, option, option);
+        }
+
+        var selected = options.FirstOrDefault(
+            option => option.Equals(_selectedDecoration, StringComparison.OrdinalIgnoreCase)
+        ) ?? options.First();
+
+        _selectedDecoration = string.IsNullOrWhiteSpace(selected)
+            ? PlayerShopEntityConstants.DefaultDecoration
+            : selected;
+
+        _decorationSelector.SelectByUserData(_selectedDecoration);
     }
 
     private void RefreshListingState()

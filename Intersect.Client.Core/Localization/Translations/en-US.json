@@ -19,6 +19,7 @@
     "ShopNameLabel": "Shop name",
     "ShopNamePlaceholder": "Enter a friendly shop name",
     "Hint": "Drag items into the slots to configure your shop.",
+    "DecorationLabel": "Shop display",
     "SelectSlot": "Select a listing slot to edit.",
     "QuantityInput": "Quantity",
     "PriceInput": "Price per unit",
