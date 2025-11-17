@@ -15,6 +15,8 @@ namespace Intersect.Client.Entities;
 public sealed class PlayerShopEntity : Entity
 {
     private IGameTexture? _decorationTexture;
+    private string _decorationName = PlayerShopEntityConstants.DefaultDecoration;
+    private string _loadedDecoration = string.Empty;
 
     public PlayerShopEntity(Guid id, PlayerShopEntityPacket packet) : base(id, packet, EntityType.PlayerShop)
     {
@@ -35,6 +37,9 @@ public sealed class PlayerShopEntity : Entity
         ShopId = shopEntityPacket.ShopId;
         Gender = shopEntityPacket.Gender;
         Equipment = NormalizeEquipment(shopEntityPacket.Equipment);
+        _decorationName = string.IsNullOrWhiteSpace(shopEntityPacket.Decoration)
+            ? PlayerShopEntityConstants.DefaultDecoration
+            : shopEntityPacket.Decoration;
 
         EnsureSprite();
     }
@@ -85,10 +90,26 @@ public sealed class PlayerShopEntity : Entity
 
     private IGameTexture? EnsureDecorationTexture()
     {
-        _decorationTexture ??= Globals.ContentManager.GetTexture(
-            TextureType.Entity,
-            PlayerShopEntityConstants.DefaultSprite
-        );
+        var decorationName = string.IsNullOrWhiteSpace(_decorationName)
+            ? PlayerShopEntityConstants.DefaultDecoration
+            : _decorationName;
+
+        if (!string.Equals(decorationName, _loadedDecoration, StringComparison.OrdinalIgnoreCase))
+        {
+            _decorationTexture = Globals.ContentManager.GetTexture(TextureType.Entity, decorationName);
+            _loadedDecoration = decorationName;
+
+            if (_decorationTexture == null)
+            {
+                _decorationTexture = Globals.ContentManager.GetTexture(
+                    TextureType.Entity,
+                    PlayerShopEntityConstants.DefaultDecoration
+                );
+                _loadedDecoration = PlayerShopEntityConstants.DefaultDecoration;
+            }
+        }
+
+        _decorationTexture ??= Globals.ContentManager.GetTexture(TextureType.Entity, PlayerShopEntityConstants.DefaultDecoration);
 
         return _decorationTexture;
     }

@@ -225,7 +225,8 @@ public static class PlayerShopManager
         int z,
         IEnumerable<PlayerShopStock> stock,
         DateTime? expiresAt = null,
-        string? title = null
+        string? title = null,
+        string? decoration = null
     )
     {
         ArgumentNullException.ThrowIfNull(owner);
@@ -270,6 +271,9 @@ public static class PlayerShopManager
                 Title = title ?? owner.Name,
                 Status = PlayerShopStatus.Active,
                 ExpiresAt = expiresAt,
+                Decoration = string.IsNullOrWhiteSpace(decoration)
+                    ? PlayerShopEntityConstants.DefaultDecoration
+                    : decoration,
             };
 
             foreach (var entry in stockEntries)
@@ -943,6 +947,9 @@ public static class PlayerShopManager
             PendingGold = shop.PendingGold;
             CreatedAt = shop.CreatedAt;
             ExpiresAt = shop.ExpiresAt;
+            Decoration = string.IsNullOrWhiteSpace(shop.Decoration)
+                ? PlayerShopEntityConstants.DefaultDecoration
+                : shop.Decoration;
 
             var appearanceSource = owner ?? shop.Owner;
             Sprite = !string.IsNullOrWhiteSpace(appearanceSource?.Sprite)
@@ -976,6 +983,8 @@ public static class PlayerShopManager
         public int Z { get; }
 
         public string Title { get; }
+
+        public string Decoration { get; }
 
         public string Sprite { get; }
 
