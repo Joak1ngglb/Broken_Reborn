@@ -17,7 +17,6 @@ using Intersect.GameObjects;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using System.Linq;
-using Intersect.Client.Utilities;
 using Intersect.Client.Framework.Gwen;
 
 namespace Intersect.Client.Interface.Game.Crafting;
@@ -50,10 +49,6 @@ public partial class CraftingWindow : Window
 
     //Objects
     private readonly ListBox mRecipes;
-
-    private readonly TextBox _searchBox;
-    private readonly Button _sortButton;
-    private bool _sortAscending = true;
 
     private readonly List<Label> mValues = [];
     private Guid _automaticCraftingDescriptorId;
@@ -106,20 +101,6 @@ public partial class CraftingWindow : Window
         {
             CellSpacing = default, InnerPanelPadding = default,
         };
-
-        _searchBox = new TextBox(this, "SearchBox")
-        {
-            Margin = new Margin(4),
-            Width = 150,
-        };
-        _searchBox.TextChanged += (s, e) => RefreshRecipeList();
-
-        _sortButton = new Button(this, "SortButton")
-        {
-            Margin = new Margin(4),
-        };
-        _sortButton.SetText("Sort");
-        _sortButton.Clicked += SortButton_Clicked;
 
         //Progress Bar
         mBarContainer = new ImagePanel(this, "ProgressBarContainer");
@@ -537,12 +518,6 @@ public partial class CraftingWindow : Window
         RefreshRecipeList();
     }
 
-    private void SortButton_Clicked(Base sender, MouseButtonState arguments)
-    {
-        _sortAscending = !_sortAscending;
-        RefreshRecipeList();
-    }
-
     private void RefreshRecipeList()
     {
         if (Globals.ActiveCraftingTable.Crafts is not { Count: > 0 } craftIds)
@@ -555,20 +530,6 @@ public partial class CraftingWindow : Window
         IEnumerable<CraftingRecipeDescriptor> descriptors = craftIds
             .Select(id => CraftingRecipeDescriptor.TryGet(id, out var desc) ? desc : null)
             .Where(d => d != null)!;
-
-        if (!string.IsNullOrWhiteSpace(_searchBox.Text))
-        {
-            descriptors = descriptors.Where(d => SearchHelper.Matches(_searchBox.Text, d!.Name));
-        }
-
-        descriptors = _sortAscending
-
-            ? descriptors.OrderBy(d => ItemDescriptor.TryGet(d!.ItemId, out var itemDesc)
-                ? ItemSortHelper.GetSortKey(itemDesc)
-                : (int.MaxValue, int.MaxValue, string.Empty))
-            : descriptors.OrderByDescending(d => ItemDescriptor.TryGet(d!.ItemId, out var itemDesc)
-                ? ItemSortHelper.GetSortKey(itemDesc)
-                : (int.MaxValue, int.MaxValue, string.Empty));
 
 
         CraftingRecipeDescriptor? first = null;
