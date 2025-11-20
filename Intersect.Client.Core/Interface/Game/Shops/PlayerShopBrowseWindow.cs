@@ -22,6 +22,7 @@ namespace Intersect.Client.Interface.Game.Shops
         private readonly List<PlayerShopBrowseItemRow> _rows = new();
 
         private bool _uiInitialized;
+        private bool _hasPendingPurchase;
 
         private ShopSnapshot _snapshot;
 
@@ -246,6 +247,7 @@ namespace Intersect.Client.Interface.Game.Shops
 
             PacketSender.SendBuyPlayerShopItem(_snapshot.ShopId, row.Snapshot.ShopItemId, quantity);
             row.SetBuying(true);
+            _hasPendingPurchase = true;
             _statusLabel.Text = Strings.PlayerShops.StatusSubmitting;
             _statusLabel.SetTextColor(Color.ForestGreen, ComponentState.Normal);
         }
@@ -316,10 +318,29 @@ namespace Intersect.Client.Interface.Game.Shops
 
         private void ResetBuyingState()
         {
+            _hasPendingPurchase = false;
             foreach (var row in _rows)
             {
                 row.SetBuying(false);
             }
+        }
+
+        internal void NotifyPurchaseFailed(string? message)
+        {
+            if (!_hasPendingPurchase)
+            {
+                return;
+            }
+
+            ResetBuyingState();
+
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            _statusLabel.Text = message;
+            _statusLabel.SetTextColor(Color.OrangeRed, ComponentState.Normal);
         }
     }
 }
