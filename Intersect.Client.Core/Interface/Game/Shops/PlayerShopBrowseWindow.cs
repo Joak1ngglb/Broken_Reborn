@@ -111,7 +111,7 @@ namespace Intersect.Client.Interface.Game.Shops
             {
                 _emptyLabel.IsVisibleInParent = true;
 
-                _itemsScroll.UpdateScrollBars();
+                LayoutRows();
                 if (scrollBar != null)
                 {
                     scrollBar.ScrollAmount = 0f;
@@ -132,8 +132,7 @@ namespace Intersect.Client.Interface.Game.Shops
                 _rows.Add(row);
             }
 
-            // Dejar que el ScrollControl recalcule content size y barras
-            _itemsScroll.UpdateScrollBars();
+            LayoutRows();
 
             // Como cambió la estructura, ponemos el scroll arriba para evitar huecos locos
             if (scrollBar != null)
@@ -193,10 +192,35 @@ namespace Intersect.Client.Interface.Game.Shops
 
         public void Update()
         {
+            LayoutRows();
+        }
+
+        private void LayoutRows()
+        {
+            if (_itemsScroll == null)
+            {
+                return;
+            }
+
+            if (_rows.Count == 0)
+            {
+                _itemsScroll.SetInnerSize(RowWidth, _itemsScroll.Height);
+                _itemsScroll.UpdateScrollBars();
+                return;
+            }
+
+            var rowWidth = RowWidth;
+            var offsetY = 0;
+
             foreach (var row in _rows)
             {
-                row.Width = RowWidth;
+                row.SetBounds(0, offsetY, rowWidth, row.Height);
+                var outerHeight = row.Height + row.Margin.Top + row.Margin.Bottom;
+                offsetY += outerHeight;
             }
+
+            _itemsScroll.SetInnerSize(rowWidth, offsetY);
+            _itemsScroll.UpdateScrollBars();
         }
 
         internal void RequestPurchase(PlayerShopBrowseItemRow row)

@@ -42,7 +42,7 @@ namespace Intersect.Client.Interface.Game.Shops
 
             // Tamaño y layout básico
             SetSize(_owner.RowWidth, 64);
-            Dock = Pos.Top;
+            Dock = Pos.None;
             Margin = new Margin(0, 0, 0, 4);
 
             // Icono
@@ -95,8 +95,7 @@ namespace Intersect.Client.Interface.Game.Shops
             };
             _buyButton.SetBounds(530, 16, 90, 32);
             _buyButton.Clicked += (_, _) => _owner.RequestPurchase(this);
-
-            // Cargar datos iniciales
+            LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString());
             UpdateRow();
         }
 
