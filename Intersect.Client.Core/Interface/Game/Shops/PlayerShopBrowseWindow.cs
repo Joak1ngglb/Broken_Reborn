@@ -13,6 +13,8 @@ namespace Intersect.Client.Interface.Game.Shops
 {
     public sealed class PlayerShopBrowseWindow : Window
     {
+        private const int DefaultRowHeight = 68;
+
         private Label _ownerLabel;
         private ScrollControl _itemsScroll;
         private Label _statusLabel;
@@ -22,6 +24,11 @@ namespace Intersect.Client.Interface.Game.Shops
         private bool _uiInitialized;
 
         private ShopSnapshot _snapshot;
+
+        private int RowOuterHeight =>
+            _rows.Count > 0
+                ? _rows[0].Height + _rows[0].Margin.Top + _rows[0].Margin.Bottom
+                : DefaultRowHeight;
 
         public PlayerShopBrowseWindow(Canvas parent, ShopSnapshot snapshot)
             : base(parent, Strings.PlayerShops.BrowserTitle.ToString(snapshot.Name), false, nameof(PlayerShopBrowseWindow))
@@ -96,11 +103,15 @@ namespace Intersect.Client.Interface.Game.Shops
                 return;
             }
 
+            var prevScroll = _itemsScroll.VerticalScrollBar?.ScrollAmount ?? 0f;
+            var anchorId = CaptureScrollAnchor(prevScroll);
+
             var scrollBar = _itemsScroll.VerticalScrollBar;
 
             // Limpiar filas anteriores
             foreach (var row in _rows)
             {
+                row.DetachEvents();
                 row.Dispose();
             }
             _rows.Clear();
@@ -112,10 +123,7 @@ namespace Intersect.Client.Interface.Game.Shops
                 _emptyLabel.IsVisibleInParent = true;
 
                 LayoutRows();
-                if (scrollBar != null)
-                {
-                    scrollBar.ScrollAmount = 0f;
-                }
+                RestoreScrollPosition(anchorId, prevScroll);
 
                 return;
             }
@@ -133,12 +141,7 @@ namespace Intersect.Client.Interface.Game.Shops
             }
 
             LayoutRows();
-
-            // Como cambió la estructura, ponemos el scroll arriba para evitar huecos locos
-            if (scrollBar != null)
-            {
-                scrollBar.ScrollAmount = 0f;
-            }
+            RestoreScrollPosition(anchorId, prevScroll);
         }
 
         public void UpdateSnapshot(ShopSnapshot snapshot)
@@ -153,6 +156,9 @@ namespace Intersect.Client.Interface.Game.Shops
                 BuildRows();
                 return;
             }
+
+            var prevScroll = _itemsScroll.VerticalScrollBar?.ScrollAmount ?? 0f;
+            var anchorId = CaptureScrollAnchor(prevScroll);
 
             var items = _snapshot.Items ?? new List<PlayerShopItemSnapshot>();
 
@@ -182,12 +188,17 @@ namespace Intersect.Client.Interface.Game.Shops
                 {
                     _rows[i].UpdateSnapshot(items[i]);
                 }
+                ResetBuyingState();
+                LayoutRows();
+                RestoreScrollPosition(anchorId, prevScroll);
 
                 return;
             }
 
             // 3) Si la estructura cambió (por ejemplo, se agotó un ítem y desapareció) → reconstruimos y reseteamos scroll
             BuildRows();
+            ResetBuyingState();
+            RestoreScrollPosition(anchorId, prevScroll);
         }
 
         public void Update()
@@ -234,6 +245,7 @@ namespace Intersect.Client.Interface.Game.Shops
             }
 
             PacketSender.SendBuyPlayerShopItem(_snapshot.ShopId, row.Snapshot.ShopItemId, quantity);
+            row.SetBuying(true);
             _statusLabel.Text = Strings.PlayerShops.StatusSubmitting;
             _statusLabel.SetTextColor(Color.ForestGreen, ComponentState.Normal);
         }
@@ -252,6 +264,62 @@ namespace Intersect.Client.Interface.Game.Shops
         public bool IsVisible()
         {
             return IsVisibleInTree;
+        }
+
+        private Guid? CaptureScrollAnchor(float scrollAmount)
+        {
+            if (_itemsScroll?.VerticalScrollBar == null || _rows.Count == 0)
+            {
+                return null;
+            }
+
+            var scrollBar = _itemsScroll.VerticalScrollBar;
+            var totalHeight = scrollBar.ContentSize;
+            var viewHeight = scrollBar.ViewableContentSize;
+            var scrollPixels = (int)(scrollAmount * Math.Max(0, totalHeight - viewHeight));
+            var firstIndex = scrollPixels / RowOuterHeight;
+
+            return firstIndex >= 0 && firstIndex < _rows.Count
+                ? _rows[firstIndex].Snapshot.ShopItemId
+                : null;
+        }
+
+        private void RestoreScrollPosition(Guid? anchorId, float prevScroll)
+        {
+            if (_itemsScroll?.VerticalScrollBar == null)
+            {
+                return;
+            }
+
+            var scrollBar = _itemsScroll.VerticalScrollBar;
+
+            if (anchorId.HasValue)
+            {
+                for (var i = 0; i < _rows.Count; i++)
+                {
+                    if (_rows[i].Snapshot.ShopItemId != anchorId.Value)
+                    {
+                        continue;
+                    }
+
+                    var newOffset = i * RowOuterHeight;
+                    var denominator = Math.Max(0, scrollBar.ContentSize - scrollBar.ViewableContentSize);
+                    var amount = denominator > 0 ? (float)newOffset / denominator : 0f;
+                    scrollBar.ScrollAmount = Math.Clamp(amount, 0f, 1f);
+
+                    return;
+                }
+            }
+
+            scrollBar.ScrollAmount = Math.Clamp(prevScroll, 0f, 1f);
+        }
+
+        private void ResetBuyingState()
+        {
+            foreach (var row in _rows)
+            {
+                row.SetBuying(false);
+            }
         }
     }
 }
