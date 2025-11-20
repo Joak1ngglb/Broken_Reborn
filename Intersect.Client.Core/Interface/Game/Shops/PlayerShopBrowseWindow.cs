@@ -13,8 +13,6 @@ namespace Intersect.Client.Interface.Game.Shops
 {
     public sealed class PlayerShopBrowseWindow : Window
     {
-        private const int RowHeight = 70;
-
         private Label _ownerLabel;
         private ScrollControl _itemsScroll;
         private Label _statusLabel;
@@ -76,8 +74,8 @@ namespace Intersect.Client.Interface.Game.Shops
             _statusLabel.SetBounds(16, 370, 480, 24);
             _statusLabel.SetTextColor(Color.White, ComponentState.Normal);
 
-           
             LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString());
+
             BuildRows();
         }
 
@@ -87,8 +85,9 @@ namespace Intersect.Client.Interface.Game.Shops
         }
 
         /// <summary>
-        /// Reconstruye las filas ajustando el scroll al nuevo tamaño
-        /// para evitar huecos visuales cuando se quitan ítems.
+        /// Reconstruye las filas.
+        /// Solo se llama cuando cambia la estructura (slots añadidos/eliminados o reordenados).
+        /// Resetea el scroll a la parte superior para evitar comportamientos raros.
         /// </summary>
         private void BuildRows()
         {
@@ -99,50 +98,32 @@ namespace Intersect.Client.Interface.Game.Shops
 
             var scrollBar = _itemsScroll.VerticalScrollBar;
 
-            // === 1. Capturar índice de la primera fila visible (ancla) ===
-            int previousFirstIndex = 0;
-            if (scrollBar != null && _rows.Count > 0)
-            {
-                var oldContentHeight = _rows.Count * RowHeight;
-                var viewHeight = _itemsScroll.Height;
-                var denom = Math.Max(0, oldContentHeight - viewHeight);
-
-                if (denom > 0)
-                {
-                    var scrollPixels = (int)(scrollBar.ScrollAmount * denom);
-                    previousFirstIndex = Math.Clamp(scrollPixels / RowHeight, 0, Math.Max(0, _rows.Count - 1));
-                }
-            }
-
-            // === 2. Limpiar filas anteriores ===
+            // Limpiar filas anteriores
             foreach (var row in _rows)
             {
                 row.Dispose();
             }
             _rows.Clear();
 
-            if (_snapshot.Items == null || _snapshot.Items.Count == 0)
+            var items = _snapshot.Items ?? new List<PlayerShopItemSnapshot>();
+
+            if (items.Count == 0)
             {
                 _emptyLabel.IsVisibleInParent = true;
 
-                // Sin items -> resetear scroll y tamaño interno
+                _itemsScroll.UpdateScrollBars();
                 if (scrollBar != null)
                 {
                     scrollBar.ScrollAmount = 0f;
-                    scrollBar.ContentSize = 0;
-                    scrollBar.ViewableContentSize = _itemsScroll.Height;
                 }
-
-                _itemsScroll.SetInnerSize(_itemsScroll.Width - 16, 0);
-                _itemsScroll.UpdateScrollBars();
 
                 return;
             }
 
             _emptyLabel.IsVisibleInParent = false;
 
-            // === 3. Crear filas nuevas ===
-            foreach (var item in _snapshot.Items)
+            // Crear filas nuevas (Gwen se encarga del layout interno)
+            foreach (var item in items)
             {
                 var row = new PlayerShopBrowseItemRow(this, _itemsScroll, item)
                 {
@@ -151,53 +132,62 @@ namespace Intersect.Client.Interface.Game.Shops
                 _rows.Add(row);
             }
 
-            // === 4. Ajustar tamaño interno y scroll ===
-            var newCount = _rows.Count;
-            var innerHeight = newCount * RowHeight;
-
-            _itemsScroll.SetInnerSize(_itemsScroll.Width - 16, innerHeight);
+            // Dejar que el ScrollControl recalcule content size y barras
             _itemsScroll.UpdateScrollBars();
 
+            // Como cambió la estructura, ponemos el scroll arriba para evitar huecos locos
             if (scrollBar != null)
             {
-                scrollBar.ContentSize = innerHeight;
-                scrollBar.ViewableContentSize = _itemsScroll.Height;
-
-                // Recalcular índice de la primera fila visible
-                previousFirstIndex = Math.Clamp(previousFirstIndex, 0, Math.Max(0, newCount - 1));
-
-                var denom = Math.Max(0, innerHeight - _itemsScroll.Height);
-                float newScrollAmount;
-
-                if (denom > 0)
-                {
-                    var newOffset = previousFirstIndex * RowHeight;
-                    newScrollAmount = (float)newOffset / denom;
-                }
-                else
-                {
-                    newScrollAmount = 0f;
-                }
-
-                if (newScrollAmount < 0f)
-                {
-                    newScrollAmount = 0f;
-                }
-                else if (newScrollAmount > 1f)
-                {
-                    newScrollAmount = 1f;
-                }
-
-                scrollBar.ScrollAmount = newScrollAmount;
+                scrollBar.ScrollAmount = 0f;
             }
         }
 
         public void UpdateSnapshot(ShopSnapshot snapshot)
         {
             _snapshot = snapshot;
+
             Title = Strings.PlayerShops.BrowserTitle.ToString(snapshot.Name);
             _ownerLabel.Text = Strings.PlayerShops.BrowserOwner.ToString(snapshot.OwnerName);
 
+            if (!_uiInitialized || _itemsScroll == null)
+            {
+                BuildRows();
+                return;
+            }
+
+            var items = _snapshot.Items ?? new List<PlayerShopItemSnapshot>();
+
+            // 1) Detectar si la estructura cambió (slots nuevos/eliminados o reordenados)
+            var structureChanged = false;
+
+            if (_rows.Count != items.Count)
+            {
+                structureChanged = true;
+            }
+            else
+            {
+                for (var i = 0; i < items.Count; i++)
+                {
+                    if (_rows[i].Snapshot.ShopItemId != items[i].ShopItemId)
+                    {
+                        structureChanged = true;
+                        break;
+                    }
+                }
+            }
+
+            // 2) Si la estructura ES la misma → solo actualizamos filas (cantidad, precio, etc.)
+            if (!structureChanged)
+            {
+                for (var i = 0; i < items.Count; i++)
+                {
+                    _rows[i].UpdateSnapshot(items[i]);
+                }
+
+                return;
+            }
+
+            // 3) Si la estructura cambió (por ejemplo, se agotó un ítem y desapareció) → reconstruimos y reseteamos scroll
             BuildRows();
         }
 
