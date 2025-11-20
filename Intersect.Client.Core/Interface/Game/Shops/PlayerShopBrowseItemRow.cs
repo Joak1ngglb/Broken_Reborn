@@ -42,7 +42,7 @@ namespace Intersect.Client.Interface.Game.Shops
 
             // Tamaño y layout básico
             SetSize(_owner.RowWidth, 64);
-            Dock = Pos.Top;
+            Dock = Pos.None;
             Margin = new Margin(0, 0, 0, 4);
 
             // Icono
