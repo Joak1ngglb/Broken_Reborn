@@ -641,6 +641,13 @@ internal sealed partial class PacketHandler
                 packet.Target, packet.Items
             )
         );
+
+        if (packet.Type == ChatMessageType.Error && Interface.Interface.GameUi?.mPlayerShopBrowseWindow != null)
+        {
+            Interface.Interface.EnqueueInGame(
+                gameInterface => gameInterface.mPlayerShopBrowseWindow?.NotifyPurchaseFailed(packet.Message)
+            );
+        }
     }
 
     //AnnouncementPacket
