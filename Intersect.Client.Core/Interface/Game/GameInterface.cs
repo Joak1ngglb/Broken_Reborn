@@ -71,6 +71,8 @@ public partial class GameInterface : MutableInterface
 
     private ItemDescriptionWindow? _itemDescriptionWindow;
 
+    private ChatItemDescriptionWindow? _chatItemDescriptionWindow;
+
     private SpellDescriptionWindow? _spellDescriptionWindow;
 
     private bool mShouldCloseBag;
@@ -160,6 +162,12 @@ public partial class GameInterface : MutableInterface
     {
         get => _itemDescriptionWindow ??= new ItemDescriptionWindow();
         set => _itemDescriptionWindow = value;
+    }
+
+    public ChatItemDescriptionWindow? ChatItemDescriptionWindow
+    {
+        get => _chatItemDescriptionWindow ??= new ChatItemDescriptionWindow();
+        set => _chatItemDescriptionWindow = value;
     }
 
     public SpellDescriptionWindow? SpellDescriptionWindow
