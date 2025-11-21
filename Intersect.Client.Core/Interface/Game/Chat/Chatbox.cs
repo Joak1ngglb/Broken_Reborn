@@ -587,7 +587,7 @@ public partial class Chatbox
             {
                 if (ItemDescriptor.TryGet(linkedItem.ItemId, out var linkedDescriptor))
                 {
-                    Interface.GameUi.ItemDescriptionWindow?.Show(linkedDescriptor, 1, linkedItem.Properties);
+                    Interface.GameUi.ChatItemDescriptionWindow?.Show(linkedDescriptor, 1, linkedItem.Properties);
                     return true;
                 }
             }
@@ -600,7 +600,7 @@ public partial class Chatbox
                 return false;
             }
 
-            Interface.GameUi.ItemDescriptionWindow?.Show(descriptor, 1);
+            Interface.GameUi.ChatItemDescriptionWindow?.Show(descriptor, 1);
             return true;
         }
 
