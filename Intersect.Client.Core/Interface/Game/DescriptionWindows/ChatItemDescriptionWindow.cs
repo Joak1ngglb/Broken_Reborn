@@ -6,15 +6,11 @@ namespace Intersect.Client.Interface.Game.DescriptionWindows;
 
 public partial class ChatItemDescriptionWindow() : ItemDescriptionWindow()
 {
-    private readonly Button _closeButton;
+    private Button? _closeButton;
 
     public ChatItemDescriptionWindow()
     {
-        _closeButton = new Button(this, "ChatDescriptionCloseButton");
-        _closeButton.SetText("X");
-        _closeButton.SizeToContents();
-        _closeButton.Clicked += CloseButtonOnClicked;
-        _closeButton.IsTabable = false;
+        CreateCloseButton();
     }
 
     public new void Show(
@@ -25,8 +21,9 @@ public partial class ChatItemDescriptionWindow() : ItemDescriptionWindow()
     )
     {
         base.Show(item, amount, itemProperties, valueLabel);
+        CreateCloseButton();
         PositionCloseButton();
-        _closeButton.Show();
+        _closeButton?.Show();
     }
 
     public override void Hide()
@@ -42,6 +39,15 @@ public partial class ChatItemDescriptionWindow() : ItemDescriptionWindow()
             Interface.GameUi.GameCanvas.RemoveChild(Interface.GameUi.SpellDescriptionWindow, true);
             Interface.GameUi.SpellDescriptionWindow = default;
         }
+    }
+
+    private void CreateCloseButton()
+    {
+        _closeButton = new Button(this, "ChatDescriptionCloseButton");
+        _closeButton.SetText("X");
+        _closeButton.SizeToContents();
+        _closeButton.Clicked += CloseButtonOnClicked;
+        _closeButton.IsTabable = false;
     }
 
     private void PositionCloseButton()
