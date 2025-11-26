@@ -477,10 +477,11 @@ public partial class Chatbox
 
     public void AppendItem(ItemDescriptor descriptor, ItemProperties properties)
     {
-        AppendText($"[{descriptor.Name}]");
+        var linkedItemName = GetLinkedItemName(descriptor, properties);
+        AppendText($"[{linkedItemName}]");
         var item = new ChatItem(descriptor.Id, new ItemProperties(properties));
-        _pendingItemLinks.Add((descriptor.Name, item));
-        sLinkedItems[descriptor.Name] = item;
+        _pendingItemLinks.Add((linkedItemName, item));
+        sLinkedItems[linkedItemName] = item;
     }
 
     public void RegisterItemLinks(IEnumerable<ChatItem>? items)
@@ -497,7 +498,8 @@ public partial class Chatbox
                 continue;
             }
 
-            sLinkedItems[descriptor.Name] = item;
+            var linkedItemName = GetLinkedItemName(descriptor, item.Properties);
+            sLinkedItems[linkedItemName] = item;
         }
     }
 
@@ -595,6 +597,17 @@ public partial class Chatbox
             var descriptor = ItemDescriptor.Lookup.Values
                 .OfType<ItemDescriptor>()
                 .FirstOrDefault(d => string.Equals(d.Name, itemName, StringComparison.OrdinalIgnoreCase));
+
+            if (descriptor == null)
+            {
+                var normalizedName = StripEnchantmentSuffix(itemName);
+                if (!string.Equals(normalizedName, itemName, StringComparison.OrdinalIgnoreCase))
+                {
+                    descriptor = ItemDescriptor.Lookup.Values
+                        .OfType<ItemDescriptor>()
+                        .FirstOrDefault(d => string.Equals(d.Name, normalizedName, StringComparison.OrdinalIgnoreCase));
+                }
+            }
             if (descriptor == null)
             {
                 return false;
@@ -733,6 +746,22 @@ public partial class Chatbox
 
         _pendingItemLinks.Clear();
         mChatboxInput.Text = GetDefaultInputText();
+    }
+
+    private static string GetLinkedItemName(ItemDescriptor descriptor, ItemProperties properties)
+    {
+        var itemName = descriptor.Name;
+        if (properties.EnchantmentLevel > 0)
+        {
+            itemName += $" +{properties.EnchantmentLevel}";
+        }
+
+        return itemName;
+    }
+
+    private static string StripEnchantmentSuffix(string itemName)
+    {
+        return Regex.Replace(itemName, "\\s+\\+\\d+$", string.Empty);
     }
 
     private static string GetDefaultInputText()
