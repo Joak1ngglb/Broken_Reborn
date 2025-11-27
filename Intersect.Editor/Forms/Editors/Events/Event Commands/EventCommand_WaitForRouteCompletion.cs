@@ -41,17 +41,20 @@ public partial class EventCommandWaitForRouteCompletion : UserControl
                 cmbEntities.SelectedIndex = -1;
             }
 
-            foreach (var evt in mCurrentMap.LocalEvents)
+            if (mCurrentMap != null)
             {
-                cmbEntities.Items.Add(
-                    evt.Key == mEditingEvent.Id
-                        ? Strings.EventWaitForRouteCompletion.This + " "
-                        : "" + evt.Value.Name
-                );
-
-                if (mEditingCommand.TargetId == evt.Key)
+                foreach (var evt in mCurrentMap.LocalEvents)
                 {
-                    cmbEntities.SelectedIndex = cmbEntities.Items.Count - 1;
+                    cmbEntities.Items.Add(
+                        evt.Key == mEditingEvent.Id
+                            ? Strings.EventWaitForRouteCompletion.This + " "
+                            : "" + evt.Value.Name
+                    );
+
+                    if (mEditingCommand.TargetId == evt.Key)
+                    {
+                        cmbEntities.SelectedIndex = cmbEntities.Items.Count - 1;
+                    }
                 }
             }
         }
@@ -83,7 +86,14 @@ public partial class EventCommandWaitForRouteCompletion : UserControl
             }
             else
             {
-                mEditingCommand.TargetId = mCurrentMap.LocalEvents.Keys.ToList()[cmbEntities.SelectedIndex - 1];
+                if (mCurrentMap != null)
+                {
+                    mEditingCommand.TargetId = mCurrentMap.LocalEvents.Keys.ToList()[cmbEntities.SelectedIndex - 1];
+                }
+                else
+                {
+                    mEditingCommand.TargetId = Guid.Empty;
+                }
             }
         }
 
