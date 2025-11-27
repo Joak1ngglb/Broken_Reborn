@@ -2213,7 +2213,11 @@ public partial class Entity : IEntity
                         myList[0] >= 0 &&
                         myList[0] < Inventory.Length)
                     {
-                        itemId = Inventory[myList[0]].ItemId;
+                        var inventoryItem = Inventory[myList[0]];
+                        if (inventoryItem != null)
+                        {
+                            itemId = inventoryItem.ItemId;
+                        }
                     }
                 }
                 else
