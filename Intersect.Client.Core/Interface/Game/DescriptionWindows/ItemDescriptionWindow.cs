@@ -695,12 +695,16 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                     if (firstWeaponSlot >= 0 && firstWeaponSlot < Options.Instance.Player.MaxInventory)
                     {
                         var equippedWeapon = player.Inventory[firstWeaponSlot];
-                        var randomStats = equippedWeapon.ItemProperties?.StatModifiers;
-                        if (randomStats != null)
+                        if (equippedWeapon?.Descriptor is { } equippedDescriptor)
                         {
-                            agility = (int)Math.Round(agility / ((100 + equippedWeapon.Descriptor.PercentageStatsGiven[(int)Stat.Agility]) / 100f));
-                            agility -= equippedWeapon.Descriptor.StatsGiven[(int)Stat.Agility];
-                            agility -= randomStats[(int)Stat.Agility];
+                            var randomStats = equippedWeapon.ItemProperties?.StatModifiers;
+                            agility = (int)Math.Round(agility / ((100 + equippedDescriptor.PercentageStatsGiven[(int)Stat.Agility]) / 100f));
+                            agility -= equippedDescriptor.StatsGiven[(int)Stat.Agility];
+
+                            if (randomStats?.Length > (int)Stat.Agility)
+                            {
+                                agility -= randomStats[(int)Stat.Agility];
+                            }
                         }
                     }
                 }
