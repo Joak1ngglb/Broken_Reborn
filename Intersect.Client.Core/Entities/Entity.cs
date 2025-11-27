@@ -160,7 +160,13 @@ public partial class Entity : IEntity
 
     private long mWalkTimer;
 
-    public Dictionary<int, List<int>> MyEquipment { get; set; } = new();
+    private Dictionary<int, List<int>> mMyEquipment = new();
+
+    public Dictionary<int, List<int>> MyEquipment
+    {
+        get => mMyEquipment;
+        set => mMyEquipment = value ?? new();
+    }
 
     public string Name { get; set; } = string.Empty;
 
