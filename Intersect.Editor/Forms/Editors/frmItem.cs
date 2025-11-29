@@ -554,6 +554,8 @@ public partial class FrmItem : EditorForm
         grpBags.Visible = false;
         chkStackable.Enabled = true;
         grpEnchanting.Visible = false;
+        chkQuickCast.Enabled = true;
+        chkSingleUseSpell.Enabled = true;
         var selectedType = (ItemType)cmbType.SelectedIndex;
         var selectedSubType = cmbSubType.SelectedItem?.ToString();
         if ((int)mEditorItem.ItemType != cmbType.SelectedIndex)
@@ -579,6 +581,16 @@ public partial class FrmItem : EditorForm
             nudInterval.Value = mEditorItem.Consumable.Value;
             nudIntervalPercentage.Value = mEditorItem.Consumable.Percentage;
             grpConsumable.Visible = true;
+
+            if (mEditorItem.Consumable.Type == ConsumableType.Effect)
+            {
+                cmbTeachSpell.SelectedIndex = SpellDescriptor.ListIndex(mEditorItem.SpellId) + 1;
+                chkQuickCast.Checked = true;
+                chkQuickCast.Enabled = false;
+                chkSingleUseSpell.Checked = mEditorItem.SingleUse;
+                chkSingleUseSpell.Enabled = false;
+                grpSpell.Visible = true;
+            }
         }
         else if (cmbType.SelectedIndex == (int)ItemType.Spell)
         {
@@ -745,6 +757,7 @@ public partial class FrmItem : EditorForm
     private void cmbConsume_SelectedIndexChanged(object sender, EventArgs e)
     {
         mEditorItem.Consumable.Type = (ConsumableType)cmbConsume.SelectedIndex;
+        RefreshExtendedData();
     }
 
     private void cmbPaperdoll_SelectedIndexChanged(object sender, EventArgs e)
