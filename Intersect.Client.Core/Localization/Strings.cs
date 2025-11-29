@@ -2177,6 +2177,7 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {0, "Restores HP:"},
             {1, "Restores MP:"},
             {2, "Grants Experience:"},
+            {3, "Applies Effect:"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

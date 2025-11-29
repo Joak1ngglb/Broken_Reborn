@@ -3641,6 +3641,26 @@ public partial class Player : Entity
                     var die = false;
                     long value;
 
+                    if (itemBase.Consumable.Type == ConsumableType.Effect)
+                    {
+                        var effectSpell = itemBase.Spell;
+                        if (effectSpell == null)
+                        {
+                            PacketSender.SendChatMsg(this, Strings.Items.CannotUse, ChatMessageType.Error);
+
+                            return;
+                        }
+
+                        TryAttack(this, effectSpell, new SpellProperties { Level = 1 });
+
+                        if (TryTakeItem(Items[slot], 1) && useEvent != default)
+                        {
+                            EnqueueStartCommonEvent(useEvent);
+                        }
+
+                        return;
+                    }
+
                     switch (itemBase.Consumable.Type)
                     {
                         case ConsumableType.Health:

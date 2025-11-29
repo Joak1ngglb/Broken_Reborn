@@ -1537,7 +1537,7 @@ namespace Intersect.Editor.Forms.Editors
             cmbConsume.FlatStyle = FlatStyle.Flat;
             cmbConsume.ForeColor = System.Drawing.Color.Gainsboro;
             cmbConsume.FormattingEnabled = true;
-            cmbConsume.Items.AddRange(new object[] { "Health", "Mana", "Experience" });
+            cmbConsume.Items.AddRange(new object[] { "Health", "Mana", "Experience", "Effect" });
             cmbConsume.Location = new System.Drawing.Point(22, 43);
             cmbConsume.Margin = new Padding(4, 3, 4, 3);
             cmbConsume.Name = "cmbConsume";
