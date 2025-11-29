@@ -850,7 +850,16 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         // Consumable data.
         if (_itemDescriptor.Consumable != null)
         {
-            if (_itemDescriptor.Consumable.Value > 0 && _itemDescriptor.Consumable.Percentage > 0)
+            if (_itemDescriptor.Consumable.Type == ConsumableType.Effect)
+            {
+                if (_itemDescriptor.Spell != null)
+                {
+                    rows.AddKeyValueRow(
+                        Strings.ItemDescription.ConsumableTypes[(int)_itemDescriptor.Consumable.Type], _itemDescriptor.Spell.Name
+                    );
+                }
+            }
+            else if (_itemDescriptor.Consumable.Value > 0 && _itemDescriptor.Consumable.Percentage > 0)
             {
                 rows.AddKeyValueRow(Strings.ItemDescription.ConsumableTypes[(int)_itemDescriptor.Consumable.Type], Strings.ItemDescription.RegularAndPercentage.ToString(_itemDescriptor.Consumable.Value, _itemDescriptor.Consumable.Percentage));
             }
