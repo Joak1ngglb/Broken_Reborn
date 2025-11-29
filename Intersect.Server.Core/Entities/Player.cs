@@ -3673,7 +3673,7 @@ public partial class Player : Entity
                             EnqueueStartCommonEvent(useEvent);
                         }
 
-                        break;
+                        return;
                     }
 
                     switch (itemBase.Consumable.Type)
