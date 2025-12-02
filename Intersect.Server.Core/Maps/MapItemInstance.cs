@@ -78,6 +78,7 @@ public partial class MapItem : Item
 
         Properties.EnchantmentLevel = item.Properties.EnchantmentLevel;
         Properties.MageSink = item.Properties.MageSink;
+        Properties.BaseDamageModifier = item.Properties.BaseDamageModifier;
 
         if (Properties.StatModifiers != null && item.Properties.StatModifiers != null)
         {

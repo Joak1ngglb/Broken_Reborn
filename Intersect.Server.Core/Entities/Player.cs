@@ -1914,9 +1914,10 @@ public partial class Player : Entity
         }
 
         List<Item> items;
-        var weapon = TryGetEquippedItem(Options.Instance.Equipment.WeaponSlot, out items)
-            ? items.FirstOrDefault()?.Descriptor
+        var weaponItem = TryGetEquippedItem(Options.Instance.Equipment.WeaponSlot, out items)
+            ? items.FirstOrDefault()
             : null;
+        var weapon = weaponItem?.Descriptor;
 
 
         //If Entity is resource, check for the correct tool and make sure its not a spell cast.
@@ -1962,8 +1963,9 @@ public partial class Player : Entity
 
         if (weapon != null)
         {
+            var baseDamage = weapon.Damage + (weaponItem?.Properties?.BaseDamageModifier ?? 0);
             base.TryAttack(
-                target, weapon.Damage, (DamageType)weapon.DamageType, (Stat)weapon.ScalingStat, weapon.Scaling,
+                target, baseDamage, (DamageType)weapon.DamageType, (Stat)weapon.ScalingStat, weapon.Scaling,
                 weapon.CritChance, weapon.CritMultiplier, null, null, weapon
             );
         }
