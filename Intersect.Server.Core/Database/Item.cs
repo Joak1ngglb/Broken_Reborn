@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Intersect.Enums;
+using Intersect.Framework.Core.Config;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
@@ -445,6 +446,7 @@ public class Item : IItem
             {
                 int[] statBonuses = new int[Enum.GetValues(typeof(Stat)).Length];
                 int[] vitalBonuses = new int[Enum.GetValues(typeof(Vital)).Length];
+                var baseDamageBonus = 0;
 
                 foreach (Stat stat in Enum.GetValues(typeof(Stat)))
                 {
@@ -470,9 +472,21 @@ public class Item : IItem
                     vitalBonuses[vitalIndex] = bonus;
                 }
 
+                if (Descriptor.EquipmentSlot == Options.Instance.Equipment.WeaponSlot)
+                {
+                    var baseDamage = Descriptor.Damage;
+                    var levelInfluence = Math.Log2(lvl + 1) + Math.Sqrt(lvl);
+                    baseDamageBonus = (int)Math.Ceiling(baseDamage * factor * levelInfluence);
+                    Properties.BaseDamageModifier += baseDamageBonus;
+                }
+
                 // Combinar stats y vitals en un solo diccionario con índices consecutivos si quieres,
                 // o guardar por separado si prefieres. Aquí los unimos en uno solo:
-                Properties.EnchantmentRolls[lvl] = statBonuses.Concat(vitalBonuses).ToArray();
+                Properties.EnchantmentRolls[lvl] =
+                    statBonuses
+                        .Concat(vitalBonuses)
+                        .Concat(new[] { baseDamageBonus })
+                        .ToArray();
             }
         }
         else
@@ -496,6 +510,14 @@ public class Item : IItem
                         int bonus = levelBonuses[statCount + i];
                         Properties.VitalModifiers[i] -= bonus;
                         Properties.VitalModifiers[i] = Math.Max(0, Properties.VitalModifiers[i]);
+                    }
+
+                    var damageBonusIndex = statCount + vitalCount;
+                    if (levelBonuses.Length > damageBonusIndex)
+                    {
+                        var bonus = levelBonuses[damageBonusIndex];
+                        Properties.BaseDamageModifier -= bonus;
+                        Properties.BaseDamageModifier = Math.Max(0, Properties.BaseDamageModifier);
                     }
 
                     Properties.EnchantmentRolls.Remove(lvl);
