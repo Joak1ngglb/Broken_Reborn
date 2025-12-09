@@ -46,5 +46,22 @@
     "BrowserEmpty": "Esta tienda no tiene objetos a la venta.",
     "BrowseStatus": "Selecciona un objeto para empezar.",
     "UnknownItem": "Objeto desconocido"
+  },
+  "MapExplorer": {
+    "Title": "Mapa del mundo",
+    "Tooltip": "Revisa todos los mapas y coloca marcadores",
+    "ButtonLabel": "Mapa",
+    "MapSummary": "Mapas disponibles: {00}",
+    "Markers": "Marcadores",
+    "MarkerLabel": "Nombre del marcador",
+    "MarkerPlaceholder": "Bandera o nota para este mapa",
+    "CoordinatesLabel": "Coordenadas (X / Y)",
+    "AddMarker": "Agregar marcador",
+    "RemoveMarker": "Quitar marcador",
+    "NoMapsAvailable": "No hay mapas disponibles",
+    "SelectMapPrompt": "Selecciona un mapa para ver o agregar marcadores.",
+    "NoMarkers": "Este mapa todavía no tiene marcadores.",
+    "MarkerLine": "{00} - ({01}, {02})",
+    "MapLine": "{00} ({01}, {02}) - {03} marcadores"
   }
 }

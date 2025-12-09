@@ -9,6 +9,7 @@ using Intersect.Client.Interface.Game.Character;
 using Intersect.Client.Interface.Game.Chat;
 using Intersect.Client.Interface.Game.Inventory;
 using Intersect.Client.Interface.Game.Job;
+using Intersect.Client.Interface.Game.Map;
 using Intersect.Client.Interface.Game.Spells;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
@@ -56,7 +57,10 @@ public partial class MenuContainer : Panel
     private readonly JobsWindow mJobsWindow;
     private readonly ImagePanel mJobsBackground;
     private readonly Button mJobsButton;
+    private readonly ImagePanel _mapExplorerButtonContainer;
+    private readonly Button _mapExplorerButton;
     private readonly MapItemWindow _mapItemWindow;
+    private readonly MapExplorerWindow _mapExplorerWindow;
 
     public MenuContainer(Canvas gameCanvas) : base(parent: gameCanvas, name: nameof(MenuContainer))
     {
@@ -220,7 +224,26 @@ public partial class MenuContainer : Panel
         _escapeMenuButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "menuicon_hovered.png");
         _escapeMenuButton.SetToolTipText(text: Strings.GameMenu.Menu);
         _escapeMenuButton.Clicked += EscapeMenuButtonClicked;
-        // ... (código existente de inicialización de otros botones)
+
+        _mapExplorerButtonContainer = new ImagePanel(parent: this, name: nameof(_mapExplorerButtonContainer))
+        {
+            Dock = Pos.Left,
+            MaximumSize = new Point(x: 36, y: 36),
+            MinimumSize = new Point(x: 36, y: 36),
+            Padding = new Padding(size: 2),
+            Size = new Point(x: 36, y: 36),
+            TextureFilename = "menuitem.png",
+        };
+
+        _mapExplorerButton = new Button(parent: _mapExplorerButtonContainer, name: nameof(_mapExplorerButton))
+        {
+            Alignment = [Alignments.Center],
+            Size = new Point(x: 32, y: 32),
+            Text = Strings.MapExplorer.ButtonLabel,
+        };
+
+        _mapExplorerButton.SetToolTipText(text: Strings.MapExplorer.Tooltip);
+        _mapExplorerButton.Clicked += MapExplorerButtonOnClicked;
 
         mJobsBackground = new ImagePanel(parent: this, name: "JobsContainer")
         {
@@ -271,6 +294,7 @@ public partial class MenuContainer : Panel
         _mapItemWindow = new MapItemWindow(gameCanvas: gameCanvas);
         _guildWindow = new GuildWindow(gameCanvas: gameCanvas);
         mJobsWindow= new JobsWindow(gameCanvas: gameCanvas);
+        _mapExplorerWindow = new MapExplorerWindow(gameCanvas: gameCanvas);
     }
 
     //Methods
@@ -285,6 +309,10 @@ public partial class MenuContainer : Panel
         _mapItemWindow.Update();
         _guildWindow.Update();
         mJobsWindow.Update();
+        if (_mapExplorerWindow.IsVisibleInTree)
+        {
+            _mapExplorerWindow.RefreshMapList();
+        }
 
     }
 
@@ -315,6 +343,7 @@ public partial class MenuContainer : Panel
         _guildWindow.Hide();
         _factionWindow.Hide();
         mJobsWindow.Hide();
+        _mapExplorerWindow.Hide();
     }
 
     public void ToggleCharacterWindow(Player? player = null)
@@ -472,6 +501,7 @@ public partial class MenuContainer : Panel
 
         _guildWindow.Hide();
         _factionWindow.Hide();
+        _mapExplorerWindow.Hide();
     }
 
     public bool HasWindowsOpen()
@@ -484,7 +514,8 @@ public partial class MenuContainer : Panel
                           _partyWindow.IsVisible() ||
                           _guildWindow.IsVisibleInTree ||
                           _factionWindow.IsVisibleInTree ||
-        mJobsWindow.IsVisible();
+                          mJobsWindow.IsVisible() ||
+                          _mapExplorerWindow.IsVisibleInTree;
         return windowsOpen;
     }
 
@@ -557,6 +588,21 @@ public partial class MenuContainer : Panel
         {
             HideWindows();
             mJobsWindow.Show();
+        }
+    }
+
+    private void MapExplorerButtonOnClicked(Base sender, MouseButtonState arguments)
+    {
+        if (_mapExplorerWindow.IsVisibleInTree)
+        {
+            _mapExplorerWindow.Hide();
+        }
+        else
+        {
+            HideWindows();
+            _mapExplorerWindow.RefreshMapList();
+            _mapExplorerWindow.RefreshMarkerList();
+            _mapExplorerWindow.Show();
         }
     }
 }

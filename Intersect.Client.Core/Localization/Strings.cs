@@ -1779,6 +1779,54 @@ public static partial class Strings
         public static LocalizedString Jobs = @"Jobs";
     }
 
+    public partial struct MapExplorer
+    {
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Title = @"Map browser";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Tooltip = @"Browse all world maps and add markers";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ButtonLabel = @"Map";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MapSummary = @"Maps available: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Markers = @"Markers";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MarkerLabel = @"Marker name";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MarkerPlaceholder = @"Flag or note for this map";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString CoordinatesLabel = @"Tile coordinates (X / Y)";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString AddMarker = @"Add marker";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString RemoveMarker = @"Remove marker";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString NoMapsAvailable = @"No maps available";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SelectMapPrompt = @"Select a map to view or add markers.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString NoMarkers = @"No markers for this map yet.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MarkerLine = @"{00} - ({01}, {02})";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MapLine = @"{00} ({01}, {02}) - {03} markers";
+    }
+
     public partial struct General
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
