@@ -46,5 +46,22 @@
     "BrowserEmpty": "This shop has no items for sale.",
     "BrowseStatus": "Select an item to begin.",
     "UnknownItem": "Unknown item"
+  },
+  "MapExplorer": {
+    "Title": "Map browser",
+    "Tooltip": "Browse all world maps and add markers",
+    "ButtonLabel": "Map",
+    "MapSummary": "Maps available: {00}",
+    "Markers": "Markers",
+    "MarkerLabel": "Marker name",
+    "MarkerPlaceholder": "Flag or note for this map",
+    "CoordinatesLabel": "Tile coordinates (X / Y)",
+    "AddMarker": "Add marker",
+    "RemoveMarker": "Remove marker",
+    "NoMapsAvailable": "No maps available",
+    "SelectMapPrompt": "Select a map to view or add markers.",
+    "NoMarkers": "No markers for this map yet.",
+    "MarkerLine": "{00} - ({01}, {02})",
+    "MapLine": "{00} ({01}, {02}) - {03} markers"
   }
 }
