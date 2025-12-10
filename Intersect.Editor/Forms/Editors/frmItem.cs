@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Drawing.Imaging;
+using System.Windows.Forms;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
@@ -176,6 +177,43 @@ public partial class FrmItem : EditorForm
         PopulateRuneCombos();
         InitLocalization();
         UpdateEditor();
+    }
+
+    private static decimal ClampToControlRange(decimal value, NumericUpDown control)
+    {
+        if (value < control.Minimum)
+        {
+            return control.Minimum;
+        }
+
+        if (value > control.Maximum)
+        {
+            return control.Maximum;
+        }
+
+        return value;
+    }
+
+    private static void SetNumericValue(NumericUpDown control, int[] values, int index)
+    {
+        if (values != null && index < values.Length)
+        {
+            control.Enabled = true;
+            control.Value = ClampToControlRange(values[index], control);
+        }
+        else
+        {
+            control.Enabled = false;
+            control.Value = 0;
+        }
+    }
+
+    private static void UpdateStatValue(int[] array, int index, int value)
+    {
+        if (array != null && index < array.Length)
+        {
+            array[index] = value;
+        }
     }
 
     private void InitLocalization()
@@ -371,24 +409,24 @@ public partial class FrmItem : EditorForm
             }
 
             // Stats fijos
-            nudStr.Value = mEditorItem.StatsGiven[0];
-            nudMag.Value = mEditorItem.StatsGiven[1];
-            nudDef.Value = mEditorItem.StatsGiven[2];
-            nudMR.Value = mEditorItem.StatsGiven[3];
-            nudSpd.Value = mEditorItem.StatsGiven[4];
-            nudAgi.Value = mEditorItem.StatsGiven[5];
-            nudDmg.Value = mEditorItem.StatsGiven[6];
-            nudCur.Value = mEditorItem.StatsGiven[7];
+            SetNumericValue(nudStr, mEditorItem.StatsGiven, 0);
+            SetNumericValue(nudMag, mEditorItem.StatsGiven, 1);
+            SetNumericValue(nudDef, mEditorItem.StatsGiven, 2);
+            SetNumericValue(nudMR, mEditorItem.StatsGiven, 3);
+            SetNumericValue(nudSpd, mEditorItem.StatsGiven, 4);
+            SetNumericValue(nudAgi, mEditorItem.StatsGiven, 5);
+            SetNumericValue(nudDmg, mEditorItem.StatsGiven, 6);
+            SetNumericValue(nudCur, mEditorItem.StatsGiven, 7);
 
             // Stats porcentuales
-            nudStrPercentage.Value = mEditorItem.PercentageStatsGiven[0];
-            nudMagPercentage.Value = mEditorItem.PercentageStatsGiven[1];
-            nudDefPercentage.Value = mEditorItem.PercentageStatsGiven[2];
-            nudMRPercentage.Value = mEditorItem.PercentageStatsGiven[3];
-            nudSpdPercentage.Value = mEditorItem.PercentageStatsGiven[4];
-            nudAgiPercentage.Value = mEditorItem.PercentageStatsGiven[5];
-            nudDmgPercentage.Value = mEditorItem.PercentageStatsGiven[6];
-            nudCurPercentage.Value = mEditorItem.PercentageStatsGiven[7];
+            SetNumericValue(nudStrPercentage, mEditorItem.PercentageStatsGiven, 0);
+            SetNumericValue(nudMagPercentage, mEditorItem.PercentageStatsGiven, 1);
+            SetNumericValue(nudDefPercentage, mEditorItem.PercentageStatsGiven, 2);
+            SetNumericValue(nudMRPercentage, mEditorItem.PercentageStatsGiven, 3);
+            SetNumericValue(nudSpdPercentage, mEditorItem.PercentageStatsGiven, 4);
+            SetNumericValue(nudAgiPercentage, mEditorItem.PercentageStatsGiven, 5);
+            SetNumericValue(nudDmgPercentage, mEditorItem.PercentageStatsGiven, 6);
+            SetNumericValue(nudCurPercentage, mEditorItem.PercentageStatsGiven, 7);
 
             // Vitals
             nudHealthBonus.Value = mEditorItem.VitalsGiven[0];
@@ -1021,75 +1059,61 @@ public partial class FrmItem : EditorForm
             return;
         }
 
-        if (!chkEffectIsFlat.Enabled)
-        {
-            return;
-        }
-
-        var selected = SelectedEffect;
-        var effect = mEditorItem.GetEffect(selected);
-        if (effect == null)
-        {
-            return;
-        }
-
         EffectValueUpdating = true;
-        var preferFlat = chkEffectIsFlat.Checked;
-        mEditorItem.SetEffectOfType(selected, (int)nudEffectPercent.Value, (int)nudEffectFlat.Value, preferFlat);
-        nudEffectPercent.Enabled = !preferFlat;
-        nudEffectFlat.Enabled = preferFlat;
-        lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(selected);
+        chkEffectIsFlat.Checked = false;
+        nudEffectPercent.Enabled = true;
+        nudEffectFlat.Enabled = false;
         EffectValueUpdating = false;
     }
 
     private void nudStr_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.StatsGiven[0] = (int)nudStr.Value;
+        UpdateStatValue(mEditorItem.StatsGiven, 0, (int)nudStr.Value);
     }
 
     private void nudMag_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.StatsGiven[1] = (int)nudMag.Value;
+        UpdateStatValue(mEditorItem.StatsGiven, 1, (int)nudMag.Value);
     }
 
     private void nudDef_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.StatsGiven[2] = (int)nudDef.Value;
+        UpdateStatValue(mEditorItem.StatsGiven, 2, (int)nudDef.Value);
     }
 
     private void nudMR_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.StatsGiven[3] = (int)nudMR.Value;
+        UpdateStatValue(mEditorItem.StatsGiven, 3, (int)nudMR.Value);
     }
 
     private void nudSpd_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.StatsGiven[4] = (int)nudSpd.Value;
+        UpdateStatValue(mEditorItem.StatsGiven, 4, (int)nudSpd.Value);
     }
 
     private void nudStrPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.PercentageStatsGiven[0] = (int)nudStrPercentage.Value;
+        UpdateStatValue(mEditorItem.PercentageStatsGiven, 0, (int)nudStrPercentage.Value);
     }
 
     private void nudMagPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.PercentageStatsGiven[1] = (int)nudMagPercentage.Value;
+        UpdateStatValue(mEditorItem.PercentageStatsGiven, 1, (int)nudMagPercentage.Value);
     }
 
     private void nudDefPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.PercentageStatsGiven[2] = (int)nudDefPercentage.Value;
+        UpdateStatValue(mEditorItem.PercentageStatsGiven, 2, (int)nudDefPercentage.Value);
     }
 
     private void nudMRPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.PercentageStatsGiven[3] = (int)nudMRPercentage.Value;
+        UpdateStatValue(mEditorItem.PercentageStatsGiven, 3, (int)nudMRPercentage.Value);
     }
 
     private void nudSpdPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.PercentageStatsGiven[4] = (int)nudSpdPercentage.Value;
+        UpdateStatValue(mEditorItem.PercentageStatsGiven, 4, (int)nudSpdPercentage.Value);
     }
 
     private void nudBag_ValueChanged(object sender, EventArgs e)
@@ -1614,25 +1638,9 @@ public partial class FrmItem : EditorForm
     private string GetBonusEffectRow(ItemEffect itemEffect)
     {
         var effectName = Strings.ItemEditor.bonuseffects[(int)itemEffect];
-        var effect = mEditorItem.GetEffect(itemEffect);
         var values = mEditorItem.GetEffectValues(itemEffect);
 
-        if (EffectData.SupportsFlatAndPercentage(itemEffect))
-        {
-            var parts = new List<string> { $"{values.Percentage}%" };
-
-            if (values.Flat != 0)
-            {
-                parts.Add(values.Flat.ToString());
-            }
-
-            return Strings.ItemEditor.BonusEffectItem.ToString(effectName, string.Join(" / ", parts));
-        }
-
-        var suffix = effect?.IsFlat == true ? string.Empty : "%";
-        var amount = effect?.IsFlat == true ? values.Flat : values.Percentage;
-
-        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{amount}{suffix}");
+        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{values.Percentage}%");
     }
 
     private Stat? SelectedStatRange
@@ -1664,23 +1672,16 @@ public partial class FrmItem : EditorForm
         }
 
         EffectValueUpdating = true;
-        var effect = mEditorItem.GetEffect(selected);
         var values = mEditorItem.GetEffectValues(selected);
-        var supportsDual = EffectData.SupportsFlatAndPercentage(selected);
 
-        chkEffectIsFlat.Enabled = !supportsDual;
-        chkEffectIsFlat.Checked = effect?.IsFlat ?? false;
+        chkEffectIsFlat.Enabled = false;
+        chkEffectIsFlat.Checked = false;
 
         nudEffectPercent.Value = values.Percentage;
-        nudEffectFlat.Value = values.Flat;
+        nudEffectFlat.Value = 0;
 
-        nudEffectPercent.Enabled = supportsDual || !chkEffectIsFlat.Checked;
-        nudEffectFlat.Enabled = supportsDual || chkEffectIsFlat.Checked;
-        if (supportsDual)
-        {
-            nudEffectPercent.Enabled = true;
-            nudEffectFlat.Enabled = true;
-        }
+        nudEffectPercent.Enabled = true;
+        nudEffectFlat.Enabled = false;
         EffectValueUpdating = false;
     }
 
@@ -1819,31 +1820,31 @@ public partial class FrmItem : EditorForm
 
     private void nudAgi_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.StatsGiven[5] = (int)nudAgi.Value;
+        UpdateStatValue(mEditorItem.StatsGiven, 5, (int)nudAgi.Value);
     }
 
     private void nudDmg_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.StatsGiven[6] = (int)nudDmg.Value;
+        UpdateStatValue(mEditorItem.StatsGiven, 6, (int)nudDmg.Value);
     }
 
     private void nudCur_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.StatsGiven[7] = (int)nudCur.Value;
+        UpdateStatValue(mEditorItem.StatsGiven, 7, (int)nudCur.Value);
     }
 
     private void nudAgiPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.PercentageStatsGiven[5] = (int)nudAgiPercentage.Value;
+        UpdateStatValue(mEditorItem.PercentageStatsGiven, 5, (int)nudAgiPercentage.Value);
     }
 
     private void nudDmgPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.PercentageStatsGiven[6] = (int)nudDmgPercentage.Value;
+        UpdateStatValue(mEditorItem.PercentageStatsGiven, 6, (int)nudDmgPercentage.Value);
     }
 
     private void nudCurPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.PercentageStatsGiven[7] = (int)nudCurPercentage.Value;
+        UpdateStatValue(mEditorItem.PercentageStatsGiven, 7, (int)nudCurPercentage.Value);
     }
 }

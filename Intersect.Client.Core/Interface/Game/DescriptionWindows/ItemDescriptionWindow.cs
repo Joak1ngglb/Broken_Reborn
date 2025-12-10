@@ -825,17 +825,16 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
                 rows.AddKeyValueRow(statLabel, statMessage);
 
-
-                // ====== Bonus Effects ======
-                foreach (var effect in _itemDescriptor.Effects)
-                {
-                    if (effect.Type != ItemEffect.None && effect.Percentage != 0)
-                    {
-                        rows.AddKeyValueRow(Strings.ItemDescription.BonusEffects[(int)effect.Type], Strings.ItemDescription.Percentage.ToString(effect.Percentage));
-                    }
-                }
-
                 rows.SizeToChildren(true, true);
+            }
+        }
+
+        // ====== Bonus Effects ======
+        foreach (var effect in _itemDescriptor.Effects)
+        {
+            if (effect.Type != ItemEffect.None && effect.Percentage != 0)
+            {
+                rows.AddKeyValueRow(Strings.ItemDescription.BonusEffects[(int)effect.Type], Strings.ItemDescription.Percentage.ToString(effect.Percentage));
             }
         }
         rows.SizeToChildren(true, true);

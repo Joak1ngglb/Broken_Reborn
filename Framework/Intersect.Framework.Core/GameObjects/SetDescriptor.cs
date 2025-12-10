@@ -162,14 +162,11 @@ public partial class SetDescriptor : DatabaseObject<SetDescriptor>, IFolderable
             .Select(
                 e =>
                 {
-                    var values = e.GetValues();
                     return new EffectData(
                         e.Type,
-                        (int)Math.Round(values.Percentage * ratio),
+                        (int)Math.Round(e.Percentage * ratio),
                         e.IsPassive,
-                        e.Stacking,
-                        (int)Math.Round(values.Flat * ratio),
-                        e.IsFlat
+                        e.Stacking
                     );
                 }
             )
@@ -207,9 +204,9 @@ public partial class SetDescriptor : DatabaseObject<SetDescriptor>, IFolderable
         var effectToEdit = Effects.Find(effect => effect.Type == type);
         if (effectToEdit != null)
         {
-            effectToEdit.IsFlat = isFlat;
+            effectToEdit.IsFlat = false;
             effectToEdit.Percentage = percentage;
-            effectToEdit.FlatAmount = flatAmount;
+            effectToEdit.FlatAmount = 0;
         }
     }
 

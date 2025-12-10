@@ -29,4 +29,8 @@ public enum ItemEffect : byte
     DamageReduction,
 
     DamageReflect,
+
+    Damages,
+
+    Cures,
 }

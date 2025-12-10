@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Intersect.Enums;
 
@@ -19,6 +20,7 @@ public static class SpellUpgradeKeys
         public const string HotDotInterval = "Combat.HotDotInterval";
         public const string OnHitDuration = "Combat.OnHitDuration";
         public const string TrapDuration = "Combat.TrapDuration";
+        public const string EffectOverride = "Combat.Effect.Set";
 
         public static class StatDiff
         {
@@ -28,8 +30,6 @@ public static class SpellUpgradeKeys
             public const string Vitality = "Combat.StatDiff.Vitality";
             public const string Speed = "Combat.StatDiff.Speed";
             public const string Agility = "Combat.StatDiff.Agility";
-            public const string Damages = "Combat.StatDiff.Damages";
-            public const string Cures = "Combat.StatDiff.Cures";
 
             public static string? GetKey(Stat stat) => stat switch
             {
@@ -39,8 +39,6 @@ public static class SpellUpgradeKeys
                 Stat.Vitality => Vitality,
                 Stat.Speed => Speed,
                 Stat.Agility => Agility,
-                Stat.Damages => Damages,
-                Stat.Cures => Cures,
                 _ => null,
             };
         }
@@ -77,8 +75,8 @@ public static class SpellUpgradeKeys
         public const string Range = "Dash.Range";
     }
 
-    public static readonly HashSet<string> All =
-    [
+    public static readonly string[] Ordered =
+    {
         CastDuration,
         CooldownDuration,
         Combat.CritChance,
@@ -90,20 +88,25 @@ public static class SpellUpgradeKeys
         Combat.HotDotInterval,
         Combat.OnHitDuration,
         Combat.TrapDuration,
+        Combat.EffectOverride,
         Combat.StatDiff.Attack,
         Combat.StatDiff.Intelligence,
         Combat.StatDiff.Defense,
         Combat.StatDiff.Vitality,
         Combat.StatDiff.Speed,
         Combat.StatDiff.Agility,
-        Combat.StatDiff.Damages,
-        Combat.StatDiff.Cures,
         Combat.VitalDiff.Health,
         Combat.VitalDiff.Mana,
         VitalCost.Health,
         VitalCost.Mana,
         Dash.Range,
-    ];
+    };
+
+    public static readonly HashSet<string> All = new(Ordered);
+
+    public static bool IsOverride(string key) =>
+        key.EndsWith("Set", StringComparison.OrdinalIgnoreCase) ||
+        key.StartsWith("set.", StringComparison.OrdinalIgnoreCase);
 
     public static bool IsValid(string key) => All.Contains(key);
 }

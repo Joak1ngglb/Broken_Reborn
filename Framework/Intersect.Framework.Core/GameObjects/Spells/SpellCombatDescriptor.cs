@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using Intersect.Enums;
 using Intersect.Utilities;
 using Microsoft.EntityFrameworkCore;
@@ -137,6 +138,20 @@ public partial class SpellCombatDescriptor
         if (TryGetUpgrade(props, SpellUpgradeKeys.Combat.CastRange, out var up))
         {
             value += up;
+        }
+
+        return value;
+    }
+
+    public SpellEffect GetEffectiveEffect(SpellProperties props)
+    {
+        var value = Effect;
+
+        if (props?.CustomUpgrades != null &&
+            props.CustomUpgrades.TryGetValue(SpellUpgradeKeys.Combat.EffectOverride, out var upgrade) &&
+            Enum.IsDefined(typeof(SpellEffect), upgrade))
+        {
+            value = (SpellEffect)upgrade;
         }
 
         return value;
