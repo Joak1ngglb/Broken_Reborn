@@ -1645,12 +1645,17 @@ public partial class FrmItem : EditorForm
         get => Enum.IsDefined((ItemEventTrigger)lstEventTriggers.SelectedIndex) ? (ItemEventTrigger)(lstEventTriggers.SelectedIndex) : null;
     }
 
-    private void lstBonusEffects_SelectedIndexChanged(object sender, EventArgs e)
-    {
-        if (!IsValidBonusSelection)
+        private void lstBonusEffects_SelectedIndexChanged(object sender, EventArgs e)
         {
-            return;
-        }
+            if (mEditorItem == null)
+            {
+                return;
+            }
+
+            if (!IsValidBonusSelection)
+            {
+                return;
+            }
 
         var selected = SelectedEffect;
         if (!mEditorItem.EffectsEnabled.Contains(selected))
