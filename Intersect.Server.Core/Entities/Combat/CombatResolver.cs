@@ -27,8 +27,10 @@ public static class CombatResolver
         CombatantEffects defenderEffects
     )
     {
-        const double minChance = 0.05d;
+        const double minChance = 0.1d;
         const double maxChance = 0.98d;
+        const double baseChance = 0.7d;
+        const double swingFactor = 0.3d;
 
         var accuracy =
             attacker.Stat[(int)Enums.Stat.Agility].Value() * 0.5d +
@@ -40,8 +42,9 @@ public static class CombatResolver
             defender.Stat[(int)Enums.Stat.Defense].Value() * 0.2d +
             defenderEffects.GetTotalEffectValue(ItemEffect.Evasion).GetPrimaryValue();
 
-        var denominator = Math.Max(1d, accuracy + evasion);
-        var hitChance = accuracy / denominator;
+        var statBalance = accuracy - evasion;
+        var normalization = Math.Max(50d, accuracy + evasion);
+        var hitChance = baseChance + swingFactor * statBalance / normalization;
 
         return Math.Clamp(hitChance, minChance, maxChance);
     }
@@ -113,6 +116,22 @@ public static class CombatResolver
         }
 
         return reduced;
+    }
+
+    public static long ApplyDamageModifier(long damage, CombatantEffects attackerEffects)
+    {
+        var isHeal = damage < 0;
+        var modifier = isHeal ? attackerEffects.GetTotalEffectValue(ItemEffect.Cures) :
+            attackerEffects.GetTotalEffectValue(ItemEffect.Damages);
+
+        if (modifier.Percentage == 0)
+        {
+            return damage;
+        }
+
+        var adjusted = Math.Round(damage * (100 + modifier.Percentage) / 100d);
+
+        return (long)adjusted;
     }
 
     public static long CalculateReflectDamage(long appliedDamage, CombatantEffects defenderEffects, bool allowReflection)

@@ -6,17 +6,12 @@ public readonly record struct EffectValue(int Percentage, int Flat)
 {
     public int GetPrimaryValue(bool preferFlat = false)
     {
-        if (preferFlat || Percentage == 0)
-        {
-            return Flat;
-        }
-
         return Percentage;
     }
 
     public EffectValue Add(EffectValue other)
     {
-        return new EffectValue(Percentage + other.Percentage, Flat + other.Flat);
+        return new EffectValue(Percentage + other.Percentage, 0);
     }
 }
 
@@ -29,7 +24,7 @@ public partial class EffectData
         Percentage = default;
         IsPassive = true;
         Stacking = EffectStacking.Stack;
-        FlatAmount = default;
+        FlatAmount = 0;
         IsFlat = false;
     }
 
@@ -46,8 +41,8 @@ public partial class EffectData
         Percentage = percentage;
         IsPassive = isPassive;
         Stacking = stacking;
-        FlatAmount = flatAmount;
-        IsFlat = isFlat;
+        FlatAmount = 0;
+        IsFlat = false;
     }
 
     public ItemEffect Type { get; set; }
@@ -64,24 +59,16 @@ public partial class EffectData
 
     public static bool SupportsFlatAndPercentage(ItemEffect effect)
     {
-        return effect is ItemEffect.AntiCritChance
-            or ItemEffect.ArmorPenetration
-            or ItemEffect.DamageReduction
-            or ItemEffect.DamageReflect;
+        return false;
     }
 
     public int GetValue()
     {
-        return GetValues().GetPrimaryValue(IsFlat);
+        return Percentage;
     }
 
     public EffectValue GetValues()
     {
-        if (SupportsFlatAndPercentage(Type))
-        {
-            return new EffectValue(Percentage, FlatAmount);
-        }
-
-        return IsFlat ? new EffectValue(0, FlatAmount) : new EffectValue(Percentage, 0);
+        return new EffectValue(Percentage, 0);
     }
 }

@@ -2139,6 +2139,14 @@ internal sealed partial class PacketHandler
 
             Globals.Me.HiddenQuests = packet.HiddenQuests;
             Globals.QuestDirty = true;
+
+            Interface.Interface.EnqueueInGame(
+                gameInterface =>
+                {
+                    gameInterface.NotifyQuestsUpdated();
+                    gameInterface.GameMenu?.NotifyQuestProgressUpdated(packet.Quests.Keys);
+                }
+            );
         }
     }
 

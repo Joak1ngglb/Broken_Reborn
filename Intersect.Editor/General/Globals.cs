@@ -207,10 +207,6 @@ public static partial class Globals
                 return "Vitality";
             case (int) Stat.Agility:
                 return "Agility";
-            case (int) Stat.Damages:
-                return "Damages";
-            case (int) Stat.Cures:
-                return "Cures";
             case (int) Stat.Speed:
                 return "Speed";
             default:

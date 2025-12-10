@@ -1070,12 +1070,6 @@ public static partial class Strings
         public static LocalizedString Agility = @"Agility:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public static LocalizedString Damages = @"Damages:";
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public static LocalizedString Cures = @"Cures:";
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Tenacity = @"Tenacity: {00}%";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1223,8 +1217,6 @@ public static partial class Strings
             { Stat.Defense, @"Defense" },
             { Stat.Vitality, @"Vitality" },
             { Stat.Agility, @"Agility" },
-            { Stat.Damages, @"Damages" },
-            { Stat.Cures, @"Cures" },
             { Stat.Speed, @"Speed" },
         };
 
@@ -2220,8 +2212,6 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {3, @"Vitality:"},
             {4, @"Speed:"},
             {5, @"Agility:"},
-            {6, @"Damages:"},
-            {7, @"Cures:"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -2233,8 +2223,6 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {3, @"Vitality"},
             {4, @"Speed"},
             {5, @"Agility"},
-            {6, @"Damages"},
-            {7, @"Cures"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -3165,8 +3153,6 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {3, @"Vitality"},
             {4, @"Speed"},
             {5, @"Agility"},
-            {6, @"Damages"},
-            {7, @"Cures"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -3178,8 +3164,6 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {3, @"Vitality:"},
             {4, @"Speed:"},
             {5, @"Agility:"},
-            {6, @"Damages:"},
-            {7, @"Cures:"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

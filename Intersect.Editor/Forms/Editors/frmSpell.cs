@@ -14,9 +14,11 @@ using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.GameObjects;
 using Intersect.Utilities;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.Linq;
 using Graphics = System.Drawing.Graphics;
 
 namespace Intersect.Editor.Forms.Editors;
@@ -38,8 +40,9 @@ public partial class FrmSpell : EditorForm
     private int mUpgradeLevel = 1;
     private bool mLoadingLevels;
 
-    private readonly Dictionary<string, DarkNumericUpDown> mUpgradeControls = new();
+    private readonly Dictionary<string, Control> mUpgradeControls = new();
     private FlowLayoutPanel mUpgradePanel;
+    private const string DefaultEffectUpgradeText = "(Usar efecto base)";
 
     public FrmSpell()
     {
@@ -75,33 +78,135 @@ public partial class FrmSpell : EditorForm
         dgvUpgrades.Dispose();
         grpUpgrades.Controls.Add(mUpgradePanel);
 
-        foreach (var key in SpellUpgradeKeys.All)
+        foreach (var key in SpellUpgradeKeys.Ordered)
         {
             var row = new Panel
             {
                 Width = mUpgradePanel.ClientSize.Width - 25,
-                Height = 25
+                Height = 30
             };
 
             var lbl = new Label
             {
-                Text = key,
+                Text = GetUpgradeLabel(key),
                 AutoSize = true,
-                Location = new System.Drawing.Point(0, 5)
+                Location = new System.Drawing.Point(0, 7)
             };
 
-            var nud = new DarkNumericUpDown
-            {
-                Minimum = int.MinValue,
-                Maximum = int.MaxValue,
-                Width = 80,
-                Location = new System.Drawing.Point(row.Width - 85, 0)
-            };
+            var control = CreateUpgradeControl(key);
+            control.Location = new System.Drawing.Point(row.Width - control.Width - 5, (row.Height - control.Height) / 2);
 
             row.Controls.Add(lbl);
-            row.Controls.Add(nud);
+            row.Controls.Add(control);
             mUpgradePanel.Controls.Add(row);
-            mUpgradeControls[key] = nud;
+            mUpgradeControls[key] = control;
+        }
+    }
+
+    private Control CreateUpgradeControl(string key)
+    {
+        if (key == SpellUpgradeKeys.Combat.EffectOverride)
+        {
+            var combo = new DarkComboBox
+            {
+                Width = 160,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                DrawMode = DrawMode.OwnerDrawFixed,
+                ForeColor = System.Drawing.Color.ForestGreen,
+                BackColor = System.Drawing. Color.FromArgb(69, 73, 74)
+            };
+
+            combo.Items.Add(DefaultEffectUpgradeText);
+            foreach (var item in cmbExtraEffect.Items.Cast<object>())
+            {
+                combo.Items.Add(item);
+            }
+
+            combo.SelectedIndex = 0;
+            return combo;
+        }
+
+        return new DarkNumericUpDown
+        {
+            Minimum = int.MinValue,
+            Maximum = int.MaxValue,
+            Width = 100
+        };
+    }
+
+    private string GetUpgradeLabel(string key)
+    {
+        return key switch
+        {
+            SpellUpgradeKeys.CastDuration => Strings.SpellEditor.casttime.ToString(),
+            SpellUpgradeKeys.CooldownDuration => Strings.SpellEditor.cooldown.ToString(),
+            SpellUpgradeKeys.Combat.CritChance => Strings.SpellEditor.critchance.ToString(),
+            SpellUpgradeKeys.Combat.CritMultiplier => Strings.SpellEditor.critmultiplier.ToString(),
+            SpellUpgradeKeys.Combat.HitRadius => Strings.SpellEditor.hitradius.ToString(),
+            SpellUpgradeKeys.Combat.CastRange => Strings.SpellEditor.castrange.ToString(),
+            SpellUpgradeKeys.Combat.Scaling => Strings.SpellEditor.scalingamount.ToString(),
+            SpellUpgradeKeys.Combat.Duration => Strings.SpellEditor.boostduration.ToString(),
+            SpellUpgradeKeys.Combat.HotDotInterval => Strings.SpellEditor.hotdottick.ToString(),
+            SpellUpgradeKeys.Combat.OnHitDuration => "Duración de efecto On Hit:",
+            SpellUpgradeKeys.Combat.TrapDuration => "Duración de trampa:",
+            SpellUpgradeKeys.Combat.EffectOverride => "Efecto adicional:",
+            SpellUpgradeKeys.Combat.StatDiff.Attack => Globals.GetStatName((int)Stat.Attack),
+            SpellUpgradeKeys.Combat.StatDiff.Intelligence => Globals.GetStatName((int)Stat.Intelligence),
+            SpellUpgradeKeys.Combat.StatDiff.Defense => Globals.GetStatName((int)Stat.Defense),
+            SpellUpgradeKeys.Combat.StatDiff.Vitality => Globals.GetStatName((int)Stat.Vitality),
+            SpellUpgradeKeys.Combat.StatDiff.Speed => Globals.GetStatName((int)Stat.Speed),
+            SpellUpgradeKeys.Combat.StatDiff.Agility => Globals.GetStatName((int)Stat.Agility),
+            SpellUpgradeKeys.Combat.VitalDiff.Health => "Salud (daño/curación):",
+            SpellUpgradeKeys.Combat.VitalDiff.Mana => "Maná (daño/curación):",
+            SpellUpgradeKeys.VitalCost.Health => "Coste de salud:",
+            SpellUpgradeKeys.VitalCost.Mana => "Coste de maná:",
+            SpellUpgradeKeys.Dash.Range => "Alcance del dash:",
+            _ => key
+        };
+    }
+
+    private static void ResetUpgradeControl(string key, Control control)
+    {
+        switch (control)
+        {
+            case DarkNumericUpDown numeric:
+                numeric.Value = 0;
+                break;
+            case DarkComboBox combo when key == SpellUpgradeKeys.Combat.EffectOverride:
+                combo.SelectedIndex = 0;
+                break;
+        }
+    }
+
+    private static void ApplyUpgradeValue(string key, Control control, int value)
+    {
+        switch (control)
+        {
+            case DarkNumericUpDown numeric:
+                numeric.Value = value;
+                break;
+            case DarkComboBox combo when key == SpellUpgradeKeys.Combat.EffectOverride:
+                var index = Math.Max(0, Math.Min(value + 1, combo.Items.Count - 1));
+                combo.SelectedIndex = index;
+                break;
+        }
+    }
+
+    private static int? GetUpgradeValue(string key, Control control)
+    {
+        switch (control)
+        {
+            case DarkNumericUpDown numeric:
+                return (int)numeric.Value;
+            case DarkComboBox combo when key == SpellUpgradeKeys.Combat.EffectOverride:
+                if (combo.SelectedIndex <= 0)
+                {
+                    return null;
+                }
+
+                return combo.SelectedIndex - 1;
+            default:
+                return null;
         }
     }
     private void AssignEditorItem(Guid id)
@@ -433,10 +538,15 @@ public partial class FrmSpell : EditorForm
 
         foreach (var kv in mUpgradeControls)
         {
-            var value = (int)kv.Value.Value;
-            if (value != 0)
+            var value = GetUpgradeValue(kv.Key, kv.Value);
+            if (!value.HasValue)
             {
-                props.CustomUpgrades[kv.Key] = value;
+                continue;
+            }
+
+            if (value != 0 || SpellUpgradeKeys.IsOverride(kv.Key))
+            {
+                props.CustomUpgrades[kv.Key] = value.Value;
             }
         }
 
@@ -450,9 +560,9 @@ public partial class FrmSpell : EditorForm
             return;
         }
 
-        foreach (var control in mUpgradeControls.Values)
+        foreach (var kv in mUpgradeControls)
         {
-            control.Value = 0;
+            ResetUpgradeControl(kv.Key, kv.Value);
         }
 
         if (mUpgradeLevel < 1 || mUpgradeLevel > Options.Instance.Player.MaxSpellLevel)
@@ -468,7 +578,7 @@ public partial class FrmSpell : EditorForm
             {
                 if (mUpgradeControls.TryGetValue(kv.Key, out var control))
                 {
-                    control.Value = kv.Value;
+                    ApplyUpgradeValue(kv.Key, control, kv.Value);
                 }
             }
         }
@@ -518,8 +628,6 @@ public partial class FrmSpell : EditorForm
             nudMag.Value = mEditorItem.Combat.StatDiff[(int)Stat.Intelligence];
             nudMR.Value = mEditorItem.Combat.StatDiff[(int)Stat.Vitality];
             nudAgi.Value = mEditorItem.Combat.StatDiff[(int)Stat.Agility];
-            nudDmg.Value = mEditorItem.Combat.StatDiff[(int)Stat.Damages];
-            nudCur.Value = mEditorItem.Combat.StatDiff[(int)Stat.Cures];
 
             // Porcentajes
             nudStrPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Attack];
@@ -528,8 +636,6 @@ public partial class FrmSpell : EditorForm
             nudMRPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Vitality];
             nudSpdPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Speed];
             nudAgiPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Agility];
-            nudDmgPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Damages];
-            nudCurPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Cures];
 
             chkFriendly.Checked = Convert.ToBoolean(mEditorItem.Combat.Friendly);
             cmbDamageType.SelectedIndex = mEditorItem.Combat.DamageType;
@@ -1303,12 +1409,12 @@ public partial class FrmSpell : EditorForm
 
     private void nudDmg_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Combat.StatDiff[(int)Stat.Damages] = (int)nudDmg.Value;
+        // Damages stat has been moved to item effects.
     }
 
     private void nudCur_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Combat.StatDiff[(int)Stat.Cures] = (int)nudCur.Value;
+        // Cures stat has been moved to item effects.
     }
 
     private void nudAgiPercentage_ValueChanged(object sender, EventArgs e)
@@ -1318,11 +1424,11 @@ public partial class FrmSpell : EditorForm
 
     private void nudDmgPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Combat.PercentageStatDiff[(int)Stat.Damages] = (int)nudDmgPercentage.Value;
+        // Damages percentage has been moved to item effects.
     }
 
     private void nudCurPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Combat.PercentageStatDiff[(int)Stat.Cures] = (int)nudCurPercentage.Value;
+        // Cures percentage has been moved to item effects.
     }
 }
