@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
@@ -1997,6 +1998,16 @@ public abstract partial class Entity : IEntity
         }
     }
 
+    public virtual IEnumerable<EffectData> GetActiveEffects()
+    {
+        return Array.Empty<EffectData>();
+    }
+
+    public virtual EffectValue GetPassiveEffectValues(ItemEffect effect)
+    {
+        return default;
+    }
+
     //Attacking with weapon or unarmed.
     public virtual void TryAttack(Entity target)
     {
@@ -2105,47 +2116,13 @@ public abstract partial class Entity : IEntity
             return;
         }
 
-        static int GetItemEffectBonus(Entity entity, ItemEffect effect)
-        {
-            return entity is Player player ? player.GetEquipmentBonusEffect(effect) : 0;
-        }
-
-        static int CalculateCriticalChance(Entity attacker, int baseCritChance)
-        {
-            var critChance = baseCritChance;
-
-            var agilityPerCrit = Math.Max(1, Options.Instance.Combat.AgilityPerCritChance);
-            critChance += attacker.Stat[(int)Stat.Agility].Value() / agilityPerCrit;
-
-            critChance += GetItemEffectBonus(attacker, ItemEffect.CriticalChance);
-
-            return Math.Max(0, critChance);
-        }
-
-        static double CalculateHitChance(Entity attacker, Entity defender)
-        {
-            const double minChance = 0.05d;
-            const double maxChance = 0.98d;
-
-            var accuracy =
-                attacker.Stat[(int)Stat.Agility].Value() * 0.5d +
-                attacker.Stat[(int)Stat.Attack].Value() * 0.3d +
-                GetItemEffectBonus(attacker, ItemEffect.Accuracy);
-
-            var evasion =
-                defender.Stat[(int)Stat.Agility].Value() * 0.7d +
-                defender.Stat[(int)Stat.Defense].Value() * 0.2d +
-                GetItemEffectBonus(defender, ItemEffect.Evasion);
-
-            var denominator = Math.Max(1d, accuracy + evasion);
-            var hitChance = accuracy / denominator;
-
-            return Math.Clamp(hitChance, minChance, maxChance);
-        }
+        var combatEffects = CombatResolver.BuildEffects(this, enemy);
+        var attackerEffects = combatEffects.Attacker;
+        var defenderEffects = combatEffects.Defender;
 
         if (damagingAttack)
         {
-            var hitChance = CalculateHitChance(this, enemy);
+            var hitChance = CombatResolver.CalculateHitChance(this, enemy, attackerEffects, defenderEffects);
             if (Randomization.NextDouble() > hitChance)
             {
                 PacketSender.SendActionMsg(this, Strings.Combat.Miss, CustomColors.Combat.Missed);
@@ -2172,8 +2149,9 @@ public abstract partial class Entity : IEntity
         //Let's save the entity's vitals before they takes damage to use in lifesteal/manasteal
         var enemyVitals = enemy.GetVitals();
         var invulnerable = enemy.CachedStatuses.Any(status => status.Type == SpellEffect.Invulnerable);
+        long appliedHealthDamage = 0;
 
-        var finalCritChance = CalculateCriticalChance(this, critChance);
+        var finalCritChance = CombatResolver.CalculateCriticalChance(critChance, attackerEffects, defenderEffects);
         bool isCrit = false;
         //Is this a critical hit?
         if (Randomization.Next(1, 101) > finalCritChance)
@@ -2186,12 +2164,15 @@ public abstract partial class Entity : IEntity
         }
 
         //If the enemy is a resource, the original base damage value will be used on "Calculate Damages", if not, we need change...
+        var defenseOverrides = CombatResolver.BuildDefenseOverrides(damageType, enemy, attackerEffects);
         if (!(enemy is Resource))
         {
             baseDamage = Formulas.CalculateDamage(
-                baseDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy, Level
+                baseDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy, Level, defenseOverrides
             );
         }
+
+        baseDamage = CombatResolver.ApplyFinalDamageReduction(baseDamage, defenderEffects);
 
         //Check on each attack if the enemy is a player AND if they are blocking.
         if (enemy is Player player && player.IsBlocking)
@@ -2254,6 +2235,7 @@ public abstract partial class Entity : IEntity
                     PacketSender.SendActionMsg(enemy, Strings.Combat.Critical, CustomColors.Combat.Critical);
                 }
 
+                appliedHealthDamage = Math.Min(enemyVitals[(int)Vital.Health], baseDamage);
                 enemy.SubVital(Vital.Health, baseDamage);
                 switch (damageType)
                 {
@@ -2293,7 +2275,7 @@ public abstract partial class Entity : IEntity
                 {
                     var dmgMap = enemyNpc.DamageMap;
                     dmgMap.TryGetValue(this, out var damage);
-                    dmgMap[this] = damage + baseDamage;
+                    dmgMap[this] = damage + appliedHealthDamage;
 
                     enemyNpc.LootMap.TryAdd(Id, true);
                     enemyNpc.LootMapCache = enemyNpc.LootMap.Keys.ToArray();
@@ -2311,11 +2293,25 @@ public abstract partial class Entity : IEntity
             }
         }
 
+        if (appliedHealthDamage > 0)
+        {
+            var reflectedDamage = CombatResolver.CalculateReflectDamage(appliedHealthDamage, defenderEffects, true);
+            if (reflectedDamage > 0 && HasVital(Vital.Health))
+            {
+                SubVital(Vital.Health, reflectedDamage);
+                PacketSender.SendActionMsg(
+                    this, Strings.Combat.RemoveSymbol + reflectedDamage, CustomColors.Combat.TrueDamage
+                );
+            }
+        }
+
         if (secondaryDamage != 0)
         {
             secondaryDamage = Formulas.CalculateDamage(
-                secondaryDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy, Level
+                secondaryDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy, Level, defenseOverrides
             );
+
+            secondaryDamage = CombatResolver.ApplyFinalDamageReduction(secondaryDamage, defenderEffects);
 
             if (secondaryDamage < 0 && secondaryDamagingAttack)
             {
@@ -2358,13 +2354,16 @@ public abstract partial class Entity : IEntity
         //Check for lifesteal/manasteal
         if (thisPlayer != null && enemy is not Resource)
         {
-            var lifestealRate = Math.Max(0f, thisPlayer.GetEquipmentBonusEffect(ItemEffect.Lifesteal) / 100f);
+            var lifestealRate = Math.Max(
+                0f,
+                attackerEffects.GetTotalEffectValue(ItemEffect.Lifesteal).GetPrimaryValue() / 100f
+            );
             if (hasVampirism)
             {
                 lifestealRate += 0.10f;
             }
 
-            var idealHealthRecovered = lifestealRate * baseDamage;
+            var idealHealthRecovered = lifestealRate * appliedHealthDamage;
             var actualHealthRecovered = Math.Min(enemyVitals[(int)Vital.Health], idealHealthRecovered);
 
             if (actualHealthRecovered > 0)
@@ -2378,13 +2377,16 @@ public abstract partial class Entity : IEntity
                 );
             }
 
-            var manastealRate = Math.Max(0f, thisPlayer.GetEquipmentBonusEffect(ItemEffect.Manasteal) / 100f);
+            var manastealRate = Math.Max(
+                0f,
+                attackerEffects.GetTotalEffectValue(ItemEffect.Manasteal).GetPrimaryValue() / 100f
+            );
             if (hasVampirism)
             {
                 manastealRate += 0.10f;
             }
 
-            var idealManaRecovered = manastealRate * baseDamage;
+            var idealManaRecovered = manastealRate * appliedHealthDamage;
             var actualManaRecovered = Math.Min(enemy.GetVital(Vital.Mana), idealManaRecovered);
 
             if (actualManaRecovered > 0)
@@ -2400,7 +2402,7 @@ public abstract partial class Entity : IEntity
             }
 
             var remainingManaRecovery = idealManaRecovered - actualManaRecovered;
-            if (remainingManaRecovery > 0)
+            if (remainingManaRecovery > 0 && appliedHealthDamage > 0)
             {
                 // If the mana recovered is less than it should be, deal the remainder as bonus damage
                 enemy.SubVital(Vital.Health, (int)remainingManaRecovery);
