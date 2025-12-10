@@ -3877,7 +3877,10 @@ Tick timer saved in server config.json.";
         public static LocalizedString BlockAmount = @"Block Amount (%):";
         public static LocalizedString BlockAbsorption = @"Block Damage Absorption (%):";
 
-        public static LocalizedString bonusamount = @"Effect Amount (%):";
+        public static LocalizedString bonusamount = @"Effect Amount:";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString bonusflatvalue = @"Use flat value";
 
         public static LocalizedString bonuseffect = @"Bonus Effect:";
 
@@ -3885,7 +3888,7 @@ Tick timer saved in server config.json.";
         public static LocalizedString BonusEffectGroup = @"Bonus Effects";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public static LocalizedString BonusEffectItem = @"{00}: {01}%";
+        public static LocalizedString BonusEffectItem = @"{00}: {01}";
 
         public static Dictionary<int, LocalizedString> bonuseffects = new Dictionary<int, LocalizedString>
         {

@@ -401,22 +401,9 @@ namespace Intersect.Server.Entities
                     p.mEquipmentVitalRegen[i] += descriptor.VitalsRegen[i];
                 }
 
-                foreach (var effect in descriptor.EffectsEnabled)
+                foreach (var effect in descriptor.Effects)
                 {
-                    var percentage = descriptor.GetEffectPercentage(effect);
-                    if (percentage == 0)
-                    {
-                        continue;
-                    }
-
-                    if (p.mEquipmentBonusEffects.ContainsKey(effect))
-                    {
-                        p.mEquipmentBonusEffects[effect] += percentage;
-                    }
-                    else
-                    {
-                        p.mEquipmentBonusEffects.Add(effect, percentage);
-                    }
+                    p.mEquipmentBonusEffects.ApplyEffect(effect);
                 }
             }
 

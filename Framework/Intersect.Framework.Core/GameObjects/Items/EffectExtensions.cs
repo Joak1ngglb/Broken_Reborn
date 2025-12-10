@@ -11,26 +11,30 @@ public static class EffectExtensions
             return;
         }
 
+        var value = effect.GetValue();
         switch (effect.Stacking)
         {
             case EffectStacking.Ignore:
                 if (!dest.ContainsKey(effect.Type))
                 {
-                    dest[effect.Type] = effect.Percentage;
+                    dest[effect.Type] = value;
                 }
+
                 break;
             case EffectStacking.Renew:
-                dest[effect.Type] = effect.Percentage;
+                dest[effect.Type] = value;
+
                 break;
             default:
                 if (dest.ContainsKey(effect.Type))
                 {
-                    dest[effect.Type] += effect.Percentage;
+                    dest[effect.Type] += value;
                 }
                 else
                 {
-                    dest[effect.Type] = effect.Percentage;
+                    dest[effect.Type] = value;
                 }
+
                 break;
         }
     }

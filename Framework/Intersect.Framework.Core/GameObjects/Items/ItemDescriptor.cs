@@ -427,7 +427,12 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
 
     public int GetEffectPercentage(ItemEffect type)
     {
-        return Effects.Find(effect => effect.Type == type)?.Percentage ?? 0;
+        return Effects.Find(effect => effect.Type == type)?.GetValue() ?? 0;
+    }
+
+    public EffectData? GetEffect(ItemEffect type)
+    {
+        return Effects.Find(effect => effect.Type == type);
     }
 
     [NotMapped, JsonIgnore]
@@ -436,14 +441,23 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         get => Effects.Select(effect => effect.Type).ToArray();
     }
 
-    public void SetEffectOfType(ItemEffect type, int value)
+    public void SetEffectOfType(ItemEffect type, int value, bool isFlat = false)
     {
         var effectToEdit = Effects.Find(effect => effect.Type == type);
         if (effectToEdit == default)
         {
             return;
         }
-        effectToEdit.Percentage = value;
+
+        effectToEdit.IsFlat = isFlat;
+        if (isFlat)
+        {
+            effectToEdit.FlatAmount = value;
+        }
+        else
+        {
+            effectToEdit.Percentage = value;
+        }
     }
 
     /// <inheritdoc />
