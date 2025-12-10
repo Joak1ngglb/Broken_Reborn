@@ -79,11 +79,14 @@ namespace Intersect.Client.Interface.Game
             mQuestStatus.SetText("");
 
             mQuestDescArea = new ScrollControl(mQuestsWindow, "QuestDescription");
+            mQuestDescArea.EnableScroll(false, true);
             mQuestDescTemplateLabel = new Label(mQuestDescArea, "QuestDescriptionTemplate");
             mQuestDescLabel = new RichLabel(mQuestDescArea);
+          
+            mQuestDescArea.BoundsChanged += (_, _) => UpdateDescriptionLayout();
 
             mQuestTasksContainer = new ScrollControl(mQuestsWindow, "QuestTasksContainer");
-            mQuestTasksContainer.EnableScroll(false, false);
+            mQuestTasksContainer.EnableScroll(false, true);
             mQuestTasksList = new ListBox(mQuestTasksContainer, "QuestTasksList");
             mQuestTasksList.EnableScroll(false, true);
             mQuestTasksList.Dock = Pos.Fill;
@@ -177,6 +180,34 @@ namespace Intersect.Client.Interface.Game
             UpdateInternal(shouldUpdateList);
         }
 
+        public void NotifyQuestProgressUpdated(IEnumerable<Guid> questIds)
+        {
+            if (questIds == null)
+            {
+                return;
+            }
+
+            if (mSelectedQuest == null)
+            {
+                return;
+            }
+
+            var selectedQuestUpdated = questIds.Contains(mSelectedQuest.Id);
+
+            if (!selectedQuestUpdated)
+            {
+                return;
+            }
+
+            if (mQuestsWindow.IsHidden || !mQuestsWindow.IsVisibleInTree)
+            {
+                _shouldUpdateList = true;
+                return;
+            }
+
+            UpdateInternal(true);
+        }
+
         private void UpdateInternal(bool shouldUpdateList)
         {
             if (shouldUpdateList)
@@ -187,6 +218,7 @@ namespace Intersect.Client.Interface.Game
 
             if (mQuestsWindow.IsHidden)
             {
+                _shouldUpdateList |= shouldUpdateList;
                 return;
             }
 
@@ -482,8 +514,7 @@ namespace Intersect.Client.Interface.Game
             mQuestTitle.IsHidden = false;
             mQuestTitle.Text = mSelectedQuest.Name;
             mQuestDescArea.IsHidden = false;
-            mQuestDescLabel.Width = mQuestDescArea.Width - mQuestDescArea.VerticalScrollBar.Width;
-            mQuestDescLabel.SizeToChildren(false, true);
+            UpdateDescriptionLayout();
             mQuestStatus.Show();
             mQuitButton.Show();
 
@@ -491,8 +522,26 @@ namespace Intersect.Client.Interface.Game
             LoadRewardWidgets(mSelectedQuest.Id);
         }
 
+        private void UpdateDescriptionLayout()
+        {
+            var scrollbarWidth = mQuestDescArea?.VerticalScrollBar?.Width ?? 0;
+
+            if (mQuestDescLabel != null && mQuestDescArea != null)
+            {
+                mQuestDescLabel.Width = Math.Max(0, mQuestDescArea.Width - scrollbarWidth);
+                mQuestDescLabel.SizeToChildren(false, true);
+                mQuestDescArea.EnableScroll(false, true);
+                mQuestDescArea.VerticalScrollBar.ScrollAmount = 0;
+            }
+        }
+
         public void Show()
         {
+            mSelectedQuest = null;
+            _questList.UnselectAll();
+            UpdateSelectedQuest();
+            UpdateQuestTasks();
+
             if (_shouldUpdateList)
             {
                 UpdateInternal(_shouldUpdateList);
@@ -508,6 +557,9 @@ namespace Intersect.Client.Interface.Game
         {
             mQuestsWindow.IsHidden = true;
             mSelectedQuest = null;
+            _questList.UnselectAll();
+            UpdateSelectedQuest();
+            UpdateQuestTasks();
         }
 
         // ---------- Recompensas: API de IQuestWindow ----------
