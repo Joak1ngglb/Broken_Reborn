@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using Intersect;
 using Intersect.Enums;
 using Intersect.Server.Core;
 using Intersect.Server.Entities;
@@ -10,6 +13,24 @@ namespace Intersect.Server.General;
 
 public partial class Formulas
 {
+    private readonly record struct CombatRequest(
+        Entity Attacker,
+        Entity Defender,
+        long BasePower,
+        DamageType DamageType,
+        Stat ScalingStat,
+        int ScalingPercent,
+        double CriticalMultiplier,
+        bool IsHeal,
+        int? AttackerLevel = null
+    );
+
+    private readonly record struct CombatResolverOptions(
+        bool AllowHealingCriticals,
+        bool IgnoreHealingDefense,
+        bool PreventReflectChaining
+    );
+
     private const string DefaultFormulaMagicDamage = "Random(((BaseDamage + (ScalingStat * ScaleFactor))) * CritMultiplier * .975, ((BaseDamage + (ScalingStat * ScaleFactor))) * CritMultiplier * 1.025) * (100 / (100 + V_MagicResist))";
     private const string DefaultFormulaPhysicalDamage = "Random(((BaseDamage + (ScalingStat * ScaleFactor))) * CritMultiplier * .975, ((BaseDamage + (ScalingStat * ScaleFactor))) * CritMultiplier * 1.025) * (100 / (100 + V_Defense))";
     private const string DefaultFormulaTrueDamage = "Random(((BaseDamage + (ScalingStat * ScaleFactor))) * CritMultiplier * .975, ((BaseDamage + (ScalingStat * ScaleFactor))) * CritMultiplier * 1.025)";
@@ -53,7 +74,8 @@ public partial class Formulas
         double critMultiplier,
         Entity attacker,
         Entity victim,
-        int? attackerLevel = null
+        int? attackerLevel = null,
+        IReadOnlyDictionary<string, object>? parameterOverrides = null
     )
     {
         if (_formulas == null)
@@ -85,14 +107,62 @@ public partial class Formulas
             _ => _formulas.TrueDamage,
         };
 
+        var request = new CombatRequest(
+            attacker,
+            victim,
+            baseDamage,
+            damageType,
+            scalingStat,
+            scaling,
+            critMultiplier,
+            baseDamage < 0
+        );
+
+        var resolverOptions = new CombatResolverOptions(
+            Options.Instance.Combat.HealingCanCrit,
+            Options.Instance.Combat.HealingIgnoresDefense,
+            Options.Instance.Combat.PreventReflectChaining
+        );
+
+        return ResolveDamage(request, expressionString, resolverOptions, parameterOverrides);
+    }
+
+    private static long ResolveDamage(
+        CombatRequest request,
+        string expressionString,
+        CombatResolverOptions resolverOptions,
+        IReadOnlyDictionary<string, object>? parameterOverrides = null
+    )
+    {
+        ArgumentNullException.ThrowIfNull(request.Attacker, nameof(request.Attacker));
+        ArgumentNullException.ThrowIfNull(request.Defender, nameof(request.Defender));
+
+        if (request.Attacker.Stat == null)
+        {
+            throw new ArgumentException(
+                $@"{nameof(request.Attacker)}.{nameof(request.Attacker.Stat)} is null",
+                nameof(request)
+            );
+        }
+
+        if (request.Defender.Stat == null)
+        {
+            throw new ArgumentException(
+                $@"{nameof(request.Defender)}.{nameof(request.Defender.Stat)} is null",
+                nameof(request)
+            );
+        }
+
         var expression = new Expression(expressionString);
-        var negate = false;
+        var baseDamage = request.BasePower;
+        var isHeal = request.IsHeal || baseDamage < 0;
 
         if (baseDamage < 0)
         {
             baseDamage = Math.Abs(baseDamage);
-            negate = true;
         }
+
+        var negate = isHeal;
 
         if (expression.Parameters == null)
         {
@@ -101,24 +171,48 @@ public partial class Formulas
 
         try
         {
+            var critMultiplier = request.CriticalMultiplier;
+            if (negate && !resolverOptions.AllowHealingCriticals)
+            {
+                critMultiplier = 1;
+            }
+
             expression.Parameters["BaseDamage"] = baseDamage;
-            expression.Parameters["ScalingStat"] = attacker.Stat[(int)scalingStat].Value();
-            expression.Parameters["ScaleFactor"] = scaling / 100f;
+            expression.Parameters["ScalingStat"] = request.Attacker.Stat[(int)request.ScalingStat].Value();
+            expression.Parameters["ScaleFactor"] = request.ScalingPercent / 100f;
             expression.Parameters["CritMultiplier"] = critMultiplier;
-            expression.Parameters["A_Attack"] = attacker.Stat[(int)Stat.Attack].Value();
-            expression.Parameters["A_Defense"] = attacker.Stat[(int)Stat.Defense].Value();
-            // Use agility in place of speed for combat calculations
-            expression.Parameters["A_Speed"] = attacker.Stat[(int)Stat.Agility].Value();
-            expression.Parameters["A_AbilityPwr"] = attacker.Stat[(int)Stat.Intelligence].Value();
-            expression.Parameters["A_MagicResist"] = attacker.Stat[(int)Stat.Vitality].Value();
-            expression.Parameters["A_Level"] = attackerLevel ?? attacker.Level;
-            expression.Parameters["V_Attack"] = victim.Stat[(int)Stat.Attack].Value();
-            expression.Parameters["V_Defense"] = victim.Stat[(int)Stat.Defense].Value();
-            // Use agility in place of speed for combat calculations
-            expression.Parameters["V_Speed"] = victim.Stat[(int)Stat.Agility].Value();
-            expression.Parameters["V_AbilityPwr"] = victim.Stat[(int)Stat.Intelligence].Value();
-            expression.Parameters["V_MagicResist"] = victim.Stat[(int)Stat.Vitality].Value();
-            expression.Parameters["V_Level"] = victim.Level;
+            expression.Parameters["A_Attack"] = request.Attacker.Stat[(int)Stat.Attack].Value();
+            expression.Parameters["A_Defense"] = request.Attacker.Stat[(int)Stat.Defense].Value();
+            expression.Parameters["A_Speed"] = request.Attacker.Stat[(int)Stat.Agility].Value();
+            expression.Parameters["A_AbilityPwr"] = request.Attacker.Stat[(int)Stat.Intelligence].Value();
+            expression.Parameters["A_MagicResist"] = request.Attacker.Stat[(int)Stat.Vitality].Value();
+            expression.Parameters["A_Level"] = request.AttackerLevel ?? request.Attacker.Level;
+            expression.Parameters["V_Attack"] = request.Defender.Stat[(int)Stat.Attack].Value();
+
+            var defenderDefense = request.Defender.Stat[(int)Stat.Defense].Value();
+            var defenderResist = request.Defender.Stat[(int)Stat.Vitality].Value();
+
+            if (negate && resolverOptions.IgnoreHealingDefense)
+            {
+                defenderDefense = 0;
+                defenderResist = 0;
+            }
+
+            expression.Parameters["V_Defense"] = defenderDefense;
+            expression.Parameters["V_MagicResist"] = defenderResist;
+            expression.Parameters["V_Speed"] = request.Defender.Stat[(int)Stat.Agility].Value();
+            expression.Parameters["V_AbilityPwr"] = request.Defender.Stat[(int)Stat.Intelligence].Value();
+            expression.Parameters["V_Level"] = request.Defender.Level;
+            expression.Parameters["IsHeal"] = isHeal;
+            expression.Parameters["PreventReflectChaining"] = resolverOptions.PreventReflectChaining;
+
+            if (parameterOverrides != null)
+            {
+                foreach (var parameterOverride in parameterOverrides)
+                {
+                    expression.Parameters[parameterOverride.Key] = parameterOverride.Value;
+                }
+            }
 
             expression.EvaluateFunction += delegate(string name, FunctionArgs args)
             {
