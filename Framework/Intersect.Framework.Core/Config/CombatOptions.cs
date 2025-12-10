@@ -11,6 +11,11 @@ public partial class CombatOptions
     public int MaxDashSpeed { get; set; } = 200;
 
     /// <summary>
+    /// Number of agility points required to gain 1% critical chance.
+    /// </summary>
+    public int AgilityPerCritChance { get; set; } = 10;
+
+    /// <summary>
     /// Allowed distance to target party members when using quick target keys.
     /// </summary>
     public int PartyTargetDistance { get; set; } = 20;

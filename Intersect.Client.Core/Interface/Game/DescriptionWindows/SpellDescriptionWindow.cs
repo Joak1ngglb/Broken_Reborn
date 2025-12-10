@@ -291,6 +291,10 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
 
         // Crit Chance
         var critChance = _spellDescriptor.Combat.GetEffectiveCritChance(_effectiveProps);
+        if (Globals.Me != null)
+        {
+            critChance = Globals.Me.CalculateCriticalChance(critChance);
+        }
         if (critChance > 0)
         {
             rows.AddKeyValueRow(Strings.SpellDescription.CritChance, Strings.SpellDescription.Percentage.ToString(critChance));
