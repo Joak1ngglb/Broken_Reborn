@@ -1,5 +1,6 @@
 
 
+using DarkUI.Controls;
 using Intersect.Framework.Core.GameObjects.Maps;
 
 namespace Intersect.Editor.Forms.Editors;
@@ -63,6 +64,8 @@ partial class frmSets
         lblPlus3 = new Label();
         lblPlus2 = new Label();
         lblPlus1 = new Label();
+        lblEffectFlat = new Label();
+        nudEffectFlat = new DarkNumericUpDown();
         nudSpd = new DarkUI.Controls.DarkNumericUpDown();
         nudCur = new DarkUI.Controls.DarkNumericUpDown();
         nudDef = new DarkUI.Controls.DarkNumericUpDown();
