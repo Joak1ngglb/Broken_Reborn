@@ -38,7 +38,7 @@ public partial class MapExplorerWindow : WindowControl
             FontName = "sourcesansproblack",
             FontSize = 12,
             TextColor = Color.White,
-            Text = Strings.MapExplorer.MapSummary.Format(0)
+            Text = Strings.MapExplorer.MapSummary.ToString(0)
         };
         _mapSummary.SetBounds(16, 8, 360, 24);
 
@@ -170,12 +170,12 @@ public partial class MapExplorerWindow : WindowControl
         foreach (var (map, x, y) in mapEntries.OrderBy(entry => entry.map.Name))
         {
             var markerCount = MapMarkerManager.CountForMap(map.Id);
-            var label = Strings.MapExplorer.MapLine.Format(map.Name, x, y, markerCount);
+            var label = Strings.MapExplorer.MapLine.ToString(map.Name, x, y, markerCount);
             var row = _mapList.AddRow(label);
             row.UserData = map.Id;
         }
 
-        _mapSummary.Text = Strings.MapExplorer.MapSummary.Format(mapEntries.Count);
+        _mapSummary.Text = Strings.MapExplorer.MapSummary.ToString(mapEntries.Count);
         if (mapEntries.Count == 0)
         {
             _mapList.AddRow(Strings.MapExplorer.NoMapsAvailable);
@@ -211,7 +211,7 @@ public partial class MapExplorerWindow : WindowControl
 
         foreach (var marker in markers.OrderBy(m => m.CreatedUtc))
         {
-            var row = _markerList.AddRow(Strings.MapExplorer.MarkerLine.Format(marker.Label, marker.X, marker.Y));
+            var row = _markerList.AddRow(Strings.MapExplorer.MarkerLine.ToString(marker.Label, marker.X, marker.Y));
             row.UserData = marker;
         }
 
@@ -236,7 +236,7 @@ public partial class MapExplorerWindow : WindowControl
     {
         if (_selectedMapId == Guid.Empty)
         {
-            new InputBox(Strings.MapExplorer.Title, Strings.MapExplorer.SelectMapPrompt, InputType.OkOnly);
+            new InputBox(Strings.MapExplorer.Title, Strings.MapExplorer.SelectMapPrompt, InputType.Okay, null);
             return;
         }
 
