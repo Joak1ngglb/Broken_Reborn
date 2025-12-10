@@ -21,4 +21,12 @@ public enum ItemEffect : byte
     Evasion = 8,
 
     CriticalChance = 9,
+
+    AntiCritChance = 10,
+       
+    ArmorPenetration ,
+       
+    DamageReduction,
+
+    DamageReflect,
 }
