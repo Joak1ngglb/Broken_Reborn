@@ -151,7 +151,9 @@ namespace Intersect.Editor.Forms.Editors
             chkEffectIsFlat = new DarkCheckBox();
             lstBonusEffects = new ListBox();
             lblEffectPercent = new Label();
+            lblEffectFlat = new Label();
             nudEffectPercent = new DarkNumericUpDown();
+            nudEffectFlat = new DarkNumericUpDown();
             grpRegen = new DarkGroupBox();
             nudMpRegen = new DarkNumericUpDown();
             nudHPRegen = new DarkNumericUpDown();
