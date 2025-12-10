@@ -31,13 +31,13 @@ public static class CombatResolver
         const double maxChance = 0.98d;
 
         var accuracy =
-            attacker.Stat[(int)Stat.Agility].Value() * 0.5d +
-            attacker.Stat[(int)Stat.Attack].Value() * 0.3d +
+            attacker.Stat[(int)Enums.Stat.Agility].Value() * 0.5d +
+            attacker.Stat[(int)Enums.Stat.Attack].Value() * 0.3d +
             attackerEffects.GetTotalEffectValue(ItemEffect.Accuracy).GetPrimaryValue();
 
         var evasion =
-            defender.Stat[(int)Stat.Agility].Value() * 0.7d +
-            defender.Stat[(int)Stat.Defense].Value() * 0.2d +
+            defender.Stat[(int)Enums.Stat.Agility].Value() * 0.7d +
+            defender.Stat[(int)Enums.Stat.Defense].Value() * 0.2d +
             defenderEffects.GetTotalEffectValue(ItemEffect.Evasion).GetPrimaryValue();
 
         var denominator = Math.Max(1d, accuracy + evasion);
@@ -55,7 +55,7 @@ public static class CombatResolver
         var critChance = baseCritChance;
 
         var agilityPerCrit = Math.Max(1, Options.Instance.Combat.AgilityPerCritChance);
-        critChance += attackerEffects.Entity.Stat[(int)Stat.Agility].Value() / agilityPerCrit;
+        critChance += attackerEffects.Entity.Stat[(int)Enums.Stat.Agility].Value() / agilityPerCrit;
         critChance += attackerEffects.GetTotalEffectValue(ItemEffect.CriticalChance).GetPrimaryValue();
 
         var antiCrit = defenderEffects.GetTotalEffectValue(ItemEffect.AntiCritChance);
@@ -78,8 +78,8 @@ public static class CombatResolver
 
         var baseDefense = damageType switch
         {
-            DamageType.Magic => defender.Stat[(int)Stat.Vitality].Value(),
-            DamageType.Physical => defender.Stat[(int)Stat.Defense].Value(),
+            DamageType.Magic => defender.Stat[(int)Enums.Stat.Vitality].Value(),
+            DamageType.Physical => defender.Stat[(int)Enums.Stat.Defense].Value(),
             _ => 0,
         };
 
@@ -131,7 +131,7 @@ public static class CombatResolver
         var reflectedDamage = reflect.Flat;
         if (reflect.Percentage != 0)
         {
-            reflectedDamage += (long)Math.Round(appliedDamage * (reflect.Percentage / 100f));
+            reflectedDamage += (int)(long)Math.Round(appliedDamage * (reflect.Percentage / 100f));
         }
 
         return reflectedDamage;
