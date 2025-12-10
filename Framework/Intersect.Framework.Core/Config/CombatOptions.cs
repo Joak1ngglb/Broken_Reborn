@@ -77,6 +77,21 @@ public partial class CombatOptions
     public bool RegenVitalsInCombat { get; set; } = false;
 
     /// <summary>
+    /// If enabled, healing can benefit from critical strike multipliers.
+    /// </summary>
+    public bool HealingCanCrit { get; set; } = true;
+
+    /// <summary>
+    /// If enabled, healing calculations ignore the defender's defensive stats.
+    /// </summary>
+    public bool HealingIgnoresDefense { get; set; }
+
+    /// <summary>
+    /// If enabled, reflected damage cannot trigger additional reflections.
+    /// </summary>
+    public bool PreventReflectChaining { get; set; } = true;
+
+    /// <summary>
     /// If enabled, this allows entities to turn around while casting
     /// </summary>
     public bool EnableTurnAroundWhileCasting { get; set; } = false;

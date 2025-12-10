@@ -2714,7 +2714,7 @@ public partial class Player : Entity, IPlayer
     public int CalculateCriticalChance(int baseCritChance)
     {
         var agilityPerCrit = Math.Max(1, Options.Instance.Combat.AgilityPerCritChance);
-        var agilityContribution = Stat[(int)Stat.Agility] / agilityPerCrit;
+        var agilityContribution = Stat[(int)Enums.Stat.Agility] / agilityPerCrit;
         var equipmentBonus = GetEquipmentEffect(ItemEffect.CriticalChance);
 
         var total = baseCritChance + agilityContribution + equipmentBonus;
