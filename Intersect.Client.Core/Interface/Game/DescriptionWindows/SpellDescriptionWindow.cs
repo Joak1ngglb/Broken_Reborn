@@ -353,11 +353,12 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         }
 
         // Handle effect display.
-        if (_spellDescriptor.Combat.Effect != SpellEffect.None)
+        var effectiveEffect = _spellDescriptor.Combat.GetEffectiveEffect(_effectiveProps);
+        if (effectiveEffect != SpellEffect.None)
         {
             showDuration = true;
             rows.AddKeyValueRow(string.Empty, string.Empty);
-            rows.AddKeyValueRow(Strings.SpellDescription.Effect, Strings.SpellDescription.Effects[(int)_spellDescriptor.Combat.Effect]);
+            rows.AddKeyValueRow(Strings.SpellDescription.Effect, Strings.SpellDescription.Effects[(int)effectiveEffect]);
         }
 
         // Show Stat Buff / Effect / HoT / DoT duration.
@@ -415,10 +416,6 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
     }
 
  
-
-    private static bool IsOverride(string key) =>
-        key.EndsWith("Set", StringComparison.OrdinalIgnoreCase) ||
-        key.StartsWith("set.", StringComparison.OrdinalIgnoreCase);
 
     protected void SetupExtraInfo()
     {

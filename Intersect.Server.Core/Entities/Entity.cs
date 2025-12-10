@@ -1802,13 +1802,14 @@ public abstract partial class Entity : IEntity
         var aliveAnimations = new List<KeyValuePair<Guid, Direction>>();
 
         spellProperties = SpellMath.Scale(spellDescriptor, spellProperties);
+        var effectiveEffect = spellDescriptor.Combat.GetEffectiveEffect(spellProperties);
 
         //Only count safe zones and friendly fire if its a dangerous spell! (If one has been used)
         if (!spellDescriptor.Combat.Friendly &&
             (spellDescriptor.Combat.TargetType != (int)SpellTargetType.Self || onHitTrigger))
         {
             //If about to hit self with an unfriendly spell (maybe aoe?) return
-            if (target == this && spellDescriptor.Combat.Effect != SpellEffect.OnHit)
+            if (target == this && effectiveEffect != SpellEffect.OnHit)
             {
                 return;
             }
@@ -1864,7 +1865,7 @@ public abstract partial class Entity : IEntity
         }
 
         if (spellDescriptor.HitAnimationId != Guid.Empty &&
-            (spellDescriptor.Combat.Effect != SpellEffect.OnHit || onHitTrigger))
+            (effectiveEffect != SpellEffect.OnHit || onHitTrigger))
         {
             deadAnimations.Add(new KeyValuePair<Guid, Direction>(spellDescriptor.HitAnimationId, Direction.Up));
             aliveAnimations.Add(new KeyValuePair<Guid, Direction>(spellDescriptor.HitAnimationId, Direction.Up));
@@ -1900,8 +1901,8 @@ public abstract partial class Entity : IEntity
         var damageHealth = spellDescriptor.Combat.GetEffectiveVitalDiff(Vital.Health, spellProperties);
         var damageMana = spellDescriptor.Combat.GetEffectiveVitalDiff(Vital.Mana, spellProperties);
 
-        if ((spellDescriptor.Combat.Effect != SpellEffect.OnHit || onHitTrigger) &&
-            spellDescriptor.Combat.Effect != SpellEffect.Shield)
+        if ((effectiveEffect != SpellEffect.OnHit || onHitTrigger) &&
+            effectiveEffect != SpellEffect.Shield)
         {
             Attack(
                 target, damageHealth, damageMana, (DamageType)spellDescriptor.Combat.DamageType,
@@ -1912,13 +1913,13 @@ public abstract partial class Entity : IEntity
             );
         }
 
-        if (spellDescriptor.Combat.Effect > 0) //Handle status effects
+        if (effectiveEffect > 0) //Handle status effects
         {
             //Check for onhit effect to avoid the onhit effect recycling.
-            if (!(onHitTrigger && spellDescriptor.Combat.Effect == SpellEffect.OnHit))
+            if (!(onHitTrigger && effectiveEffect == SpellEffect.OnHit))
             {
                 // If the entity is immune to some status, then just inform the client of such
-                if (target.Immunities.Contains(spellDescriptor.Combat.Effect))
+                if (target.Immunities.Contains(effectiveEffect))
                 {
                     PacketSender.SendActionMsg(
                         target, Strings.Combat.ImmuneToEffect, CustomColors.Combat.Status
@@ -1928,7 +1929,7 @@ public abstract partial class Entity : IEntity
                 {
                     // Else, apply the status
                     new Status(
-                        target, this, spellDescriptor, spellDescriptor.Combat.Effect, duration,
+                        target, this, spellDescriptor, effectiveEffect, duration,
                         spellDescriptor.Combat.TransformSprite
                     );
 
@@ -1938,11 +1939,11 @@ public abstract partial class Entity : IEntity
                     }
 
                     PacketSender.SendActionMsg(
-                        target, Strings.Combat.Status[(int)spellDescriptor.Combat.Effect], CustomColors.Combat.Status
+                        target, Strings.Combat.Status[(int)effectiveEffect], CustomColors.Combat.Status
                     );
 
                     //If an onhit or shield status bail out as we don't want to do any damage.
-                    if (spellDescriptor.Combat.Effect == SpellEffect.OnHit || spellDescriptor.Combat.Effect == SpellEffect.Shield)
+                    if (effectiveEffect == SpellEffect.OnHit || effectiveEffect == SpellEffect.Shield)
                     {
                         Animate(target, aliveAnimations);
 
@@ -1955,9 +1956,9 @@ public abstract partial class Entity : IEntity
         {
             if (statBuffTime > -1)
             {
-                if (!target.Immunities.Contains(spellDescriptor.Combat.Effect))
+                if (!target.Immunities.Contains(effectiveEffect))
                 {
-                    new Status(target, this, spellDescriptor, spellDescriptor.Combat.Effect, statBuffTime, "");
+                    new Status(target, this, spellDescriptor, effectiveEffect, statBuffTime, "");
 
                     if (target is Npc npc)
                     {
@@ -2512,17 +2513,18 @@ public abstract partial class Entity : IEntity
         }
 
         var spellProperties = (this as Player)?.GetSpellProperties(spell.Id);
+        var scaledSpellProperties = SpellMath.Scale(spell, spellProperties);
 
         // Do we meet the vital requirements?
         if (checkVitalReqs)
         {
-            if (spell.GetEffectiveVitalCost(Vital.Mana, spellProperties) > GetVital(Vital.Mana))
+            if (spell.GetEffectiveVitalCost(Vital.Mana, scaledSpellProperties) > GetVital(Vital.Mana))
             {
                 reason = SpellCastFailureReason.InsufficientMP;
                 return false;
             }
 
-            if (spell.GetEffectiveVitalCost(Vital.Health, spellProperties) >= GetVital(Vital.Health))
+            if (spell.GetEffectiveVitalCost(Vital.Health, scaledSpellProperties) >= GetVital(Vital.Health))
             {
                 reason = SpellCastFailureReason.InsufficientHP;
                 return false;
@@ -2531,7 +2533,8 @@ public abstract partial class Entity : IEntity
 
         // Check if the caster has any status effects that need to apply.
         // Ignore if the current spell is a Cleanse, this will ignore any and all status effects.
-        if (spell.Combat.Effect != SpellEffect.Cleanse)
+        var effectiveEffect = spell.Combat.GetEffectiveEffect(scaledSpellProperties);
+        if (effectiveEffect != SpellEffect.Cleanse)
         {
             foreach (var status in CachedStatuses)
             {
@@ -2591,7 +2594,7 @@ public abstract partial class Entity : IEntity
         //Check for range of a single target spell
         if (singleTargetSpell && target != this)
         {
-            var castRange = spell.Combat.GetEffectiveCastRange(spellProperties);
+            var castRange = spell.Combat.GetEffectiveCastRange(scaledSpellProperties);
             if (!InRangeOf(target, castRange))
             {
                 reason = SpellCastFailureReason.OutOfRange;
@@ -2618,6 +2621,7 @@ public abstract partial class Entity : IEntity
 
         var spellProperties = CastSpellProperties ?? (this as Player)?.GetSpellProperties(spellId);
         var scaledProperties = SpellMath.Scale(spellBase, spellProperties);
+        var effectiveEffect = spellBase.Combat.GetEffectiveEffect(scaledProperties);
 
         var manaCost = spellBase.GetEffectiveVitalCost(Vital.Mana, scaledProperties);
         if (manaCost > 0)
@@ -2650,7 +2654,7 @@ public abstract partial class Entity : IEntity
                     {
                         case SpellTargetType.Self:
                             if (spellBase.HitAnimationId != Guid.Empty &&
-                                spellBase.Combat.Effect != SpellEffect.OnHit)
+                                effectiveEffect != SpellEffect.OnHit)
                             {
                                 PacketSender.SendAnimationToProximity(
                                     spellBase.HitAnimationId,
@@ -2727,7 +2731,7 @@ public abstract partial class Entity : IEntity
 
                             break;
                         case SpellTargetType.OnHit:
-                            if (spellBase.Combat.Effect == SpellEffect.OnHit)
+                            if (effectiveEffect == SpellEffect.OnHit)
                             {
                                 new Status(
                                     this,
@@ -2737,10 +2741,10 @@ public abstract partial class Entity : IEntity
                                     spellBase.Combat.GetEffectiveOnHitDuration(scaledProperties),
                                     spellBase.Combat.TransformSprite
                                 );
-                                
+
                                 PacketSender.SendActionMsg(
                                     this,
-                                    Strings.Combat.Status[(int)spellBase.Combat.Effect],
+                                    Strings.Combat.Status[(int)effectiveEffect],
                                     CustomColors.Combat.Status
                                 );
                             }
