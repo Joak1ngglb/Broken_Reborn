@@ -2171,8 +2171,8 @@ public abstract partial class Entity : IEntity
         if (!(enemy is Resource))
         {
             baseDamage = Formulas.CalculateDamage(
-            baseDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy, spellLevel
-        );
+                baseDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy, Level
+            );
         }
 
         //Check on each attack if the enemy is a player AND if they are blocking.
@@ -2296,7 +2296,7 @@ public abstract partial class Entity : IEntity
         if (secondaryDamage != 0)
         {
             secondaryDamage = Formulas.CalculateDamage(
-                secondaryDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy, spellLevel
+                secondaryDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy, Level
             );
 
             if (secondaryDamage < 0 && secondaryDamagingAttack)
