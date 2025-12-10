@@ -64,6 +64,7 @@ public partial class CharacterWindow:Window
     Label mAgilityLabel;
     Label mDamageLabel;
     Label mCureLabel;
+    Label mCritChanceLabel;
     public ImagePanel[] PaperdollPanels;
 
     public string[] PaperdollTextures;
@@ -246,37 +247,40 @@ public partial class CharacterWindow:Window
         mCureLabel = new Label(this, "CureLabel");
         mCureLabel.SetPosition(statsX, statsY + statSpacing * 7);
 
+        mCritChanceLabel = new Label(this, "CritLabel");
+        mCritChanceLabel.SetPosition(statsX, statsY + statSpacing * 8);
+
         mPointsLabel = new Label(this, "PointsLabel");
-        mPointsLabel.SetPosition(statsX, statsY + statSpacing * 8);
+        mPointsLabel.SetPosition(statsX, statsY + statSpacing * 9);
 
         var extraBuffsLabel = new Label(this, "ExtraBuffsLabel");
         extraBuffsLabel.SetText(Strings.Character.ExtraBuffs);
-        extraBuffsLabel.SetPosition(statsX, statsY + statSpacing * 9);
+        extraBuffsLabel.SetPosition(statsX, statsY + statSpacing * 10);
 
         mHpRegen = new Label(this, "HpRegen");
-        mHpRegen.SetPosition(statsX, statsY + statSpacing * 10);
+        mHpRegen.SetPosition(statsX, statsY + statSpacing * 11);
         mManaRegen = new Label(this, "ManaRegen");
-        mManaRegen.SetPosition(statsX, statsY + statSpacing * 11);
+        mManaRegen.SetPosition(statsX, statsY + statSpacing * 12);
         mLifeSteal = new Label(this, "Lifesteal");
-        mLifeSteal.SetPosition(statsX, statsY + statSpacing * 12);
+        mLifeSteal.SetPosition(statsX, statsY + statSpacing * 13);
         mAttackSpeed = new Label(this, "AttackSpeed");
-        mAttackSpeed.SetPosition(statsX, statsY + statSpacing * 13);
+        mAttackSpeed.SetPosition(statsX, statsY + statSpacing * 14);
         mSpeedBuff = new Label(this, "SpeedBuff");
-        mSpeedBuff.SetPosition(statsX, statsY + statSpacing * 14);
+        mSpeedBuff.SetPosition(statsX, statsY + statSpacing * 15);
         mDamageBuff = new Label(this, "DamageBuff");
-        mDamageBuff.SetPosition(statsX, statsY + statSpacing * 15);
+        mDamageBuff.SetPosition(statsX, statsY + statSpacing * 16);
         mCureBuff = new Label(this, "CureBuff");
-        mCureBuff.SetPosition(statsX, statsY + statSpacing * 16);
+        mCureBuff.SetPosition(statsX, statsY + statSpacing * 17);
         mExtraExp = new Label(this, "ExtraExp");
-        mExtraExp.SetPosition(statsX, statsY + statSpacing * 17);
+        mExtraExp.SetPosition(statsX, statsY + statSpacing * 18);
         mLuck = new Label(this, "Luck");
-        mLuck.SetPosition(statsX, statsY + statSpacing * 18);
+        mLuck.SetPosition(statsX, statsY + statSpacing * 19);
         mTenacity = new Label(this, "Tenacity");
-        mTenacity.SetPosition(statsX, statsY + statSpacing * 19);
+        mTenacity.SetPosition(statsX, statsY + statSpacing * 20);
         mCooldownReduction = new Label(this, "CooldownReduction");
-        mCooldownReduction.SetPosition(statsX, statsY + statSpacing * 20);
+        mCooldownReduction.SetPosition(statsX, statsY + statSpacing * 21);
         mManaSteal = new Label(this, "Manasteal");
-        mManaSteal.SetPosition(statsX, statsY + statSpacing * 21);
+        mManaSteal.SetPosition(statsX, statsY + statSpacing * 22);
 
         UpdateExtraBuffs();
 
@@ -475,6 +479,8 @@ public partial class CharacterWindow:Window
                 player.Stat[(int)Stat.Cures]
             )
         );
+        var critChance = player.CalculateCriticalChance(player.GetBaseCriticalChance());
+        mCritChanceLabel.SetText(Strings.Character.CriticalChance.ToString(critChance));
         mPointsLabel.SetText(Strings.Character.Points.ToString(player.StatPoints));
         mAddAbilityPwrBtn.IsHidden = player.StatPoints == 0 ||
                                      player.Stat[(int) Stat.Intelligence] == Options.Instance.Player.MaxStat;
@@ -633,11 +639,12 @@ public partial class CharacterWindow:Window
         }
 
         //Getting extra buffs from items
-        if (item.Effects.Find(effect => effect.Type != ItemEffect.None && effect.Percentage > 0) != default)
+        if (item.Effects.Find(effect => effect.Type != ItemEffect.None && effect.GetValue() > 0) != default)
         {
             foreach (var effect in item.Effects)
             {
-                if (effect.Percentage <= 0)
+                var effectAmount = effect.GetValue();
+                if (effectAmount <= 0)
                 {
                     continue;
                 }
@@ -645,22 +652,22 @@ public partial class CharacterWindow:Window
                 switch (effect.Type)
                 {
                     case ItemEffect.CooldownReduction:
-                        CooldownAmount += effect.Percentage;
+                        CooldownAmount += effectAmount;
                         break;
                     case ItemEffect.Lifesteal:
-                        LifeStealAmount += effect.Percentage;
+                        LifeStealAmount += effectAmount;
                         break;
                     case ItemEffect.Tenacity:
-                        TenacityAmount += effect.Percentage;
+                        TenacityAmount += effectAmount;
                         break;
                     case ItemEffect.Luck:
-                        LuckAmount += effect.Percentage;
+                        LuckAmount += effectAmount;
                         break;
                     case ItemEffect.EXP:
-                        ExtraExpAmount += effect.Percentage;
+                        ExtraExpAmount += effectAmount;
                         break;
                     case ItemEffect.Manasteal:
-                        ManaStealAmount += effect.Percentage;
+                        ManaStealAmount += effectAmount;
                         break;
                 }
             }
