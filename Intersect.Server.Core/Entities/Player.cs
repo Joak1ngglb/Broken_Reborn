@@ -4138,6 +4138,31 @@ public partial class Player : Entity
 
     public int GetEquipmentBonusEffect(ItemEffect effect) => GetEquipmentBonusEffectValues(effect).GetPrimaryValue();
 
+    public override EffectValue GetPassiveEffectValues(ItemEffect effect)
+    {
+        return GetEquipmentBonusEffectValues(effect);
+    }
+
+    public override IEnumerable<EffectData> GetActiveEffects()
+    {
+        var activeEffects = new List<EffectData>();
+
+        foreach (var item in EquippedItems)
+        {
+            var descriptor = item.Descriptor;
+            if (descriptor?.Effects == null)
+            {
+                continue;
+            }
+
+            activeEffects.AddRange(descriptor.Effects.Where(effect => !effect.IsPassive));
+        }
+
+        activeEffects.AddRange(mSetBonusEffects.Where(effect => !effect.IsPassive));
+
+        return activeEffects;
+    }
+
     public long GetEquipmentVitalRegen(Vital vital)
     {
         return mEquipmentVitalRegen[(int)vital];
