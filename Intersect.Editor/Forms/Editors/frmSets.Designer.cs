@@ -106,6 +106,7 @@ partial class frmSets
         btnCancel = new DarkUI.Controls.DarkButton();
         btnSave = new DarkUI.Controls.DarkButton();
         grpEffects = new DarkUI.Controls.DarkGroupBox();
+        chkEffectIsFlat = new DarkUI.Controls.DarkCheckBox();
         lstBonusEffects = new ListBox();
         lblEffectPercent = new Label();
         nudEffectPercent = new DarkUI.Controls.DarkNumericUpDown();
@@ -1087,6 +1088,7 @@ partial class frmSets
         // 
         grpEffects.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
         grpEffects.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        grpEffects.Controls.Add(chkEffectIsFlat);
         grpEffects.Controls.Add(lstBonusEffects);
         grpEffects.Controls.Add(lblEffectPercent);
         grpEffects.Controls.Add(nudEffectPercent);
@@ -1095,13 +1097,24 @@ partial class frmSets
         grpEffects.Margin = new Padding(4, 3, 4, 3);
         grpEffects.Name = "grpEffects";
         grpEffects.Padding = new Padding(4, 3, 4, 3);
-        grpEffects.Size = new Size(307, 226);
+        grpEffects.Size = new Size(307, 248);
         grpEffects.TabIndex = 60;
         grpEffects.TabStop = false;
         grpEffects.Text = "Bonus Effects";
-        // 
+        //
+        // chkEffectIsFlat
+        //
+        chkEffectIsFlat.AutoSize = true;
+        chkEffectIsFlat.Location = new System.Drawing.Point(15, 219);
+        chkEffectIsFlat.Margin = new Padding(4, 3, 4, 3);
+        chkEffectIsFlat.Name = "chkEffectIsFlat";
+        chkEffectIsFlat.Size = new System.Drawing.Size(95, 19);
+        chkEffectIsFlat.TabIndex = 61;
+        chkEffectIsFlat.Text = "Use flat value";
+        chkEffectIsFlat.CheckedChanged += chkEffectIsFlat_CheckedChanged;
+        //
         // lstBonusEffects
-        // 
+        //
         lstBonusEffects.BackColor = System.Drawing.Color.FromArgb(60, 63, 65);
         lstBonusEffects.BorderStyle = BorderStyle.FixedSingle;
         lstBonusEffects.ForeColor = System.Drawing.Color.Gainsboro;
@@ -1448,7 +1461,8 @@ partial class frmSets
     private Label lblARP;
     private Label lblVit;
     private Label lblWis;
-    private DarkUI.Controls.DarkGroupBox grpEffects;
+        private DarkUI.Controls.DarkGroupBox grpEffects;
+        private DarkUI.Controls.DarkCheckBox chkEffectIsFlat;
     private ListBox lstBonusEffects;
     private Label lblEffectPercent;
     private DarkUI.Controls.DarkNumericUpDown nudEffectPercent;
