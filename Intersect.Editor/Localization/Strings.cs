@@ -3899,6 +3899,9 @@ Tick timer saved in server config.json.";
             {4, @"Luck"},
             {5, @"EXP"},
             {6, @"Mana Steal"},
+            {7, @"Accuracy"},
+            {8, @"Evasion"},
+            {9, @"Critical Chance"},
         };
 
         public static LocalizedString bonuses = @"Stat Bonuses";
