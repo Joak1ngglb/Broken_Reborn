@@ -1945,6 +1945,8 @@ namespace Intersect.Editor.Forms.Editors
             grpEffects.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpEffects.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
             grpEffects.Controls.Add(chkEffectIsFlat);
+            grpEffects.Controls.Add(lblEffectFlat);
+            grpEffects.Controls.Add(nudEffectFlat);
             grpEffects.Controls.Add(lstBonusEffects);
             grpEffects.Controls.Add(lblEffectPercent);
             grpEffects.Controls.Add(nudEffectPercent);
@@ -1961,13 +1963,35 @@ namespace Intersect.Editor.Forms.Editors
             // chkEffectIsFlat
             //
             chkEffectIsFlat.AutoSize = true;
-            chkEffectIsFlat.Location = new System.Drawing.Point(15, 219);
+            chkEffectIsFlat.Location = new System.Drawing.Point(15, 228);
             chkEffectIsFlat.Margin = new Padding(4, 3, 4, 3);
             chkEffectIsFlat.Name = "chkEffectIsFlat";
             chkEffectIsFlat.Size = new System.Drawing.Size(95, 19);
             chkEffectIsFlat.TabIndex = 59;
             chkEffectIsFlat.Text = "Use flat value";
             chkEffectIsFlat.CheckedChanged += chkEffectIsFlat_CheckedChanged;
+            //
+            // lblEffectFlat
+            //
+            lblEffectFlat.AutoSize = true;
+            lblEffectFlat.Location = new System.Drawing.Point(12, 184);
+            lblEffectFlat.Margin = new Padding(4, 0, 4, 0);
+            lblEffectFlat.Name = "lblEffectFlat";
+            lblEffectFlat.Size = new Size(105, 15);
+            lblEffectFlat.TabIndex = 61;
+            lblEffectFlat.Text = "Effect Amount (#):";
+            //
+            // nudEffectFlat
+            //
+            nudEffectFlat.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudEffectFlat.ForeColor = System.Drawing.Color.Gainsboro;
+            nudEffectFlat.Location = new System.Drawing.Point(15, 206);
+            nudEffectFlat.Margin = new Padding(4, 3, 4, 3);
+            nudEffectFlat.Name = "nudEffectFlat";
+            nudEffectFlat.Size = new Size(282, 23);
+            nudEffectFlat.TabIndex = 60;
+            nudEffectFlat.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudEffectFlat.ValueChanged += nudEffectFlat_ValueChanged;
             //
             // lstBonusEffects
             //
@@ -1979,25 +2003,25 @@ namespace Intersect.Editor.Forms.Editors
             lstBonusEffects.Location = new System.Drawing.Point(15, 22);
             lstBonusEffects.Margin = new Padding(4, 3, 4, 3);
             lstBonusEffects.Name = "lstBonusEffects";
-            lstBonusEffects.Size = new Size(284, 137);
+            lstBonusEffects.Size = new Size(284, 100);
             lstBonusEffects.TabIndex = 58;
             lstBonusEffects.SelectedIndexChanged += lstBonusEffects_SelectedIndexChanged;
-            // 
+            //
             // lblEffectPercent
-            // 
+            //
             lblEffectPercent.AutoSize = true;
-            lblEffectPercent.Location = new System.Drawing.Point(12, 168);
+            lblEffectPercent.Location = new System.Drawing.Point(12, 131);
             lblEffectPercent.Margin = new Padding(4, 0, 4, 0);
             lblEffectPercent.Name = "lblEffectPercent";
             lblEffectPercent.Size = new Size(108, 15);
             lblEffectPercent.TabIndex = 31;
             lblEffectPercent.Text = "Effect Amount (%):";
-            // 
+            //
             // nudEffectPercent
-            // 
+            //
             nudEffectPercent.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudEffectPercent.ForeColor = System.Drawing.Color.Gainsboro;
-            nudEffectPercent.Location = new System.Drawing.Point(15, 190);
+            nudEffectPercent.Location = new System.Drawing.Point(15, 153);
             nudEffectPercent.Margin = new Padding(4, 3, 4, 3);
             nudEffectPercent.Name = "nudEffectPercent";
             nudEffectPercent.Size = new Size(282, 23);
@@ -3686,6 +3710,8 @@ namespace Intersect.Editor.Forms.Editors
         private ToolTip tooltips;
         private DarkGroupBox grpEffects;
         private DarkCheckBox chkEffectIsFlat;
+        private Label lblEffectFlat;
+        private DarkNumericUpDown nudEffectFlat;
         private ListBox lstBonusEffects;
         private DarkGroupBox grpCooldown;
         private DarkGroupBox grpStack;
