@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DarkUI.Forms;
 using Intersect.Editor.Networking;
 using Intersect.GameObjects;
@@ -482,13 +483,39 @@ public partial class frmSets : EditorForm
             return;
         }
 
-        mEditorSet.SetEffectOfType(SelectedEffect, (int)nudEffectPercent.Value, chkEffectIsFlat.Checked);
+        mEditorSet.SetEffectOfType(
+            SelectedEffect,
+            (int)nudEffectPercent.Value,
+            (int)nudEffectFlat.Value,
+            chkEffectIsFlat.Checked
+        );
+        lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(SelectedEffect);
+    }
+
+    private void nudEffectFlat_ValueChanged(object sender, EventArgs e)
+    {
+        if (!IsValidBonusSelection || EffectValueUpdating)
+        {
+            return;
+        }
+
+        mEditorSet.SetEffectOfType(
+            SelectedEffect,
+            (int)nudEffectPercent.Value,
+            (int)nudEffectFlat.Value,
+            chkEffectIsFlat.Checked
+        );
         lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(SelectedEffect);
     }
 
     private void chkEffectIsFlat_CheckedChanged(object sender, EventArgs e)
     {
         if (!IsValidBonusSelection || EffectValueUpdating)
+        {
+            return;
+        }
+
+        if (!chkEffectIsFlat.Enabled)
         {
             return;
         }
@@ -501,9 +528,10 @@ public partial class frmSets : EditorForm
         }
 
         EffectValueUpdating = true;
-        var value = chkEffectIsFlat.Checked ? effect.FlatAmount : effect.Percentage;
-        mEditorSet.SetEffectOfType(selected, value, chkEffectIsFlat.Checked);
-        nudEffectPercent.Value = value;
+        var preferFlat = chkEffectIsFlat.Checked;
+        mEditorSet.SetEffectOfType(selected, (int)nudEffectPercent.Value, (int)nudEffectFlat.Value, preferFlat);
+        nudEffectPercent.Enabled = !preferFlat;
+        nudEffectFlat.Enabled = preferFlat;
         lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(selected);
         EffectValueUpdating = false;
     }
@@ -589,9 +617,23 @@ public partial class frmSets : EditorForm
     {
         var effectName = Strings.ItemEditor.bonuseffects[(int)itemEffect];
         var effect = mEditorSet.GetEffect(itemEffect);
-        var effectAmt = effect?.GetValue() ?? 0;
+        var values = mEditorSet.GetEffectValues(itemEffect);
+
+        if (EffectData.SupportsFlatAndPercentage(itemEffect))
+        {
+            var parts = new List<string> { $"{values.Percentage}%" };
+
+            if (values.Flat != 0)
+            {
+                parts.Add(values.Flat.ToString());
+            }
+
+            return Strings.ItemEditor.BonusEffectItem.ToString(effectName, string.Join(" / ", parts));
+        }
+
         var suffix = effect?.IsFlat == true ? string.Empty : "%";
-        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{effectAmt}{suffix}");
+        var amount = effect?.IsFlat == true ? values.Flat : values.Percentage;
+        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{amount}{suffix}");
     }
     private void lstBonusEffects_SelectedIndexChanged(object sender, EventArgs e)
     {
@@ -608,8 +650,21 @@ public partial class frmSets : EditorForm
 
         EffectValueUpdating = true;
         var effect = mEditorSet.GetEffect(selected);
+        var values = mEditorSet.GetEffectValues(selected);
+        var supportsDual = EffectData.SupportsFlatAndPercentage(selected);
+
+        chkEffectIsFlat.Enabled = !supportsDual;
         chkEffectIsFlat.Checked = effect?.IsFlat ?? false;
-        nudEffectPercent.Value = effect?.IsFlat == true ? effect.FlatAmount : mEditorSet.GetEffectPercentage(selected);
+
+        nudEffectPercent.Value = values.Percentage;
+        nudEffectFlat.Value = values.Flat;
+        nudEffectPercent.Enabled = supportsDual || !chkEffectIsFlat.Checked;
+        nudEffectFlat.Enabled = supportsDual || chkEffectIsFlat.Checked;
+        if (supportsDual)
+        {
+            nudEffectPercent.Enabled = true;
+            nudEffectFlat.Enabled = true;
+        }
         EffectValueUpdating = false;
     }
     private void lstItems_SelectedIndexChanged(object sender, EventArgs e)

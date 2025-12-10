@@ -19,6 +19,7 @@ public class EffectDataSerializationTests
 
         Assert.That(roundTrip, Is.Not.Null);
         Assert.That(roundTrip!.Type, Is.EqualTo(itemEffect));
+        Assert.That(roundTrip.Percentage, Is.EqualTo(effect.Percentage));
         Assert.That(roundTrip.FlatAmount, Is.EqualTo(effect.FlatAmount));
         Assert.That(roundTrip.IsFlat, Is.EqualTo(effect.IsFlat));
         Assert.That(roundTrip.IsPassive, Is.EqualTo(effect.IsPassive));

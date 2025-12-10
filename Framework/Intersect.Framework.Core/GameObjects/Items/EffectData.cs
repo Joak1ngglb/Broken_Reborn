@@ -1,6 +1,24 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Intersect.Framework.Core.GameObjects.Items;
+
+public readonly record struct EffectValue(int Percentage, int Flat)
+{
+    public int GetPrimaryValue(bool preferFlat = false)
+    {
+        if (preferFlat || Percentage == 0)
+        {
+            return Flat;
+        }
+
+        return Percentage;
+    }
+
+    public EffectValue Add(EffectValue other)
+    {
+        return new EffectValue(Percentage + other.Percentage, Flat + other.Flat);
+    }
+}
 
 [Owned]
 public partial class EffectData
@@ -44,8 +62,26 @@ public partial class EffectData
 
     public EffectStacking Stacking { get; set; }
 
+    public static bool SupportsFlatAndPercentage(ItemEffect effect)
+    {
+        return effect is ItemEffect.AntiCritChance
+            or ItemEffect.ArmorPenetration
+            or ItemEffect.DamageReduction
+            or ItemEffect.DamageReflect;
+    }
+
     public int GetValue()
     {
-        return IsFlat ? FlatAmount : Percentage;
+        return GetValues().GetPrimaryValue(IsFlat);
+    }
+
+    public EffectValue GetValues()
+    {
+        if (SupportsFlatAndPercentage(Type))
+        {
+            return new EffectValue(Percentage, FlatAmount);
+        }
+
+        return IsFlat ? new EffectValue(0, FlatAmount) : new EffectValue(Percentage, 0);
     }
 }
