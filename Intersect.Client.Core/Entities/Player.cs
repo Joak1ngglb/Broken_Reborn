@@ -34,6 +34,7 @@ using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Intersect.Client.Entities;
@@ -2623,6 +2624,99 @@ public partial class Player : Entity, IPlayer
         }
 
         return attackTime;
+    }
+
+    public ItemDescriptor? GetEquippedWeaponDescriptor()
+    {
+        ItemDescriptor? weapon = null;
+        var weaponSlotId = Options.Instance.Equipment.Slots.IndexOf("Weapon");
+
+        if (this == Globals.Me)
+        {
+            if (MyEquipment.TryGetValue(weaponSlotId, out var weaponSlots) && weaponSlots.Count > 0)
+            {
+                var invItem = Inventory.ElementAtOrDefault(weaponSlots[0]);
+                if (invItem != null)
+                {
+                    weapon = ItemDescriptor.Get(invItem.ItemId);
+                }
+            }
+        }
+        else if (Equipment.TryGetValue(weaponSlotId, out var weaponItems) && weaponItems.Count > 0)
+        {
+            weapon = ItemDescriptor.Get(weaponItems[0]);
+        }
+
+        return weapon;
+    }
+
+    public int GetEquipmentEffect(ItemEffect effect)
+    {
+        var effects = new Dictionary<ItemEffect, int>();
+
+        void ApplyEffects(ItemDescriptor? descriptor)
+        {
+            if (descriptor == null)
+            {
+                return;
+            }
+
+            foreach (var effectData in descriptor.Effects)
+            {
+                effects.ApplyEffect(effectData);
+            }
+        }
+
+        if (this == Globals.Me)
+        {
+            foreach (var (_, equipmentSlots) in MyEquipment)
+            {
+                foreach (var slotIndex in equipmentSlots)
+                {
+                    var invItem = Inventory.ElementAtOrDefault(slotIndex);
+                    if (invItem == null)
+                    {
+                        continue;
+                    }
+
+                    ApplyEffects(ItemDescriptor.Get(invItem.ItemId));
+                }
+            }
+        }
+        else
+        {
+            foreach (var (_, equippedItems) in Equipment)
+            {
+                foreach (var descriptorId in equippedItems)
+                {
+                    ApplyEffects(ItemDescriptor.Get(descriptorId));
+                }
+            }
+        }
+
+        return effects.TryGetValue(effect, out var value) ? value : 0;
+    }
+
+    public int GetBaseCriticalChance()
+    {
+        var weapon = GetEquippedWeaponDescriptor();
+        if (weapon != null)
+        {
+            return weapon.CritChance;
+        }
+
+        var cls = ClassDescriptor.Get(Class);
+        return cls?.CritChance ?? 0;
+    }
+
+    public int CalculateCriticalChance(int baseCritChance)
+    {
+        var agilityPerCrit = Math.Max(1, Options.Instance.Combat.AgilityPerCritChance);
+        var agilityContribution = Stat[(int)Stat.Agility] / agilityPerCrit;
+        var equipmentBonus = GetEquipmentEffect(ItemEffect.CriticalChance);
+
+        var total = baseCritChance + agilityContribution + equipmentBonus;
+        return Math.Max(0, total);
     }
 
 

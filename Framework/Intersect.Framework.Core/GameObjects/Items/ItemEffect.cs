@@ -19,4 +19,6 @@ public enum ItemEffect : byte
     Accuracy = 7,
 
     Evasion = 8,
+
+    CriticalChance = 9,
 }
