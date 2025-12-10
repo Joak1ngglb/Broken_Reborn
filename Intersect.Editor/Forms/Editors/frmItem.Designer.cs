@@ -149,6 +149,8 @@ namespace Intersect.Editor.Forms.Editors
             cmbFemalePaperdoll = new DarkComboBox();
             grpEffects = new DarkGroupBox();
             chkEffectIsFlat = new DarkCheckBox();
+            lblEffectFlat = new Label();
+            nudEffectFlat = new DarkNumericUpDown();
             lstBonusEffects = new ListBox();
             lblEffectPercent = new Label();
             nudEffectPercent = new DarkNumericUpDown();
@@ -295,6 +297,7 @@ namespace Intersect.Editor.Forms.Editors
             ((ISupportInitialize)picMalePaperdoll).BeginInit();
             ((ISupportInitialize)picFemalePaperdoll).BeginInit();
             grpEffects.SuspendLayout();
+            ((ISupportInitialize)nudEffectFlat).BeginInit();
             ((ISupportInitialize)nudEffectPercent).BeginInit();
             grpRegen.SuspendLayout();
             ((ISupportInitialize)nudMpRegen).BeginInit();
@@ -896,7 +899,7 @@ namespace Intersect.Editor.Forms.Editors
             lblDespawnTime.Location = new System.Drawing.Point(9, 479);
             lblDespawnTime.Margin = new Padding(4, 0, 4, 0);
             lblDespawnTime.Name = "lblDespawnTime";
-            lblDespawnTime.Size = new Size(262, 15);
+            lblDespawnTime.Size = new Size(263, 15);
             lblDespawnTime.TabIndex = 101;
             lblDespawnTime.Text = "Item Despawn Time (ms):     [0 for server default]";
             // 
@@ -1033,7 +1036,7 @@ namespace Intersect.Editor.Forms.Editors
             chkCanTrade.Location = new System.Drawing.Point(27, 384);
             chkCanTrade.Margin = new Padding(4, 3, 4, 3);
             chkCanTrade.Name = "chkCanTrade";
-            chkCanTrade.Size = new Size(83, 19);
+            chkCanTrade.Size = new Size(84, 19);
             chkCanTrade.TabIndex = 91;
             chkCanTrade.Text = "Can Trade?";
             chkCanTrade.CheckedChanged += chkCanTrade_CheckedChanged;
@@ -1366,7 +1369,7 @@ namespace Intersect.Editor.Forms.Editors
             lblType.Location = new System.Drawing.Point(9, 111);
             lblType.Margin = new Padding(4, 0, 4, 0);
             lblType.Name = "lblType";
-            lblType.Size = new Size(34, 15);
+            lblType.Size = new Size(35, 15);
             lblType.TabIndex = 3;
             lblType.Text = "Type:";
             // 
@@ -1955,24 +1958,24 @@ namespace Intersect.Editor.Forms.Editors
             grpEffects.Margin = new Padding(4, 3, 4, 3);
             grpEffects.Name = "grpEffects";
             grpEffects.Padding = new Padding(4, 3, 4, 3);
-            grpEffects.Size = new Size(307, 248);
+            grpEffects.Size = new Size(307, 273);
             grpEffects.TabIndex = 57;
             grpEffects.TabStop = false;
             grpEffects.Text = "Bonus Effects";
-            //
+            // 
             // chkEffectIsFlat
-            //
+            // 
             chkEffectIsFlat.AutoSize = true;
-            chkEffectIsFlat.Location = new System.Drawing.Point(15, 228);
+            chkEffectIsFlat.Location = new System.Drawing.Point(14, 235);
             chkEffectIsFlat.Margin = new Padding(4, 3, 4, 3);
             chkEffectIsFlat.Name = "chkEffectIsFlat";
-            chkEffectIsFlat.Size = new System.Drawing.Size(95, 19);
+            chkEffectIsFlat.Size = new Size(96, 19);
             chkEffectIsFlat.TabIndex = 59;
             chkEffectIsFlat.Text = "Use flat value";
             chkEffectIsFlat.CheckedChanged += chkEffectIsFlat_CheckedChanged;
-            //
+            // 
             // lblEffectFlat
-            //
+            // 
             lblEffectFlat.AutoSize = true;
             lblEffectFlat.Location = new System.Drawing.Point(12, 184);
             lblEffectFlat.Margin = new Padding(4, 0, 4, 0);
@@ -1980,9 +1983,9 @@ namespace Intersect.Editor.Forms.Editors
             lblEffectFlat.Size = new Size(105, 15);
             lblEffectFlat.TabIndex = 61;
             lblEffectFlat.Text = "Effect Amount (#):";
-            //
+            // 
             // nudEffectFlat
-            //
+            // 
             nudEffectFlat.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudEffectFlat.ForeColor = System.Drawing.Color.Gainsboro;
             nudEffectFlat.Location = new System.Drawing.Point(15, 206);
@@ -1992,9 +1995,9 @@ namespace Intersect.Editor.Forms.Editors
             nudEffectFlat.TabIndex = 60;
             nudEffectFlat.Value = new decimal(new int[] { 0, 0, 0, 0 });
             nudEffectFlat.ValueChanged += nudEffectFlat_ValueChanged;
-            //
+            // 
             // lstBonusEffects
-            //
+            // 
             lstBonusEffects.BackColor = System.Drawing.Color.FromArgb(60, 63, 65);
             lstBonusEffects.BorderStyle = BorderStyle.FixedSingle;
             lstBonusEffects.ForeColor = System.Drawing.Color.Gainsboro;
@@ -2003,12 +2006,12 @@ namespace Intersect.Editor.Forms.Editors
             lstBonusEffects.Location = new System.Drawing.Point(15, 22);
             lstBonusEffects.Margin = new Padding(4, 3, 4, 3);
             lstBonusEffects.Name = "lstBonusEffects";
-            lstBonusEffects.Size = new Size(284, 100);
+            lstBonusEffects.Size = new Size(284, 92);
             lstBonusEffects.TabIndex = 58;
             lstBonusEffects.SelectedIndexChanged += lstBonusEffects_SelectedIndexChanged;
-            //
+            // 
             // lblEffectPercent
-            //
+            // 
             lblEffectPercent.AutoSize = true;
             lblEffectPercent.Location = new System.Drawing.Point(12, 131);
             lblEffectPercent.Margin = new Padding(4, 0, 4, 0);
@@ -2016,9 +2019,9 @@ namespace Intersect.Editor.Forms.Editors
             lblEffectPercent.Size = new Size(108, 15);
             lblEffectPercent.TabIndex = 31;
             lblEffectPercent.Text = "Effect Amount (%):";
-            //
+            // 
             // nudEffectPercent
-            //
+            // 
             nudEffectPercent.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudEffectPercent.ForeColor = System.Drawing.Color.Gainsboro;
             nudEffectPercent.Location = new System.Drawing.Point(15, 153);
@@ -2286,7 +2289,7 @@ namespace Intersect.Editor.Forms.Editors
             grpStatBonuses.Controls.Add(lblMag);
             grpStatBonuses.Controls.Add(lblStr);
             grpStatBonuses.ForeColor = System.Drawing.Color.Gainsboro;
-            grpStatBonuses.Location = new System.Drawing.Point(16, 576);
+            grpStatBonuses.Location = new System.Drawing.Point(16, 606);
             grpStatBonuses.Margin = new Padding(4, 3, 4, 3);
             grpStatBonuses.Name = "grpStatBonuses";
             grpStatBonuses.Padding = new Padding(4, 3, 4, 3);
@@ -2873,7 +2876,7 @@ namespace Intersect.Editor.Forms.Editors
             lblCritMultiplier.Location = new System.Drawing.Point(14, 112);
             lblCritMultiplier.Margin = new Padding(4, 0, 4, 0);
             lblCritMultiplier.Name = "lblCritMultiplier";
-            lblCritMultiplier.Size = new Size(156, 15);
+            lblCritMultiplier.Size = new Size(155, 15);
             lblCritMultiplier.TabIndex = 57;
             lblCritMultiplier.Text = "Crit Multiplier (Default 1.5x):";
             // 
@@ -3081,7 +3084,7 @@ namespace Intersect.Editor.Forms.Editors
             lblDamageType.Location = new System.Drawing.Point(15, 156);
             lblDamageType.Margin = new Padding(4, 0, 4, 0);
             lblDamageType.Name = "lblDamageType";
-            lblDamageType.Size = new Size(81, 15);
+            lblDamageType.Size = new Size(82, 15);
             lblDamageType.TabIndex = 41;
             lblDamageType.Text = "Damage Type:";
             // 
@@ -3123,7 +3126,7 @@ namespace Intersect.Editor.Forms.Editors
             lblAttackAnimation.Location = new System.Drawing.Point(14, 387);
             lblAttackAnimation.Margin = new Padding(4, 0, 4, 0);
             lblAttackAnimation.Name = "lblAttackAnimation";
-            lblAttackAnimation.Size = new Size(132, 15);
+            lblAttackAnimation.Size = new Size(131, 15);
             lblAttackAnimation.TabIndex = 37;
             lblAttackAnimation.Text = "Extra Attack Animation:";
             // 
@@ -3144,7 +3147,7 @@ namespace Intersect.Editor.Forms.Editors
             lblToolType.Location = new System.Drawing.Point(15, 435);
             lblToolType.Margin = new Padding(4, 0, 4, 0);
             lblToolType.Name = "lblToolType";
-            lblToolType.Size = new Size(59, 15);
+            lblToolType.Size = new Size(61, 15);
             lblToolType.TabIndex = 26;
             lblToolType.Text = "Tool Type:";
             // 
@@ -3474,6 +3477,7 @@ namespace Intersect.Editor.Forms.Editors
             ((ISupportInitialize)picFemalePaperdoll).EndInit();
             grpEffects.ResumeLayout(false);
             grpEffects.PerformLayout();
+            ((ISupportInitialize)nudEffectFlat).EndInit();
             ((ISupportInitialize)nudEffectPercent).EndInit();
             grpRegen.ResumeLayout(false);
             grpRegen.PerformLayout();
