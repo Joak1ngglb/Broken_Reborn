@@ -2125,7 +2125,6 @@ public abstract partial class Entity : IEntity
             var hitChance = CombatResolver.CalculateHitChance(this, enemy, attackerEffects, defenderEffects);
             if (Randomization.NextDouble() > hitChance)
             {
-                PacketSender.SendActionMsg(this, Strings.Combat.Miss, CustomColors.Combat.Missed);
                 PacketSender.SendActionMsg(enemy, Strings.Combat.Miss, CustomColors.Combat.Missed);
 
                 return;
