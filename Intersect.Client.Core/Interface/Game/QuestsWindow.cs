@@ -79,11 +79,14 @@ namespace Intersect.Client.Interface.Game
             mQuestStatus.SetText("");
 
             mQuestDescArea = new ScrollControl(mQuestsWindow, "QuestDescription");
+            mQuestDescArea.EnableScroll(false, true);
             mQuestDescTemplateLabel = new Label(mQuestDescArea, "QuestDescriptionTemplate");
             mQuestDescLabel = new RichLabel(mQuestDescArea);
+            mQuestDescLabel.ShouldClip = true;
+            mQuestDescArea.BoundsChanged += (_, _) => UpdateDescriptionLayout();
 
             mQuestTasksContainer = new ScrollControl(mQuestsWindow, "QuestTasksContainer");
-            mQuestTasksContainer.EnableScroll(false, false);
+            mQuestTasksContainer.EnableScroll(false, true);
             mQuestTasksList = new ListBox(mQuestTasksContainer, "QuestTasksList");
             mQuestTasksList.EnableScroll(false, true);
             mQuestTasksList.Dock = Pos.Fill;
@@ -482,13 +485,25 @@ namespace Intersect.Client.Interface.Game
             mQuestTitle.IsHidden = false;
             mQuestTitle.Text = mSelectedQuest.Name;
             mQuestDescArea.IsHidden = false;
-            mQuestDescLabel.Width = mQuestDescArea.Width - mQuestDescArea.VerticalScrollBar.Width;
-            mQuestDescLabel.SizeToChildren(false, true);
+            UpdateDescriptionLayout();
             mQuestStatus.Show();
             mQuitButton.Show();
 
             // Cargar recompensas de esta quest (ítems + exp) y acomodar
             LoadRewardWidgets(mSelectedQuest.Id);
+        }
+
+        private void UpdateDescriptionLayout()
+        {
+            var scrollbarWidth = mQuestDescArea?.VerticalScrollBar?.Width ?? 0;
+
+            if (mQuestDescLabel != null && mQuestDescArea != null)
+            {
+                mQuestDescLabel.Width = Math.Max(0, mQuestDescArea.Width - scrollbarWidth);
+                mQuestDescLabel.SizeToChildren(false, true);
+                mQuestDescArea.EnableScroll(false, true);
+                mQuestDescArea.VerticalScrollAmount = 0;
+            }
         }
 
         public void Show()
