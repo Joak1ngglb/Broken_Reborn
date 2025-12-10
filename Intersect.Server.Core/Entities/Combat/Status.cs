@@ -118,7 +118,7 @@ public partial class Status
 
                 var shieldAmount = Formulas.CalculateDamage(
                     vitalDiff, (DamageType)spell.Combat.DamageType, (Enums.Stat)spell.Combat.ScalingStat,
-                    spell.Combat.GetEffectiveScaling(properties), 1.0, attacker, en, level
+                    spell.Combat.GetEffectiveScaling(properties), 1.0, attacker, en, attacker.Level
                 );
 
                 Shield[(int)vital] = Math.Abs(shieldAmount);
