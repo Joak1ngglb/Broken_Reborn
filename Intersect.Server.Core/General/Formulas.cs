@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Intersect.Enums;
 using Intersect.Server.Core;
 using Intersect.Server.Entities;
@@ -53,7 +54,8 @@ public partial class Formulas
         double critMultiplier,
         Entity attacker,
         Entity victim,
-        int? attackerLevel = null
+        int? attackerLevel = null,
+        IReadOnlyDictionary<string, object>? parameterOverrides = null
     )
     {
         if (_formulas == null)
@@ -119,6 +121,14 @@ public partial class Formulas
             expression.Parameters["V_AbilityPwr"] = victim.Stat[(int)Stat.Intelligence].Value();
             expression.Parameters["V_MagicResist"] = victim.Stat[(int)Stat.Vitality].Value();
             expression.Parameters["V_Level"] = victim.Level;
+
+            if (parameterOverrides != null)
+            {
+                foreach (var parameterOverride in parameterOverrides)
+                {
+                    expression.Parameters[parameterOverride.Key] = parameterOverride.Value;
+                }
+            }
 
             expression.EvaluateFunction += delegate(string name, FunctionArgs args)
             {
