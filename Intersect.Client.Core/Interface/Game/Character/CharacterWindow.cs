@@ -456,11 +456,11 @@ public partial class CharacterWindow:Window
             )
         );
         mAgilityLabel.SetText(
-    Strings.Character.StatLabelValue.ToString(
-        Strings.Combat.Stats[Stat.Agility],
-        player.Stat[(int)Stat.Agility]
-    )
-);
+            Strings.Character.StatLabelValue.ToString(
+                Strings.Combat.Stats[Stat.Agility],
+                player.Stat[(int)Stat.Agility]
+            )
+        );
 
         mDamageLabel.SetText(
             Strings.Character.StatLabelValue.ToString(
