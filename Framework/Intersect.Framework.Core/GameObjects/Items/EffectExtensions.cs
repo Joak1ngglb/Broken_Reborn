@@ -4,14 +4,14 @@ namespace Intersect.Framework.Core.GameObjects.Items;
 
 public static class EffectExtensions
 {
-    public static void ApplyEffect(this IDictionary<ItemEffect, int> dest, EffectData effect)
+    public static void ApplyEffect(this IDictionary<ItemEffect, EffectValue> dest, EffectData effect)
     {
         if (!effect.IsPassive)
         {
             return;
         }
 
-        var value = effect.GetValue();
+        var value = effect.GetValues();
         switch (effect.Stacking)
         {
             case EffectStacking.Ignore:
@@ -28,7 +28,7 @@ public static class EffectExtensions
             default:
                 if (dest.ContainsKey(effect.Type))
                 {
-                    dest[effect.Type] += value;
+                    dest[effect.Type] = dest[effect.Type].Add(value);
                 }
                 else
                 {
