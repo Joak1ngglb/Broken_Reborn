@@ -160,14 +160,18 @@ public partial class SetDescriptor : DatabaseObject<SetDescriptor>, IFolderable
 
         var effects = Effects
             .Select(
-                e => new EffectData(
-                    e.Type,
-                    (int)Math.Round(e.Percentage * ratio),
-                    e.IsPassive,
-                    e.Stacking,
-                    (int)Math.Round(e.FlatAmount * ratio),
-                    e.IsFlat
-                )
+                e =>
+                {
+                    var values = e.GetValues();
+                    return new EffectData(
+                        e.Type,
+                        (int)Math.Round(values.Percentage * ratio),
+                        e.IsPassive,
+                        e.Stacking,
+                        (int)Math.Round(values.Flat * ratio),
+                        e.IsFlat
+                    );
+                }
             )
             .ToList();
 
@@ -188,25 +192,24 @@ public partial class SetDescriptor : DatabaseObject<SetDescriptor>, IFolderable
         return Effects.Find(effect => effect.Type == type)?.GetValue() ?? 0;
     }
 
+    public EffectValue GetEffectValues(ItemEffect type)
+    {
+        return Effects.Find(effect => effect.Type == type)?.GetValues() ?? default;
+    }
+
     public EffectData? GetEffect(ItemEffect type)
     {
         return Effects.Find(effect => effect.Type == type);
     }
 
-    public void SetEffectOfType(ItemEffect type, int value, bool isFlat = false)
+    public void SetEffectOfType(ItemEffect type, int percentage, int flatAmount, bool isFlat = false)
     {
         var effectToEdit = Effects.Find(effect => effect.Type == type);
         if (effectToEdit != null)
         {
             effectToEdit.IsFlat = isFlat;
-            if (isFlat)
-            {
-                effectToEdit.FlatAmount = value;
-            }
-            else
-            {
-                effectToEdit.Percentage = value;
-            }
+            effectToEdit.Percentage = percentage;
+            effectToEdit.FlatAmount = flatAmount;
         }
     }
 

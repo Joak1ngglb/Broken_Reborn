@@ -2647,9 +2647,9 @@ public partial class Player : Entity, IPlayer
         return weapon;
     }
 
-    public int GetEquipmentEffect(ItemEffect effect)
+    public EffectValue GetEquipmentEffectValues(ItemEffect effect)
     {
-        var effects = new Dictionary<ItemEffect, int>();
+        var effects = new Dictionary<ItemEffect, EffectValue>();
 
         void ApplyEffects(ItemDescriptor? descriptor)
         {
@@ -2691,8 +2691,10 @@ public partial class Player : Entity, IPlayer
             }
         }
 
-        return effects.TryGetValue(effect, out var value) ? value : 0;
+        return effects.TryGetValue(effect, out var value) ? value : default;
     }
+
+    public int GetEquipmentEffect(ItemEffect effect) => GetEquipmentEffectValues(effect).GetPrimaryValue();
 
     public int GetBaseCriticalChance()
     {
