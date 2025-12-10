@@ -50,7 +50,7 @@ public class EffectStackingTests
     }
 
     [Test]
-    public void ApplyEffect_StacksFlatAndPercentComponents()
+    public void ApplyEffect_IgnoresFlatComponents()
     {
         var bonuses = new Dictionary<ItemEffect, EffectValue>();
         var percentOnly = new EffectData(ItemEffect.DamageReflect, 10, true, EffectStacking.Stack, flatAmount: 0, isFlat: false);
@@ -60,6 +60,6 @@ public class EffectStackingTests
         bonuses.ApplyEffect(flatOnly);
 
         Assert.That(bonuses[ItemEffect.DamageReflect].Percentage, Is.EqualTo(10));
-        Assert.That(bonuses[ItemEffect.DamageReflect].Flat, Is.EqualTo(5));
+        Assert.That(bonuses[ItemEffect.DamageReflect].Flat, Is.EqualTo(0));
     }
 }

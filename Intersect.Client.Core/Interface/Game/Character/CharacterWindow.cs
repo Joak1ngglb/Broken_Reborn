@@ -465,20 +465,6 @@ public partial class CharacterWindow:Window
                 player.Stat[(int)Stat.Agility]
             )
         );
-
-        mDamageLabel.SetText(
-            Strings.Character.StatLabelValue.ToString(
-                Strings.Combat.Stats[Stat.Damages],
-                player.Stat[(int)Stat.Damages]
-            )
-        );
-
-        mCureLabel.SetText(
-            Strings.Character.StatLabelValue.ToString(
-                Strings.Combat.Stats[Stat.Cures],
-                player.Stat[(int)Stat.Cures]
-            )
-        );
         var critChance = player.CalculateCriticalChance(player.GetBaseCriticalChance());
         mCritChanceLabel.SetText(Strings.Character.CriticalChance.ToString(critChance));
         mPointsLabel.SetText(Strings.Character.Points.ToString(player.StatPoints));
@@ -602,14 +588,6 @@ public partial class CharacterWindow:Window
             mSpeedBuff.SetText(Strings.Character.StatLabelValue.ToString(
                 Strings.Combat.Stats[Stat.Speed],
                 player.Stat[(int)Stat.Speed]
-            ));
-            mDamageBuff.SetText(Strings.Character.StatLabelValue.ToString(
-                Strings.Combat.Stats[Stat.Damages],
-                player.Stat[(int)Stat.Damages]
-            ));
-            mCureBuff.SetText(Strings.Character.StatLabelValue.ToString(
-                Strings.Combat.Stats[Stat.Cures],
-                player.Stat[(int)Stat.Cures]
             ));
         }
     }

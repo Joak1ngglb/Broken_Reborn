@@ -13,8 +13,4 @@ public enum Stat
     Speed,
 
     Agility,
-
-    Damages,
-
-    Cures,
 }

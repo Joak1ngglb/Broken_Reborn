@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Intersect.Client.Core;
 using Intersect.Client.Entities;
 using Intersect.Client.Framework.File_Management;
@@ -286,6 +288,11 @@ public partial class MenuContainer : Panel
         _guildWindow.Update();
         mJobsWindow.Update();
 
+    }
+
+    public void NotifyQuestProgressUpdated(IEnumerable<Guid> questIds)
+    {
+        _questsWindow.NotifyQuestProgressUpdated(questIds);
     }
 
     public void UpdateFriendsList()
