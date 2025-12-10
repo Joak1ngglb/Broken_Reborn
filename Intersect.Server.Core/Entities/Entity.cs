@@ -2110,6 +2110,18 @@ public abstract partial class Entity : IEntity
             return entity is Player player ? player.GetEquipmentBonusEffect(effect) : 0;
         }
 
+        static int CalculateCriticalChance(Entity attacker, int baseCritChance)
+        {
+            var critChance = baseCritChance;
+
+            var agilityPerCrit = Math.Max(1, Options.Instance.Combat.AgilityPerCritChance);
+            critChance += attacker.Stat[(int)Stat.Agility].Value() / agilityPerCrit;
+
+            critChance += GetItemEffectBonus(attacker, ItemEffect.CriticalChance);
+
+            return Math.Max(0, critChance);
+        }
+
         static double CalculateHitChance(Entity attacker, Entity defender)
         {
             const double minChance = 0.05d;
@@ -2161,9 +2173,10 @@ public abstract partial class Entity : IEntity
         var enemyVitals = enemy.GetVitals();
         var invulnerable = enemy.CachedStatuses.Any(status => status.Type == SpellEffect.Invulnerable);
 
+        var finalCritChance = CalculateCriticalChance(this, critChance);
         bool isCrit = false;
         //Is this a critical hit?
-        if (Randomization.Next(1, 101) > critChance)
+        if (Randomization.Next(1, 101) > finalCritChance)
         {
             critMultiplier = 1;
         }
