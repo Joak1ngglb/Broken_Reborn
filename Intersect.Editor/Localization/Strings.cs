@@ -3901,7 +3901,11 @@ Tick timer saved in server config.json.";
             {6, @"Mana Steal"},
             {7, @"Accuracy"},
             {8, @"Evasion"},
-            {9, @"Critical Chance"},
+               {9, @"Critical Chance"},
+            {10, @"Anti-Critical"},
+            {11, @"Armor Penetration"},
+            {12, @"Damage Reduction"},
+            {13, @"Damage Reflect"},
         };
 
         public static LocalizedString bonuses = @"Stat Bonuses";

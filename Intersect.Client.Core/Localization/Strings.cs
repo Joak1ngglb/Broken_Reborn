@@ -2274,6 +2274,13 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {4, @"Luck:"},
             {5, @"Bonus Experience:"},
             {6, @"Manasteal:"},
+            {7, @"Accuracy:"},
+            {8, @"Evasion:"},
+            {9, @"Critical Chance:"},
+            {10, @"Anti-Critical:"},
+            {11, @"Armor Penetration:"},
+            {12, @"Damage Reduction:"},
+            {13, @"Damage Reflect:"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
