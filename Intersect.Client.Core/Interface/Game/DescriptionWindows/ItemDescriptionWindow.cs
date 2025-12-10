@@ -677,9 +677,15 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             }
 
             // Crit Chance
-            if (_itemDescriptor.CritChance > 0)
+            var critChance = _itemDescriptor.CritChance;
+            if (Globals.Me != null)
             {
-                rows.AddKeyValueRow(Strings.ItemDescription.CritChance, Strings.ItemDescription.Percentage.ToString(_itemDescriptor.CritChance));
+                critChance = Globals.Me.CalculateCriticalChance(critChance);
+            }
+
+            if (critChance > 0)
+            {
+                rows.AddKeyValueRow(Strings.ItemDescription.CritChance, Strings.ItemDescription.Percentage.ToString(critChance));
                 rows.AddKeyValueRow(Strings.ItemDescription.CritMultiplier, Strings.ItemDescription.Multiplier.ToString(_itemDescriptor.CritMultiplier));
             }
 

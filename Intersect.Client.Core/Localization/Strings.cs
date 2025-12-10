@@ -1139,6 +1139,9 @@ public static partial class Strings
         public static LocalizedString HealthRegen = @"Health Regen: {00}%";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString CriticalChance = @"Critical Chance: {00}%";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString LevelAndClass = @"Level: {00}, Class: {01}";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
