@@ -78,14 +78,8 @@ public partial class frmSets : EditorForm
             nudInt.Value = mEditorSet.Stats[(int)Stat.Intelligence];
             nudIntPercentage.Value = mEditorSet.PercentageStats[(int)Stat.Intelligence];
 
-            nudDmg.Value = mEditorSet.Stats[(int)Stat.Damages];
-            nudDmgPercentage.Value = mEditorSet.PercentageStats[(int)Stat.Damages];
-
             nudDef.Value = mEditorSet.Stats[(int)Stat.Defense];
             nudDefPercentage.Value = mEditorSet.PercentageStats[(int)Stat.Defense];
-
-            nudCur.Value = mEditorSet.Stats[(int)Stat.Cures];
-            nudCurPercentage.Value = mEditorSet.PercentageStats[(int)Stat.Cures];
 
             nudSpd.Value = mEditorSet.Stats[(int)Stat.Speed];
             nudSpdPercentage.Value = mEditorSet.PercentageStats[(int)Stat.Speed];
@@ -448,7 +442,7 @@ public partial class frmSets : EditorForm
 
     private void nudMag_ValueChanged(object sender, EventArgs e)
     {
-        mEditorSet.Stats[(int)Stat.Damages] = (int)nudDmg.Value;
+        // Damages stat has been moved to item effects.
     }
 
     private void nudDef_ValueChanged(object sender, EventArgs e)
@@ -458,7 +452,7 @@ public partial class frmSets : EditorForm
 
     private void nudMR_ValueChanged(object sender, EventArgs e)
     {
-        mEditorSet.Stats[(int)Stat.Cures] = (int)nudCur.Value;
+        // Cures stat has been moved to item effects.
     }
 
     private void nudSpd_ValueChanged(object sender, EventArgs e)
@@ -578,7 +572,7 @@ public partial class frmSets : EditorForm
 
     private void nudMagPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorSet.PercentageStats[(int)Stat.Damages] = (int)nudDmgPercentage.Value;
+        // Damages percentage has been moved to item effects.
     }
 
     private void nudDefPercentage_ValueChanged(object sender, EventArgs e)
@@ -588,7 +582,7 @@ public partial class frmSets : EditorForm
 
     private void nudMRPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorSet.PercentageStats[(int)Stat.Cures] = (int)nudCurPercentage.Value;
+        // Cures percentage has been moved to item effects.
     }
     private void cmbItems_SelectedIndexChanged(object sender, EventArgs e)
     {

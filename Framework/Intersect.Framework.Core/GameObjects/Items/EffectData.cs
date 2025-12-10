@@ -67,7 +67,9 @@ public partial class EffectData
         return effect is ItemEffect.AntiCritChance
             or ItemEffect.ArmorPenetration
             or ItemEffect.DamageReduction
-            or ItemEffect.DamageReflect;
+            or ItemEffect.DamageReflect
+            or ItemEffect.Damages
+            or ItemEffect.Cures;
     }
 
     public int GetValue()

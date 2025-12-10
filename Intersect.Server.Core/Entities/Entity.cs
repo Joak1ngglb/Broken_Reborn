@@ -2172,6 +2172,7 @@ public abstract partial class Entity : IEntity
             );
         }
 
+        baseDamage = CombatResolver.ApplyDamageModifier(baseDamage, attackerEffects);
         baseDamage = CombatResolver.ApplyFinalDamageReduction(baseDamage, defenderEffects);
 
         //Check on each attack if the enemy is a player AND if they are blocking.
@@ -2311,6 +2312,7 @@ public abstract partial class Entity : IEntity
                 secondaryDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy, Level, defenseOverrides
             );
 
+            secondaryDamage = CombatResolver.ApplyDamageModifier(secondaryDamage, attackerEffects);
             secondaryDamage = CombatResolver.ApplyFinalDamageReduction(secondaryDamage, defenderEffects);
 
             if (secondaryDamage < 0 && secondaryDamagingAttack)

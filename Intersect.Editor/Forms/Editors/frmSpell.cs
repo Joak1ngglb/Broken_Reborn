@@ -518,8 +518,6 @@ public partial class FrmSpell : EditorForm
             nudMag.Value = mEditorItem.Combat.StatDiff[(int)Stat.Intelligence];
             nudMR.Value = mEditorItem.Combat.StatDiff[(int)Stat.Vitality];
             nudAgi.Value = mEditorItem.Combat.StatDiff[(int)Stat.Agility];
-            nudDmg.Value = mEditorItem.Combat.StatDiff[(int)Stat.Damages];
-            nudCur.Value = mEditorItem.Combat.StatDiff[(int)Stat.Cures];
 
             // Porcentajes
             nudStrPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Attack];
@@ -528,8 +526,6 @@ public partial class FrmSpell : EditorForm
             nudMRPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Vitality];
             nudSpdPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Speed];
             nudAgiPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Agility];
-            nudDmgPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Damages];
-            nudCurPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Cures];
 
             chkFriendly.Checked = Convert.ToBoolean(mEditorItem.Combat.Friendly);
             cmbDamageType.SelectedIndex = mEditorItem.Combat.DamageType;
@@ -1303,12 +1299,12 @@ public partial class FrmSpell : EditorForm
 
     private void nudDmg_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Combat.StatDiff[(int)Stat.Damages] = (int)nudDmg.Value;
+        // Damages stat has been moved to item effects.
     }
 
     private void nudCur_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Combat.StatDiff[(int)Stat.Cures] = (int)nudCur.Value;
+        // Cures stat has been moved to item effects.
     }
 
     private void nudAgiPercentage_ValueChanged(object sender, EventArgs e)
@@ -1318,11 +1314,11 @@ public partial class FrmSpell : EditorForm
 
     private void nudDmgPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Combat.PercentageStatDiff[(int)Stat.Damages] = (int)nudDmgPercentage.Value;
+        // Damages percentage has been moved to item effects.
     }
 
     private void nudCurPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Combat.PercentageStatDiff[(int)Stat.Cures] = (int)nudCurPercentage.Value;
+        // Cures percentage has been moved to item effects.
     }
 }

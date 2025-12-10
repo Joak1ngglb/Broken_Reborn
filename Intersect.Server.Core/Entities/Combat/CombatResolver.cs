@@ -115,6 +115,22 @@ public static class CombatResolver
         return reduced;
     }
 
+    public static long ApplyDamageModifier(long damage, CombatantEffects attackerEffects)
+    {
+        var isHeal = damage < 0;
+        var modifier = isHeal ? attackerEffects.GetTotalEffectValue(ItemEffect.Cures) :
+            attackerEffects.GetTotalEffectValue(ItemEffect.Damages);
+
+        if (modifier.Percentage == 0)
+        {
+            return damage;
+        }
+
+        var adjusted = Math.Round(damage * (100 + modifier.Percentage) / 100d);
+
+        return (long)adjusted;
+    }
+
     public static long CalculateReflectDamage(long appliedDamage, CombatantEffects defenderEffects, bool allowReflection)
     {
         if (!allowReflection || appliedDamage <= 0)

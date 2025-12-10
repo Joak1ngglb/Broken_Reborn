@@ -339,8 +339,6 @@ public partial class FrmNpc : EditorForm
             nudMR.Value = mEditorItem.Stats[(int)Stat.Vitality];
             nudSpd.Value = mEditorItem.Stats[(int)Stat.Speed];
             nudAgi.Value = mEditorItem.Stats[(int)Stat.Agility];
-            nudDmg.Value = mEditorItem.Stats[(int)Stat.Damages];
-            nudCur.Value = mEditorItem.Stats[(int)Stat.Cures];
             nudHp.Value = mEditorItem.MaxVitals[(int)Vital.Health];
             nudMana.Value = mEditorItem.MaxVitals[(int)Vital.Mana];
             nudExp.Value = mEditorItem.Experience;
@@ -1317,11 +1315,11 @@ public partial class FrmNpc : EditorForm
 
     private void nudDmg_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Stats[(int)Stat.Damages] = (int)nudDmg.Value;
+        // Damages stat has been moved to item effects.
     }
 
     private void nudCur_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Stats[(int)Stat.Cures] = (int)nudCur.Value;
+        // Cures stat has been moved to item effects.
     }
 }
