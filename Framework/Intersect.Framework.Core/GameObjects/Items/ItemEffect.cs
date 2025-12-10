@@ -15,4 +15,8 @@ public enum ItemEffect : byte
     EXP = 5,
 
     Manasteal = 6,
+
+    Accuracy = 7,
+
+    Evasion = 8,
 }

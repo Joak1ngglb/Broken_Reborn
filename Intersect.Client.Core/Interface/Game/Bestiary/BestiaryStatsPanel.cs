@@ -33,8 +33,8 @@ public class BestiaryStatsPanel : Base
         _minDamageLabel = new Label(this, "MinDamageLabel");
         _maxDamageLabel = new Label(this, "MaxDamageLabel");
 
-        // Crear 6 labels para stats base (Fuerza, Defensa, etc.)
-        for (int i = 0; i < (int)Stat.Cures+1; i++)
+        // Crear labels para cada estadística base
+        for (int i = 0; i < Enum.GetValues<Stat>().Length; i++)
         {
             var lbl = new Label(this, $"Stat_{i}");
             _statLabels.Add(lbl);

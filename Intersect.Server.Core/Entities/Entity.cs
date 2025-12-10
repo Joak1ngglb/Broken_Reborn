@@ -2105,6 +2105,44 @@ public abstract partial class Entity : IEntity
             return;
         }
 
+        static int GetItemEffectBonus(Entity entity, ItemEffect effect)
+        {
+            return entity is Player player ? player.GetEquipmentBonusEffect(effect) : 0;
+        }
+
+        static double CalculateHitChance(Entity attacker, Entity defender)
+        {
+            const double minChance = 0.05d;
+            const double maxChance = 0.98d;
+
+            var accuracy =
+                attacker.Stat[(int)Stat.Agility].Value() * 0.5d +
+                attacker.Stat[(int)Stat.Attack].Value() * 0.3d +
+                GetItemEffectBonus(attacker, ItemEffect.Accuracy);
+
+            var evasion =
+                defender.Stat[(int)Stat.Agility].Value() * 0.7d +
+                defender.Stat[(int)Stat.Defense].Value() * 0.2d +
+                GetItemEffectBonus(defender, ItemEffect.Evasion);
+
+            var denominator = Math.Max(1d, accuracy + evasion);
+            var hitChance = accuracy / denominator;
+
+            return Math.Clamp(hitChance, minChance, maxChance);
+        }
+
+        if (damagingAttack)
+        {
+            var hitChance = CalculateHitChance(this, enemy);
+            if (Randomization.NextDouble() > hitChance)
+            {
+                PacketSender.SendActionMsg(this, Strings.Combat.Miss, CustomColors.Combat.Missed);
+                PacketSender.SendActionMsg(enemy, Strings.Combat.Miss, CustomColors.Combat.Missed);
+
+                return;
+            }
+        }
+
         if (this is Player attacker && enemy is Player victim)
         {
             var (ok, reason) = AlignmentPvPService.CanEngage(attacker, victim);
