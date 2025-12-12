@@ -217,7 +217,7 @@ public partial class SpellDescriptor : DatabaseObject<SpellDescriptor>, IFoldera
                         continue;
                     }
 
-                    if (IsOverride(key))
+                    if (SpellUpgradeKeys.IsOverride(key))
                     {
                         effective.CustomUpgrades[key] = val;
                     }
@@ -242,7 +242,7 @@ public partial class SpellDescriptor : DatabaseObject<SpellDescriptor>, IFoldera
                     continue;
                 }
 
-                if (IsOverride(key))
+                if (SpellUpgradeKeys.IsOverride(key))
                 {
                     effective.CustomUpgrades[key] = val;
                 }
@@ -257,40 +257,7 @@ public partial class SpellDescriptor : DatabaseObject<SpellDescriptor>, IFoldera
         return effective;
     }
 
-    private static bool IsOverride(string key) =>
-        key.EndsWith("Set", StringComparison.OrdinalIgnoreCase) ||
-        key.StartsWith("set.", StringComparison.OrdinalIgnoreCase);
-
-    public SpellProperties GetPropertiesForLevel(int level)
-    {
-        var result = new SpellProperties { Level = level };
-        if (LevelUpgrades == null)
-        {
-            return result;
-        }
-
-        for (var i = 1; i <= level; i++)
-        {
-            if (!LevelUpgrades.TryGetValue(i, out var upgrade) || upgrade?.CustomUpgrades == null)
-            {
-                continue;
-            }
-
-            foreach (var kv in upgrade.CustomUpgrades)
-            {
-                if (result.CustomUpgrades.TryGetValue(kv.Key, out var current))
-                {
-                    result.CustomUpgrades[kv.Key] = current + kv.Value;
-                }
-                else
-                {
-                    result.CustomUpgrades[kv.Key] = kv.Value;
-                }
-            }
-        }
-
-        return result;
-    }
+    public SpellProperties GetPropertiesForLevel(int level) => BuildEffectiveProperties(level);
 
     public int GetEffectiveCastDuration(SpellProperties props)
     {
