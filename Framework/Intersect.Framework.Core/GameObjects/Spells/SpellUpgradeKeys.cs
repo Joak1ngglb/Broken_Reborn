@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Intersect.Enums;
 
@@ -19,6 +20,7 @@ public static class SpellUpgradeKeys
         public const string HotDotInterval = "Combat.HotDotInterval";
         public const string OnHitDuration = "Combat.OnHitDuration";
         public const string TrapDuration = "Combat.TrapDuration";
+        public const string EffectOverride = "Combat.Effect.Set";
 
         public static class StatDiff
         {
@@ -73,8 +75,8 @@ public static class SpellUpgradeKeys
         public const string Range = "Dash.Range";
     }
 
-    public static readonly HashSet<string> All =
-    [
+    public static readonly string[] Ordered =
+    {
         CastDuration,
         CooldownDuration,
         Combat.CritChance,
@@ -86,6 +88,7 @@ public static class SpellUpgradeKeys
         Combat.HotDotInterval,
         Combat.OnHitDuration,
         Combat.TrapDuration,
+        Combat.EffectOverride,
         Combat.StatDiff.Attack,
         Combat.StatDiff.Intelligence,
         Combat.StatDiff.Defense,
@@ -97,7 +100,13 @@ public static class SpellUpgradeKeys
         VitalCost.Health,
         VitalCost.Mana,
         Dash.Range,
-    ];
+    };
+
+    public static readonly HashSet<string> All = new(Ordered);
+
+    public static bool IsOverride(string key) =>
+        key.EndsWith("Set", StringComparison.OrdinalIgnoreCase) ||
+        key.StartsWith("set.", StringComparison.OrdinalIgnoreCase);
 
     public static bool IsValid(string key) => All.Contains(key);
 }
