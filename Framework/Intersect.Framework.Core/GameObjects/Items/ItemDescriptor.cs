@@ -454,9 +454,9 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
             return;
         }
 
-        effectToEdit.IsFlat = isFlat;
+        effectToEdit.IsFlat = false;
         effectToEdit.Percentage = percentage;
-        effectToEdit.FlatAmount = flatAmount;
+        effectToEdit.FlatAmount = 0;
     }
 
     /// <inheritdoc />
