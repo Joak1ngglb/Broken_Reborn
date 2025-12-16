@@ -1473,6 +1473,9 @@ public static partial class Strings
         public static LocalizedString Manasteal = @"Manasteal: {00}%";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString BasicAttackDamage = @"Basic Damage: {00} | True: {01}-{02}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Points = @"Points: {00}";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1486,6 +1489,12 @@ public static partial class Strings
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Tenacity = @"Tenacity: {00}%";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString FlatDamage = @"Damage Bonus: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString FlatCures = @"Healing Bonus: {00}";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Title = @"Character Information";
@@ -1626,13 +1635,14 @@ public static partial class Strings
         public static LocalizedString AttackWhileCastingDeny = @"You cannot attack while casting a spell.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public static Dictionary<Stat, LocalizedString> Stats = new() {
+        public static Dictionary<Stat, LocalizedString> Stats = new()
+        {
             { Stat.Attack, @"Attack" },
             { Stat.Intelligence, @"Intelligence" },
             { Stat.Defense, @"Defense" },
             { Stat.Vitality, @"Vitality" },
-            { Stat.Agility, @"Agility" },
             { Stat.Speed, @"Speed" },
+            { Stat.Agility, @"Agility" },
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -2622,6 +2632,8 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {11, @"Armor Penetration:"},
             {12, @"Damage Reduction:"},
             {13, @"Damage Reflect:"},
+            {14, @"Damage Bonus:"},
+            {15, @"Healing Bonus:"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
