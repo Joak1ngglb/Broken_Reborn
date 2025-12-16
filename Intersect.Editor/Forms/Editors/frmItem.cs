@@ -1059,24 +1059,10 @@ public partial class FrmItem : EditorForm
             return;
         }
 
-        if (!chkEffectIsFlat.Enabled)
-        {
-            return;
-        }
-
-        var selected = SelectedEffect;
-        var effect = mEditorItem.GetEffect(selected);
-        if (effect == null)
-        {
-            return;
-        }
-
         EffectValueUpdating = true;
-        var preferFlat = chkEffectIsFlat.Checked;
-        mEditorItem.SetEffectOfType(selected, (int)nudEffectPercent.Value, (int)nudEffectFlat.Value, preferFlat);
-        nudEffectPercent.Enabled = !preferFlat;
-        nudEffectFlat.Enabled = preferFlat;
-        lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(selected);
+        chkEffectIsFlat.Checked = false;
+        nudEffectPercent.Enabled = true;
+        nudEffectFlat.Enabled = false;
         EffectValueUpdating = false;
     }
 
@@ -1652,25 +1638,9 @@ public partial class FrmItem : EditorForm
     private string GetBonusEffectRow(ItemEffect itemEffect)
     {
         var effectName = Strings.ItemEditor.bonuseffects[(int)itemEffect];
-        var effect = mEditorItem.GetEffect(itemEffect);
         var values = mEditorItem.GetEffectValues(itemEffect);
 
-        if (EffectData.SupportsFlatAndPercentage(itemEffect))
-        {
-            var parts = new List<string> { $"{values.Percentage}%" };
-
-            if (values.Flat != 0)
-            {
-                parts.Add(values.Flat.ToString());
-            }
-
-            return Strings.ItemEditor.BonusEffectItem.ToString(effectName, string.Join(" / ", parts));
-        }
-
-        var suffix = effect?.IsFlat == true ? string.Empty : "%";
-        var amount = effect?.IsFlat == true ? values.Flat : values.Percentage;
-
-        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{amount}{suffix}");
+        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{values.Percentage}%");
     }
 
     private Stat? SelectedStatRange
@@ -1702,23 +1672,16 @@ public partial class FrmItem : EditorForm
         }
 
         EffectValueUpdating = true;
-        var effect = mEditorItem.GetEffect(selected);
         var values = mEditorItem.GetEffectValues(selected);
-        var supportsDual = EffectData.SupportsFlatAndPercentage(selected);
 
-        chkEffectIsFlat.Enabled = !supportsDual;
-        chkEffectIsFlat.Checked = effect?.IsFlat ?? false;
+        chkEffectIsFlat.Enabled = false;
+        chkEffectIsFlat.Checked = false;
 
         nudEffectPercent.Value = values.Percentage;
-        nudEffectFlat.Value = values.Flat;
+        nudEffectFlat.Value = 0;
 
-        nudEffectPercent.Enabled = supportsDual || !chkEffectIsFlat.Checked;
-        nudEffectFlat.Enabled = supportsDual || chkEffectIsFlat.Checked;
-        if (supportsDual)
-        {
-            nudEffectPercent.Enabled = true;
-            nudEffectFlat.Enabled = true;
-        }
+        nudEffectPercent.Enabled = true;
+        nudEffectFlat.Enabled = false;
         EffectValueUpdating = false;
     }
 

@@ -509,24 +509,10 @@ public partial class frmSets : EditorForm
             return;
         }
 
-        if (!chkEffectIsFlat.Enabled)
-        {
-            return;
-        }
-
-        var selected = SelectedEffect;
-        var effect = mEditorSet.GetEffect(selected);
-        if (effect == null)
-        {
-            return;
-        }
-
         EffectValueUpdating = true;
-        var preferFlat = chkEffectIsFlat.Checked;
-        mEditorSet.SetEffectOfType(selected, (int)nudEffectPercent.Value, (int)nudEffectFlat.Value, preferFlat);
-        nudEffectPercent.Enabled = !preferFlat;
-        nudEffectFlat.Enabled = preferFlat;
-        lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(selected);
+        chkEffectIsFlat.Checked = false;
+        nudEffectPercent.Enabled = true;
+        nudEffectFlat.Enabled = false;
         EffectValueUpdating = false;
     }
 
@@ -610,24 +596,8 @@ public partial class frmSets : EditorForm
     private string GetBonusEffectRow(ItemEffect itemEffect)
     {
         var effectName = Strings.ItemEditor.bonuseffects[(int)itemEffect];
-        var effect = mEditorSet.GetEffect(itemEffect);
         var values = mEditorSet.GetEffectValues(itemEffect);
-
-        if (EffectData.SupportsFlatAndPercentage(itemEffect))
-        {
-            var parts = new List<string> { $"{values.Percentage}%" };
-
-            if (values.Flat != 0)
-            {
-                parts.Add(values.Flat.ToString());
-            }
-
-            return Strings.ItemEditor.BonusEffectItem.ToString(effectName, string.Join(" / ", parts));
-        }
-
-        var suffix = effect?.IsFlat == true ? string.Empty : "%";
-        var amount = effect?.IsFlat == true ? values.Flat : values.Percentage;
-        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{amount}{suffix}");
+        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{values.Percentage}%");
     }
     private void lstBonusEffects_SelectedIndexChanged(object sender, EventArgs e)
     {
@@ -643,22 +613,15 @@ public partial class frmSets : EditorForm
         }
 
         EffectValueUpdating = true;
-        var effect = mEditorSet.GetEffect(selected);
         var values = mEditorSet.GetEffectValues(selected);
-        var supportsDual = EffectData.SupportsFlatAndPercentage(selected);
 
-        chkEffectIsFlat.Enabled = !supportsDual;
-        chkEffectIsFlat.Checked = effect?.IsFlat ?? false;
+        chkEffectIsFlat.Enabled = false;
+        chkEffectIsFlat.Checked = false;
 
         nudEffectPercent.Value = values.Percentage;
-        nudEffectFlat.Value = values.Flat;
-        nudEffectPercent.Enabled = supportsDual || !chkEffectIsFlat.Checked;
-        nudEffectFlat.Enabled = supportsDual || chkEffectIsFlat.Checked;
-        if (supportsDual)
-        {
-            nudEffectPercent.Enabled = true;
-            nudEffectFlat.Enabled = true;
-        }
+        nudEffectFlat.Value = 0;
+        nudEffectPercent.Enabled = true;
+        nudEffectFlat.Enabled = false;
         EffectValueUpdating = false;
     }
     private void lstItems_SelectedIndexChanged(object sender, EventArgs e)
