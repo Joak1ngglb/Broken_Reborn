@@ -8,6 +8,7 @@ using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Fishing;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps;
@@ -747,6 +748,35 @@ internal sealed partial class PacketHandler
                     var set = new SetDescriptor(id);
                     set.Load(json);
                     SetDescriptor.Lookup.Set(id, set);
+                }
+
+                break;
+            case GameObjectType.Fish:
+                if (deleted)
+                {
+                    var cft = FishBase.Get(id);
+                    cft.Delete();
+                }
+                else
+                {
+                    var cft = new FishBase(id);
+                    cft.Load(json);
+                    FishBase.Lookup.Set(id, cft);
+                }
+
+                break;
+
+            case GameObjectType.FishingSpot:
+                if (deleted)
+                {
+                    var cft = FishingSpotBase.Get(id);
+                    cft.Delete();
+                }
+                else
+                {
+                    var cft = new FishingSpotBase(id);
+                    cft.Load(json);
+                    FishingSpotBase.Lookup.Set(id, cft);
                 }
 
                 break;

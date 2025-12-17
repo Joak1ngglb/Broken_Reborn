@@ -48,6 +48,17 @@ public partial class Entity : IEntity
 
     public long CastTime { get; set; } = 0;
 
+    //Fishing
+    public bool IsFishing { get; set; }
+
+    public int FishingStageIndex { get; set; }
+
+    public bool IsFishingRodPressed { get; set; }
+
+    public long FishingStageTimer { get; set; }
+
+    public long FishingStageDuration { get; set; }
+
     //Combat Status
     public bool IsAttacking => AttackTimer > Timing.Global.Milliseconds;
 
@@ -178,6 +189,8 @@ public partial class Entity : IEntity
     public HashSet<Entity>? RenderList { get; set; }
 
     private Guid _spellCast;
+
+    private int _lastFishingStage;
 
     public Guid SpellCast
     {
@@ -394,6 +407,7 @@ public partial class Entity : IEntity
                 SpriteAnimations.Shoot => Options.Instance.Sprites.ShootFrames,
                 SpriteAnimations.Cast => Options.Instance.Sprites.CastFrames,
                 SpriteAnimations.Weapon => Options.Instance.Sprites.WeaponFrames,
+                SpriteAnimations.Fishing => Options.Instance.Sprites.FishingFrames,
                 _ => Options.Instance.Sprites.NormalFrames,
             };
         }
@@ -2160,6 +2174,122 @@ public partial class Entity : IEntity
         Status = [.. Status.OrderByDescending(x => x.RemainingMs)];
     }
 
+    private bool UpdateFishingSpriteAnimation(long timingMilliseconds)
+    {
+        if (!IsFishing && _lastFishingStage == 0)
+        {
+            return false;
+        }
+
+        if (!IsFishing)
+        {
+            FishingStageIndex = 0;
+        }
+
+        if (SpriteFrameTimer + Options.Instance.Sprites.IdleFrameDuration >= timingMilliseconds)
+        {
+            return true;
+        }
+
+        switch (FishingStageIndex)
+        {
+            case 0:
+                if (_lastFishingStage == 1)
+                {
+                    if (AnimatedTextures.TryGetValue(SpriteAnimations.Weapon, out _))
+                    {
+                        SpriteAnimation = SpriteAnimations.Weapon;
+                        SpriteFrame = Math.Max(0, SpriteFrames - 1);
+                    }
+
+                    _lastFishingStage = 0;
+                }
+                else if (_lastFishingStage == 0)
+                {
+                    SpriteFrame = Math.Max(0, SpriteFrame - 1);
+                    if (SpriteFrame == 0 && AnimatedTextures.TryGetValue(SpriteAnimations.Idle, out _))
+                    {
+                        SpriteAnimation = SpriteAnimations.Idle;
+                    }
+                }
+                else
+                {
+                    _lastFishingStage = FishingStageIndex;
+                }
+
+                break;
+
+            case 1:
+                if (_lastFishingStage == 0)
+                {
+                    if (AnimatedTextures.TryGetValue(SpriteAnimations.Weapon, out _))
+                    {
+                        SpriteAnimation = SpriteAnimations.Weapon;
+                        SpriteFrame = 0;
+                    }
+
+                    _lastFishingStage = FishingStageIndex;
+                }
+                else if (_lastFishingStage == 1)
+                {
+                    SpriteFrame = Math.Min(SpriteFrames - 1, SpriteFrame + 1);
+                    if (SpriteFrame >= SpriteFrames - 1 && AnimatedTextures.TryGetValue(SpriteAnimations.Idle, out _))
+                    {
+                        SpriteAnimation = SpriteAnimations.Idle;
+                    }
+                }
+
+                break;
+
+            case 2:
+                if (_lastFishingStage == 1)
+                {
+                    if (AnimatedTextures.TryGetValue(SpriteAnimations.Weapon, out _))
+                    {
+                        SpriteAnimation = SpriteAnimations.Weapon;
+                    }
+
+                    _lastFishingStage = FishingStageIndex;
+                }
+
+                SpriteFrame = IsFishingRodPressed ? 0 : Math.Min(1, SpriteFrames - 1);
+
+                break;
+
+            case 3:
+                if (_lastFishingStage == 2)
+                {
+                    if (AnimatedTextures.TryGetValue(SpriteAnimations.Weapon, out _))
+                    {
+                        SpriteAnimation = SpriteAnimations.Weapon;
+                        SpriteFrame = Math.Max(0, SpriteFrames - 1);
+                    }
+
+                    _lastFishingStage = FishingStageIndex;
+                }
+                else if (_lastFishingStage == 3)
+                {
+                    SpriteFrame--;
+                    if (SpriteFrame < 0)
+                    {
+                        if (AnimatedTextures.TryGetValue(SpriteAnimations.Idle, out _))
+                        {
+                            SpriteAnimation = SpriteAnimations.Idle;
+                        }
+
+                        SpriteFrame = 0;
+                        _lastFishingStage = 0;
+                    }
+                }
+
+                break;
+        }
+
+        SpriteFrameTimer = timingMilliseconds;
+
+        return IsFishing || _lastFishingStage != 0;
+    }
+
     private void UpdateSpriteAnimation()
     {
         // Exit if textures haven't been loaded yet
@@ -2170,6 +2300,13 @@ public partial class Entity : IEntity
 
         var timingMilliseconds = Timing.Global.Milliseconds;
         var isNotBlockingAndCasting = !IsBlocking && !IsCasting;
+        var isFishing = this is Player { FishingStage: not FishingStage.None };
+        var hasFishingAnimation = AnimatedTextures.TryGetValue(SpriteAnimations.Fishing, out _);
+
+        if (this != Globals.Me && UpdateFishingSpriteAnimation(timingMilliseconds))
+        {
+            return;
+        }
 
         SpriteAnimation = SpriteAnimations.Normal;
         if (AnimatedTextures.TryGetValue(SpriteAnimations.Idle, out _) &&
@@ -2179,13 +2316,18 @@ public partial class Entity : IEntity
             SpriteAnimation = SpriteAnimations.Idle;
         }
 
+        if (isFishing && hasFishingAnimation && isNotBlockingAndCasting && !IsAttacking)
+        {
+            SpriteAnimation = SpriteAnimations.Fishing;
+        }
+
         if (IsMoving && !IsAttacking && isNotBlockingAndCasting)
         {
             SpriteAnimation = SpriteAnimations.Normal;
             LastActionTime = timingMilliseconds;
         }
 
-        if (IsAttacking && isNotBlockingAndCasting)
+        if (IsAttacking && isNotBlockingAndCasting && SpriteAnimation != SpriteAnimations.Fishing)
         {
             // Normal sprite-sheets have their own handler for attacking frames.
             if (AnimatedTextures.TryGetValue(SpriteAnimations.Normal, out _))
@@ -2261,7 +2403,7 @@ public partial class Entity : IEntity
             }
         }
 
-        if (IsCasting)
+        if (IsCasting && SpriteAnimation != SpriteAnimations.Fishing)
         {
             var spell = SpellDescriptor.Get(SpellCast);
             if (spell != null)
@@ -2313,6 +2455,19 @@ public partial class Entity : IEntity
                 SpriteFrameTimer = timingMilliseconds;
             }
         }
+        else if (SpriteAnimation == SpriteAnimations.Fishing)
+        {
+            if (SpriteFrameTimer + Options.Instance.Sprites.IdleFrameDuration < timingMilliseconds)
+            {
+                SpriteFrame++;
+                if (SpriteFrame >= SpriteFrames)
+                {
+                    SpriteFrame = 0;
+                }
+
+                SpriteFrameTimer = timingMilliseconds;
+            }
+        }
     }
 
 
@@ -2350,6 +2505,7 @@ public partial class Entity : IEntity
         {
             case SpriteAnimations.Normal:
             case SpriteAnimations.Idle:
+            case SpriteAnimations.Fishing:
                 break;
 
             case SpriteAnimations.Attack:

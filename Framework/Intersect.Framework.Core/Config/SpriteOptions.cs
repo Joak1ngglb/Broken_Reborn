@@ -78,6 +78,11 @@ public partial class SpriteOptions
     public int WeaponFrames { get; set; } = 4;
 
     /// <summary>
+    /// Defines the number of frames there will be in fishing sprite sheets.
+    /// </summary>
+    public int FishingFrames { get; set; } = 4;
+
+    /// <summary>
     /// The number of rows in the sprite sheet that correspond to the number of directions supported in the game.
     /// Currently, Intersect only supports 4 rows of frames for directions.
     /// </summary>

@@ -25,6 +25,7 @@ using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.Maps.Attributes;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.Security;
 using Intersect.Network.Packets.Server;
@@ -482,6 +483,44 @@ internal sealed partial class PacketHandler
             }
         }
 
+        return true;
+    }
+
+    private bool TryGetFishingSpotAttribute(Client client, out MapFishingSpotAttribute fishingAttribute)
+    {
+        fishingAttribute = default;
+
+        var player = client?.Entity;
+        if (player == null)
+        {
+            return false;
+        }
+
+        if (!MapController.TryGet(player.MapId, out var mapController))
+        {
+            return false;
+        }
+
+        var attributes = mapController.Attributes;
+        if (attributes == null ||
+            player.X < 0 || player.Y < 0 ||
+            player.X >= attributes.GetLength(0) ||
+            player.Y >= attributes.GetLength(1))
+        {
+            return false;
+        }
+
+        if (attributes[player.X, player.Y] is not MapFishingSpotAttribute fishingSpotAttribute)
+        {
+            return false;
+        }
+
+        if (fishingSpotAttribute.FishingSpotType == Guid.Empty)
+        {
+            return false;
+        }
+
+        fishingAttribute = fishingSpotAttribute;
         return true;
     }
 
@@ -3245,6 +3284,64 @@ internal sealed partial class PacketHandler
             return;
         }
         player.IsFading = false;
+    }
+
+    //FishingPacket
+    public void HandlePacket(Client client, FishingPacket packet)
+    {
+        HandleFishingCast(client);
+    }
+
+    //SendFishingSpot
+    public void HandlePacket(Client client, SendFishingSpot packet)
+    {
+        HandleFishingCast(client);
+    }
+
+    //SendCancelFishing
+    public void HandlePacket(Client client, SendCancelFishing packet)
+    {
+        var player = client?.Entity;
+        if (player == null)
+        {
+            return;
+        }
+
+        player.FishEvent.ServerReturnFishingRod();
+    }
+
+    //SendSuccessFishing
+    public void HandlePacket(Client client, SendSuccessFishing packet)
+    {
+        var player = client?.Entity;
+        if (player == null)
+        {
+            return;
+        }
+
+        player.FishEvent.FishingSuccess();
+    }
+
+    //SendFailedFishing
+    public void HandlePacket(Client client, SendFailedFishing packet)
+    {
+        var player = client?.Entity;
+        if (player == null)
+        {
+            return;
+        }
+
+        player.FishEvent.FishingFailed();
+    }
+
+    private void HandleFishingCast(Client client)
+    {
+        if (!TryGetFishingSpotAttribute(client, out var fishingAttribute))
+        {
+            return;
+        }
+
+        client.Entity.FishEvent.ServerCastFishingRod(fishingAttribute.FishingSpotType);
     }
 
     public void HandlePacket(Client client, TargetPacket packet)
