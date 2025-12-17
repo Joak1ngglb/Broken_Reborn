@@ -186,6 +186,47 @@ public partial class Player : Entity, IPlayer
 
     public long GlobalCooldown { get; set; }
 
+    public Guid? FishingFishId { get; private set; }
+
+    public long FishingStageTimer { get; private set; }
+
+    public long FishingResolveTimer { get; private set; }
+
+    public FishingStage FishingStage { get; private set; } = FishingStage.None;
+
+    public bool IsFishingCancellationRequested { get; private set; }
+
+    public bool FishingCanceled { get; private set; }
+
+    public void StartFishing(Guid fishId, long stageTimer, long resolveTimer, FishingStage stage, bool cancelRequested)
+    {
+        FishingFishId = fishId;
+        FishingStageTimer = stageTimer;
+        FishingResolveTimer = resolveTimer;
+        FishingStage = stage;
+        IsFishingCancellationRequested = cancelRequested;
+        FishingCanceled = false;
+    }
+
+    public void ResolveFishing(Guid fishId, long resolveTimer, bool cancelRequested, bool canceled)
+    {
+        FishingFishId = fishId;
+        FishingResolveTimer = resolveTimer;
+        FishingStage = FishingStage.Resolving;
+        IsFishingCancellationRequested = cancelRequested;
+        FishingCanceled = canceled;
+    }
+
+    public void StopFishing(bool canceled)
+    {
+        FishingCanceled = canceled;
+        FishingStage = FishingStage.None;
+        FishingFishId = null;
+        FishingStageTimer = 0;
+        FishingResolveTimer = 0;
+        IsFishingCancellationRequested = false;
+    }
+
     // Target data
     private long mlastTargetScanTime;
 
