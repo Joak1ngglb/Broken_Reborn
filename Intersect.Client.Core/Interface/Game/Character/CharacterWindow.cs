@@ -166,7 +166,7 @@ public partial class CharacterWindow : Window
             FontSize = 11,
             TextColorOverride = Color.White,
             AutoSizeToContents = false,
-            Alignment = [Alignments.Left, Alignments.CenterV]
+        
         };
 
         label.SetSize(width, height);
@@ -514,6 +514,66 @@ public partial class CharacterWindow : Window
         }
     }
 
+    private bool TryGetEquippedWeaponProfile(
+        Player player,
+        out int baseDamage,
+        out Stat scalingStat,
+        out int scalingPercent
+    )
+    {
+        baseDamage = 0;
+        scalingStat = Stat.Attack;
+        scalingPercent = 0;
+
+        var weaponSlotIndex = Options.Instance.Equipment.Slots.IndexOf("Weapon");
+        if (weaponSlotIndex < 0)
+        {
+            weaponSlotIndex = Options.Instance.Equipment.Slots.IndexOf("MainHand");
+        }
+
+        if (weaponSlotIndex < 0)
+        {
+            return false;
+        }
+
+        Guid weaponId = Guid.Empty;
+
+        if (player == Globals.Me)
+        {
+            if (player.MyEquipment.TryGetValue(weaponSlotIndex, out var list) && list.Count > 0)
+            {
+                var invIndex = list[0];
+                if (invIndex >= 0 && invIndex < Options.Instance.Player.MaxInventory)
+                {
+                    weaponId = player.Inventory[invIndex].ItemId;
+                }
+            }
+        }
+        else
+        {
+            if (player.Equipment.TryGetValue(weaponSlotIndex, out var list) && list.Count > 0)
+            {
+                weaponId = list[0];
+            }
+        }
+
+        if (weaponId == Guid.Empty)
+        {
+            return false;
+        }
+
+        if (!ItemDescriptor.TryGet(weaponId, out var weapon))
+        {
+            return false;
+        }
+
+        baseDamage = weapon.Damage;
+        scalingStat = (Stat)weapon.ScalingStat;
+        scalingPercent = weapon.Scaling;
+
+        return true;
+    }
+
     // -------------------------
     // Update Loop
     // -------------------------
@@ -750,19 +810,27 @@ public partial class CharacterWindow : Window
                 player.Stat[(int)Stat.Speed]
             ));
 
-            var baseDamage = mClassDescriptor?.Damage ?? 0;
-            var scalingStat = (Stat)(mClassDescriptor?.ScalingStat ?? (int)Stat.Attack);
-            var scalingPercent = mClassDescriptor?.Scaling ?? 0;
-            var critMultiplier = mClassDescriptor?.CritMultiplier ?? 1f;
+            int sourceBaseDamage;
+            Stat sourceScalingStat;
+            int sourceScalingPercent;
 
-            var scalingStatValue = player.Stat[(int)scalingStat];
-            var scaledBase = baseDamage + scalingStatValue * (scalingPercent / 100f);
-            var minTrueDamage = scaledBase * 0.975 * critMultiplier;
-            var maxTrueDamage = scaledBase * 1.025 * critMultiplier;
+            if (!TryGetEquippedWeaponProfile(player, out sourceBaseDamage, out sourceScalingStat, out sourceScalingPercent))
+            {
+                sourceBaseDamage = mClassDescriptor?.Damage ?? 0;
+                sourceScalingStat = (Stat)(mClassDescriptor?.ScalingStat ?? (int)Stat.Attack);
+                sourceScalingPercent = mClassDescriptor?.Scaling ?? 0;
+            }
+
+            var statValue = player.Stat[(int)sourceScalingStat];
+            var scaledBase = sourceBaseDamage + statValue * (sourceScalingPercent / 100f);
+            var afterBonuses = (scaledBase + _flatDamage.Flat) * (1f + _flatDamage.Percentage / 100f);
+
+            var minTrueDamage = afterBonuses * 0.975f;
+            var maxTrueDamage = afterBonuses * 1.025f;
 
             mBasicAttackDamageLabel.SetText(
                 Strings.Character.BasicAttackDamage.ToString(
-                    baseDamage,
+                    sourceBaseDamage,
                     (int)Math.Round(minTrueDamage),
                     (int)Math.Round(maxTrueDamage)
                 )
