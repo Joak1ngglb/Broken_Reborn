@@ -1689,6 +1689,51 @@ public static partial class PacketSender
         player.SendPacket(new GlobalCooldownPacket(cooldown - Timing.Global.MillisecondsUtc), TransmissionMode.All);
     }
 
+    public static void SendStartFishing(
+        Player player,
+        Guid fishId,
+        long stageTimer,
+        long resolveTimer,
+        FishingStage stage,
+        bool cancelRequested
+    )
+    {
+        player.SendPacket(
+            new StartFishingPacket(
+                fishId,
+                Math.Max(0, stageTimer - Timing.Global.Milliseconds),
+                Math.Max(0, resolveTimer - Timing.Global.Milliseconds),
+                stage,
+                cancelRequested
+            ),
+            TransmissionMode.All
+        );
+    }
+
+    public static void SendResolveFishing(
+        Player player,
+        Guid fishId,
+        long resolveTimer,
+        bool cancelRequested,
+        bool canceled
+    )
+    {
+        player.SendPacket(
+            new ResolveFishingPacket(
+                fishId,
+                Math.Max(0, resolveTimer - Timing.Global.Milliseconds),
+                cancelRequested,
+                canceled
+            ),
+            TransmissionMode.All
+        );
+    }
+
+    public static void SendStopFishing(Player player, bool canceled)
+    {
+        player.SendPacket(new StopFishingPacket(canceled), TransmissionMode.All);
+    }
+
     //ExperiencePacket
     public static void SendExperience(Player player)
     {
