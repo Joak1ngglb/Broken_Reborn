@@ -20,9 +20,12 @@ namespace Intersect.Client.Interface.Game.Character;
 
 public partial class CharacterWindow : Window
 {
-    private const int WindowWidth = 700;
+    private const int WindowWidth = 560;
     private const int WindowHeight = 520;
     private const int Margin = 16;
+
+    private const int InfoHeight = 120;
+    private const int StatsHeight = 220;
 
     private const int StatRowHeight = 24;
     private const int StatLabelWidth = 230;
@@ -32,30 +35,18 @@ public partial class CharacterWindow : Window
     private const string TitleFont = "sourcesansproblack";
     private const string BodyFont = "source-sans-pro";
 
-    //Equipment List
-    public List<EquipmentItem> Items = new List<EquipmentItem>();
-
     // Containers
     private Base mCharacterInfoContainer;
     private Base mStatsContainer;
-    private Base mEquipmentContainer;
     private Base mExtraBuffsContainer;
 
     private ScrollControl mExtraBuffsScroll;
     private Base mExtraBuffsList;
 
     // Character UI
-    private ImagePanel mCharacterContainer;
     private Label mCharacterLevelAndClass;
     private Label mCharacterName;
     private Button mFactionButton;
-
-    private ImagePanel mCharacterPortrait; // (si lo usas después)
-    private string mCharacterPortraitImg = string.Empty;
-    private string mCurrentSprite = string.Empty;
-
-    public ImagePanel[] PaperdollPanels;
-    public string[] PaperdollTextures;
 
     // Stats UI
     private Label mAttackLabel;
@@ -229,19 +220,21 @@ public partial class CharacterWindow : Window
         var contentX = Margin;
         var contentY = Margin;
 
-        var leftW = 420;
-        var rightW = WindowWidth - (Margin * 2) - leftW;
-        var topH = 250;
-        var bottomH = WindowHeight - (Margin * 2) - topH;
+        var contentW = WindowWidth - (Margin * 2);
+        var contentH = WindowHeight - (Margin * 2);
 
         // Containers
-        mCharacterInfoContainer = CreateContainer("CharacterInfoContainer", contentX, contentY, leftW, 150);
-        mStatsContainer = CreateContainer("StatsContainer", contentX, contentY + 150, leftW, topH - 150);
-        mEquipmentContainer = CreateContainer("EquipmentContainer", contentX + leftW, contentY, rightW, topH);
-        mExtraBuffsContainer = CreateContainer("ExtraBuffsContainer", contentX, contentY + topH, WindowWidth - (Margin * 2), bottomH);
+        mCharacterInfoContainer = CreateContainer("CharacterInfoContainer", contentX, contentY, contentW, InfoHeight);
+        mStatsContainer = CreateContainer("StatsContainer", contentX, contentY + InfoHeight, contentW, StatsHeight);
+        mExtraBuffsContainer = CreateContainer(
+            "ExtraBuffsContainer",
+            contentX,
+            contentY + InfoHeight + StatsHeight,
+            contentW,
+            contentH - InfoHeight - StatsHeight
+        );
 
         BuildCharacterInfoSection();
-        BuildEquipmentSection();
         BuildStatsSection();
         BuildExtraBuffsSection();
 
@@ -281,79 +274,6 @@ public partial class CharacterWindow : Window
         mFactionButton.SetStateTexture(ComponentState.Hovered, "factionicon_hovered.png");
         mFactionButton.SetToolTipText("Faction");
         mFactionButton.Clicked += (s, e) => Interface.GameUi.GameMenu?.ToggleFactionWindow();
-
-        mCharacterContainer = new ImagePanel(mCharacterInfoContainer, "CharacterContainer");
-        mCharacterContainer.SetSize(120, 120);
-        mCharacterContainer.SetPosition(0, y);
-
-        mCharacterPortrait = new ImagePanel(mCharacterContainer);
-        mCharacterPortrait.SetSize(80, 80);
-        mCharacterPortrait.SetPosition(
-            (mCharacterContainer.Width - mCharacterPortrait.Width) / 2,
-            (mCharacterContainer.Height - mCharacterPortrait.Height) / 2
-        );
-
-        PaperdollPanels = new ImagePanel[Options.Instance.Equipment.Slots.Count + 1];
-        PaperdollTextures = new string[Options.Instance.Equipment.Slots.Count + 1];
-        for (var i = 0; i <= Options.Instance.Equipment.Slots.Count; i++)
-        {
-            PaperdollPanels[i] = new ImagePanel(mCharacterContainer);
-            PaperdollTextures[i] = string.Empty;
-            PaperdollPanels[i].Hide();
-        }
-    }
-
-    private void BuildEquipmentSection()
-    {
-        var header = CreateSectionTitle(mEquipmentContainer, "EquipmentHeader", 0, 0, "Equipo");
-
-        var columns = 4;
-        var slotW = 36;
-        var slotH = 36;
-        var spacingX = 8;
-        var spacingY = 8;
-
-        var startX = 0;
-        var startY = header.Height + 8;
-
-        int itemIndex = 0;
-        var multiSlotTracker = new Dictionary<string, int>();
-
-        for (int slotIndex = 0; slotIndex < Options.Instance.Equipment.EquipmentSlots.Count; slotIndex++)
-        {
-            var slot = Options.Instance.Equipment.EquipmentSlots[slotIndex];
-
-            for (int j = 0; j < slot.MaxItems; j++)
-            {
-                var item = new EquipmentItem(slotIndex, this);
-                Items.Add(item);
-
-                var slotName = slot.Name;
-
-                if (slot.MaxItems <= 1)
-                {
-                    item.Pnl = new ImagePanel(mEquipmentContainer, slotName);
-                }
-                else
-                {
-                    if (!multiSlotTracker.ContainsKey(slotName))
-                        multiSlotTracker[slotName] = 0;
-
-                    var currentIndex = multiSlotTracker[slotName];
-                    item.Pnl = new ImagePanel(mEquipmentContainer, $"{slotName}_{currentIndex}");
-                    multiSlotTracker[slotName]++;
-                }
-
-                int row = itemIndex / columns;
-                int col = itemIndex % columns;
-
-                item.Pnl.SetSize(slotW, slotH);
-                item.Pnl.SetPosition(startX + col * (slotW + spacingX), startY + row * (slotH + spacingY));
-                item.Setup();
-
-                itemIndex++;
-            }
-        }
     }
 
     private void BuildStatsSection()
@@ -587,79 +507,6 @@ public partial class CharacterWindow : Window
         mCharacterName.Text = player.Name;
         mCharacterLevelAndClass.Text = Strings.Character.LevelAndClass.ToString(player.Level, ClassDescriptor.GetName(player.Class));
 
-        // Portrait/paperdoll
-        var entityTex = Globals.ContentManager.GetTexture(Framework.Content.TextureType.Entity, player.Sprite);
-
-        if (!string.IsNullOrWhiteSpace(player.Sprite) && player.Sprite != mCurrentSprite && entityTex != null)
-        {
-            for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[1].Count; z++)
-            {
-                var paperdoll = string.Empty;
-                var slotName = Options.Instance.Equipment.Paperdoll.Directions[1][z];
-                var slotIndex = Options.Instance.Equipment.Slots.IndexOf(slotName);
-
-                if (slotIndex > -1)
-                {
-                    var equipment = player.MyEquipment;
-
-                    if (equipment.TryGetValue(slotIndex, out var equippedList) && equippedList.Count > 0)
-                    {
-                        var inventoryIndex = equippedList[0];
-                        if (inventoryIndex >= 0 && inventoryIndex < Options.Instance.Player.MaxInventory)
-                        {
-                            var itemNum = player.Inventory[inventoryIndex].ItemId;
-
-                            if (ItemDescriptor.TryGet(itemNum, out var itemDescriptor))
-                            {
-                                paperdoll = player.Gender == 0 ? itemDescriptor.MalePaperdoll : itemDescriptor.FemalePaperdoll;
-                                PaperdollPanels[z].RenderColor = itemDescriptor.Color;
-                            }
-                        }
-                    }
-                }
-                else if (slotName == "Player")
-                {
-                    PaperdollPanels[z].Show();
-                    PaperdollPanels[z].Texture = entityTex;
-                    PaperdollPanels[z].SetTextureRect(0, 0, entityTex.Width / Options.Instance.Sprites.NormalFrames, entityTex.Height / Options.Instance.Sprites.Directions);
-                    PaperdollPanels[z].SizeToContents();
-                    PaperdollPanels[z].RenderColor = player.Color;
-                    Align.Center(PaperdollPanels[z]);
-                }
-
-                if (string.IsNullOrWhiteSpace(paperdoll) && !string.IsNullOrWhiteSpace(PaperdollTextures[z]) && slotName != "Player")
-                {
-                    PaperdollPanels[z].Texture = null;
-                    PaperdollPanels[z].Hide();
-                    PaperdollTextures[z] = string.Empty;
-                }
-                else if (!string.IsNullOrWhiteSpace(paperdoll) && paperdoll != PaperdollTextures[z])
-                {
-                    var paperdollTex = Globals.ContentManager.GetTexture(Framework.Content.TextureType.Paperdoll, paperdoll);
-
-                    PaperdollPanels[z].Texture = paperdollTex;
-                    if (paperdollTex != null)
-                    {
-                        PaperdollPanels[z].SetTextureRect(0, 0, paperdollTex.Width / Options.Instance.Sprites.NormalFrames, paperdollTex.Height / Options.Instance.Sprites.Directions);
-                        PaperdollPanels[z].SetSize(paperdollTex.Width / Options.Instance.Sprites.NormalFrames, paperdollTex.Height / Options.Instance.Sprites.Directions);
-                        PaperdollPanels[z].SetPosition(
-                            mCharacterContainer.Width / 2 - PaperdollPanels[z].Width / 2,
-                            mCharacterContainer.Height / 2 - PaperdollPanels[z].Height / 2
-                        );
-                    }
-
-                    PaperdollPanels[z].Show();
-                    PaperdollTextures[z] = paperdoll;
-                }
-            }
-        }
-        else if (player.Sprite != mCurrentSprite && player.Face != mCurrentSprite)
-        {
-            mCharacterPortrait.IsHidden = true;
-            for (var i = 0; i < Options.Instance.Equipment.Slots.Count; i++)
-                PaperdollPanels[i].Hide();
-        }
-
         // Stats text
         mAttackLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Attack], player.Stat[(int)Stat.Attack]));
         mAbilityPwrLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Intelligence], player.Stat[(int)Stat.Intelligence]));
@@ -684,63 +531,6 @@ public partial class CharacterWindow : Window
         UpdateExtraBuffs();
         mDamageLabel.SetText(Strings.Character.FlatDamage.ToString(FormatEffectValue(_flatDamage)));
         mCureLabel.SetText(Strings.Character.FlatCures.ToString(FormatEffectValue(_flatCures)));
-
-        UpdateEquippedItems(true);
-    }
-
-    private void UpdateEquippedItems(bool updateExtraBuffs = false)
-    {
-        var player = DisplayedPlayer;
-        if (player is null)
-            return;
-
-        int itemIndex = 0;
-        for (var slotIndex = 0; slotIndex < Options.Instance.Equipment.EquipmentSlots.Count; slotIndex++)
-        {
-            var slot = Options.Instance.Equipment.EquipmentSlots[slotIndex];
-
-            if (player == Globals.Me)
-            {
-                var itemSlots = player.MyEquipment.GetValueOrDefault(slotIndex) ?? new List<int>();
-                for (var i = 0; i < slot.MaxItems; i++)
-                {
-                    if (itemIndex >= Items.Count)
-                        break;
-
-                    var itemIds = new List<Guid>();
-                    var props = new List<ItemProperties>();
-
-                    if (i < itemSlots.Count && itemSlots[i] >= 0 && itemSlots[i] < Options.Instance.Player.MaxInventory)
-                    {
-                        var invItem = player.Inventory[itemSlots[i]];
-                        if (invItem.ItemId != Guid.Empty)
-                        {
-                            itemIds.Add(invItem.ItemId);
-                            props.Add(invItem.ItemProperties);
-                        }
-                    }
-
-                    Items[itemIndex].Update(itemIds, props);
-                    itemIndex++;
-                }
-            }
-            else
-            {
-                var equippedIds = player.Equipment.GetValueOrDefault(slotIndex) ?? new List<Guid>();
-                for (var i = 0; i < slot.MaxItems; i++)
-                {
-                    if (itemIndex >= Items.Count)
-                        break;
-
-                    var itemIds = new List<Guid>();
-                    if (i < equippedIds.Count && equippedIds[i] != Guid.Empty)
-                        itemIds.Add(equippedIds[i]);
-
-                    Items[itemIndex].Update(itemIds, new List<ItemProperties>());
-                    itemIndex++;
-                }
-            }
-        }
     }
 
     public void UpdateExtraBuffs()
