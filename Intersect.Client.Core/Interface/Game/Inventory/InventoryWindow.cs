@@ -9,11 +9,14 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
+using Intersect.Client.Interface.Game.Character;
 using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Client.Utilities;
 using Intersect.Client.Framework.Items;
+using Intersect.Client.Framework.Content;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.PlayerClass;
 
 namespace Intersect.Client.Interface.Game.Inventory;
 
@@ -21,6 +24,8 @@ public partial class InventoryWindow : Window
 {
     public List<SlotItem> Items { get; set; } = [];
 
+    private readonly Base _characterPanel;
+    private readonly Base _equipmentPanel;
     private readonly Base _headerPanel;
     private readonly ScrollControl _slotContainer;
     private readonly ContextMenu _contextMenu;
@@ -28,6 +33,15 @@ public partial class InventoryWindow : Window
     private readonly Button _sortButton;
     private readonly ComboBox _typeBox;
     private readonly ComboBox _subtypeBox;
+
+    private readonly ImagePanel _paperdollContainer;
+    private readonly Label _characterName;
+    private readonly Label _characterLevelAndClass;
+    private readonly List<EquipmentItem> _equipmentItems = [];
+    private readonly ImagePanel[] _paperdollLayers;
+    private readonly string[] _paperdollTextures;
+    private readonly Label _equipmentHeader;
+    private string _currentSprite = string.Empty;
 
  
     private readonly Dictionary<int, HashSet<string>> _subtypesByType = new();
@@ -50,6 +64,11 @@ public partial class InventoryWindow : Window
     private const int CTRL_H = 24;   // alto de controles
     private const int CTRL_W_SMALL = 140;
     private const int CTRL_W_MED = 150;
+    private const int LEFT_COL_WIDTH = 240;
+    private const int PAPERDOLL_SIZE = 160;
+    private const int EQUIP_COLUMNS = 3;
+    private const int EQUIP_SLOT_SIZE = 36;
+    private const int EQUIP_SPACING = 8;
 
     private int _lastW, _lastH;
 
@@ -63,12 +82,71 @@ public partial class InventoryWindow : Window
         IsClosable = true;
 
         // Tamaño/posición explícitos
-        SetSize(380, 460);
+        SetSize(760, 520);
+
+        // Columna izquierda: info de personaje y equipo
+        _characterPanel = new Base(this, "CharacterPanel");
+        _characterPanel.SetPosition(PAD, PAD);
+        _characterPanel.SetSize(LEFT_COL_WIDTH, Height - PAD * 2);
+
+        _characterName = new Label(_characterPanel, "CharacterName")
+        {
+            FontName = "sourcesansproblack",
+            FontSize = 14,
+            AutoSizeToContents = true,
+            TextColorOverride = Color.White,
+        };
+        _characterName.SetPosition(0, 0);
+
+        _characterLevelAndClass = new Label(_characterPanel, "CharacterLevelAndClass")
+        {
+            FontName = "source-sans-pro",
+            FontSize = 12,
+            AutoSizeToContents = true,
+            TextColorOverride = Color.White,
+        };
+        _characterLevelAndClass.SetPosition(0, _characterName.Height + 2);
+
+        _paperdollContainer = new ImagePanel(_characterPanel, "PaperdollContainer");
+        _paperdollContainer.SetSize(PAPERDOLL_SIZE, PAPERDOLL_SIZE);
+        _paperdollContainer.SetPosition((LEFT_COL_WIDTH - PAPERDOLL_SIZE) / 2, _characterLevelAndClass.Bottom + GAP);
+
+        _paperdollLayers = new ImagePanel[Options.Instance.Equipment.Slots.Count + 1];
+        _paperdollTextures = new string[_paperdollLayers.Length];
+        for (var i = 0; i < _paperdollLayers.Length; i++)
+        {
+            _paperdollLayers[i] = new ImagePanel(_paperdollContainer)
+            {
+                IsVisibleInTree = false
+            };
+            _paperdollLayers[i].Hide();
+            _paperdollTextures[i] = string.Empty;
+        }
+
+        _equipmentPanel = new Base(_characterPanel, "EquipmentPanel");
+        _equipmentPanel.SetPosition(0, _paperdollContainer.Bottom + GAP);
+        _equipmentPanel.SetSize(_characterPanel.Width, _characterPanel.Height - _equipmentPanel.Y);
+
+        _equipmentHeader = new Label(_equipmentPanel, "EquipmentHeader")
+        {
+            FontName = "sourcesansproblack",
+            FontSize = 12,
+            AutoSizeToContents = true,
+            Text = "Equipo",
+            TextColorOverride = Color.White,
+        };
+        _equipmentHeader.SetPosition(0, 0);
+        _equipmentHeader.SizeToContents();
+
+        BuildEquipmentSlots();
+
+        var rightX = PAD + LEFT_COL_WIDTH + GAP;
+        var rightW = Width - rightX - PAD;
 
         // --------- Header (contenedor de filtros) ----------
         _headerPanel = new Base(this, "HeaderPanel");
-        _headerPanel.SetPosition(PAD, PAD);
-        _headerPanel.SetSize(Width - PAD * 2, HEADER_H);
+        _headerPanel.SetPosition(rightX, PAD);
+        _headerPanel.SetSize(rightW, HEADER_H);
 
         // Campo de búsqueda
         _searchBox = new TextBox(_headerPanel, "SearchBox")
@@ -129,7 +207,8 @@ public partial class InventoryWindow : Window
             OverflowX = OverflowBehavior.Auto,
             OverflowY = OverflowBehavior.Scroll,
         };
-        _slotContainer.SetPosition(PAD, _headerPanel.Y + _headerPanel.Height + GAP);
+        _slotContainer.SetPosition(rightX, _headerPanel.Y + _headerPanel.Height + GAP);
+        _slotContainer.SetSize(rightW, Height - (_slotContainer.Y + PAD));
         
 
         // Context menu
@@ -159,16 +238,203 @@ public partial class InventoryWindow : Window
     // Recalcula posiciones/tamaños si cambia el tamaño de la ventana
     private void RecomputeLayout()
     {
-        _headerPanel.SetPosition(PAD, PAD);
-        _headerPanel.SetSize(Width - PAD * 2, HEADER_H);
+        _characterPanel.SetPosition(PAD, PAD);
+        _characterPanel.SetSize(LEFT_COL_WIDTH, Height - PAD * 2);
+
+        _characterName.SetPosition(0, 0);
+        _characterLevelAndClass.SetPosition(0, _characterName.Height + 2);
+
+        _paperdollContainer.SetPosition((LEFT_COL_WIDTH - PAPERDOLL_SIZE) / 2, _characterLevelAndClass.Bottom + GAP);
+
+        _equipmentPanel.SetPosition(0, _paperdollContainer.Bottom + GAP);
+        _equipmentPanel.SetSize(_characterPanel.Width, _characterPanel.Height - _equipmentPanel.Y);
+
+        var rightX = PAD + LEFT_COL_WIDTH + GAP;
+        var rightW = Width - rightX - PAD;
+
+        _headerPanel.SetPosition(rightX, PAD);
+        _headerPanel.SetSize(rightW, HEADER_H);
 
         _searchBox.SetPosition(0, 0);
         _sortButton.SetPosition(_searchBox.X + _searchBox.Width + GAP, 0);
         _typeBox.SetPosition(0, _searchBox.Y + _searchBox.Height + GAP);
         _subtypeBox.SetPosition(_typeBox.X + _typeBox.Width + GAP, _typeBox.Y);
 
-        _slotContainer.SetPosition(PAD, _headerPanel.Y + _headerPanel.Height + GAP);
-  
+        _slotContainer.SetPosition(rightX, _headerPanel.Y + _headerPanel.Height + GAP);
+        _slotContainer.SetSize(rightW, Height - (_slotContainer.Y + PAD));
+
+        LayoutEquipmentSlots();
+    }
+
+    private void BuildEquipmentSlots()
+    {
+        _equipmentItems.Clear();
+
+        var multiSlotTracker = new Dictionary<string, int>();
+        for (var slotIndex = 0; slotIndex < Options.Instance.Equipment.EquipmentSlots.Count; slotIndex++)
+        {
+            var slot = Options.Instance.Equipment.EquipmentSlots[slotIndex];
+
+            for (var j = 0; j < slot.MaxItems; j++)
+            {
+                var item = new EquipmentItem(slotIndex, () => Globals.Me);
+                _equipmentItems.Add(item);
+
+                var slotName = slot.Name;
+                var panelName = slotName;
+
+                if (slot.MaxItems > 1)
+                {
+                    var currentIndex = multiSlotTracker.GetValueOrDefault(slotName);
+                    panelName = $"{slotName}_{currentIndex}";
+                    multiSlotTracker[slotName] = currentIndex + 1;
+                }
+
+                item.Pnl = new ImagePanel(_equipmentPanel, panelName);
+                item.Setup();
+            }
+        }
+
+        LayoutEquipmentSlots();
+    }
+
+    private void LayoutEquipmentSlots()
+    {
+        if (_equipmentItems.Count == 0)
+            return;
+
+        var totalWidth = (EQUIP_COLUMNS * EQUIP_SLOT_SIZE) + ((EQUIP_COLUMNS - 1) * EQUIP_SPACING);
+        var startX = Math.Max(0, (_equipmentPanel.Width - totalWidth) / 2);
+        var startY = _equipmentHeader.Bottom + GAP;
+
+        for (var index = 0; index < _equipmentItems.Count; index++)
+        {
+            var row = index / EQUIP_COLUMNS;
+            var col = index % EQUIP_COLUMNS;
+
+            var panel = _equipmentItems[index].Pnl;
+            panel.SetSize(EQUIP_SLOT_SIZE, EQUIP_SLOT_SIZE);
+            panel.SetPosition(
+                startX + col * (EQUIP_SLOT_SIZE + EQUIP_SPACING),
+                startY + row * (EQUIP_SLOT_SIZE + EQUIP_SPACING)
+            );
+        }
+    }
+
+    private void UpdatePaperdoll(Player player)
+    {
+        var entityTex = Globals.ContentManager.GetTexture(TextureType.Entity, player.Sprite);
+
+        if (!string.IsNullOrWhiteSpace(player.Sprite) && entityTex != null)
+        {
+            for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[1].Count && z < _paperdollLayers.Length; z++)
+            {
+                var paperdoll = string.Empty;
+                var slotName = Options.Instance.Equipment.Paperdoll.Directions[1][z];
+                var slotIndex = Options.Instance.Equipment.Slots.IndexOf(slotName);
+
+                if (slotIndex > -1)
+                {
+                    var equipment = player.MyEquipment;
+
+                    if (equipment.TryGetValue(slotIndex, out var equippedList) && equippedList.Count > 0)
+                    {
+                        var inventoryIndex = equippedList[0];
+                        if (inventoryIndex >= 0 && inventoryIndex < Options.Instance.Player.MaxInventory)
+                        {
+                            var itemNum = player.Inventory[inventoryIndex].ItemId;
+
+                            if (ItemDescriptor.TryGet(itemNum, out var itemDescriptor))
+                            {
+                                paperdoll = player.Gender == 0 ? itemDescriptor.MalePaperdoll : itemDescriptor.FemalePaperdoll;
+                                _paperdollLayers[z].RenderColor = itemDescriptor.Color;
+                            }
+                        }
+                    }
+                }
+                else if (slotName == "Player")
+                {
+                    _paperdollLayers[z].Show();
+                    _paperdollLayers[z].Texture = entityTex;
+                    _paperdollLayers[z].SetTextureRect(0, 0, entityTex.Width / Options.Instance.Sprites.NormalFrames, entityTex.Height / Options.Instance.Sprites.Directions);
+                    _paperdollLayers[z].SizeToContents();
+                    _paperdollLayers[z].RenderColor = player.Color;
+                    _paperdollLayers[z].SetPosition(
+                        _paperdollContainer.Width / 2 - _paperdollLayers[z].Width / 2,
+                        _paperdollContainer.Height / 2 - _paperdollLayers[z].Height / 2
+                    );
+                }
+
+                if (string.IsNullOrWhiteSpace(paperdoll) && !string.IsNullOrWhiteSpace(_paperdollTextures[z]) && slotName != "Player")
+                {
+                    _paperdollLayers[z].Texture = null;
+                    _paperdollLayers[z].Hide();
+                    _paperdollTextures[z] = string.Empty;
+                }
+                else if (!string.IsNullOrWhiteSpace(paperdoll) && paperdoll != _paperdollTextures[z])
+                {
+                    var paperdollTex = Globals.ContentManager.GetTexture(TextureType.Paperdoll, paperdoll);
+
+                    _paperdollLayers[z].Texture = paperdollTex;
+                    if (paperdollTex != null)
+                    {
+                        _paperdollLayers[z].SetTextureRect(0, 0, paperdollTex.Width / Options.Instance.Sprites.NormalFrames, paperdollTex.Height / Options.Instance.Sprites.Directions);
+                        _paperdollLayers[z].SetSize(paperdollTex.Width / Options.Instance.Sprites.NormalFrames, paperdollTex.Height / Options.Instance.Sprites.Directions);
+                        _paperdollLayers[z].SetPosition(
+                            _paperdollContainer.Width / 2 - _paperdollLayers[z].Width / 2,
+                            _paperdollContainer.Height / 2 - _paperdollLayers[z].Height / 2
+                        );
+                    }
+
+                    _paperdollLayers[z].Show();
+                    _paperdollTextures[z] = paperdoll;
+                }
+            }
+
+            _currentSprite = player.Sprite ?? string.Empty;
+        }
+        else if (player.Sprite != _currentSprite && player.Face != _currentSprite)
+        {
+            foreach (var layer in _paperdollLayers)
+            {
+                layer.Hide();
+                layer.Texture = null;
+            }
+
+            _currentSprite = string.Empty;
+        }
+    }
+
+    private void UpdateEquipmentSlots(Player player)
+    {
+        int itemIndex = 0;
+        for (var slotIndex = 0; slotIndex < Options.Instance.Equipment.EquipmentSlots.Count; slotIndex++)
+        {
+            var slot = Options.Instance.Equipment.EquipmentSlots[slotIndex];
+            var itemSlots = player.MyEquipment.GetValueOrDefault(slotIndex) ?? new List<int>();
+
+            for (var i = 0; i < slot.MaxItems; i++)
+            {
+                if (itemIndex >= _equipmentItems.Count)
+                    break;
+
+                var itemIds = new List<Guid>();
+                var props = new List<ItemProperties>();
+
+                if (i < itemSlots.Count && itemSlots[i] >= 0 && itemSlots[i] < Options.Instance.Player.MaxInventory)
+                {
+                    var invItem = player.Inventory[itemSlots[i]];
+                    if (invItem.ItemId != Guid.Empty)
+                    {
+                        itemIds.Add(invItem.ItemId);
+                        props.Add(invItem.ItemProperties);
+                    }
+                }
+
+                _equipmentItems[itemIndex].Update(itemIds, props);
+                itemIndex++;
+            }
+        }
     }
 
     private void SortButton_Clicked(Base sender, MouseButtonState arguments)
@@ -379,6 +645,18 @@ public partial class InventoryWindow : Window
             _lastH = Height;
             RecomputeLayout();
         }
+
+        var player = Globals.Me;
+        if (player == null)
+        {
+            return;
+        }
+
+        _characterName.SetText(player.Name ?? string.Empty);
+        _characterLevelAndClass.SetText(Strings.Character.LevelAndClass.ToString(player.Level, ClassDescriptor.GetName(player.Class)));
+
+        UpdatePaperdoll(player);
+        UpdateEquipmentSlots(player);
 
         var query = _searchBox.Text;
         var asc = _sortAscending;
