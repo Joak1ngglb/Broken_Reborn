@@ -38,12 +38,6 @@ public enum GameObjectType
     [GameObjectInfo(typeof(ResourceDescriptor), "resources")]
     Resource,
 
-    [GameObjectInfo(typeof(FishBase), "fish")]
-    Fish,
-
-    [GameObjectInfo(typeof(FishingSpotBase), "fishing_spots")]
-    FishingSpot,
-
     [GameObjectInfo(typeof(ShopDescriptor), "shops")]
     Shop,
 
@@ -83,7 +77,9 @@ public enum GameObjectType
     [GameObjectInfo(typeof(SetDescriptor), "sets")]
     Sets = 19,
 
+    [GameObjectInfo(typeof(FishBase), "fish")]
     Fish = 20,
 
+    [GameObjectInfo(typeof(FishingSpotBase), "fishing_spots")]
     FishingSpot,
 }

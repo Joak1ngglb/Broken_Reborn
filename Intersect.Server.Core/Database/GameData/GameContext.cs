@@ -2,6 +2,7 @@ using Intersect.Extensions;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Fishing;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
@@ -63,6 +64,11 @@ public abstract partial class GameContext : IntersectDbContext<GameContext>, IGa
 
     //Resources
     public DbSet<ResourceDescriptor> Resources { get; set; }
+
+    //Fishing
+    public DbSet<FishBase> Fish { get; set; }
+
+    public DbSet<FishingSpotBase> FishingSpots { get; set; }
 
     //Shops
     public DbSet<ShopDescriptor> Shops { get; set; }

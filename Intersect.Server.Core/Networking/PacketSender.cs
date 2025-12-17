@@ -9,6 +9,7 @@ using Intersect.Framework.Core.GameObjects;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Fishing;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
@@ -1932,6 +1933,20 @@ public static partial class PacketSender
                 break;
             case GameObjectType.Resource:
                 foreach (var obj in ResourceDescriptor.Lookup)
+                {
+                    SendGameObject(client, obj.Value, false, false, packetList);
+                }
+
+                break;
+            case GameObjectType.Fish:
+                foreach (var obj in FishBase.Lookup)
+                {
+                    SendGameObject(client, obj.Value, false, false, packetList);
+                }
+
+                break;
+            case GameObjectType.FishingSpot:
+                foreach (var obj in FishingSpotBase.Lookup)
                 {
                     SendGameObject(client, obj.Value, false, false, packetList);
                 }
