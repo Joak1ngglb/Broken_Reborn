@@ -74,5 +74,9 @@ public enum GameObjectType
     UserVariable,
 
     [GameObjectInfo(typeof(SetDescriptor), "sets")]
-    Sets,
+    Sets = 19,
+
+    Fish = 20,
+
+    FishingSpot,
 }

@@ -38,6 +38,8 @@ public abstract partial class MapAttribute
                 return new MapSlideAttribute();
             case MapAttributeType.Critter:
                 return new MapCritterAttribute();
+            case MapAttributeType.FishingSpot:
+                return new MapFishingSpotAttribute();
         }
 
         return null;
