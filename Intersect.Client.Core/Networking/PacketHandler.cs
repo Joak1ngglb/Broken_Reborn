@@ -1571,6 +1571,32 @@ internal sealed partial class PacketHandler
         Globals.Me.GlobalCooldown = Timing.Global.Milliseconds + packet.GlobalCooldown;
     }
 
+    public void HandlePacket(IPacketSender packetSender, StartFishingPacket packet)
+    {
+        Globals.Me?.StartFishing(
+            packet.FishId,
+            Timing.Global.Milliseconds + packet.StageTimer,
+            Timing.Global.Milliseconds + packet.ResolveTimer,
+            packet.Stage,
+            packet.CancelRequested
+        );
+    }
+
+    public void HandlePacket(IPacketSender packetSender, ResolveFishingPacket packet)
+    {
+        Globals.Me?.ResolveFishing(
+            packet.FishId,
+            Timing.Global.Milliseconds + packet.ResolveTimer,
+            packet.CancelRequested,
+            packet.Canceled
+        );
+    }
+
+    public void HandlePacket(IPacketSender packetSender, StopFishingPacket packet)
+    {
+        Globals.Me?.StopFishing(packet.Canceled);
+    }
+
     //ExperiencePacket
     public void HandlePacket(IPacketSender packetSender, ExperiencePacket packet)
     {

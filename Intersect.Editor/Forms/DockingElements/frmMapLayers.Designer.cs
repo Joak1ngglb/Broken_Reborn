@@ -40,11 +40,15 @@ namespace Intersect.Editor.Forms.DockingElements
             this.cmbTilesets = new DarkUI.Controls.DarkComboBox();
             cmbAttributeType = new DarkUI.Controls.DarkComboBox();
             this.grpResource = new DarkUI.Controls.DarkGroupBox();
+            this.grpFishingSpot = new DarkUI.Controls.DarkGroupBox();
             this.grpZResource = new DarkUI.Controls.DarkGroupBox();
             this.rbLevel2 = new DarkUI.Controls.DarkRadioButton();
             this.rbLevel1 = new DarkUI.Controls.DarkRadioButton();
             this.cmbResourceAttribute = new DarkUI.Controls.DarkComboBox();
             this.lblResource = new System.Windows.Forms.Label();
+            this.cmbFishingSpot = new DarkUI.Controls.DarkComboBox();
+            this.lblFishingSpot = new System.Windows.Forms.Label();
+            this.chkFishingSpotBlocked = new DarkUI.Controls.DarkCheckBox();
             this.grpItem = new DarkUI.Controls.DarkGroupBox();
             this.nudItemQuantity = new DarkUI.Controls.DarkNumericUpDown();
             this.cmbItemAttribute = new DarkUI.Controls.DarkComboBox();
@@ -145,6 +149,7 @@ namespace Intersect.Editor.Forms.DockingElements
             this.lblItemRespawnTime = new System.Windows.Forms.Label();
             this.tooltips = new System.Windows.Forms.ToolTip(this.components);
             this.grpResource.SuspendLayout();
+            this.grpFishingSpot.SuspendLayout();
             this.grpZResource.SuspendLayout();
             this.grpItem.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudItemQuantity)).BeginInit();
@@ -299,6 +304,22 @@ namespace Intersect.Editor.Forms.DockingElements
             this.grpResource.Text = "Resource";
             this.grpResource.Visible = false;
             //
+            // grpFishingSpot
+            //
+            this.grpFishingSpot.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(48)))));
+            this.grpFishingSpot.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(90)))), ((int)(((byte)(90)))), ((int)(((byte)(90)))));
+            this.grpFishingSpot.Controls.Add(this.chkFishingSpotBlocked);
+            this.grpFishingSpot.Controls.Add(this.cmbFishingSpot);
+            this.grpFishingSpot.Controls.Add(this.lblFishingSpot);
+            this.grpFishingSpot.ForeColor = System.Drawing.Color.Gainsboro;
+            this.grpFishingSpot.Location = new System.Drawing.Point(8, 42);
+            this.grpFishingSpot.Name = "grpFishingSpot";
+            this.grpFishingSpot.Size = new System.Drawing.Size(250, 90);
+            this.grpFishingSpot.TabIndex = 32;
+            this.grpFishingSpot.TabStop = false;
+            this.grpFishingSpot.Text = "Fishing Spot";
+            this.grpFishingSpot.Visible = false;
+            //
             // grpZResource
             //
             this.grpZResource.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(48)))));
@@ -363,6 +384,44 @@ namespace Intersect.Editor.Forms.DockingElements
             this.lblResource.Size = new System.Drawing.Size(56, 13);
             this.lblResource.TabIndex = 10;
             this.lblResource.Text = "Resource:";
+            //
+            // cmbFishingSpot
+            //
+            this.cmbFishingSpot.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(69)))), ((int)(((byte)(73)))), ((int)(((byte)(74)))));
+            this.cmbFishingSpot.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(90)))), ((int)(((byte)(90)))), ((int)(((byte)(90)))));
+            this.cmbFishingSpot.BorderStyle = System.Windows.Forms.ButtonBorderStyle.Solid;
+            this.cmbFishingSpot.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(43)))), ((int)(((byte)(43)))));
+            this.cmbFishingSpot.DrawDropdownHoverOutline = false;
+            this.cmbFishingSpot.DrawFocusRectangle = false;
+            this.cmbFishingSpot.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.cmbFishingSpot.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbFishingSpot.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmbFishingSpot.ForeColor = System.Drawing.Color.Gainsboro;
+            this.cmbFishingSpot.FormattingEnabled = true;
+            this.cmbFishingSpot.Location = new System.Drawing.Point(17, 36);
+            this.cmbFishingSpot.Name = "cmbFishingSpot";
+            this.cmbFishingSpot.Size = new System.Drawing.Size(222, 21);
+            this.cmbFishingSpot.TabIndex = 21;
+            this.cmbFishingSpot.Text = null;
+            this.cmbFishingSpot.TextPadding = new System.Windows.Forms.Padding(2);
+            //
+            // lblFishingSpot
+            //
+            this.lblFishingSpot.AutoSize = true;
+            this.lblFishingSpot.Location = new System.Drawing.Point(14, 16);
+            this.lblFishingSpot.Name = "lblFishingSpot";
+            this.lblFishingSpot.Size = new System.Drawing.Size(68, 13);
+            this.lblFishingSpot.TabIndex = 22;
+            this.lblFishingSpot.Text = "Fishing Spot";
+            //
+            // chkFishingSpotBlocked
+            //
+            this.chkFishingSpotBlocked.AutoSize = true;
+            this.chkFishingSpotBlocked.Location = new System.Drawing.Point(17, 65);
+            this.chkFishingSpotBlocked.Name = "chkFishingSpotBlocked";
+            this.chkFishingSpotBlocked.Size = new System.Drawing.Size(65, 17);
+            this.chkFishingSpotBlocked.TabIndex = 23;
+            this.chkFishingSpotBlocked.Text = "Blocked";
             //
             // grpItem
             //
@@ -1245,6 +1304,7 @@ namespace Intersect.Editor.Forms.DockingElements
             this.pnlAttributes.Controls.Add(this.grpSound);
             this.pnlAttributes.Controls.Add(this.grpZDimension);
             this.pnlAttributes.Controls.Add(this.grpItem);
+            this.pnlAttributes.Controls.Add(this.grpFishingSpot);
             this.pnlAttributes.Controls.Add(this.grpResource);
             this.pnlAttributes.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlAttributes.Location = new System.Drawing.Point(0, 0);
@@ -1712,6 +1772,8 @@ namespace Intersect.Editor.Forms.DockingElements
             this.Load += new System.EventHandler(this.frmMapLayers_Load);
             this.grpResource.ResumeLayout(false);
             this.grpResource.PerformLayout();
+            this.grpFishingSpot.ResumeLayout(false);
+            this.grpFishingSpot.PerformLayout();
             this.grpZResource.ResumeLayout(false);
             this.grpZResource.PerformLayout();
             this.grpItem.ResumeLayout(false);
@@ -1814,6 +1876,10 @@ namespace Intersect.Editor.Forms.DockingElements
         public Controls.LightEditorCtrl lightEditor;
         private DarkComboBox cmbResourceAttribute;
         private System.Windows.Forms.Label lblResource;
+        private DarkGroupBox grpFishingSpot;
+        private DarkComboBox cmbFishingSpot;
+        private System.Windows.Forms.Label lblFishingSpot;
+        private DarkCheckBox chkFishingSpotBlocked;
         private DarkComboBox cmbItemAttribute;
         private DarkComboBox cmbWarpMap;
         private DarkButton btnVisualMapSelector;

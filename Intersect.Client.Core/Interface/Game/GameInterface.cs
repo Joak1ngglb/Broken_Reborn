@@ -9,6 +9,7 @@ using Intersect.Client.Interface.Game.Chat;
 using Intersect.Client.Interface.Game.Crafting;
 using Intersect.Client.Interface.Game.DescriptionWindows;
 using Intersect.Client.Interface.Game.Enchanting;
+using Intersect.Client.Interface.Game.Fishing;
 using Intersect.Client.Interface.Game.EntityPanel;
 using Intersect.Client.Interface.Game.Guilds;
 using Intersect.Client.Interface.Game.Hotbar;
@@ -67,6 +68,7 @@ public partial class GameInterface : MutableInterface
     public EnchantItemWindow mEnchantItemWindow;
     private RuneEnchantWindow mRuneItemWindow;
     private BreakItemWindow mBreakItemWindow;
+    private FishingWindow? _fishingWindow;
     private MapItemWindow mMapItemWindow;
     private GuildCreationWindow mCreateGuildWindow;
     private SettingsWindow? _settingsWindow;
@@ -548,6 +550,7 @@ public partial class GameInterface : MutableInterface
         mBreakItemWindow?.Update();
         mEnchantItemWindow?.Update();
         mRuneItemWindow?.Update();
+        UpdateFishingWindow();
         _bestiaryWindow?.Update();
         mMailBoxWindow?.UpdateMail();
         mSellMarketWindow?.Update();
@@ -729,6 +732,18 @@ public partial class GameInterface : MutableInterface
             mChatBox.UnFocus();
             UnfocusChat = false;
         }
+    }
+
+    private void UpdateFishingWindow()
+    {
+        if (Globals.Me == null)
+        {
+            _fishingWindow?.Hide();
+            return;
+        }
+
+        _fishingWindow ??= new FishingWindow(GameCanvas);
+        _fishingWindow.Update(Globals.Me);
     }
 
     public void UpdateAdminWindowMapList()

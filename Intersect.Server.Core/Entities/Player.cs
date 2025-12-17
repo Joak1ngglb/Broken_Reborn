@@ -871,6 +871,8 @@ public partial class Player : Entity
 
                 base.Update(timeMs);
 
+                FishEvent.FishingUpdate();
+
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
                 {
                     var autorunEvents = 0;
