@@ -25,4 +25,6 @@ public enum MapAttributeType : byte
     Slide,
 
     Critter,
+
+    FishingSpot,
 }
