@@ -932,6 +932,7 @@ public static partial class Strings
             {(int) MapAttributeType.Item, @"Item Spawn" },
             {(int) MapAttributeType.NpcAvoid, @"Npc Avoid" },
             {(int) MapAttributeType.Resource, @"Resource Spawn" },
+            {(int) MapAttributeType.FishingSpot, @"Fishing Spot" },
             {(int) MapAttributeType.Slide, @"Slide" },
             {(int) MapAttributeType.Sound, @"Map Sound" },
             {(int) MapAttributeType.Walkable, @"Walkable" },
@@ -1027,6 +1028,8 @@ public static partial class Strings
         public static LocalizedString Resource = @"Resource";
 
         public static LocalizedString ResourceSpawn = @"Resource";
+
+        public static LocalizedString FishingSpot = @"Fishing Spot";
 
         public static LocalizedString RespawnTime = @"Respawn Time (ms)";
 
@@ -3799,6 +3802,30 @@ Tick timer saved in server config.json.";
         public static LocalizedString Okay = @"Okay";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Save = @"Save";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Name = @"Name";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Folder = @"Folder";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString New = @"New";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Copy = @"Copy";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Undo = @"Undo";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Paste = @"Paste";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Delete = @"Delete";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString True = @"True";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -4353,6 +4380,10 @@ Tick timer saved in server config.json.";
         public static LocalizedString reportbug = @"Report Bug";
 
         public static LocalizedString resourceeditor = @"Resource Editor";
+
+        public static LocalizedString fisheditor = @"Fish Editor";
+
+        public static LocalizedString fishingspoteditor = @"Fishing Spot Editor";
 
         public static LocalizedString resources = @"Resources";
 
@@ -6006,6 +6037,60 @@ Negative values for time to flow backwards.";
             {(int) VariableType.UserVariable, @"User Variable" },
         };
 
+    }
+
+    public partial struct FishEditor
+    {
+        public static LocalizedString Title = @"Fish Editor";
+
+        public static LocalizedString Chance = @"Chance";
+
+        public static LocalizedString Strength = @"Strength";
+
+        public static LocalizedString Speed = @"Speed";
+
+        public static LocalizedString Hooks = @"Hooks";
+
+        public static LocalizedString AddHook = @"Add Hook";
+
+        public static LocalizedString RemoveHook = @"Remove Hook";
+
+        public static LocalizedString Requirements = @"Requirements";
+
+        public static LocalizedString DeletePrompt = @"Are you sure you want to delete this fish?";
+
+        public static LocalizedString DeleteTitle = @"Delete Fish";
+
+        public static LocalizedString UndoPrompt = @"Revert changes to this fish?";
+
+        public static LocalizedString UndoTitle = @"Undo Fish";
+    }
+
+    public partial struct FishingSpotEditor
+    {
+        public static LocalizedString Title = @"Fishing Spot Editor";
+
+        public static LocalizedString Chance = @"Chance";
+
+        public static LocalizedString Strength = @"Strength";
+
+        public static LocalizedString Speed = @"Speed";
+
+        public static LocalizedString Hooks = @"Hooks";
+
+        public static LocalizedString AddHook = @"Add Hook";
+
+        public static LocalizedString RemoveHook = @"Remove Hook";
+
+        public static LocalizedString Requirements = @"Requirements";
+
+        public static LocalizedString DeletePrompt = @"Are you sure you want to delete this fishing spot?";
+
+        public static LocalizedString DeleteTitle = @"Delete Fishing Spot";
+
+        public static LocalizedString UndoPrompt = @"Revert changes to this fishing spot?";
+
+        public static LocalizedString UndoTitle = @"Undo Fishing Spot";
     }
 
 }

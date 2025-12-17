@@ -192,6 +192,10 @@ public partial class Player : Entity, IPlayer
 
     public long FishingResolveTimer { get; private set; }
 
+    public long FishingStageDuration { get; private set; }
+
+    public long FishingResolveDuration { get; private set; }
+
     public FishingStage FishingStage { get; private set; } = FishingStage.None;
 
     public bool IsFishingCancellationRequested { get; private set; }
@@ -203,6 +207,8 @@ public partial class Player : Entity, IPlayer
         FishingFishId = fishId;
         FishingStageTimer = stageTimer;
         FishingResolveTimer = resolveTimer;
+        FishingStageDuration = stageTimer - Timing.Global.Milliseconds;
+        FishingResolveDuration = resolveTimer - Timing.Global.Milliseconds;
         FishingStage = stage;
         IsFishingCancellationRequested = cancelRequested;
         FishingCanceled = false;
@@ -212,6 +218,7 @@ public partial class Player : Entity, IPlayer
     {
         FishingFishId = fishId;
         FishingResolveTimer = resolveTimer;
+        FishingResolveDuration = resolveTimer - Timing.Global.Milliseconds;
         FishingStage = FishingStage.Resolving;
         IsFishingCancellationRequested = cancelRequested;
         FishingCanceled = canceled;
@@ -224,6 +231,8 @@ public partial class Player : Entity, IPlayer
         FishingFishId = null;
         FishingStageTimer = 0;
         FishingResolveTimer = 0;
+        FishingStageDuration = 0;
+        FishingResolveDuration = 0;
         IsFishingCancellationRequested = false;
     }
 

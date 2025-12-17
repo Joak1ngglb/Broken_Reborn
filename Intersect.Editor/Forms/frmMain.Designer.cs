@@ -112,6 +112,8 @@ namespace Intersect.Editor.Forms
             this.projectileEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.questEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.resourceEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fishEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fishingSpotEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.shopEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.spellEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.variableEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -815,6 +817,8 @@ namespace Intersect.Editor.Forms
             this.projectileEditorToolStripMenuItem,
             this.questEditorToolStripMenuItem,
             this.resourceEditorToolStripMenuItem,
+            this.fishEditorToolStripMenuItem,
+            this.fishingSpotEditorToolStripMenuItem,
             this.shopEditorToolStripMenuItem,
             this.spellEditorToolStripMenuItem,
             this.variableEditorToolStripMenuItem,
@@ -904,9 +908,25 @@ namespace Intersect.Editor.Forms
             this.resourceEditorToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
             this.resourceEditorToolStripMenuItem.Text = "Resource Editor";
             this.resourceEditorToolStripMenuItem.Click += new System.EventHandler(this.resourceEditorToolStripMenuItem_Click);
-            // 
+            //
+            // fishEditorToolStripMenuItem
+            //
+            this.fishEditorToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(220)))));
+            this.fishEditorToolStripMenuItem.Name = "fishEditorToolStripMenuItem";
+            this.fishEditorToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
+            this.fishEditorToolStripMenuItem.Text = "Fish Editor";
+            this.fishEditorToolStripMenuItem.Click += new System.EventHandler(this.fishEditorToolStripMenuItem_Click);
+            //
+            // fishingSpotEditorToolStripMenuItem
+            //
+            this.fishingSpotEditorToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(220)))));
+            this.fishingSpotEditorToolStripMenuItem.Name = "fishingSpotEditorToolStripMenuItem";
+            this.fishingSpotEditorToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
+            this.fishingSpotEditorToolStripMenuItem.Text = "Fishing Spot Editor";
+            this.fishingSpotEditorToolStripMenuItem.Click += new System.EventHandler(this.fishingSpotEditorToolStripMenuItem_Click);
+            //
             // shopEditorToolStripMenuItem
-            // 
+            //
             this.shopEditorToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(220)))));
             this.shopEditorToolStripMenuItem.Name = "shopEditorToolStripMenuItem";
             this.shopEditorToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
@@ -1113,10 +1133,12 @@ namespace Intersect.Editor.Forms
 		private ToolStripMenuItem craftingTableEditorToolStripMenuItem;
 		private ToolStripMenuItem itemEditorToolStripMenuItem;
 		private ToolStripMenuItem npcEditorToolStripMenuItem;
-		private ToolStripMenuItem projectileEditorToolStripMenuItem;
-		private ToolStripMenuItem questEditorToolStripMenuItem;
-		private ToolStripMenuItem resourceEditorToolStripMenuItem;
-		private ToolStripMenuItem shopEditorToolStripMenuItem;
+           private ToolStripMenuItem projectileEditorToolStripMenuItem;
+           private ToolStripMenuItem questEditorToolStripMenuItem;
+           private ToolStripMenuItem resourceEditorToolStripMenuItem;
+            private ToolStripMenuItem fishEditorToolStripMenuItem;
+            private ToolStripMenuItem fishingSpotEditorToolStripMenuItem;
+            private ToolStripMenuItem shopEditorToolStripMenuItem;
                 private ToolStripMenuItem spellEditorToolStripMenuItem;
                 private ToolStripMenuItem variableEditorToolStripMenuItem;
                 private ToolStripMenuItem timeEditorToolStripMenuItem;
