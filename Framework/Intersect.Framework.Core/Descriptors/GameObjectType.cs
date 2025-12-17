@@ -2,6 +2,7 @@ using Intersect.Extensions;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Fishing;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
@@ -36,6 +37,12 @@ public enum GameObjectType
 
     [GameObjectInfo(typeof(ResourceDescriptor), "resources")]
     Resource,
+
+    [GameObjectInfo(typeof(FishBase), "fish")]
+    Fish,
+
+    [GameObjectInfo(typeof(FishingSpotBase), "fishing_spots")]
+    FishingSpot,
 
     [GameObjectInfo(typeof(ShopDescriptor), "shops")]
     Shop,
