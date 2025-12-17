@@ -18,146 +18,134 @@ using Intersect.Framework.Core.GameObjects.PlayerClass;
 
 namespace Intersect.Client.Interface.Game.Character;
 
-
-public partial class CharacterWindow:Window
+public partial class CharacterWindow : Window
 {
-
     private const int WindowWidth = 700;
-
     private const int WindowHeight = 520;
-
     private const int Margin = 16;
 
     private const int StatRowHeight = 24;
-
     private const int StatLabelWidth = 230;
-
-    private const int EffectLabelWidth = 220;
+    private const int EffectLabelWidth = 420; // más ancho porque ahora es 1 sola columna
+    private const int EffectRowHeight = 20;
 
     private const string TitleFont = "sourcesansproblack";
-
     private const string BodyFont = "source-sans-pro";
 
     //Equipment List
     public List<EquipmentItem> Items = new List<EquipmentItem>();
 
-    Label mAbilityPwrLabel;
+    // Containers
+    private Base mCharacterInfoContainer;
+    private Base mStatsContainer;
+    private Base mEquipmentContainer;
+    private Base mExtraBuffsContainer;
 
-    Button mAddAbilityPwrBtn;
+    private ScrollControl mExtraBuffsScroll;
+    private Base mExtraBuffsList;
 
-    Button mAddAttackBtn;
-
-    Button mAddDefenseBtn;
-
-    Button mAddMagicResistBtn;
-
-    Button mAddAgilityBtn;
-    Button mFactionButton;
-
-    //Stats
-    Label mAttackLabel;
-
+    // Character UI
     private ImagePanel mCharacterContainer;
-
     private Label mCharacterLevelAndClass;
-
     private Label mCharacterName;
+    private Button mFactionButton;
 
-    private ImagePanel mCharacterPortrait;
-
+    private ImagePanel mCharacterPortrait; // (si lo usas después)
     private string mCharacterPortraitImg = string.Empty;
-
     private string mCurrentSprite = string.Empty;
 
-    Label mDefenseLabel;
-
-    private ItemProperties mItemProperties = null;
-
-    Label mMagicRstLabel;
-
-    Label mPointsLabel;
-
-    Label mSpeedLabel;
-    Label mAgilityLabel;
-    Label mDamageLabel;
-    Label mCureLabel;
-    Label mCritChanceLabel;
-    Label mBasicAttackDamageLabel;
     public ImagePanel[] PaperdollPanels;
-
     public string[] PaperdollTextures;
+
+    // Stats UI
+    private Label mAttackLabel;
+    private Label mAbilityPwrLabel;
+    private Label mDefenseLabel;
+    private Label mMagicRstLabel;
+    private Label mSpeedLabel;
+    private Label mAgilityLabel;
+    private Label mDamageLabel;
+    private Label mCureLabel;
+    private Label mCritChanceLabel;
+    private Label mBasicAttackDamageLabel;
+    private Label mPointsLabel;
+
+    private Button mAddAttackBtn;
+    private Button mAddAbilityPwrBtn;
+    private Button mAddDefenseBtn;
+    private Button mAddMagicResistBtn;
+    private Button mAddAgilityBtn; // (ojo: en tu código estaba “IncreaseSpeedButton” pero variable “AgilityBtn”)
+
+    // Extra Buffs UI
+    private Label mHpRegen;
+    private Label mManaRegen;
+    private Label mLifeSteal;
+    private Label mAttackSpeed;
+    private Label mExtraExp;
+    private Label mLuck;
+    private Label mTenacity;
+    private Label mCooldownReduction;
+    private Label mManaSteal;
+    private Label mSpeedBuff;
+    private Label mDamageBuff;
+    private Label mCureBuff;
+
+    private Label mAccuracy;
+    private Label mEvasion;
+    private Label mCritBonus;
+    private Label mAntiCrit;
+    private Label mArmorPenetration;
+    private Label mDamageReduction;
+    private Label mDamageReflect;
+    private Label mFlatDamage;
+    private Label mFlatCures;
 
     //Location
     public int X;
-
     public int Y;
 
-    //Extra Buffs
-    Label mHpRegen;
-    Label mManaRegen;
-    Label mLifeSteal;
-    Label mAttackSpeed;
-    Label mExtraExp;
-    Label mLuck;
-    Label mTenacity;
-    Label mCooldownReduction;
-    Label mManaSteal;
-    Label mSpeedBuff;
-    Label mDamageBuff;
-    Label mCureBuff;
-    Label mAccuracy;
-    Label mEvasion;
-    Label mCritBonus;
-    Label mAntiCrit;
-    Label mArmorPenetration;
-    Label mDamageReduction;
-    Label mDamageReflect;
-    Label mFlatDamage;
-    Label mFlatCures;
-    
     private Player? _player;
-
-    ClassDescriptor mClassDescriptor;
+    private ItemProperties mItemProperties = null;
+    private ClassDescriptor mClassDescriptor;
 
     public Player? DisplayedPlayer => _player ?? Globals.Me;
 
     long HpRegenAmount;
-
     long ManaRegenAmount;
 
     int LifeStealAmount = 0;
-
     int ExtraExpAmount = 0;
-
     int LuckAmount = 0;
-
     int TenacityAmount = 0;
-
     int CooldownAmount = 0;
-
     int ManaStealAmount = 0;
 
     private EffectValue _accuracy = default;
-
     private EffectValue _evasion = default;
-
     private EffectValue _critBonus = default;
-
     private EffectValue _antiCrit = default;
-
     private EffectValue _armorPenetration = default;
-
     private EffectValue _damageReduction = default;
-
     private EffectValue _damageReflect = default;
-
     private EffectValue _flatDamage = default;
-
     private EffectValue _flatCures = default;
 
-    private Label CreateSectionTitle(string name, int x, int y, string text)
+    // -------------------------
+    // Helpers
+    // -------------------------
+
+    private Base CreateContainer(string name, int x, int y, int w, int h, bool drawBg = false)
     {
-        var label = new Label(this, name)
+        var panel = new Base(this, name);
+        panel.SetPosition(x, y);
+        panel.SetSize(w, h);
+        panel.ShouldDrawBackground = drawBg;
+        return panel;
+    }
+
+    private Label CreateSectionTitle(Base parent, string name, int x, int y, string text)
+    {
+        var label = new Label(parent, name)
         {
             FontName = TitleFont,
             FontSize = 14,
@@ -167,13 +155,12 @@ public partial class CharacterWindow:Window
         };
 
         label.SetPosition(x, y);
-
         return label;
     }
 
-    private Label CreateBodyLabel(string name, int x, int y, int width, int height = StatRowHeight)
+    private Label CreateBodyLabel(Base parent, string name, int x, int y, int width, int height = StatRowHeight)
     {
-        var label = new Label(this, name)
+        var label = new Label(parent, name)
         {
             FontName = BodyFont,
             FontSize = 11,
@@ -184,13 +171,12 @@ public partial class CharacterWindow:Window
 
         label.SetSize(width, height);
         label.SetPosition(x, y);
-
         return label;
     }
 
-    private Button CreateStatButton(string name, int x, int y)
+    private Button CreateStatButton(Base parent, string name, int x, int y)
     {
-        var button = new Button(this, name)
+        var button = new Button(parent, name)
         {
             Width = 28,
             Height = 22,
@@ -201,296 +187,13 @@ public partial class CharacterWindow:Window
         };
 
         button.SetPosition(x, y);
-
         return button;
     }
 
-    //Init
-    public CharacterWindow(Canvas gameCanvas) : base(gameCanvas, Strings.Character.Title, false, nameof(CharacterWindow))
+    private int Stack(Base ctrl, int x, int y, int spacing = 4)
     {
-       
-        SetSize(WindowWidth, WindowHeight);
-
-        IsResizable = false;
-
-        TitleLabel.FontName = TitleFont;
-        TitleLabel.FontSize = 14;
-        TitleLabel.TextColorOverride = Color.White;
-
-        var headerX = Margin;
-        var headerY = Margin;
-
-        mCharacterName = new Label(this, "CharacterNameLabel")
-        {
-            FontName = TitleFont,
-            FontSize = 18,
-            TextColorOverride = Color.White,
-            AutoSizeToContents = true
-        };
-
-        mCharacterName.SetPosition(headerX, headerY);
-
-        mCharacterLevelAndClass = new Label(this, "ChatacterInfoLabel")
-        {
-            FontName = BodyFont,
-            FontSize = 12,
-            TextColorOverride = Color.White,
-            AutoSizeToContents = true
-        };
-
-        mCharacterLevelAndClass.SetPosition(headerX, headerY + 24);
-
-        mFactionButton = new Button(this, "FactionInfoButton")
-        {
-            Width = 32,
-            Height = 32
-        };
-
-        mFactionButton.SetPosition(WindowWidth - Margin - mFactionButton.Width, headerY);
-        mFactionButton.SetStateTexture(ComponentState.Normal, "factionicon.png");
-        mFactionButton.SetStateTexture(ComponentState.Hovered, "factionicon_hovered.png");
-        mFactionButton.SetToolTipText("Faction");
-        mFactionButton.Clicked += (s, e) => Interface.GameUi.GameMenu?.ToggleFactionWindow();
-
-        mCharacterContainer = new ImagePanel(this, "CharacterContainer");
-        mCharacterContainer.SetSize(120, 120);
-        mCharacterContainer.SetPosition(headerX, headerY + 48);
-
-        mCharacterPortrait = new ImagePanel(mCharacterContainer);
-        mCharacterPortrait.SetSize(80, 80);
-        mCharacterPortrait.SetPosition(
-            (mCharacterContainer.Width - mCharacterPortrait.Width) / 2,
-            (mCharacterContainer.Height - mCharacterPortrait.Height) / 2
-        );
-
-        PaperdollPanels = new ImagePanel[Options.Instance.Equipment.Slots.Count + 1];
-        PaperdollTextures = new string[Options.Instance.Equipment.Slots.Count + 1];
-        for (var i = 0; i <= Options.Instance.Equipment.Slots.Count; i++)
-        {
-            PaperdollPanels[i] = new ImagePanel(mCharacterContainer);
-            PaperdollTextures[i] = string.Empty;
-            PaperdollPanels[i].Hide();
-        }
-
-        var columns = 4;
-        var slotW = 36;
-        var slotH = 36;
-        var spacingX = 8;
-        var spacingY = 8;
-        var equipmentHeaderX = WindowWidth - Margin - (columns * slotW + spacingX * (columns - 1));
-        var equipmentHeader = CreateSectionTitle("EquipmentHeader", equipmentHeaderX, headerY, "Equipo");
-        var startX = equipmentHeader.X;
-        var startY = equipmentHeader.Y + equipmentHeader.Height + 8;
-
-        int itemIndex = 0;
-        var multiSlotTracker = new Dictionary<string, int>();
-
-        for (int slotIndex = 0; slotIndex < Options.Instance.Equipment.EquipmentSlots.Count; slotIndex++)
-        {
-            var slot = Options.Instance.Equipment.EquipmentSlots[slotIndex];
-
-            for (int j = 0; j < slot.MaxItems; j++)
-            {
-                var item = new EquipmentItem(slotIndex, this);
-                Items.Add(item);
-
-                var slotName = slot.Name;
-
-                if (slot.MaxItems <= 1)
-                {
-                    item.Pnl = new ImagePanel(this, slotName);
-                }
-                else
-                {
-                    if (!multiSlotTracker.ContainsKey(slotName))
-                        multiSlotTracker[slotName] = 0;
-
-                    var currentIndex = multiSlotTracker[slotName];
-                    item.Pnl = new ImagePanel(this, $"{slotName}_{currentIndex}");
-                    multiSlotTracker[slotName]++;
-                }
-
-                int row = itemIndex / columns;
-                int col = itemIndex % columns;
-
-                item.Pnl.SetSize(slotW, slotH);
-                item.Pnl.SetPosition(startX + col * (slotW + spacingX), startY + row * (slotH + spacingY));
-                item.Setup();
-
-                itemIndex++;
-            }
-        }
-
-
-        var statsHeader = CreateSectionTitle("StatsHeader", mCharacterContainer.X + mCharacterContainer.Width + 20, headerY, "Atributos");
-        var statsX = statsHeader.X;
-        var statsY = statsHeader.Y + statsHeader.Height + 6;
-
-        mAttackLabel = CreateBodyLabel("AttackLabel", statsX, statsY, StatLabelWidth);
-        mAddAttackBtn = CreateStatButton("IncreaseAttackButton", statsX + StatLabelWidth + 8, statsY);
-        mAddAttackBtn.Clicked += _addAttackBtn_Clicked;
-
-        mAbilityPwrLabel = CreateBodyLabel("AbilityPowerLabel", statsX, statsY + StatRowHeight, StatLabelWidth);
-        mAddAbilityPwrBtn = CreateStatButton("IncreaseAbilityPowerButton", statsX + StatLabelWidth + 8, statsY + StatRowHeight);
-        mAddAbilityPwrBtn.Clicked += _addAbilityPwrBtn_Clicked;
-
-        mDefenseLabel = CreateBodyLabel("DefenseLabel", statsX, statsY + StatRowHeight * 2, StatLabelWidth);
-        mAddDefenseBtn = CreateStatButton("IncreaseDefenseButton", statsX + StatLabelWidth + 8, statsY + StatRowHeight * 2);
-        mAddDefenseBtn.Clicked += _addDefenseBtn_Clicked;
-
-        mMagicRstLabel = CreateBodyLabel("MagicResistLabel", statsX, statsY + StatRowHeight * 3, StatLabelWidth);
-        mAddMagicResistBtn = CreateStatButton("IncreaseMagicResistButton", statsX + StatLabelWidth + 8, statsY + StatRowHeight * 3);
-        mAddMagicResistBtn.Clicked += _addMagicResistBtn_Clicked;
-
-        mSpeedLabel = CreateBodyLabel("SpeedLabel", statsX, statsY + StatRowHeight * 4, StatLabelWidth);
-        mAddAgilityBtn = CreateStatButton("IncreaseSpeedButton", statsX + StatLabelWidth + 8, statsY + StatRowHeight * 4);
-        mAddAgilityBtn.Clicked += _addSpeedBtn_Clicked;
-
-        mAgilityLabel = CreateBodyLabel("AgilityLabel", statsX, statsY + StatRowHeight * 5, StatLabelWidth);
-        mDamageLabel = CreateBodyLabel("DamageLabel", statsX, statsY + StatRowHeight * 6, StatLabelWidth);
-        mCureLabel = CreateBodyLabel("CureLabel", statsX, statsY + StatRowHeight * 7, StatLabelWidth);
-        mCritChanceLabel = CreateBodyLabel("CritLabel", statsX, statsY + StatRowHeight * 8, StatLabelWidth);
-        mPointsLabel = CreateBodyLabel("PointsLabel", statsX, statsY + StatRowHeight * 9, StatLabelWidth + 40);
-
-        mBasicAttackDamageLabel = CreateBodyLabel(
-            "BasicAttackDamageLabel",
-            statsX,
-            statsY + StatRowHeight * 10,
-            StatLabelWidth + 60,
-            StatRowHeight + 4
-        );
-
-        var effectsHeader = CreateSectionTitle(
-            "ExtraBuffsLabel",
-            statsX,
-            statsY + StatRowHeight * 10 + mBasicAttackDamageLabel.Height + 12,
-            Strings.Character.ExtraBuffs
-        );
-        var effectsY = effectsHeader.Y + effectsHeader.Height + 4;
-        var effectsX = effectsHeader.X;
-        var secondColumnX = effectsX + EffectLabelWidth + 20;
-        var thirdColumnX = secondColumnX + EffectLabelWidth + 20;
-        const int effectSpacing = 20;
-
-        mHpRegen = CreateBodyLabel("HpRegen", effectsX, effectsY, EffectLabelWidth, effectSpacing);
-        mManaRegen = CreateBodyLabel("ManaRegen", effectsX, effectsY + effectSpacing, EffectLabelWidth, effectSpacing);
-        mLifeSteal = CreateBodyLabel("Lifesteal", effectsX, effectsY + effectSpacing * 2, EffectLabelWidth, effectSpacing);
-        mAttackSpeed = CreateBodyLabel("AttackSpeed", effectsX, effectsY + effectSpacing * 3, EffectLabelWidth, effectSpacing);
-        mSpeedBuff = CreateBodyLabel("SpeedBuff", effectsX, effectsY + effectSpacing * 4, EffectLabelWidth, effectSpacing);
-        mDamageBuff = CreateBodyLabel("DamageBuff", effectsX, effectsY + effectSpacing * 5, EffectLabelWidth, effectSpacing);
-        mAccuracy = CreateBodyLabel("Accuracy", effectsX, effectsY + effectSpacing * 6, EffectLabelWidth, effectSpacing);
-        mEvasion = CreateBodyLabel("Evasion", effectsX, effectsY + effectSpacing * 7, EffectLabelWidth, effectSpacing);
-        mArmorPenetration = CreateBodyLabel(
-            "ArmorPenetration",
-            effectsX,
-            effectsY + effectSpacing * 8,
-            EffectLabelWidth,
-            effectSpacing
-        );
-
-        mCureBuff = CreateBodyLabel("CureBuff", secondColumnX, effectsY, EffectLabelWidth, effectSpacing);
-        mExtraExp = CreateBodyLabel("ExtraExp", secondColumnX, effectsY + effectSpacing, EffectLabelWidth, effectSpacing);
-        mLuck = CreateBodyLabel("Luck", secondColumnX, effectsY + effectSpacing * 2, EffectLabelWidth, effectSpacing);
-        mTenacity = CreateBodyLabel("Tenacity", secondColumnX, effectsY + effectSpacing * 3, EffectLabelWidth, effectSpacing);
-        mCooldownReduction = CreateBodyLabel(
-            "CooldownReduction",
-            secondColumnX,
-            effectsY + effectSpacing * 4,
-            EffectLabelWidth,
-            effectSpacing
-        );
-        mManaSteal = CreateBodyLabel("Manasteal", secondColumnX, effectsY + effectSpacing * 5, EffectLabelWidth, effectSpacing);
-        mCritBonus = CreateBodyLabel("CriticalBonus", secondColumnX, effectsY + effectSpacing * 6, EffectLabelWidth, effectSpacing);
-        mAntiCrit = CreateBodyLabel("AntiCritical", secondColumnX, effectsY + effectSpacing * 7, EffectLabelWidth, effectSpacing);
-        mDamageReduction = CreateBodyLabel(
-            "DamageReduction",
-            secondColumnX,
-            effectsY + effectSpacing * 8,
-            EffectLabelWidth,
-            effectSpacing
-        );
-
-        mDamageReflect = CreateBodyLabel("DamageReflect", thirdColumnX, effectsY, EffectLabelWidth, effectSpacing);
-        mFlatDamage = CreateBodyLabel("FlatDamage", thirdColumnX, effectsY + effectSpacing, EffectLabelWidth, effectSpacing);
-        mFlatCures = CreateBodyLabel("FlatCures", thirdColumnX, effectsY + effectSpacing * 2, EffectLabelWidth, effectSpacing);
-
-        UpdateExtraBuffs();
-
-        LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
-    }
-
-    public void SetPlayer(Player? player)
-    {
-        _player = player;
-    }
-
-    //Update Button Event Handlers
-    void _addMagicResistBtn_Clicked(Base sender, MouseButtonState arguments)
-    {
-        PacketSender.SendUpgradeStat((int) Stat.Vitality);
-    }
-
-    void _addAbilityPwrBtn_Clicked(Base sender, MouseButtonState arguments)
-    {
-        PacketSender.SendUpgradeStat((int) Stat.Intelligence);
-    }
-
-    void _addSpeedBtn_Clicked(Base sender, MouseButtonState arguments)
-    {
-        PacketSender.SendUpgradeStat((int) Stat.Agility);
-    }
-
-    void _addDefenseBtn_Clicked(Base sender, MouseButtonState arguments)
-    {
-        PacketSender.SendUpgradeStat((int) Stat.Defense);
-    }
-
-    void _addAttackBtn_Clicked(Base sender, MouseButtonState arguments)
-    {
-        PacketSender.SendUpgradeStat((int) Stat.Attack);
-    }
-
-    private IEnumerable<ItemDescriptor> GetEquippedDescriptors(Player player)
-    {
-        if (player == Globals.Me)
-        {
-            foreach (var (_, equipmentSlots) in player.MyEquipment)
-            {
-                foreach (var slotIndex in equipmentSlots)
-                {
-                    var invItem = player.Inventory.ElementAtOrDefault(slotIndex);
-                    if (invItem?.ItemId == null || invItem.ItemId == Guid.Empty)
-                    {
-                        continue;
-                    }
-
-                    var descriptor = ItemDescriptor.Get(invItem.ItemId);
-                    if (descriptor != null)
-                    {
-                        yield return descriptor;
-                    }
-                }
-            }
-        }
-        else
-        {
-            foreach (var (_, equippedItems) in player.Equipment)
-            {
-                foreach (var id in equippedItems)
-                {
-                    if (id == Guid.Empty)
-                    {
-                        continue;
-                    }
-
-                    var descriptor = ItemDescriptor.Get(id);
-                    if (descriptor != null)
-                    {
-                        yield return descriptor;
-                    }
-                }
-            }
-        }
+        ctrl.SetPosition(x, y);
+        return y + ctrl.Height + spacing;
     }
 
     private string FormatEffectValue(EffectValue value)
@@ -509,39 +212,324 @@ public partial class CharacterWindow:Window
         return segments.Count == 0 ? "0" : string.Join(" / ", segments);
     }
 
-    //Methods
+    // -------------------------
+    // Init
+    // -------------------------
+
+    public CharacterWindow(Canvas gameCanvas) : base(gameCanvas, Strings.Character.Title, false, nameof(CharacterWindow))
+    {
+        SetSize(WindowWidth, WindowHeight);
+        IsResizable = false;
+
+        TitleLabel.FontName = TitleFont;
+        TitleLabel.FontSize = 14;
+        TitleLabel.TextColorOverride = Color.White;
+
+        // Macro layout
+        var contentX = Margin;
+        var contentY = Margin;
+
+        var leftW = 420;
+        var rightW = WindowWidth - (Margin * 2) - leftW;
+        var topH = 250;
+        var bottomH = WindowHeight - (Margin * 2) - topH;
+
+        // Containers
+        mCharacterInfoContainer = CreateContainer("CharacterInfoContainer", contentX, contentY, leftW, 150);
+        mStatsContainer = CreateContainer("StatsContainer", contentX, contentY + 150, leftW, topH - 150);
+        mEquipmentContainer = CreateContainer("EquipmentContainer", contentX + leftW, contentY, rightW, topH);
+        mExtraBuffsContainer = CreateContainer("ExtraBuffsContainer", contentX, contentY + topH, WindowWidth - (Margin * 2), bottomH);
+
+        BuildCharacterInfoSection();
+        BuildEquipmentSection();
+        BuildStatsSection();
+        BuildExtraBuffsSection();
+
+        UpdateExtraBuffs();
+        LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+    }
+
+    private void BuildCharacterInfoSection()
+    {
+        int y = 0;
+
+        mCharacterName = new Label(mCharacterInfoContainer, "CharacterNameLabel")
+        {
+            FontName = TitleFont,
+            FontSize = 18,
+            TextColorOverride = Color.White,
+            AutoSizeToContents = true
+        };
+        y = Stack(mCharacterName, 0, y, 2);
+
+        mCharacterLevelAndClass = new Label(mCharacterInfoContainer, "ChatacterInfoLabel")
+        {
+            FontName = BodyFont,
+            FontSize = 12,
+            TextColorOverride = Color.White,
+            AutoSizeToContents = true
+        };
+        y = Stack(mCharacterLevelAndClass, 0, y, 10);
+
+        mFactionButton = new Button(mCharacterInfoContainer, "FactionInfoButton")
+        {
+            Width = 32,
+            Height = 32
+        };
+        mFactionButton.SetPosition(mCharacterInfoContainer.Width - mFactionButton.Width, 0);
+        mFactionButton.SetStateTexture(ComponentState.Normal, "factionicon.png");
+        mFactionButton.SetStateTexture(ComponentState.Hovered, "factionicon_hovered.png");
+        mFactionButton.SetToolTipText("Faction");
+        mFactionButton.Clicked += (s, e) => Interface.GameUi.GameMenu?.ToggleFactionWindow();
+
+        mCharacterContainer = new ImagePanel(mCharacterInfoContainer, "CharacterContainer");
+        mCharacterContainer.SetSize(120, 120);
+        mCharacterContainer.SetPosition(0, y);
+
+        mCharacterPortrait = new ImagePanel(mCharacterContainer);
+        mCharacterPortrait.SetSize(80, 80);
+        mCharacterPortrait.SetPosition(
+            (mCharacterContainer.Width - mCharacterPortrait.Width) / 2,
+            (mCharacterContainer.Height - mCharacterPortrait.Height) / 2
+        );
+
+        PaperdollPanels = new ImagePanel[Options.Instance.Equipment.Slots.Count + 1];
+        PaperdollTextures = new string[Options.Instance.Equipment.Slots.Count + 1];
+        for (var i = 0; i <= Options.Instance.Equipment.Slots.Count; i++)
+        {
+            PaperdollPanels[i] = new ImagePanel(mCharacterContainer);
+            PaperdollTextures[i] = string.Empty;
+            PaperdollPanels[i].Hide();
+        }
+    }
+
+    private void BuildEquipmentSection()
+    {
+        var header = CreateSectionTitle(mEquipmentContainer, "EquipmentHeader", 0, 0, "Equipo");
+
+        var columns = 4;
+        var slotW = 36;
+        var slotH = 36;
+        var spacingX = 8;
+        var spacingY = 8;
+
+        var startX = 0;
+        var startY = header.Height + 8;
+
+        int itemIndex = 0;
+        var multiSlotTracker = new Dictionary<string, int>();
+
+        for (int slotIndex = 0; slotIndex < Options.Instance.Equipment.EquipmentSlots.Count; slotIndex++)
+        {
+            var slot = Options.Instance.Equipment.EquipmentSlots[slotIndex];
+
+            for (int j = 0; j < slot.MaxItems; j++)
+            {
+                var item = new EquipmentItem(slotIndex, this);
+                Items.Add(item);
+
+                var slotName = slot.Name;
+
+                if (slot.MaxItems <= 1)
+                {
+                    item.Pnl = new ImagePanel(mEquipmentContainer, slotName);
+                }
+                else
+                {
+                    if (!multiSlotTracker.ContainsKey(slotName))
+                        multiSlotTracker[slotName] = 0;
+
+                    var currentIndex = multiSlotTracker[slotName];
+                    item.Pnl = new ImagePanel(mEquipmentContainer, $"{slotName}_{currentIndex}");
+                    multiSlotTracker[slotName]++;
+                }
+
+                int row = itemIndex / columns;
+                int col = itemIndex % columns;
+
+                item.Pnl.SetSize(slotW, slotH);
+                item.Pnl.SetPosition(startX + col * (slotW + spacingX), startY + row * (slotH + spacingY));
+                item.Setup();
+
+                itemIndex++;
+            }
+        }
+    }
+
+    private void BuildStatsSection()
+    {
+        var header = CreateSectionTitle(mStatsContainer, "StatsHeader", 0, 0, "Atributos");
+
+        var x = 0;
+        var y = header.Height + 6;
+
+        // Attack
+        mAttackLabel = CreateBodyLabel(mStatsContainer, "AttackLabel", x, y, StatLabelWidth);
+        mAddAttackBtn = CreateStatButton(mStatsContainer, "IncreaseAttackButton", x + StatLabelWidth + 8, y);
+        mAddAttackBtn.Clicked += _addAttackBtn_Clicked;
+        y += StatRowHeight;
+
+        // Ability Power
+        mAbilityPwrLabel = CreateBodyLabel(mStatsContainer, "AbilityPowerLabel", x, y, StatLabelWidth);
+        mAddAbilityPwrBtn = CreateStatButton(mStatsContainer, "IncreaseAbilityPowerButton", x + StatLabelWidth + 8, y);
+        mAddAbilityPwrBtn.Clicked += _addAbilityPwrBtn_Clicked;
+        y += StatRowHeight;
+
+        // Defense
+        mDefenseLabel = CreateBodyLabel(mStatsContainer, "DefenseLabel", x, y, StatLabelWidth);
+        mAddDefenseBtn = CreateStatButton(mStatsContainer, "IncreaseDefenseButton", x + StatLabelWidth + 8, y);
+        mAddDefenseBtn.Clicked += _addDefenseBtn_Clicked;
+        y += StatRowHeight;
+
+        // Vitality (Magic Resist label en tu UI, pero realmente es Vitality)
+        mMagicRstLabel = CreateBodyLabel(mStatsContainer, "MagicResistLabel", x, y, StatLabelWidth);
+        mAddMagicResistBtn = CreateStatButton(mStatsContainer, "IncreaseMagicResistButton", x + StatLabelWidth + 8, y);
+        mAddMagicResistBtn.Clicked += _addMagicResistBtn_Clicked;
+        y += StatRowHeight;
+
+        // Speed
+        mAgilityLabel = CreateBodyLabel(mStatsContainer, "AgilityLabel", x, y, StatLabelWidth);
+
+        mAddAgilityBtn = CreateStatButton(mStatsContainer, "IncreaseSpeedButton", x + StatLabelWidth + 8, y);
+        mAddAgilityBtn.Clicked += _addSpeedBtn_Clicked;
+        y += StatRowHeight;
+
+        // Read-only stats
+        mSpeedLabel = CreateBodyLabel(mStatsContainer, "SpeedLabel", x, y, StatLabelWidth); y += StatRowHeight;
+        mDamageLabel = CreateBodyLabel(mStatsContainer, "DamageLabel", x, y, StatLabelWidth); y += StatRowHeight;
+        mCureLabel = CreateBodyLabel(mStatsContainer, "CureLabel", x, y, StatLabelWidth); y += StatRowHeight;
+        mCritChanceLabel = CreateBodyLabel(mStatsContainer, "CritLabel", x, y, StatLabelWidth); y += StatRowHeight;
+        mPointsLabel = CreateBodyLabel(mStatsContainer, "PointsLabel", x, y, StatLabelWidth + 40); y += StatRowHeight;
+
+        mBasicAttackDamageLabel = CreateBodyLabel(
+            mStatsContainer,
+            "BasicAttackDamageLabel",
+            x,
+            y,
+            StatLabelWidth + 120,
+            StatRowHeight + 4
+        );
+    }
+
+    private void BuildExtraBuffsSection()
+    {
+        var header = CreateSectionTitle(mExtraBuffsContainer, "ExtraBuffsHeader", 0, 0, Strings.Character.ExtraBuffs);
+
+        mExtraBuffsScroll = new ScrollControl(mExtraBuffsContainer, "ExtraBuffsScroll");
+        mExtraBuffsScroll.SetPosition(0, header.Height + 6);
+        mExtraBuffsScroll.SetSize(mExtraBuffsContainer.Width, mExtraBuffsContainer.Height - (header.Height + 6));
+        mExtraBuffsScroll.AutoHideBars = true;
+
+        mExtraBuffsList = new Base(mExtraBuffsScroll, "ExtraBuffsList");
+        mExtraBuffsList.SetPosition(0, 0);
+        mExtraBuffsList.SetSize(mExtraBuffsScroll.Width - 20, 10);
+
+        int y = 0;
+
+        // Apilado 1 por 1 (una sola columna)
+        mHpRegen = CreateBodyLabel(mExtraBuffsList, "HpRegen", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mManaRegen = CreateBodyLabel(mExtraBuffsList, "ManaRegen", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mLifeSteal = CreateBodyLabel(mExtraBuffsList, "Lifesteal", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mAttackSpeed = CreateBodyLabel(mExtraBuffsList, "AttackSpeed", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+
+        mSpeedBuff = CreateBodyLabel(mExtraBuffsList, "SpeedBuff", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mDamageBuff = CreateBodyLabel(mExtraBuffsList, "DamageBuff", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mCureBuff = CreateBodyLabel(mExtraBuffsList, "CureBuff", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+
+        mExtraExp = CreateBodyLabel(mExtraBuffsList, "ExtraExp", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mLuck = CreateBodyLabel(mExtraBuffsList, "Luck", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mTenacity = CreateBodyLabel(mExtraBuffsList, "Tenacity", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mCooldownReduction = CreateBodyLabel(mExtraBuffsList, "CooldownReduction", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mManaSteal = CreateBodyLabel(mExtraBuffsList, "Manasteal", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+
+        mAccuracy = CreateBodyLabel(mExtraBuffsList, "Accuracy", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mEvasion = CreateBodyLabel(mExtraBuffsList, "Evasion", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mCritBonus = CreateBodyLabel(mExtraBuffsList, "CriticalBonus", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mAntiCrit = CreateBodyLabel(mExtraBuffsList, "AntiCritical", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mArmorPenetration = CreateBodyLabel(mExtraBuffsList, "ArmorPenetration", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mDamageReduction = CreateBodyLabel(mExtraBuffsList, "DamageReduction", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mDamageReflect = CreateBodyLabel(mExtraBuffsList, "DamageReflect", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+
+        mFlatDamage = CreateBodyLabel(mExtraBuffsList, "FlatDamage", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+        mFlatCures = CreateBodyLabel(mExtraBuffsList, "FlatCures", 0, y, EffectLabelWidth, EffectRowHeight); y += EffectRowHeight;
+
+        // Ajusta el alto del list para que el scroll funcione bien
+        mExtraBuffsList.SetSize(mExtraBuffsList.Width, y + 4);
+    }
+
+    // -------------------------
+    // Public
+    // -------------------------
+
+    public void SetPlayer(Player? player) => _player = player;
+
+    //Update Button Event Handlers
+    void _addMagicResistBtn_Clicked(Base sender, MouseButtonState arguments) =>
+        PacketSender.SendUpgradeStat((int)Stat.Vitality);
+
+    void _addAbilityPwrBtn_Clicked(Base sender, MouseButtonState arguments) =>
+        PacketSender.SendUpgradeStat((int)Stat.Intelligence);
+
+    void _addSpeedBtn_Clicked(Base sender, MouseButtonState arguments) =>
+        PacketSender.SendUpgradeStat((int)Stat.Agility);
+
+    void _addDefenseBtn_Clicked(Base sender, MouseButtonState arguments) =>
+        PacketSender.SendUpgradeStat((int)Stat.Defense);
+
+    void _addAttackBtn_Clicked(Base sender, MouseButtonState arguments) =>
+        PacketSender.SendUpgradeStat((int)Stat.Attack);
+
+    private IEnumerable<ItemDescriptor> GetEquippedDescriptors(Player player)
+    {
+        if (player == Globals.Me)
+        {
+            foreach (var (_, equipmentSlots) in player.MyEquipment)
+            {
+                foreach (var slotIndex in equipmentSlots)
+                {
+                    var invItem = player.Inventory.ElementAtOrDefault(slotIndex);
+                    if (invItem?.ItemId == null || invItem.ItemId == Guid.Empty)
+                        continue;
+
+                    var descriptor = ItemDescriptor.Get(invItem.ItemId);
+                    if (descriptor != null)
+                        yield return descriptor;
+                }
+            }
+        }
+        else
+        {
+            foreach (var (_, equippedItems) in player.Equipment)
+            {
+                foreach (var id in equippedItems)
+                {
+                    if (id == Guid.Empty)
+                        continue;
+
+                    var descriptor = ItemDescriptor.Get(id);
+                    if (descriptor != null)
+                        yield return descriptor;
+                }
+            }
+        }
+    }
+
+    // -------------------------
+    // Update Loop
+    // -------------------------
+
     public void Update()
     {
         var player = DisplayedPlayer;
         if (IsHidden || player is null)
-        {
             return;
-        }
 
         mCharacterName.Text = player.Name;
-        mCharacterLevelAndClass.Text = Strings.Character.LevelAndClass.ToString(
-            player.Level, ClassDescriptor.GetName(player.Class)
-        );
+        mCharacterLevelAndClass.Text = Strings.Character.LevelAndClass.ToString(player.Level, ClassDescriptor.GetName(player.Class));
 
-        //Load Portrait
-        //UNCOMMENT THIS LINE IF YOU'D RATHER HAVE A FACE HERE IGameTexture faceTex = Globals.ContentManager.GetTexture(Framework.Content.TextureType.Face, player.Face);
-        var entityTex = Globals.ContentManager.GetTexture(
-            Framework.Content.TextureType.Entity, player.Sprite
-        );
+        // Portrait/paperdoll
+        var entityTex = Globals.ContentManager.GetTexture(Framework.Content.TextureType.Entity, player.Sprite);
 
-        /* UNCOMMENT THIS BLOCK IF YOU"D RATHER HAVE A FACE HERE if (player.Face != "" && player.Face != _currentSprite && faceTex != null)
-         {
-             _characterPortrait.Texture = faceTex;
-             _characterPortrait.SetTextureRect(0, 0, faceTex.GetWidth(), faceTex.GetHeight());
-             _characterPortrait.SizeToContents();
-             Align.Center(_characterPortrait);
-             _characterPortrait.IsHidden = false;
-             for (int i = 0; i < Options.Instance.Equipment.Slots.Count; i++)
-             {
-                 _paperdollPanels[i].Hide();
-             }
-         }
-         else */
         if (!string.IsNullOrWhiteSpace(player.Sprite) && player.Sprite != mCurrentSprite && entityTex != null)
         {
             for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[1].Count; z++)
@@ -554,20 +542,16 @@ public partial class CharacterWindow:Window
                 {
                     var equipment = player.MyEquipment;
 
-                    // Intentar obtener la lista de ítems equipados en este slot
                     if (equipment.TryGetValue(slotIndex, out var equippedList) && equippedList.Count > 0)
                     {
-                        var inventoryIndex = equippedList[0]; // Tomamos el primero para mostrar
+                        var inventoryIndex = equippedList[0];
                         if (inventoryIndex >= 0 && inventoryIndex < Options.Instance.Player.MaxInventory)
                         {
                             var itemNum = player.Inventory[inventoryIndex].ItemId;
 
                             if (ItemDescriptor.TryGet(itemNum, out var itemDescriptor))
                             {
-                                paperdoll = player.Gender == 0
-                                    ? itemDescriptor.MalePaperdoll
-                                    : itemDescriptor.FemalePaperdoll;
-
+                                paperdoll = player.Gender == 0 ? itemDescriptor.MalePaperdoll : itemDescriptor.FemalePaperdoll;
                                 PaperdollPanels[z].RenderColor = itemDescriptor.Color;
                             }
                         }
@@ -598,7 +582,10 @@ public partial class CharacterWindow:Window
                     {
                         PaperdollPanels[z].SetTextureRect(0, 0, paperdollTex.Width / Options.Instance.Sprites.NormalFrames, paperdollTex.Height / Options.Instance.Sprites.Directions);
                         PaperdollPanels[z].SetSize(paperdollTex.Width / Options.Instance.Sprites.NormalFrames, paperdollTex.Height / Options.Instance.Sprites.Directions);
-                        PaperdollPanels[z].SetPosition(mCharacterContainer.Width / 2 - PaperdollPanels[z].Width / 2, mCharacterContainer.Height / 2 - PaperdollPanels[z].Height / 2);
+                        PaperdollPanels[z].SetPosition(
+                            mCharacterContainer.Width / 2 - PaperdollPanels[z].Width / 2,
+                            mCharacterContainer.Height / 2 - PaperdollPanels[z].Height / 2
+                        );
                     }
 
                     PaperdollPanels[z].Show();
@@ -606,77 +593,38 @@ public partial class CharacterWindow:Window
                 }
             }
         }
-
         else if (player.Sprite != mCurrentSprite && player.Face != mCurrentSprite)
         {
             mCharacterPortrait.IsHidden = true;
             for (var i = 0; i < Options.Instance.Equipment.Slots.Count; i++)
-            {
                 PaperdollPanels[i].Hide();
-            }
         }
 
-        mAttackLabel.SetText(
-            Strings.Character.StatLabelValue.ToString(
-                Strings.Combat.Stats[Stat.Attack],
-                player.Stat[(int)Stat.Attack]
-            )
-        );
+        // Stats text
+        mAttackLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Attack], player.Stat[(int)Stat.Attack]));
+        mAbilityPwrLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Intelligence], player.Stat[(int)Stat.Intelligence]));
+        mDefenseLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Defense], player.Stat[(int)Stat.Defense]));
+        mMagicRstLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Vitality], player.Stat[(int)Stat.Vitality]));
+        mSpeedLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Speed], player.Stat[(int)Stat.Speed]));
+        mAgilityLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Agility], player.Stat[(int)Stat.Agility]));
 
-        mAbilityPwrLabel.SetText(
-            Strings.Character.StatLabelValue.ToString(
-                Strings.Combat.Stats[Stat.Intelligence],
-                player.Stat[(int)Stat.Intelligence]
-            )
-        );
-
-        mDefenseLabel.SetText(
-            Strings.Character.StatLabelValue.ToString(
-                Strings.Combat.Stats[Stat.Defense],
-                player.Stat[(int)Stat.Defense]
-            )
-        );
-
-        mMagicRstLabel.SetText(
-            Strings.Character.StatLabelValue.ToString(
-                Strings.Combat.Stats[Stat.Vitality],
-                player.Stat[(int)Stat.Vitality]
-            )
-        );
-
-        mSpeedLabel.SetText(
-            Strings.Character.StatLabelValue.ToString(
-                Strings.Combat.Stats[Stat.Speed],
-                player.Stat[(int)Stat.Speed]
-            )
-        );
-        mAgilityLabel.SetText(
-            Strings.Character.StatLabelValue.ToString(
-                Strings.Combat.Stats[Stat.Agility],
-                player.Stat[(int)Stat.Agility]
-            )
-        );
         var critChance = player.CalculateCriticalChance(player.GetBaseCriticalChance());
         mCritChanceLabel.SetText(Strings.Character.CriticalChance.ToString(critChance));
+
         mPointsLabel.SetText(Strings.Character.Points.ToString(player.StatPoints));
-        mAddAbilityPwrBtn.IsHidden = player.StatPoints == 0 ||
-                                     player.Stat[(int) Stat.Intelligence] == Options.Instance.Player.MaxStat;
 
-        mAddAttackBtn.IsHidden =
-            player.StatPoints == 0 || player.Stat[(int) Stat.Attack] == Options.Instance.Player.MaxStat;
+        // Buttons visibility
+        mAddAbilityPwrBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Intelligence] == Options.Instance.Player.MaxStat;
+        mAddAttackBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Attack] == Options.Instance.Player.MaxStat;
+        mAddDefenseBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Defense] == Options.Instance.Player.MaxStat;
+        mAddMagicResistBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Vitality] == Options.Instance.Player.MaxStat;
+        mAddAgilityBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Agility] == Options.Instance.Player.MaxStat;
 
-        mAddDefenseBtn.IsHidden = player.StatPoints == 0 ||
-                                  player.Stat[(int) Stat.Defense] == Options.Instance.Player.MaxStat;
-
-        mAddMagicResistBtn.IsHidden = player.StatPoints == 0 ||
-                                      player.Stat[(int) Stat.Vitality] == Options.Instance.Player.MaxStat;
-
-        mAddAgilityBtn.IsHidden =
-            player.StatPoints == 0 || player.Stat[(int) Stat.Agility] == Options.Instance.Player.MaxStat;
-
+        // Effects
         UpdateExtraBuffs();
         mDamageLabel.SetText(Strings.Character.FlatDamage.ToString(FormatEffectValue(_flatDamage)));
         mCureLabel.SetText(Strings.Character.FlatCures.ToString(FormatEffectValue(_flatCures)));
+
         UpdateEquippedItems(true);
     }
 
@@ -684,9 +632,7 @@ public partial class CharacterWindow:Window
     {
         var player = DisplayedPlayer;
         if (player is null)
-        {
             return;
-        }
 
         int itemIndex = 0;
         for (var slotIndex = 0; slotIndex < Options.Instance.Equipment.EquipmentSlots.Count; slotIndex++)
@@ -728,9 +674,7 @@ public partial class CharacterWindow:Window
 
                     var itemIds = new List<Guid>();
                     if (i < equippedIds.Count && equippedIds[i] != Guid.Empty)
-                    {
                         itemIds.Add(equippedIds[i]);
-                    }
 
                     Items[itemIndex].Update(itemIds, new List<ItemProperties>());
                     itemIndex++;
@@ -775,57 +719,26 @@ public partial class CharacterWindow:Window
                 {
                     var effectValue = effect.GetValues();
                     if (effectValue.GetPrimaryValue() == 0)
-                    {
                         continue;
-                    }
 
                     switch (effect.Type)
                     {
-                        case ItemEffect.CooldownReduction:
-                            CooldownAmount += effectValue.GetPrimaryValue();
-                            break;
-                        case ItemEffect.Lifesteal:
-                            LifeStealAmount += effectValue.GetPrimaryValue();
-                            break;
-                        case ItemEffect.Tenacity:
-                            TenacityAmount += effectValue.GetPrimaryValue();
-                            break;
-                        case ItemEffect.Luck:
-                            LuckAmount += effectValue.GetPrimaryValue();
-                            break;
-                        case ItemEffect.EXP:
-                            ExtraExpAmount += effectValue.GetPrimaryValue();
-                            break;
-                        case ItemEffect.Manasteal:
-                            ManaStealAmount += effectValue.GetPrimaryValue();
-                            break;
-                        case ItemEffect.Accuracy:
-                            _accuracy = _accuracy.Add(effectValue);
-                            break;
-                        case ItemEffect.Evasion:
-                            _evasion = _evasion.Add(effectValue);
-                            break;
-                        case ItemEffect.CriticalChance:
-                            _critBonus = _critBonus.Add(effectValue);
-                            break;
-                        case ItemEffect.AntiCritChance:
-                            _antiCrit = _antiCrit.Add(effectValue);
-                            break;
-                        case ItemEffect.ArmorPenetration:
-                            _armorPenetration = _armorPenetration.Add(effectValue);
-                            break;
-                        case ItemEffect.DamageReduction:
-                            _damageReduction = _damageReduction.Add(effectValue);
-                            break;
-                        case ItemEffect.DamageReflect:
-                            _damageReflect = _damageReflect.Add(effectValue);
-                            break;
-                        case ItemEffect.Damages:
-                            _flatDamage = _flatDamage.Add(effectValue);
-                            break;
-                        case ItemEffect.Cures:
-                            _flatCures = _flatCures.Add(effectValue);
-                            break;
+                        case ItemEffect.CooldownReduction: CooldownAmount += effectValue.GetPrimaryValue(); break;
+                        case ItemEffect.Lifesteal: LifeStealAmount += effectValue.GetPrimaryValue(); break;
+                        case ItemEffect.Tenacity: TenacityAmount += effectValue.GetPrimaryValue(); break;
+                        case ItemEffect.Luck: LuckAmount += effectValue.GetPrimaryValue(); break;
+                        case ItemEffect.EXP: ExtraExpAmount += effectValue.GetPrimaryValue(); break;
+                        case ItemEffect.Manasteal: ManaStealAmount += effectValue.GetPrimaryValue(); break;
+
+                        case ItemEffect.Accuracy: _accuracy = _accuracy.Add(effectValue); break;
+                        case ItemEffect.Evasion: _evasion = _evasion.Add(effectValue); break;
+                        case ItemEffect.CriticalChance: _critBonus = _critBonus.Add(effectValue); break;
+                        case ItemEffect.AntiCritChance: _antiCrit = _antiCrit.Add(effectValue); break;
+                        case ItemEffect.ArmorPenetration: _armorPenetration = _armorPenetration.Add(effectValue); break;
+                        case ItemEffect.DamageReduction: _damageReduction = _damageReduction.Add(effectValue); break;
+                        case ItemEffect.DamageReflect: _damageReflect = _damageReflect.Add(effectValue); break;
+                        case ItemEffect.Damages: _flatDamage = _flatDamage.Add(effectValue); break;
+                        case ItemEffect.Cures: _flatCures = _flatCures.Add(effectValue); break;
                     }
                 }
             }
@@ -867,6 +780,7 @@ public partial class CharacterWindow:Window
 
         mDamageBuff.SetText(Strings.Character.FlatDamage.ToString(FormatEffectValue(_flatDamage)));
         mCureBuff.SetText(Strings.Character.FlatCures.ToString(FormatEffectValue(_flatCures)));
+
         mAccuracy.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.Accuracy]} {FormatEffectValue(_accuracy)}");
         mEvasion.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.Evasion]} {FormatEffectValue(_evasion)}");
         mCritBonus.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.CriticalChance]} {FormatEffectValue(_critBonus)}");
@@ -874,98 +788,30 @@ public partial class CharacterWindow:Window
         mArmorPenetration.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.ArmorPenetration]} {FormatEffectValue(_armorPenetration)}");
         mDamageReduction.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.DamageReduction]} {FormatEffectValue(_damageReduction)}");
         mDamageReflect.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.DamageReflect]} {FormatEffectValue(_damageReflect)}");
+
+        // Estos dos son “flat” pero los estás mostrando también acá
         mFlatDamage.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.Damages]} {FormatEffectValue(_flatDamage)}");
         mFlatCures.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.Cures]} {FormatEffectValue(_flatCures)}");
-    }
 
-    /// <summary>
-    /// Update Extra Buffs Effects like hp/mana regen and items effect types
-    /// </summary>
-    /// <param name="itemId">Id of item to update extra buffs</param>
-    private void UpdateExtraBuffs(Guid itemId)
-    {
-        var item = ItemDescriptor.Get(itemId);
-
-        if (item == null)
+        // Reajusta alto del listado por si cambiaste fuentes/escala
+        if (mExtraBuffsList != null)
         {
-            return;
-        }
-
-        //Getting HP and Mana Regen from items
-        if (item.VitalsRegen[(int)Vital.Health] != 0)
-        {
-            HpRegenAmount += item.VitalsRegen[(int)Vital.Health];
-        }
-
-        if (item.VitalsRegen[(int)Vital.Mana] != 0)
-        {
-            ManaRegenAmount += item.VitalsRegen[(int)Vital.Mana];
-        }
-
-        //Getting extra buffs from items
-        if (item.Effects.Find(effect => effect.Type != ItemEffect.None && effect.GetValue() > 0) != default)
-        {
-            foreach (var effect in item.Effects)
-            {
-                var effectAmount = effect.GetValue();
-                if (effectAmount <= 0)
-                {
-                    continue;
-                }
-
-                switch (effect.Type)
-                {
-                    case ItemEffect.CooldownReduction:
-                        CooldownAmount += effectAmount;
-                        break;
-                    case ItemEffect.Lifesteal:
-                        LifeStealAmount += effectAmount;
-                        break;
-                    case ItemEffect.Tenacity:
-                        TenacityAmount += effectAmount;
-                        break;
-                    case ItemEffect.Luck:
-                        LuckAmount += effectAmount;
-                        break;
-                    case ItemEffect.EXP:
-                        ExtraExpAmount += effectAmount;
-                        break;
-                    case ItemEffect.Manasteal:
-                        ManaStealAmount += effectAmount;
-                        break;
-                }
-            }
+            // “básico”: deja el height tal cual lo seteamos en BuildExtraBuffsSection()
+            // Si luego haces hide/show dinámico, aquí recalculas el alto.
         }
     }
-
 
     /// <summary>
     /// Show the window
     /// </summary>
-    public void Show()
-    {
-        this.IsHidden = false;
-    }
+    public void Show() => IsHidden = false;
 
-    /// <summary>
-    /// </summary>
-    /// <returns>Returns if window is visible</returns>
-    public bool IsVisible()
-    {
-        return !this.IsHidden;
-    }
+    public bool IsVisible() => !IsHidden;
 
-    /// <summary>
-    /// Hide the window
-    /// </summary>
-    public void Hide()
-    {
-        this.IsHidden = true;
-    }
+    public void Hide() => IsHidden = true;
 
     protected override void EnsureInitialized()
     {
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
     }
-
 }
