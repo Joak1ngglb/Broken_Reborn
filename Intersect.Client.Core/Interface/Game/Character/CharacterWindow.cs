@@ -460,18 +460,22 @@ public partial class CharacterWindow : Window
 
         if (player == Globals.Me)
         {
-            if (player.MyEquipment.TryGetValue(weaponSlotIndex, out var list) && list.Count > 0)
+            if (player.MyEquipment.TryGetValue(weaponSlotIndex, out var list) && list?.Count > 0)
             {
                 var invIndex = list[0];
                 if (invIndex >= 0 && invIndex < Options.Instance.Player.MaxInventory)
                 {
-                    weaponId = player.Inventory[invIndex].ItemId;
+                    var inventorySlot = player.Inventory?[invIndex];
+                    if (inventorySlot != null)
+                    {
+                        weaponId = inventorySlot.ItemId;
+                    }
                 }
             }
         }
         else
         {
-            if (player.Equipment.TryGetValue(weaponSlotIndex, out var list) && list.Count > 0)
+            if (player.Equipment.TryGetValue(weaponSlotIndex, out var list) && list?.Count > 0)
             {
                 weaponId = list[0];
             }
