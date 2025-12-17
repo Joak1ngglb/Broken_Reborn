@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
@@ -17,7 +18,7 @@ public partial class EquipmentItem
 {
     public List<ImagePanel> ContentPanels = new();
 
-    private WindowControl mCharacterWindow;
+    private readonly Func<Player?> _playerProvider;
 
     private List<Guid> mCurrentItemIds = new();
 
@@ -29,10 +30,10 @@ public partial class EquipmentItem
 
     public ImagePanel Pnl;
 
-    public EquipmentItem(int index, WindowControl characterWindow)
+    public EquipmentItem(int index, Func<Player?> playerProvider)
     {
         mYindex = index;
-        mCharacterWindow = characterWindow;
+        _playerProvider = playerProvider;
     }
 
     public void Setup()
@@ -77,7 +78,7 @@ public partial class EquipmentItem
             return;
         }
 
-        var player = (mCharacterWindow as CharacterWindow)?.DisplayedPlayer;
+        var player = _playerProvider?.Invoke();
         if (player == null || player != Globals.Me)
         {
             return;
