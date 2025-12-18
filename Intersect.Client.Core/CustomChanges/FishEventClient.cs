@@ -3,11 +3,9 @@ using Intersect.Client.Core.Controls;
 using Intersect.Client.Core.Sounds;
 using Intersect.Client.Framework.Entities;
 using Intersect.Client.Framework.Graphics;
-using Intersect.Client.Framework.Input;
 using Intersect.Client.General;
 using Intersect.Client.Interface.Game.MiniEvent;
 using Intersect.Client.Networking;
-using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Fishing;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -140,7 +138,7 @@ public partial class FishEventClient
         }
 
         MapAttribute mapAttribute;
-        mapAttribute = GetAttribute(Enums.MapAttribute.FishingSpot);
+        mapAttribute = GetAttribute(MapAttributeType.FishingSpot);
         if (mapAttribute != null)
         {
             MapFishingSpotAttribute attribute = (MapFishingSpotAttribute)mapAttribute;
@@ -153,7 +151,7 @@ public partial class FishEventClient
 
             if (stage == 0)
             {
-                PacketSender.SendFishingSpot(fishingSpotID);
+                PacketSender.SendFishingSpot();
             }
             else
             {
@@ -184,7 +182,7 @@ public partial class FishEventClient
             if (stage == 0)
             {
                 mapPosition = new int[] { player.X, player.Y };
-                playerDirection = player.Dir;
+                playerDirection = player.DirectionFacing;
                 stage = 1;
                 isFishing = true;
                 isFishingForAnimation = true;
@@ -198,12 +196,13 @@ public partial class FishEventClient
     #region Функции
     private bool IsFishingRod()
     {
-        if (Options.WeaponIndex > -1 && Options.WeaponIndex < player.Equipment.Length)
+        var weaponSlotIndex = Options.Instance.Equipment.WeaponSlot;
+        if (weaponSlotIndex > -1 && weaponSlotIndex < player.Equipment.Length)
         {
-            if (player.MyEquipment[Options.WeaponIndex] < Options.MaxInvItems)
+            if (player.MyEquipment[weaponSlotIndex] < Options.Instance.Player.MaxInventory)
             {
                 var itemId = Guid.Empty;
-                var slot = player.MyEquipment[Options.WeaponIndex];
+                var slot = player.MyEquipment[weaponSlotIndex];
                 if (slot > -1)
                     itemId = player.Inventory[slot].ItemId;
 
@@ -211,7 +210,7 @@ public partial class FishEventClient
 
                 if (item != null)
                 {
-                    List<string> tools = [.. Options.ToolTypes.ToArray()];
+                    List<string> tools = [.. Options.Instance.Equipment.ToolTypes.ToArray()];
                     int toolID = -1;
                     toolID = tools.FindIndex(x => x == "Fishing Rod");
                     if (toolID == -1)
@@ -344,10 +343,11 @@ public partial class FishEventClient
         }
     }
 
-    private MapAttribute GetAttribute(Enums.MapAttribute requireType)
+    private MapAttribute GetAttribute(MapAttributeType requireType)
     {
         if (Maps.MapInstance.Get(player.MapId) == null) return null;
-        if ((player.X < Options.MapWidth && player.X >= 0) && (player.Y < Options.MapHeight && player.Y >= 0))
+        if ((player.X < Options.Instance.Map.MapWidth && player.X >= 0) &&
+            (player.Y < Options.Instance.Map.MapHeight && player.Y >= 0))
         {
 
             MapAttribute result = null;
@@ -356,7 +356,8 @@ public partial class FishEventClient
                 for (int radarY = player.Y - 1; radarY < player.Y + 2; radarY++)
                 {
                     Maps.MapInstance mapInstance = Maps.MapInstance.Get(player.MapId);
-                    if (radarX >= Options.MapWidth || radarX < 0 || radarY >= Options.MapHeight || radarY < 0)
+                    if (radarX >= Options.Instance.Map.MapWidth || radarX < 0 ||
+                        radarY >= Options.Instance.Map.MapHeight || radarY < 0)
                         continue;
                     MapAttribute attribute = Maps.MapInstance.Get(player.MapId).Attributes[radarX, radarY];
                     if (attribute == null || attribute.Type != requireType) continue;
@@ -365,7 +366,7 @@ public partial class FishEventClient
                     Vector2Int direction = attributePos - playerPos;
                     Direction requiredDirection = GetDirection(direction.X, direction.Y);
 
-                    if (requiredDirection == player.Dir)
+                    if (requiredDirection == player.DirectionFacing)
                     {
                         result = attribute;
                         break;
@@ -416,11 +417,11 @@ public partial class FishEventClient
         switch (stage)
         {
             case 1:
-                if (Controls.KeyDown(Control.MoveDown) ||
-                    Controls.KeyDown(Control.MoveLeft) ||
-                    Controls.KeyDown(Control.MoveRight) ||
-                    Controls.KeyDown(Control.MoveUp) ||
-                    Controls.KeyDown(Control.TurnAround))
+                if (Controls.IsControlPressed(Control.MoveDown) ||
+                    Controls.IsControlPressed(Control.MoveLeft) ||
+                    Controls.IsControlPressed(Control.MoveRight) ||
+                    Controls.IsControlPressed(Control.MoveUp) ||
+                    Controls.IsControlPressed(Control.TurnAround))
                 {
                     Freeze(timerFishingRod, true);
                     stage = 0;
@@ -497,7 +498,7 @@ public partial class FishEventClient
     {
         if (fish == null) return;
         float volumePressEMultiple = 10;
-        if (Controls.KeyDown(Control.AttackInteract))
+        if (Controls.IsControlPressed(Control.AttackInteract))
         {
             if (!isPressed)
             {
@@ -771,7 +772,7 @@ public partial class FishEventClient
                 }
                 else if (oldStageForSound == 2)
                 {
-                    if (player.IsFishingRodPressed)
+                    if (IsFishingRodPressed)
                     {
                         StopSound(3);
                         PlaySound(1);
@@ -839,18 +840,10 @@ public partial class FishEventClient
     {
         if (player == null) return;
 
-        player.isFishing = isFishingForAnimation;
-        player.FishingStage = stage;
-        player.IsFishingRodPressed = IsFishingRodPressed;
-
         if (isFishingForAnimation != oldStatusFishing ||
             stage != oldStageForAnimation ||
             IsFishingRodPressed != oldPressed)
         {
-            /*Log.Information($"\nstatus: {isFishingForAnimation}!={oldStatusFishing}\n" +
-                $"stage: {stage}!={oldStageForAnimation}\n" +
-                $"rodPressed: {IsFishingRodPressed}!={oldPressed}");*/
-            PacketSender.SendFishing(player.Id, isFishingForAnimation, stage, IsFishingRodPressed);
             oldStageForAnimation = stage;
             oldStatusFishing = isFishingForAnimation;
             oldPressed = IsFishingRodPressed;
