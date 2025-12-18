@@ -5,7 +5,7 @@ using Intersect.Client.Framework.Entities;
 using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Input;
 using Intersect.Client.General;
-using Intersect.Client.Interface.Game.MiniEvent;
+using Intersect.Client.Interface.Game.Fishing;
 using Intersect.Client.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core;
@@ -26,7 +26,7 @@ public partial class FishEventClient
     private long lastUpdateTime;//Время последнего обновления для deltaTime
     private float deltaTime;//Дельта времени
     private bool isPressed = false;//Зажатие кнопки
-    private FishEventUI? eventUI;
+    private FishingWindow? eventUI;
     private int timerFishingRod = 1000;
     private long timeFishingRod;
     private ItemDescriptor? currentFishingRod { get; set; }
@@ -101,7 +101,7 @@ public partial class FishEventClient
     {
         if (Interface.Interface.GameUi == null) return;
         if (eventUI == null)
-            eventUI = new FishEventUI();
+            eventUI = new FishingWindow(Interface.GameUi.GameCanvas);
         player = Globals.Me;
         sounds = new Sound[10];
     }
