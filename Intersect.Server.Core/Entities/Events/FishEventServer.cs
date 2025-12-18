@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Fishing;
@@ -43,8 +44,7 @@ public class FishEventServer
             _fishingSpotId = fishingSpotId;
             _stage = 1;
 
-            var random = new Random();
-            var timer = random.Next(spot.FishingTimeMin, spot.FishingTimeMax);
+            var timer = Randomization.Next(spot.FishingTimeMin, spot.FishingTimeMax);
             _timerWaitFish = Timing.Global.MillisecondsUtc + timer;
             PacketSender.SendClientResultCastFishingRod(_player, true);
         }
@@ -83,11 +83,11 @@ public class FishEventServer
     private Guid GetRandomFish() //Даём рыбу
     {
         var fishingSpot = FishingSpotBase.Get(_fishingSpotId);
-        var result = Guid.Empty;
-        var fishes = new List<Guid>();
+        var fishes = new List<FishBase>();
 
         //Сортируем рыбку по возрастанию на редкость
         var fishesSort = fishingSpot?.SortingFishByRarity(FishingSpotBase.SortByType.INCREASING).ToArray();
+
         //Проверяем рыбу на соблюдение требований пожарной безопасности
         if (fishesSort != null)
         {
@@ -96,35 +96,41 @@ public class FishEventServer
                 var fish = FishBase.Get(fishGuid);
                 if (fish != null && Conditions.MeetsConditionLists(fish.FishingRequirements, _player, null))
                 {
-                    fishes.Add(fishGuid);
+                    fishes.Add(fish);
                 }
             }
         }
 
         if (fishes.Count == 0)
         {
-            return result;
+            return Guid.Empty;
         }
 
-        var randomFish = new Random();
-        for (var i = 0; i < fishes.Count; i++)
+        var totalChance = fishes.Sum(fish => Math.Max(0, fish.chance));
+
+        // If all chances are zero or negative, give each fish an even weight to avoid dead ends
+        if (totalChance <= 0)
         {
-            if (i == fishes.Count - 1)
+            totalChance = fishes.Count;
+        }
+
+        var roll = Randomization.Next(1, totalChance + 1);
+        var accumulated = 0;
+
+        foreach (var fish in fishes)
+        {
+            var weight = Math.Max(0, fish.chance);
+            weight = weight == 0 ? 1 : weight;
+
+            accumulated += weight;
+
+            if (roll <= accumulated)
             {
-                result = fishes[fishes.Count - 1];
-            }
-            else
-            {
-                var randomChange = randomFish.Next(1, 101);
-                if (randomChange <= FishBase.Get(fishes[i]).chance)
-                {
-                    result = fishes[i];
-                    break;
-                }
+                return fish.Id;
             }
         }
 
-        return result;
+        return fishes.Last().Id;
     }
 
     #endregion
@@ -175,7 +181,10 @@ public class FishEventServer
                     }
                     else
                     {
-                        _timerWaitFish = Timing.Global.MillisecondsUtc + (1000 * 60 * 60 * 24);
+                        _stage = 0;
+                        _fishingSpotId = Guid.Empty;
+                        _timerWaitFish = 0;
+                        _currentFishId = Guid.Empty;
                     }
                 }
 
@@ -220,8 +229,7 @@ public class FishEventServer
         {
             "Сорвалась..", "Блин..", "Неудача.."
         };
-        var randInstance = new Random();
-        var rand = randInstance.Next(0, strings.Length);
+        var rand = Randomization.Next(0, strings.Length);
         PacketSender.SendChatBubble(_player.Id, _player.MapInstanceId, (int)EntityType.GlobalEntity, strings[rand],
             _player.MapId);
         _stage = 0;
