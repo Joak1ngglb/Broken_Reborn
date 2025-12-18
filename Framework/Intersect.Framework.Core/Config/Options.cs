@@ -272,6 +272,11 @@ public partial record Options
         {
             var rawJson = File.ReadAllText(pathToServerConfig);
             instance = JsonConvert.DeserializeObject<Options>(rawJson, PrivateSerializerSettings) ?? instance;
+            instance.Sprites ??= new();
+            if (instance.Sprites.FishingFrames <= 0)
+            {
+                instance.Sprites.FishingFrames = 4;
+            }
             instance.SyncEquipmentItemSubtypes();
             Instance = instance;
         }

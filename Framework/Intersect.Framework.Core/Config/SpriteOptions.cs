@@ -1,4 +1,5 @@
-﻿using Intersect.Framework.Annotations;
+﻿using System.ComponentModel;
+using Intersect.Framework.Annotations;
 using Newtonsoft.Json;
 
 namespace Intersect.Config;
@@ -60,6 +61,13 @@ public partial class SpriteOptions
     /// Defines a single frame from the normal sprite sheet to show when dashing or sliding.
     /// </summary>
     public int NormalDashFrame { get; set; } = 1;
+
+    /// <summary>
+    /// Defines the number of frames there will be in fishing sprite sheets.
+    /// </summary>
+    [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+    [DefaultValue(4)]
+    public int FishingFrames { get; set; } = 4;
 
     /// <summary>
     /// Defines the duration (in milliseconds) for transitioning between consecutive walking frames.
