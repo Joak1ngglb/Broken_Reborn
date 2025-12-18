@@ -439,6 +439,11 @@ public partial class Entity : IEntity
         NameColor = packet.NameColor;
         HeaderLabel = new Label(packet.HeaderLabel.Label, packet.HeaderLabel.Color);
         FooterLabel = new Label(packet.FooterLabel.Label, packet.FooterLabel.Color);
+        IsFishing = packet.IsFishing;
+        FishingStageIndex = packet.FishingStageIndex;
+        IsFishingRodPressed = packet.IsFishingRodPressed;
+        FishingStageTimer = packet.FishingStageTimer;
+        FishingStageDuration = packet.FishingStageDuration;
 
         var animsToClear = new List<Animation>();
         var animsToAdd = new List<AnimationDescriptor>();

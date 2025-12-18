@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Fishing;
@@ -148,6 +149,12 @@ public class FishEventServer
         _isFishingVisual = isFishingVisual;
         _stageVisual = stageVisual;
         _isPressed = isPressed;
+
+        _player.IsFishing = _isFishingVisual;
+        _player.FishingStageIndex = _stageVisual;
+        _player.IsFishingRodPressed = _isPressed;
+        _player.FishingStageTimer = Timing.Global.Milliseconds;
+        _player.FishingStageDuration = Options.Instance.Sprites.IdleFrameDuration;
         //Console.Write($"Обновление игрока {_player.Name}\n");
     }
 

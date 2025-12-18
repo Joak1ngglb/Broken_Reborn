@@ -82,4 +82,19 @@ public abstract partial class EntityPacket : IntersectPacket
     [Key(23)]
     public Color Color { get; set; }
 
+    [Key(47)]
+    public bool IsFishing { get; set; }
+
+    [Key(48)]
+    public int FishingStageIndex { get; set; }
+
+    [Key(49)]
+    public bool IsFishingRodPressed { get; set; }
+
+    [Key(50)]
+    public long FishingStageTimer { get; set; }
+
+    [Key(51)]
+    public long FishingStageDuration { get; set; }
+
 }
