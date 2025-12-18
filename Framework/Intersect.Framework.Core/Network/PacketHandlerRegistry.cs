@@ -587,6 +587,12 @@ public partial class PacketHandlerRegistry : IDisposable
                 Handlers.Remove(disposableHandler.PacketType);
                 disposableHandler.Dispose();
             }
+
+            Handlers.Clear();
+            Preprocessors.Clear();
+            PreHooks.Clear();
+            PostHooks.Clear();
+            DisposableHandlers.Clear();
         }
     }
 
