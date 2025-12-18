@@ -1737,9 +1737,12 @@ public static partial class PacketSender
 
     public static void SendEntityFishing(Player player, bool isFishing, int stage, bool isPressed)
     {
-        player.SendPacket(
+        SendDataToProximityOnMapInstance(
+            player.MapId,
+            player.MapInstanceId,
             new EntityFishingPacket(player.Id, player.GetEntityType(), player.MapId, isFishing, stage, isPressed),
-            TransmissionMode.All
+            player,
+            TransmissionMode.Any
         );
     }
 
