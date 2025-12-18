@@ -1200,6 +1200,50 @@ internal sealed partial class PacketHandler
         }
     }
 
+    public void HandlePacket(IPacketSender packetSender, EntityFishingPacket packet)
+    {
+        var id = packet.Id;
+        var type = packet.Type;
+        var mapId = packet.MapId;
+
+        Entity en = null;
+        if (type < EntityType.Event)
+        {
+            if (!Globals.Entities.ContainsKey(id))
+            {
+                return;
+            }
+
+            en = Globals.Entities[id];
+        }
+        else
+        {
+            var entityMap = MapInstance.Get(mapId);
+            if (entityMap == null)
+            {
+                return;
+            }
+
+            if (!entityMap.LocalEntities.ContainsKey(id))
+            {
+                return;
+            }
+
+            en = entityMap.LocalEntities[id];
+        }
+
+        if (en == null)
+        {
+            return;
+        }
+
+        en.IsFishing = packet.IsFishing;
+        en.FishingStageIndex = packet.Stage;
+        en.IsFishingRodPressed = packet.IsPressed;
+        en.FishingStageTimer = Timing.Global.Milliseconds;
+        en.FishingStageDuration = Options.Instance.Sprites.IdleFrameDuration;
+    }
+
     //EntityDiePacket
     public void HandlePacket(IPacketSender packetSender, EntityDiePacket packet)
     {
