@@ -5,6 +5,7 @@ using Intersect.Framework.Core.GameObjects;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Fishing;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps;
@@ -994,6 +995,16 @@ internal sealed partial class NetworkedPacketHandler
 
                     break;
 
+                case GameObjectType.Fish:
+                    obj = FishBase.Get(id);
+
+                    break;
+
+                case GameObjectType.FishingSpot:
+                    obj = FishingSpotBase.Get(id);
+
+                    break;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1132,6 +1143,15 @@ internal sealed partial class NetworkedPacketHandler
                     break;
                 case GameObjectType.Sets:
                     obj = SetDescriptor.Get(id);
+
+                    break;
+                case GameObjectType.Fish:
+                    obj = FishBase.Get(id);
+
+                    break;
+
+                case GameObjectType.FishingSpot:
+                    obj = FishingSpotBase.Get(id);
 
                     break;
                 default:

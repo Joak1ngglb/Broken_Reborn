@@ -25,6 +25,7 @@ using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.Maps.Attributes;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.Security;
 using Intersect.Network.Packets.Server;
@@ -484,6 +485,8 @@ internal sealed partial class PacketHandler
 
         return true;
     }
+
+  
 
     #region "Client Packets"
 
@@ -3246,6 +3249,143 @@ internal sealed partial class PacketHandler
         }
         player.IsFading = false;
     }
+    private bool TryGetFishingSpotAttribute(Client client, out MapFishingSpotAttribute fishingAttribute)
+    {
+        fishingAttribute = default;
+
+        var player = client?.Entity;
+        if (player == null)
+        {
+            return false;
+        }
+
+        if (!MapController.TryGet(player.MapId, out var mapController))
+        {
+            return false;
+        }
+
+        var attributes = mapController.Attributes;
+        if (attributes == null)
+        {
+            return false;
+        }
+
+        var maxX = attributes.GetLength(0) - 1;
+        var maxY = attributes.GetLength(1) - 1;
+
+        if (player.X < 0 || player.Y < 0 || player.X > maxX || player.Y > maxY)
+        {
+            return false;
+        }
+
+        for (var radarX = Math.Max(0, player.X - 1); radarX <= Math.Min(maxX, player.X + 1); radarX++)
+        {
+            for (var radarY = Math.Max(0, player.Y - 1); radarY <= Math.Min(maxY, player.Y + 1); radarY++)
+            {
+                if (attributes[radarX, radarY] is not MapFishingSpotAttribute fishingSpotAttribute)
+                {
+                    continue;
+                }
+
+                if (fishingSpotAttribute.FishingSpotType == Guid.Empty)
+                {
+                    continue;
+                }
+
+                var direction = GetDirection(radarX - player.X, radarY - player.Y);
+                var isSameTile = radarX == player.X && radarY == player.Y;
+                if (isSameTile || direction == player.Dir)
+                {
+                    fishingAttribute = fishingSpotAttribute;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static Direction GetDirection(int xDiff, int yDiff)
+    {
+        if (xDiff == 0)
+        {
+            if (yDiff < 0) return Direction.Up;
+            if (yDiff > 0) return Direction.Down;
+            return Direction.None;
+        }
+        if (xDiff > 0)
+        {
+            if (yDiff < 0) return Direction.UpRight;
+            if (yDiff > 0) return Direction.DownRight;
+            return Direction.Right;
+        }
+        if (xDiff < 0)
+        {
+            if (yDiff < 0) return Direction.UpLeft;
+            if (yDiff > 0) return Direction.DownLeft;
+            return Direction.Left;
+        }
+        return Direction.None;
+    }
+
+    //FishingPacket
+    public void HandlePacket(Client client, FishingPacket packet)
+    {
+        if (!TryGetFishingSpotAttribute(client, out var fishingAttribute))
+        {
+            return;
+        }
+
+        client.Entity.FishEvent.ServerCastFishingRod(fishingAttribute.FishingSpotType);
+    }
+
+    //SendFishingSpot
+    public void HandlePacket(Client client, SendFishingSpot packet)
+    {
+        if (!TryGetFishingSpotAttribute(client, out var fishingAttribute))
+        {
+            return;
+        }
+
+        client.Entity.FishEvent.ServerCastFishingRod(fishingAttribute.FishingSpotType);
+    }
+
+    //SendCancelFishing
+    public void HandlePacket(Client client, SendCancelFishing packet)
+    {
+        var player = client?.Entity;
+        if (player == null)
+        {
+            return;
+        }
+
+        player.FishEvent.ServerReturnFishingRod();
+    }
+
+    //SendSuccessFishing
+    public void HandlePacket(Client client, SendSuccessFishing packet)
+    {
+        var player = client?.Entity;
+        if (player == null)
+        {
+            return;
+        }
+
+        player.FishEvent.FishingSuccess();
+    }
+
+    //SendFailedFishing
+    public void HandlePacket(Client client, SendFailedFishing packet)
+    {
+        var player = client?.Entity;
+        if (player == null)
+        {
+            return;
+        }
+
+        player.FishEvent.FishingFailed();
+    }
+
 
     public void HandlePacket(Client client, TargetPacket packet)
     {

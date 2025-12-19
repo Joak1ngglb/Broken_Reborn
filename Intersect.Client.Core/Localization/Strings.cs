@@ -585,6 +585,36 @@ public static partial class Strings
         public static LocalizedString NothingToGain = "Breaking this item yields no materials.";
     }
 
+    public partial struct Fishing
+    {
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString WindowTitle = "Fishing";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Hook = "Hook";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Cancel = "Cancel";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString StageWaiting = "Waiting for a bite...";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString StageHooked = "Fish hooked!";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString StageResolving = "Reeling in...";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString StageCanceled = "Fishing canceled";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString StageTimer = "Bite Timer: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResolveTimer = "Catch Timer: {00}";
+    }
+
     public partial struct Enchanting
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

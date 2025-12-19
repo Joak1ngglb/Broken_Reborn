@@ -9,6 +9,7 @@ using Intersect.Framework.Core.GameObjects;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Fishing;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
@@ -1689,6 +1690,24 @@ public static partial class PacketSender
         player.SendPacket(new GlobalCooldownPacket(cooldown - Timing.Global.MillisecondsUtc), TransmissionMode.All);
     }
 
+    public static void SendEntityFishing(Player player, bool isFishing, int stage, bool isPressed)
+    {
+        player.SendPacket(
+            new EntityFishingPacket(player.Id, player.GetEntityType(), player.MapId, isFishing, stage, isPressed),
+            TransmissionMode.All
+        );
+    }
+
+    public static void SendClientFish(Player player, Guid fishId)
+    {
+        player.SendPacket(new SendClientFish(fishId), TransmissionMode.All);
+    }
+
+    public static void SendClientResultCastFishingRod(Player player, bool success)
+    {
+        player.SendPacket(new SendClientResultCastFishingRod(success), TransmissionMode.All);
+    }
+
     //ExperiencePacket
     public static void SendExperience(Player player)
     {
@@ -1887,6 +1906,20 @@ public static partial class PacketSender
                 break;
             case GameObjectType.Resource:
                 foreach (var obj in ResourceDescriptor.Lookup)
+                {
+                    SendGameObject(client, obj.Value, false, false, packetList);
+                }
+
+                break;
+            case GameObjectType.Fish:
+                foreach (var obj in FishBase.Lookup)
+                {
+                    SendGameObject(client, obj.Value, false, false, packetList);
+                }
+
+                break;
+            case GameObjectType.FishingSpot:
+                foreach (var obj in FishingSpotBase.Lookup)
                 {
                     SendGameObject(client, obj.Value, false, false, packetList);
                 }

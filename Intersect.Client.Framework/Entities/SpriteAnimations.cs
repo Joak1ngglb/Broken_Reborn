@@ -8,4 +8,5 @@ public enum SpriteAnimations
     Shoot,
     Cast,
     Weapon,
+    Fishing,
 }

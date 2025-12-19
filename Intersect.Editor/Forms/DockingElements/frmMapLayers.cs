@@ -5,6 +5,7 @@ using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Fishing;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps;
@@ -462,6 +463,7 @@ public partial class FrmMapLayers : DockContent
         grpWarp.Visible = false;
         grpSound.Visible = false;
         grpResource.Visible = false;
+        grpFishingSpot.Visible = false;
         grpAnimation.Visible = false;
         grpSlide.Visible = false;
         grpCritter.Visible = false;
@@ -487,6 +489,7 @@ public partial class FrmMapLayers : DockContent
         {MapAttributeType.Item,Strings.Attributes.ItemSpawn},
         {MapAttributeType.NpcAvoid,Strings.Attributes.NpcAvoid},
         {MapAttributeType.Resource,Strings.Attributes.ResourceSpawn},
+        {MapAttributeType.FishingSpot,Strings.Attributes.FishingSpot},
         {MapAttributeType.Sound,Strings.Attributes.MapSound},
         {MapAttributeType.Slide,Strings.Attributes.Slide},
         {MapAttributeType.Warp,Strings.Attributes.Warp},
@@ -570,6 +573,21 @@ public partial class FrmMapLayers : DockContent
                     cmbResourceAttribute.SelectedIndex = 0;
                 }
 
+                break;
+            case MapAttributeType.FishingSpot:
+                grpFishingSpot.Visible = true;
+                cmbFishingSpot.Items.Clear();
+                cmbFishingSpot.Items.AddRange(FishingSpotBase.Names);
+                if (cmbFishingSpot.Items.Count > 0)
+                {
+                    cmbFishingSpot.SelectedIndex = 0;
+                }
+
+                chkFishingSpotBlocked.Checked = false;
+                cmbFishingSpotAnimation.Items.Clear();
+                cmbFishingSpotAnimation.Items.Add(Strings.General.None);
+                cmbFishingSpotAnimation.Items.AddRange(AnimationDescriptor.Names);
+                cmbFishingSpotAnimation.SelectedIndex = 0;
                 break;
             case MapAttributeType.Animation:
                 grpAnimation.Visible = true;
@@ -659,6 +677,9 @@ public partial class FrmMapLayers : DockContent
             case MapAttributeType.Resource:
                 return CreateResourceAttribute();
 
+            case MapAttributeType.FishingSpot:
+                return CreateFishingSpotAttribute();
+
             case MapAttributeType.Animation:
                 return CreateAnimationAttribute();
 
@@ -721,6 +742,15 @@ public partial class FrmMapLayers : DockContent
         resourceAttribute.ResourceId = ResourceDescriptor.IdFromList(cmbResourceAttribute.SelectedIndex);
         resourceAttribute.SpawnLevel = (byte)(rbLevel1.Checked ? 0 : 1);
         return resourceAttribute;
+    }
+
+    private MapFishingSpotAttribute CreateFishingSpotAttribute()
+    {
+        var fishingSpotAttribute = (MapFishingSpotAttribute)MapAttribute.CreateAttribute(MapAttributeType.FishingSpot);
+        fishingSpotAttribute.FishingSpotType = FishingSpotBase.IdFromList(cmbFishingSpot.SelectedIndex);
+        fishingSpotAttribute.IsBlocked = chkFishingSpotBlocked.Checked;
+        fishingSpotAttribute.AnimationId = AnimationDescriptor.IdFromList(cmbFishingSpotAnimation.SelectedIndex - 1);
+        return fishingSpotAttribute;
     }
 
     private MapAnimationAttribute CreateAnimationAttribute()

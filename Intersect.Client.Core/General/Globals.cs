@@ -176,6 +176,7 @@ public static partial class Globals
         HoldToSoftRetargetOnSelfCast || Database.AutoSoftRetargetOnSelfCast;
 
     public static bool WaitingOnServer { get; set; }
+    public static bool InFishing = false;
 
     internal static void EmitLifecycleChangingState()
     {

@@ -576,4 +576,29 @@ public static partial class PacketSender
         Network.SendPacket(new TargetPacket(targetId));
     }
 
+    public static void SendFishingCast()
+    {
+        Network.SendPacket(new FishingPacket());
+    }
+
+    public static void SendFishingSpot()
+    {
+        Network.SendPacket(new SendFishingSpot());
+    }
+
+    public static void SendSuccessFishing()
+    {
+        Network.SendPacket(new SendSuccessFishing());
+    }
+
+    public static void SendCancelFishing()
+    {
+        Network.SendPacket(new SendCancelFishing());
+    }
+
+    public static void SendFailedFishing()
+    {
+        Network.SendPacket(new SendFailedFishing());
+    }
+
 }

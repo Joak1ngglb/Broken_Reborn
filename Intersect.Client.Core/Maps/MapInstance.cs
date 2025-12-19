@@ -670,6 +670,29 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                         mAttributeAnimInstances[mapAttribute].Update();
                         break;
                     }
+                    case MapAttributeType.FishingSpot:
+                    {
+                        var fishingSpotAttribute = (MapFishingSpotAttribute)mapAttribute;
+                        var anim = AnimationDescriptor.Get(fishingSpotAttribute.AnimationId);
+                        if (anim == null)
+                        {
+                            continue;
+                        }
+
+                        if (!mAttributeAnimInstances.ContainsKey(mapAttribute))
+                        {
+                            var animInstance = new Animation(anim, true);
+                            animInstance.SetPosition(
+                                X + x * _tileWidth + _tileHalfWidth,
+                                Y + y * _tileHeight + _tileHalfHeight, x, y, Id, 0
+                            );
+
+                            mAttributeAnimInstances.Add(mapAttribute, animInstance);
+                        }
+
+                        mAttributeAnimInstances[mapAttribute].Update();
+                        break;
+                    }
                     case MapAttributeType.Critter:
                     {
                         var critterAttribute = ((MapCritterAttribute)mapAttribute);

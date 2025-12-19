@@ -218,6 +218,22 @@ public abstract partial class Entity : IEntity
     [NotMapped, JsonIgnore]
     public Entity CastTarget { get; set; }
 
+    //Fishing
+    [NotMapped]
+    public bool IsFishing { get; set; }
+
+    [NotMapped]
+    public int FishingStageIndex { get; set; }
+
+    [NotMapped]
+    public bool IsFishingRodPressed { get; set; }
+
+    [NotMapped]
+    public long FishingStageTimer { get; set; }
+
+    [NotMapped]
+    public long FishingStageDuration { get; set; }
+
     [NotMapped, JsonIgnore]
     public bool SoftRetargetOnSelfCast { get; set; }
 
@@ -3437,6 +3453,11 @@ public abstract partial class Entity : IEntity
         packet.NameColor = NameColor;
         packet.HeaderLabel = new LabelPacket(HeaderLabel.Text, HeaderLabel.Color);
         packet.FooterLabel = new LabelPacket(FooterLabel.Text, FooterLabel.Color);
+        packet.IsFishing = IsFishing;
+        packet.FishingStageIndex = FishingStageIndex;
+        packet.IsFishingRodPressed = IsFishingRodPressed;
+        packet.FishingStageTimer = FishingStageTimer;
+        packet.FishingStageDuration = FishingStageDuration;
 
         return packet;
     }

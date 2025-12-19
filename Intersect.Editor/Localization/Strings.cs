@@ -932,6 +932,7 @@ public static partial class Strings
             {(int) MapAttributeType.Item, @"Item Spawn" },
             {(int) MapAttributeType.NpcAvoid, @"Npc Avoid" },
             {(int) MapAttributeType.Resource, @"Resource Spawn" },
+            {(int) MapAttributeType.FishingSpot, @"Fishing Spot" },
             {(int) MapAttributeType.Slide, @"Slide" },
             {(int) MapAttributeType.Sound, @"Map Sound" },
             {(int) MapAttributeType.Walkable, @"Walkable" },
@@ -1006,6 +1007,10 @@ public static partial class Strings
 
         public static LocalizedString DistanceFormat = @"{00} tiles";
 
+        public static LocalizedString FishingSpotType = @"Fishing Spot Type";
+
+        public static LocalizedString FishingSpotAnimation = @"Fishing Spot Animation";
+
         public static LocalizedString Grapple = @"Grapple Stone";
 
         public static LocalizedString Item = @"Item";
@@ -1027,6 +1032,8 @@ public static partial class Strings
         public static LocalizedString Resource = @"Resource";
 
         public static LocalizedString ResourceSpawn = @"Resource";
+
+        public static LocalizedString FishingSpot = @"Fishing Spot";
 
         public static LocalizedString RespawnTime = @"Respawn Time (ms)";
 
@@ -1587,6 +1594,12 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString instructionsresource =
             @"Below are condition lists. If conditions are met on any of the lists then the player can harvest the resource.";
+
+        public static LocalizedString instructionsfish =
+            @"Below are condition lists. If conditions are met on any of the lists then the player can catch this fish.";
+
+        public static LocalizedString instructionsfishingspot =
+            @"Below are condition lists. If conditions are met on any of the lists then the player can fish at this spot.";
 
         public static LocalizedString instructionsspell =
             @"Below are condition lists. If conditions are met on any of the lists then the player can use cast the spell.";
@@ -3799,6 +3812,30 @@ Tick timer saved in server config.json.";
         public static LocalizedString Okay = @"Okay";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Save = @"Save";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Name = @"Name";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Folder = @"Folder";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString New = @"New";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Copy = @"Copy";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Undo = @"Undo";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Paste = @"Paste";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Delete = @"Delete";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString True = @"True";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -4353,6 +4390,10 @@ Tick timer saved in server config.json.";
         public static LocalizedString reportbug = @"Report Bug";
 
         public static LocalizedString resourceeditor = @"Resource Editor";
+
+        public static LocalizedString fisheditor = @"Fish Editor";
+
+        public static LocalizedString fishingspoteditor = @"Fishing Spot Editor";
 
         public static LocalizedString resources = @"Resources";
 
@@ -6006,6 +6047,185 @@ Negative values for time to flow backwards.";
             {(int) VariableType.UserVariable, @"User Variable" },
         };
 
+    }
+
+    public partial struct FishEditor
+    {
+        public static LocalizedString Title = @"Fish Editor";
+
+        public static LocalizedString New = @"New Fish";
+
+        public static LocalizedString delete = @"Delete Fish";
+
+        public static LocalizedString copy = @"Copy Fish";
+
+        public static LocalizedString paste = @"Paste Fish";
+
+        public static LocalizedString undo = @"Undo Changes";
+
+        public static LocalizedString fishes = @"Fishes";
+
+        public static LocalizedString general = @"General";
+
+        public static LocalizedString name = @"Name:";
+
+        public static LocalizedString item = @"Item:";
+
+        public static LocalizedString parameters = @"Parameters";
+
+        public static LocalizedString commonevent = @"Common Event:";
+
+        public static LocalizedString sortalphabetically = @"Order Alphabetically";
+
+        public static LocalizedString searchplaceholder = @"Search...";
+
+        public static LocalizedString folderlabel = @"Folder:";
+
+        public static LocalizedString save = @"Save";
+
+        public static LocalizedString cancel = @"Cancel";
+
+        public static LocalizedString chance = @"Chance (%)";
+
+        public static LocalizedString coeffUnpredictability = @"Coeff Unpredictability (%)";
+
+        public static LocalizedString position = @"Position";
+
+        public static LocalizedString pushStrength = @"Push Strength";
+
+        public static LocalizedString rangeSize = @"Range Size";
+
+        public static LocalizedString speedMove = @"Speed Move";
+
+        public static LocalizedString speedResize = @"Speed Resize";
+
+        public static LocalizedString strength = @"Strength";
+
+        public static LocalizedString timeChangeRangeSize = @"Timer Change Resize (MS)";
+
+        public static LocalizedString nudTimeChangeSpeed = @"Timer Change Speed (MS)";
+
+        public static LocalizedString weight = @"Weight";
+
+        public static LocalizedString Chance = @"Chance";
+
+        public static LocalizedString Strength = @"Strength";
+
+        public static LocalizedString Speed = @"Speed";
+
+        public static LocalizedString Hooks = @"Hooks";
+
+        public static LocalizedString AddHook = @"Add Hook";
+
+        public static LocalizedString RemoveHook = @"Remove Hook";
+
+        public static LocalizedString Requirements = @"Requirements";
+
+        public static LocalizedString DeletePrompt = @"Are you sure you want to delete this fish?";
+
+        public static LocalizedString DeleteTitle = @"Delete Fish";
+
+        public static LocalizedString UndoPrompt = @"Revert changes to this fish?";
+
+        public static LocalizedString UndoTitle = @"Undo Fish";
+    }
+
+    public partial struct FishesEditor
+    {
+        public static LocalizedString deleteprompt =
+            @"Are you sure you want to delete this fish? This action cannot be reverted!";
+
+        public static LocalizedString deletetitle = @"Delete Fish";
+
+        public static LocalizedString undoprompt =
+            @"Are you sure you want to undo changes made to this fish? This action cannot be reverted!";
+
+        public static LocalizedString undotitle = @"Undo Changes";
+
+        public static LocalizedString folderprompt = @"Enter a name for the folder you'd like to add:";
+
+        public static LocalizedString foldertitle = @"Add Folder";
+
+        public static LocalizedString searchplaceholder = @"Search...";
+    }
+
+    public partial struct FishingSpotEditor
+    {
+        public static LocalizedString Title = @"Fishing Spot Editor";
+
+        public static LocalizedString title = @"Fishing Spot Editor";
+
+        public static LocalizedString New = @"New Fishing Spot";
+
+        public static LocalizedString delete = @"Delete Fishing Spot";
+
+        public static LocalizedString copy = @"Copy Fishing Spot";
+
+        public static LocalizedString paste = @"Paste Fishing Spot";
+
+        public static LocalizedString undo = @"Undo Changes";
+
+        public static LocalizedString tables = @"Spots";
+
+        public static LocalizedString fishes = @"Available Fishes";
+
+        public static LocalizedString addfishlabel = @"Add Fish To Be Fishing:";
+
+        public static LocalizedString add = @"Add Selected";
+
+        public static LocalizedString remove = @"Remove Selected";
+
+        public static LocalizedString general = @"General";
+
+        public static LocalizedString name = @"Name:";
+
+        public static LocalizedString sortalphabetically = @"Order Alphabetically";
+
+        public static LocalizedString searchplaceholder = @"Search...";
+
+        public static LocalizedString folderlabel = @"Folder:";
+
+        public static LocalizedString save = @"Save";
+
+        public static LocalizedString cancel = @"Cancel";
+
+        public static LocalizedString fishingtimemin = @"Fishing Time Min";
+
+        public static LocalizedString fishingtimemax = @"Fishing Time Max";
+
+        public static LocalizedString fishingjobexp = @"Fishing Job EXP";
+
+        public static LocalizedString Chance = @"Chance";
+
+        public static LocalizedString Strength = @"Strength";
+
+        public static LocalizedString Speed = @"Speed";
+
+        public static LocalizedString Hooks = @"Hooks";
+
+        public static LocalizedString AddHook = @"Add Hook";
+
+        public static LocalizedString RemoveHook = @"Remove Hook";
+
+        public static LocalizedString Requirements = @"Requirements";
+
+        public static LocalizedString DeletePrompt = @"Are you sure you want to delete this fishing spot?";
+
+        public static LocalizedString DeleteTitle = @"Delete Fishing Spot";
+
+        public static LocalizedString UndoPrompt = @"Revert changes to this fishing spot?";
+
+        public static LocalizedString UndoTitle = @"Undo Fishing Spot";
+
+        public static LocalizedString deleteprompt = @"Are you sure you want to delete this fishing spot?";
+
+        public static LocalizedString undoprompt = @"Revert changes to this fishing spot?";
+
+        public static LocalizedString undotitle = @"Undo Fishing Spot";
+
+        public static LocalizedString folderprompt = @"Enter a name for the folder you'd like to add:";
+
+        public static LocalizedString foldertitle = @"Add Folder";
     }
 
 }

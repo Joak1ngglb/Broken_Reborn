@@ -1200,6 +1200,50 @@ internal sealed partial class PacketHandler
         }
     }
 
+    public void HandlePacket(IPacketSender packetSender, EntityFishingPacket packet)
+    {
+        var id = packet.Id;
+        var type = packet.Type;
+        var mapId = packet.MapId;
+
+        Entity en = null;
+        if (type < EntityType.Event)
+        {
+            if (!Globals.Entities.ContainsKey(id))
+            {
+                return;
+            }
+
+            en = Globals.Entities[id];
+        }
+        else
+        {
+            var entityMap = MapInstance.Get(mapId);
+            if (entityMap == null)
+            {
+                return;
+            }
+
+            if (!entityMap.LocalEntities.ContainsKey(id))
+            {
+                return;
+            }
+
+            en = entityMap.LocalEntities[id];
+        }
+
+        if (en == null)
+        {
+            return;
+        }
+
+        en.IsFishing = packet.IsFishing;
+        en.FishingStageIndex = packet.Stage;
+        en.IsFishingRodPressed = packet.IsPressed;
+        en.FishingStageTimer = Timing.Global.Milliseconds;
+        en.FishingStageDuration = Options.Instance.Sprites.IdleFrameDuration;
+    }
+
     //EntityDiePacket
     public void HandlePacket(IPacketSender packetSender, EntityDiePacket packet)
     {
@@ -1569,6 +1613,32 @@ internal sealed partial class PacketHandler
     public void HandlePacket(IPacketSender packetSender, GlobalCooldownPacket packet)
     {
         Globals.Me.GlobalCooldown = Timing.Global.Milliseconds + packet.GlobalCooldown;
+    }
+
+    public void HandlePacket(IPacketSender packetSender, StartFishingPacket packet)
+    {
+        Globals.Me?.StartFishing(
+            packet.FishId,
+            Timing.Global.Milliseconds + packet.StageTimer,
+            Timing.Global.Milliseconds + packet.ResolveTimer,
+            packet.Stage,
+            packet.CancelRequested
+        );
+    }
+
+    public void HandlePacket(IPacketSender packetSender, ResolveFishingPacket packet)
+    {
+        Globals.Me?.ResolveFishing(
+            packet.FishId,
+            Timing.Global.Milliseconds + packet.ResolveTimer,
+            packet.CancelRequested,
+            packet.Canceled
+        );
+    }
+
+    public void HandlePacket(IPacketSender packetSender, StopFishingPacket packet)
+    {
+        Globals.Me?.StopFishing(packet.Canceled);
     }
 
     //ExperiencePacket

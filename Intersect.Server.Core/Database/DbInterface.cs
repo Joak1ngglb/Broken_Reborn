@@ -14,6 +14,7 @@ using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Fishing;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps;
@@ -746,6 +747,14 @@ public static partial class DbInterface
                 ResourceDescriptor.Lookup.Clear();
 
                 break;
+            case GameObjectType.Fish:
+                FishBase.Lookup.Clear();
+
+                break;
+            case GameObjectType.FishingSpot:
+                FishingSpotBase.Lookup.Clear();
+
+                break;
             case GameObjectType.Shop:
                 ShopDescriptor.Lookup.Clear();
 
@@ -853,18 +862,32 @@ public static partial class DbInterface
                         }
 
                         break;
-                    case GameObjectType.Resource:
-                        foreach (var res in context.Resources)
-                        {
-                            ResourceDescriptor.Lookup.Set(res.Id, res);
-                        }
+            case GameObjectType.Resource:
+                foreach (var res in context.Resources)
+                {
+                    ResourceDescriptor.Lookup.Set(res.Id, res);
+                }
 
-                        break;
-                    case GameObjectType.Shop:
-                        foreach (var shp in context.Shops)
-                        {
-                            ShopDescriptor.Lookup.Set(shp.Id, shp);
-                        }
+                break;
+            case GameObjectType.Fish:
+                foreach (var fish in context.Fish)
+                {
+                    FishBase.Lookup.Set(fish.Id, fish);
+                }
+
+                break;
+            case GameObjectType.FishingSpot:
+                foreach (var fishingSpot in context.FishingSpots)
+                {
+                    FishingSpotBase.Lookup.Set(fishingSpot.Id, fishingSpot);
+                }
+
+                break;
+            case GameObjectType.Shop:
+                foreach (var shp in context.Shops)
+                {
+                    ShopDescriptor.Lookup.Set(shp.Id, shp);
+                }
 
                         break;
                     case GameObjectType.Spell:
@@ -1143,6 +1166,14 @@ public static partial class DbInterface
                 dbObj = new ResourceDescriptor(predefinedid);
 
                 break;
+            case GameObjectType.Fish:
+                dbObj = new FishBase(predefinedid);
+
+                break;
+            case GameObjectType.FishingSpot:
+                dbObj = new FishingSpotBase(predefinedid);
+
+                break;
             case GameObjectType.Shop:
                 dbObj = new ShopDescriptor(predefinedid);
 
@@ -1258,6 +1289,18 @@ public static partial class DbInterface
                     case GameObjectType.Resource:
                         context.Resources.Add((ResourceDescriptor)dbObj);
                         ResourceDescriptor.Lookup.Set(dbObj.Id, dbObj);
+
+                        break;
+
+                    case GameObjectType.Fish:
+                        context.Fish.Add((FishBase)dbObj);
+                        FishBase.Lookup.Set(dbObj.Id, dbObj);
+
+                        break;
+
+                    case GameObjectType.FishingSpot:
+                        context.FishingSpots.Add((FishingSpotBase)dbObj);
+                        FishingSpotBase.Lookup.Set(dbObj.Id, dbObj);
 
                         break;
 
@@ -1416,6 +1459,14 @@ public static partial class DbInterface
                         break;
                     case GameObjectType.Resource:
                         context.Resources.Remove((ResourceDescriptor)gameObject);
+
+                        break;
+                    case GameObjectType.Fish:
+                        context.Fish.Remove((FishBase)gameObject);
+
+                        break;
+                    case GameObjectType.FishingSpot:
+                        context.FishingSpots.Remove((FishingSpotBase)gameObject);
 
                         break;
                     case GameObjectType.Shop:
@@ -1589,6 +1640,14 @@ public static partial class DbInterface
                         break;
                     case GameObjectType.Resource:
                         context.Resources.Update((ResourceDescriptor)gameObject);
+
+                        break;
+                    case GameObjectType.Fish:
+                        context.Fish.Update((FishBase)gameObject);
+
+                        break;
+                    case GameObjectType.FishingSpot:
+                        context.FishingSpots.Update((FishingSpotBase)gameObject);
 
                         break;
                     case GameObjectType.Shop:
