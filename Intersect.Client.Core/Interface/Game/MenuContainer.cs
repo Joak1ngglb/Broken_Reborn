@@ -295,6 +295,12 @@ public partial class MenuContainer : Panel
         _questsWindow.NotifyQuestProgressUpdated(questIds);
     }
 
+    public void ShowQuest(Guid questId)
+    {
+        HideWindows();
+        _questsWindow.ShowQuest(questId);
+    }
+
     public void UpdateFriendsList()
     {
         _friendsWindow.UpdateList();

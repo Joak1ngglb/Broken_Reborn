@@ -2242,7 +2242,7 @@ internal sealed partial class PacketHandler
                 gameInterface =>
                 {
                     gameInterface.NotifyQuestsUpdated();
-                    gameInterface.GameMenu?.NotifyQuestProgressUpdated(packet.Quests.Keys);
+                    gameInterface.NotifyQuestProgressUpdated(packet.Quests.Keys);
                 }
             );
         }

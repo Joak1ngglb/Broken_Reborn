@@ -63,6 +63,7 @@ public partial class GameInterface : MutableInterface
     private PictureWindow mPictureWindow;
 
     private QuestOfferWindow mQuestOfferWindow;
+    private QuestTrackerWindow? _questTrackerWindow;
 
     private ShopWindow _shopWindow;
     public EnchantItemWindow mEnchantItemWindow;
@@ -209,6 +210,8 @@ public partial class GameInterface : MutableInterface
         }
 
         mQuestOfferWindow = new QuestOfferWindow(GameCanvas);
+        _questTrackerWindow = new QuestTrackerWindow(GameCanvas);
+        _questTrackerWindow.QuestSelected += questId => GameMenu.ShowQuest(questId);
         mMapItemWindow = new MapItemWindow(GameCanvas);
 
     }
@@ -490,6 +493,12 @@ public partial class GameInterface : MutableInterface
         mShouldUpdateQuestLog = true;
     }
 
+    public void NotifyQuestProgressUpdated(IEnumerable<Guid> questIds)
+    {
+        GameMenu?.NotifyQuestProgressUpdated(questIds);
+        _questTrackerWindow?.NotifyQuestProgressUpdated(questIds);
+    }
+
     //Trading
     public void NotifyOpenTrading(string traderName)
     {
@@ -538,6 +547,7 @@ public partial class GameInterface : MutableInterface
         }
 
         GameMenu?.Update(mShouldUpdateQuestLog);
+        _questTrackerWindow?.Update(mShouldUpdateQuestLog);
         mShouldUpdateQuestLog = false;
         Hotbar?.Update();
         EscapeMenu.Update();

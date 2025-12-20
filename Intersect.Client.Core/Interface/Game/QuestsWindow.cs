@@ -561,6 +561,15 @@ namespace Intersect.Client.Interface.Game
             mQuestsWindow.IsHidden = false;
         }
 
+        public void ShowQuest(Guid questId)
+        {
+            Globals.QuestWindowSelectedQuestId = questId;
+            _shouldUpdateList = true;
+            mSelectedQuest = null;
+            mQuestsWindow.IsHidden = false;
+            UpdateInternal(true);
+        }
+
         public bool IsVisible() => !mQuestsWindow.IsHidden;
 
         public void Hide()
@@ -757,56 +766,17 @@ namespace Intersect.Client.Interface.Game
         }
 
         // ---------- Tareas ----------
-        private bool IsTaskCompleted(QuestTaskDescriptor task)
-        {
-            if (mSelectedQuest == null || Globals.Me?.QuestProgress == null)
-            {
-                return false;
-            }
+        private bool IsTaskCompleted(QuestTaskDescriptor task) => QuestTaskProgressHelper.IsTaskCompleted(
+            mSelectedQuest,
+            task,
+            Globals.Me?.QuestProgress
+        );
 
-            if (!Globals.Me.QuestProgress.TryGetValue(mSelectedQuest.Id, out var progress))
-            {
-                return false;
-            }
-
-            if (progress.Completed)
-            {
-                return true;
-            }
-
-            var currentIndex = mSelectedQuest.GetTaskIndex(progress.TaskId);
-            var taskIndex = mSelectedQuest.GetTaskIndex(task.Id);
-
-            return currentIndex > taskIndex;
-        }
-
-        private int GetTaskProgress(QuestTaskDescriptor task)
-        {
-            if (mSelectedQuest == null || Globals.Me?.QuestProgress == null)
-            {
-                return 0;
-            }
-
-            if (!Globals.Me.QuestProgress.TryGetValue(mSelectedQuest.Id, out var progress))
-            {
-                return 0;
-            }
-
-            var currentIndex = mSelectedQuest.GetTaskIndex(progress.TaskId);
-            var taskIndex = mSelectedQuest.GetTaskIndex(task.Id);
-
-            if (progress.Completed || currentIndex > taskIndex)
-            {
-                return task.Quantity;
-            }
-
-            if (currentIndex == taskIndex)
-            {
-                return progress.TaskProgress;
-            }
-
-            return 0;
-        }
+        private int GetTaskProgress(QuestTaskDescriptor task) => QuestTaskProgressHelper.GetTaskProgress(
+            mSelectedQuest,
+            task,
+            Globals.Me?.QuestProgress
+        );
         private void UpdateQuestTasks()
         {
             mQuestTasksList.RemoveAllRows();
