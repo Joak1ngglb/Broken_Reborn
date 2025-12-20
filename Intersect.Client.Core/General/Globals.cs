@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
 using Intersect.Client.Entities;
 using Intersect.Client.Entities.Events;
@@ -103,6 +104,8 @@ public static partial class Globals
     public static readonly Dictionary<Guid, long> QuestGuildExperience = new();
 
     public static readonly Dictionary<Guid, Dictionary<Factions, int>> QuestFactionHonor = new();
+
+    public static Guid? QuestWindowSelectedQuestId { get; set; }
 
     public static bool QuestDirty;
 
