@@ -1,3 +1,4 @@
+using Intersect;
 using Intersect.Client.Core;
 using Intersect.Client.Entities;
 using Intersect.Client.Entities.Events;
@@ -1202,6 +1203,11 @@ internal sealed partial class PacketHandler
 
     public void HandlePacket(IPacketSender packetSender, EntityFishingPacket packet)
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         var id = packet.Id;
         var type = packet.Type;
         var mapId = packet.MapId;
@@ -1617,6 +1623,11 @@ internal sealed partial class PacketHandler
 
     public void HandlePacket(IPacketSender packetSender, StartFishingPacket packet)
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         Globals.Me?.StartFishing(
             packet.FishId,
             Timing.Global.Milliseconds + packet.StageTimer,
@@ -1628,6 +1639,11 @@ internal sealed partial class PacketHandler
 
     public void HandlePacket(IPacketSender packetSender, ResolveFishingPacket packet)
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         Globals.Me?.ResolveFishing(
             packet.FishId,
             Timing.Global.Milliseconds + packet.ResolveTimer,
@@ -1638,6 +1654,11 @@ internal sealed partial class PacketHandler
 
     public void HandlePacket(IPacketSender packetSender, StopFishingPacket packet)
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         Globals.Me?.StopFishing(packet.Canceled);
     }
 

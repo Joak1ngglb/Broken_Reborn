@@ -1,6 +1,7 @@
 using Intersect.Client.Core;
 using Intersect.Client.Core.Controls;
 using Intersect.Client.Core.Sounds;
+using Intersect;
 using Intersect.Client.Framework.Entities;
 using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Input;
@@ -116,6 +117,11 @@ public partial class FishEventClient
 
     public bool TryFishing()
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return false;
+        }
+
         if (isFishingEvent)
         {
             if (isDebaging)

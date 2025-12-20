@@ -1,3 +1,4 @@
+using Intersect;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
@@ -578,26 +579,51 @@ public static partial class PacketSender
 
     public static void SendFishingCast()
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         Network.SendPacket(new FishingPacket());
     }
 
     public static void SendFishingSpot()
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         Network.SendPacket(new SendFishingSpot());
     }
 
     public static void SendSuccessFishing()
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         Network.SendPacket(new SendSuccessFishing());
     }
 
     public static void SendCancelFishing()
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         Network.SendPacket(new SendCancelFishing());
     }
 
     public static void SendFailedFishing()
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         Network.SendPacket(new SendFailedFishing());
     }
 
