@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Intersect.Network.Packets;
 using Intersect.Network.Packets.Shops;
+using Intersect.Fishing;
 using AdminAction = Intersect.Admin.Actions.AdminAction;
 
 namespace Intersect.Client.Networking;
@@ -587,6 +588,16 @@ public static partial class PacketSender
         Network.SendPacket(new FishingPacket());
     }
 
+    public static void SendFishingCastRequest(Guid sessionId)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        Network.SendPacket(new FishingCastRequest(sessionId));
+    }
+
     public static void SendFishingSpot()
     {
         if (!Options.Instance.Features.NewFishingV2)
@@ -617,6 +628,16 @@ public static partial class PacketSender
         Network.SendPacket(new SendCancelFishing());
     }
 
+    public static void SendFishingCancel(Guid sessionId, string reason)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        Network.SendPacket(new FishingCancelRequest(sessionId, reason));
+    }
+
     public static void SendFailedFishing()
     {
         if (!Options.Instance.Features.NewFishingV2)
@@ -625,6 +646,16 @@ public static partial class PacketSender
         }
 
         Network.SendPacket(new SendFailedFishing());
+    }
+
+    public static void SendFishingInput(Guid sessionId, int tickMs, FishingInputFlags flags)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        Network.SendPacket(new FishingInputPacket(sessionId, tickMs, flags));
     }
 
 }
