@@ -11,6 +11,7 @@ public partial class PackedIntersectPacket
         "Intersect.Network.Packets.Client",
         "Intersect.Network.Packets.Editor",
         "Intersect.Network.Packets.Server",
+        "Intersect.Network.Packets.Server.Fishing",
         "Intersect.Admin.Actions"
     };
 
