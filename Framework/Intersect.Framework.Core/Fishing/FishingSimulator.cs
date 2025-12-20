@@ -16,70 +16,21 @@ public static class FishingSimulator
         state.TickMs += deltaMs;
         var now = state.TickMs;
 
-        const float volumePressEMultiple = 10f;
-
         if ((input.Flags & FishingInputFlags.Tap) != 0)
         {
-            state.PullMeter += config.PlayerStrength * volumePressEMultiple;
-            state.PlayerPosition += config.PlayerStrength;
+            state.PullMeter += config.PlayerStrength;
         }
 
-        state.PlayerPosition -= config.FishWeight * dt;
-        state.PullMeter -= config.FishWeight * dt * (volumePressEMultiple * 0.5f);
+        state.PullMeter = Math.Clamp(state.PullMeter - (config.FishWeight * dt), 0f, 1f);
 
         var hookHalfSize = config.HookSize * 0.5f;
+        state.PlayerPosition += (state.PullMeter * config.FishPushStrength - config.FishWeight) * dt;
         state.PlayerPosition = Math.Clamp(state.PlayerPosition, hookHalfSize, 1f - hookHalfSize);
-        state.PullMeter = Math.Clamp(state.PullMeter, 0f, 1f);
 
-        state.FishPosition += state.FishMoveSpeed * dt;
+        UpdateFishMovement(ref state, in config, dt, now, ref rng);
+        UpdateFishRange(ref state, in config, dt, now, ref rng);
+
         var halfRange = state.RangeSize * 0.5f;
-        state.FishPosition = Math.Clamp(state.FishPosition, halfRange, 1f - halfRange);
-
-        var leftRange = state.FishPosition - halfRange;
-        var rightRange = state.FishPosition + halfRange;
-        if (leftRange <= 0f || rightRange >= 1f)
-        {
-            state.FishMoveSpeed *= -1f;
-        }
-
-        if (now >= state.NextSpeedChangeAtMs)
-        {
-            var direction = Math.Sign(state.FishMoveSpeed);
-            if (direction == 0)
-            {
-                direction = 1;
-            }
-
-            state.FishMoveSpeed = ChaosRange(config.FishBaseSpeed, 0f, config.Unpredictability, 1, 2f, ref rng) * direction;
-
-            var flipRoll = rng.NextInt(1, 201);
-            if (flipRoll < config.Unpredictability)
-            {
-                state.FishMoveSpeed *= -1f;
-            }
-
-            var timeChangeSpeed = (int)ChaosRange(config.TimeChangeSpeedMs, 0f, config.Unpredictability, rng: ref rng);
-            state.NextSpeedChangeAtMs = now + timeChangeSpeed;
-        }
-
-        if (now >= state.NextRangeChangeAtMs)
-        {
-            state.TargetRangeSize = ChaosRange(config.FishRangeBaseSize, 0f, config.Unpredictability, rng: ref rng);
-            var timeChangeRange = (int)ChaosRange(config.TimeChangeRangeMs, 0f, config.Unpredictability, rng: ref rng);
-            state.NextRangeChangeAtMs = now + timeChangeRange;
-        }
-
-        if (!state.RangeSize.Equals(state.TargetRangeSize))
-        {
-            var rangeSign = Math.Sign(state.TargetRangeSize - state.RangeSize);
-            state.RangeSize += config.FishRangeChangeSpeed * dt * rangeSign;
-            if (Math.Abs(state.TargetRangeSize - state.RangeSize) < 0.01f)
-            {
-                state.RangeSize = state.TargetRangeSize;
-            }
-        }
-
-        halfRange = state.RangeSize * 0.5f;
         state.FishPosition = Math.Clamp(state.FishPosition, halfRange, 1f - halfRange);
 
         var hookLeft = state.PlayerPosition - hookHalfSize;
@@ -111,41 +62,87 @@ public static class FishingSimulator
         return FishingSimResult.InProgress;
     }
 
-    private static float ChaosRange(
-        float defaultValue,
-        float min,
-        float max,
-        int sign = 0,
-        float multiply = 1f,
+    private static void UpdateFishMovement(
+        ref FishingSimState state,
+        in FishingSimConfig config,
+        float dt,
+        long now,
         ref FishingRng rng)
     {
-        var minInt = (int)MathF.Floor(min);
-        var maxInt = (int)MathF.Ceiling(max);
+        state.FishPosition += state.FishMoveSpeed * dt;
 
-        var scale = maxInt > minInt ? rng.NextInt(minInt, maxInt) : minInt;
+        var halfRange = state.RangeSize * 0.5f;
+        var leftRange = state.FishPosition - halfRange;
+        var rightRange = state.FishPosition + halfRange;
 
-        var direction = Math.Sign(sign);
-        var result = 0f;
-
-        switch (direction)
+        if (leftRange <= 0f || rightRange >= 1f)
         {
-            case > 0:
-                result = scale / 100f;
-                break;
-            case < 0:
-                result = -scale / 100f;
-                break;
-            default:
-                var res = rng.NextInt(1, 101);
-                result = res > 50 ? scale / 100f : -scale / 100f;
-                break;
+            state.FishMoveSpeed *= -1f;
         }
 
-        if (scale == 0)
+        if (now < state.NextSpeedChangeAtMs)
         {
-            result = 0f;
+            return;
         }
 
-        return defaultValue + defaultValue * (result * multiply);
+        var direction = Math.Sign(state.FishMoveSpeed);
+        if (direction == 0)
+        {
+            direction = rng.NextInt(0, 2) == 0 ? -1 : 1;
+        }
+
+        var newSpeed = ApplyVariance(config.FishBaseSpeed, config.Unpredictability, ref rng) * direction;
+
+        var flipRoll = rng.NextFloat01();
+        if (flipRoll <= config.Unpredictability / 200f)
+        {
+            newSpeed *= -1f;
+        }
+
+        state.FishMoveSpeed = newSpeed;
+
+        var timeChangeSpeed = (int)MathF.Max(1f, ApplyVariance(config.TimeChangeSpeedMs, config.Unpredictability, ref rng));
+        state.NextSpeedChangeAtMs = now + timeChangeSpeed;
+    }
+
+    private static void UpdateFishRange(
+        ref FishingSimState state,
+        in FishingSimConfig config,
+        float dt,
+        long now,
+        ref FishingRng rng)
+    {
+        if (now >= state.NextRangeChangeAtMs)
+        {
+            state.TargetRangeSize = ApplyVariance(config.FishRangeBaseSize, config.Unpredictability, ref rng);
+            var timeChangeRange = (int)MathF.Max(1f, ApplyVariance(config.TimeChangeRangeMs, config.Unpredictability, ref rng));
+            state.NextRangeChangeAtMs = now + timeChangeRange;
+        }
+
+        if (Math.Abs(state.RangeSize - state.TargetRangeSize) < 0.001f)
+        {
+            return;
+        }
+
+        var rangeSign = Math.Sign(state.TargetRangeSize - state.RangeSize);
+        state.RangeSize += config.FishRangeChangeSpeed * dt * rangeSign;
+
+        if (Math.Abs(state.TargetRangeSize - state.RangeSize) < 0.01f)
+        {
+            state.RangeSize = state.TargetRangeSize;
+        }
+    }
+
+    private static float ApplyVariance(float baseValue, float unpredictability, ref FishingRng rng)
+    {
+        if (unpredictability <= 0)
+        {
+            return baseValue;
+        }
+
+        var variance = rng.NextFloat01() * (unpredictability / 100f);
+        var direction = rng.NextInt(0, 2) == 0 ? -1f : 1f;
+
+        return baseValue + (baseValue * variance * direction);
     }
 }
