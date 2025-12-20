@@ -4,9 +4,11 @@ using System.Linq;
 using Intersect.Config;
 using Intersect.Core;
 using Intersect.Enums;
+using Intersect.Fishing;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Fishing;
 using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.Server.Fishing;
 using Intersect.Server.Entities;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
@@ -27,11 +29,76 @@ public class FishEventServer
     private Guid _currentFishId;
     private int _stage;
 
+    private Guid _pendingSessionId;
+    private Guid _pendingFishingSpotId;
+    private int[]? _pendingFishingPosition;
+    private Direction _pendingFishingDirection;
+    private long _pendingBiteAt;
+
     #endregion
 
     public FishEventServer(Player player)
     {
         _player = player;
+    }
+
+    public void CastV2(Guid sessionId, Guid fishingSpotId)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        var spot = FishingSpotBase.Get(fishingSpotId);
+        if (spot == null || !Conditions.MeetsConditionLists(spot.FishingRequirements, _player, null))
+        {
+            return;
+        }
+
+        _pendingSessionId = sessionId;
+        _pendingFishingSpotId = fishingSpotId;
+        _pendingFishingPosition = new[] { _player.X, _player.Y };
+        _pendingFishingDirection = _player.Dir;
+        _pendingBiteAt = Timing.Global.Milliseconds + Randomization.Next(spot.FishingTimeMin, spot.FishingTimeMax);
+    }
+
+    public void CancelV2(Guid sessionId)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        if (sessionId != Guid.Empty && _player.FishingSession?.SessionId != sessionId && _pendingSessionId != sessionId)
+        {
+            return;
+        }
+
+        _pendingSessionId = Guid.Empty;
+        _pendingFishingSpotId = Guid.Empty;
+        _pendingFishingPosition = null;
+        _pendingBiteAt = 0;
+
+        if (_player.FishingSession != null && (sessionId == Guid.Empty || _player.FishingSession.SessionId == sessionId))
+        {
+            ResolveCatchV2(true);
+        }
+        else
+        {
+            _player.ClearFishingSession();
+            _player.SendPacket(new StopFishingPacket(true));
+        }
+    }
+
+    public void UpdateV2()
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        TryStartBiteV2();
+        MaybeSendSnapshotV2();
     }
 
     #region Stage 0 — player casts or retrieves the fishing rod
@@ -197,6 +264,271 @@ public class FishEventServer
                 }
 
                 break;
+        }
+    }
+
+    public void SimulateV2(Guid sessionId, int tickMs, FishingInputFlags flags)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        var session = _player.FishingSession;
+        if (session == null || session.SessionId != sessionId || session.State == null || session.Config == null || session.Rng == null)
+        {
+            return;
+        }
+
+        var now = Timing.Global.Milliseconds;
+        if (session.NextInputAt > now)
+        {
+            return;
+        }
+
+        var deltaMs = tickMs - (int)session.State.TickMs;
+        if (deltaMs <= 0 && flags == FishingInputFlags.None)
+        {
+            return;
+        }
+
+        session.NextInputAt = now + 50;
+
+        var inputFrame = new FishingInputFrame
+        {
+            TickMs = tickMs,
+            Flags = flags,
+        };
+
+        var result = FishingSimulator.Step(ref session.State, in session.Config, inputFrame, (uint)Math.Max(0, deltaMs), ref session.Rng);
+        session.Stage = FishingStage.Hooked;
+        session.CancelRequested = false;
+
+        switch (result)
+        {
+            case FishingSimResult.Success:
+                ResolveCatchV2(false);
+                break;
+            case FishingSimResult.Failed:
+                ResolveCatchV2(true);
+                break;
+        }
+    }
+
+    private void MaybeSendSnapshotV2()
+    {
+        var session = _player.FishingSession;
+        if (session?.State == null)
+        {
+            return;
+        }
+
+        var now = Timing.Global.Milliseconds;
+        if (session.NextSnapshotAt > now)
+        {
+            return;
+        }
+
+        session.NextSnapshotAt = now + 250;
+        _player.SendPacket(
+            new FishingSessionStatePacket(
+                session.SessionId,
+                FishingSimStateDto.FromState(session.State)
+            )
+        );
+    }
+
+    private void TryStartBiteV2()
+    {
+        if (_pendingSessionId == Guid.Empty || _pendingFishingSpotId == Guid.Empty)
+        {
+            return;
+        }
+
+        if (_pendingFishingPosition != null && (_player.X != _pendingFishingPosition[0] || _player.Y != _pendingFishingPosition[1] ||
+                                                _pendingFishingDirection != _player.Dir))
+        {
+            CancelV2(_pendingSessionId);
+            return;
+        }
+
+        if (Timing.Global.Milliseconds < _pendingBiteAt)
+        {
+            return;
+        }
+
+        _fishingSpotId = _pendingFishingSpotId;
+        var fishId = GetRandomFish();
+        if (fishId == Guid.Empty)
+        {
+            CancelV2(_pendingSessionId);
+            return;
+        }
+
+        var fish = FishBase.Get(fishId);
+        if (fish == null)
+        {
+            CancelV2(_pendingSessionId);
+            return;
+        }
+
+        var session = BuildSession(_pendingSessionId, _pendingFishingSpotId, fish);
+        _player.StartFishingSession(session);
+
+        _player.SendPacket(
+            new FishingSessionConfigPacket(
+                session.SessionId,
+                FishingSimConfigDto.FromConfig(session.Config!),
+                FishingSimStateDto.FromState(session.State!)
+            )
+        );
+
+        PacketSender.SendEntityFishing(_player, true, 0, false);
+        _player.SendPacket(new StartFishingPacket(session.FishId, 1000, session.ResolveTimer, FishingStage.Hooked, false));
+
+        _pendingSessionId = Guid.Empty;
+        _pendingFishingSpotId = Guid.Empty;
+        _pendingFishingPosition = null;
+        _pendingBiteAt = 0;
+    }
+
+    private FishingSession BuildSession(Guid sessionId, Guid fishingSpotId, FishBase fish)
+    {
+        var config = BuildSimConfig(fish);
+        var state = new FishingSimState
+        {
+            CurrentValue = config.BeginValue,
+            FishPosition = config.FishInitialPosition,
+            FishMoveSpeed = config.FishBaseSpeed,
+            RangeSize = config.FishRangeBaseSize,
+            TargetRangeSize = config.FishRangeBaseSize,
+            PlayerPosition = config.FishInitialPosition,
+            PullMeter = 0f,
+            NextSpeedChangeAtMs = config.TimeChangeSpeedMs,
+            NextRangeChangeAtMs = config.TimeChangeRangeMs,
+            TickMs = 0,
+        };
+
+        return new FishingSession
+        {
+            SessionId = sessionId,
+            FishingSpotId = fishingSpotId,
+            FishId = fish.Id,
+            Stage = FishingStage.Hooked,
+            StageTimer = 1000,
+            ResolveTimer = 60000,
+            Config = config,
+            State = state,
+            Rng = new FishingRng(DeriveSeed(sessionId, fish.Id)),
+            NextSnapshotAt = Timing.Global.Milliseconds + 250,
+            NextInputAt = Timing.Global.Milliseconds,
+        };
+    }
+
+    private static FishingSimConfig BuildSimConfig(FishBase fish)
+    {
+        return new FishingSimConfig
+        {
+            BeginValue = 0.5f,
+            PlayerStrength = 0.15f,
+            HookSize = 0.15f,
+            FishInitialPosition = fish.position / 100f,
+            FishBaseSpeed = fish.speedMove / 100f,
+            FishRangeBaseSize = fish.rangeSize / 100f,
+            FishRangeChangeSpeed = fish.speedChangeRangeSize / 100f,
+            FishWeight = fish.weight / 100f,
+            FishStrengthDrain = fish.strength / 100f,
+            FishPushStrength = fish.pushStrength / 100f,
+            TimeChangeSpeedMs = fish.timeChangeSpeed,
+            TimeChangeRangeMs = fish.timeChangeRangeSize,
+            Unpredictability = fish.coeffUnpredictability,
+        };
+    }
+
+    private static uint DeriveSeed(Guid sessionId, Guid fishId)
+    {
+        unchecked
+        {
+            var hash = 17u;
+            foreach (var b in sessionId.ToByteArray())
+            {
+                hash = hash * 31u + b;
+            }
+
+            foreach (var b in fishId.ToByteArray())
+            {
+                hash = hash * 31u + b;
+            }
+
+            return hash;
+        }
+    }
+
+    private void ResolveCatchV2(bool canceled)
+    {
+        var session = _player.FishingSession;
+        if (session == null)
+        {
+            return;
+        }
+
+        session.Canceled = canceled;
+
+        _player.SendPacket(
+            new ResolveFishingPacket(
+                session.FishId,
+                1000,
+                session.CancelRequested,
+                canceled
+            )
+        );
+
+        if (!canceled)
+        {
+            ResolvePayout(session.FishId, session.FishingSpotId);
+        }
+        else
+        {
+            PacketSender.SendChatBubble(
+                _player.Id,
+                _player.MapInstanceId,
+                (int)EntityType.GlobalEntity,
+                "The fish got away..",
+                _player.MapId
+            );
+        }
+
+        _player.SendPacket(new StopFishingPacket(canceled));
+        _player.ClearFishingSession();
+    }
+
+    private void ResolvePayout(Guid fishId, Guid fishingSpotId)
+    {
+        var fish = FishBase.Get(fishId);
+        if (fish == null)
+        {
+            return;
+        }
+
+        var fishingSpot = FishingSpotBase.Get(fishingSpotId);
+
+        if (!_player.TryGiveItem(fish.ItemId, 1))
+        {
+            if (MapController.TryGetInstanceFromMap(_player.MapId, _player.MapInstanceId, out var instance))
+            {
+                var item = new Database.Item(fish.ItemId, 1);
+                instance.SpawnItem((Framework.Items.IItemSource)_player, _player.X, _player.Y, item, 1, _player.Id);
+            }
+        }
+
+        if (fish.Event != default)
+        {
+            _player.EnqueueStartCommonEvent(fish.Event);
+        }
+
+        if (fishingSpot != null && fishingSpot.FishingJobExperience > 0)
+        {
+            _player.GiveJobExperience(JobType.Fishing, fishingSpot.FishingJobExperience);
         }
     }
 

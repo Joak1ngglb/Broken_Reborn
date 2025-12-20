@@ -29,6 +29,7 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.Security;
+using Intersect.Fishing;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Core;
 using Intersect.Server.Services;
@@ -3342,7 +3343,8 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        client.Entity.FishEvent.ServerCastFishingRod(fishingAttribute.FishingSpotType);
+        var sessionId = Guid.NewGuid();
+        client.Entity.FishEvent.CastV2(sessionId, fishingAttribute.FishingSpotType);
     }
 
     //SendFishingSpot
@@ -3358,7 +3360,25 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        client.Entity.FishEvent.ServerCastFishingRod(fishingAttribute.FishingSpotType);
+        var sessionId = Guid.NewGuid();
+        client.Entity.FishEvent.CastV2(sessionId, fishingAttribute.FishingSpotType);
+    }
+
+    //FishingCastRequest
+    public void HandlePacket(Client client, FishingCastRequest packet)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        if (!TryGetFishingSpotAttribute(client, out var fishingAttribute))
+        {
+            return;
+        }
+
+        var sessionId = packet.SessionId == Guid.Empty ? Guid.NewGuid() : packet.SessionId;
+        client.Entity.FishEvent.CastV2(sessionId, fishingAttribute.FishingSpotType);
     }
 
     //SendCancelFishing
@@ -3375,7 +3395,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        player.FishEvent.ServerReturnFishingRod();
+        player.FishEvent.CancelV2(player.FishingSession?.SessionId ?? Guid.Empty);
     }
 
     //SendSuccessFishing
@@ -3392,7 +3412,11 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        player.FishEvent.FishingSuccess();
+        player.FishEvent.SimulateV2(
+            player.FishingSession?.SessionId ?? Guid.Empty,
+            (int)(player.FishingSession?.State?.TickMs ?? 0),
+            FishingInputFlags.Tap
+        );
     }
 
     //SendFailedFishing
@@ -3409,7 +3433,46 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        player.FishEvent.FishingFailed();
+        player.FishEvent.CancelV2(player.FishingSession?.SessionId ?? Guid.Empty);
+    }
+
+    //FishingCancelRequest
+    public void HandlePacket(Client client, FishingCancelRequest packet)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        var player = client?.Entity;
+        if (player == null)
+        {
+            return;
+        }
+
+        player.FishEvent.CancelV2(packet.SessionId);
+    }
+
+    //FishingInputPacket
+    public void HandlePacket(Client client, FishingInputPacket packet)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        var player = client?.Entity;
+        if (player == null)
+        {
+            return;
+        }
+
+        if (player.FishingSession == null || player.FishingSession.SessionId != packet.SessionId)
+        {
+            return;
+        }
+
+        player.FishEvent.SimulateV2(packet.SessionId, packet.TickMs, packet.Flags);
     }
 
 

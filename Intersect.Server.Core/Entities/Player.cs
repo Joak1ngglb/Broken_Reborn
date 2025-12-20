@@ -873,6 +873,10 @@ public partial class Player : Entity
 
                 if (Options.Instance.Features.NewFishingV2)
                 {
+                    FishEvent.UpdateV2();
+                }
+                else
+                {
                     FishEvent.FishingUpdate();
                 }
 
