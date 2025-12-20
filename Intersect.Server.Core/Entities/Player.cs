@@ -871,7 +871,10 @@ public partial class Player : Entity
 
                 base.Update(timeMs);
 
-                FishEvent.FishingUpdate();
+                if (Options.Instance.Features.NewFishingV2)
+                {
+                    FishEvent.FishingUpdate();
+                }
 
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
                 {

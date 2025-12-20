@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Intersect.Enums;
+using Intersect;
 using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets;
@@ -3331,6 +3332,11 @@ internal sealed partial class PacketHandler
     //FishingPacket
     public void HandlePacket(Client client, FishingPacket packet)
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         if (!TryGetFishingSpotAttribute(client, out var fishingAttribute))
         {
             return;
@@ -3342,6 +3348,11 @@ internal sealed partial class PacketHandler
     //SendFishingSpot
     public void HandlePacket(Client client, SendFishingSpot packet)
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         if (!TryGetFishingSpotAttribute(client, out var fishingAttribute))
         {
             return;
@@ -3353,6 +3364,11 @@ internal sealed partial class PacketHandler
     //SendCancelFishing
     public void HandlePacket(Client client, SendCancelFishing packet)
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         var player = client?.Entity;
         if (player == null)
         {
@@ -3365,6 +3381,11 @@ internal sealed partial class PacketHandler
     //SendSuccessFishing
     public void HandlePacket(Client client, SendSuccessFishing packet)
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         var player = client?.Entity;
         if (player == null)
         {
@@ -3377,6 +3398,11 @@ internal sealed partial class PacketHandler
     //SendFailedFishing
     public void HandlePacket(Client client, SendFailedFishing packet)
     {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
         var player = client?.Entity;
         if (player == null)
         {

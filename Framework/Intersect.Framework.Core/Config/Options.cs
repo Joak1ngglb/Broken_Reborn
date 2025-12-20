@@ -44,6 +44,8 @@ public partial record Options
 
     public const string CategoryNetworkVisibility = nameof(CategoryNetworkVisibility);
 
+    public const string CategoryFeatures = nameof(CategoryFeatures);
+
     public const string CategorySecurity = nameof(CategorySecurity);
 
     #endregion
@@ -142,6 +144,15 @@ public partial record Options
     public MetricsOptions Metrics { get; set; } = new();
 
     #endregion Logging and Metrics
+
+    #region Features
+
+    [Category(CategoryFeatures)]
+    [JsonProperty(Order = -85)]
+    [RequiresRestart]
+    public FeatureOptions Features { get; set; } = new();
+
+    #endregion Features
 
     #region Database
 
