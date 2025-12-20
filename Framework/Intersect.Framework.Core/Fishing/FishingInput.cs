@@ -9,7 +9,7 @@ public enum FishingInputFlags
 
 public struct FishingInputFrame
 {
-    public int TickMs { get; init; }
+    public uint TickMs { get; init; }
 
     public FishingInputFlags Flags { get; init; }
 }

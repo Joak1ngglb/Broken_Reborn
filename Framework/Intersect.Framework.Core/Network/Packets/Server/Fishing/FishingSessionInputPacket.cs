@@ -11,7 +11,7 @@ public sealed class FishingSessionInputPacket : IntersectPacket
     {
     }
 
-    public FishingSessionInputPacket(Guid sessionId, int tickMs, FishingInputFlags flags)
+    public FishingSessionInputPacket(Guid sessionId, uint tickMs, FishingInputFlags flags)
     {
         SessionId = sessionId;
         TickMs = tickMs;
@@ -22,7 +22,7 @@ public sealed class FishingSessionInputPacket : IntersectPacket
     public Guid SessionId { get; set; }
 
     [Key(1)]
-    public int TickMs { get; set; }
+    public uint TickMs { get; set; }
 
     [Key(2)]
     public FishingInputFlags Flags { get; set; }

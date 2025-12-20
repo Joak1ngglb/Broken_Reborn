@@ -3414,7 +3414,7 @@ internal sealed partial class PacketHandler
 
         player.FishEvent.SimulateV2(
             player.FishingSession?.SessionId ?? Guid.Empty,
-            (int)(player.FishingSession?.State?.TickMs ?? 0),
+            (uint)Math.Clamp(player.FishingSession?.State?.TickMs ?? 0, 0, uint.MaxValue),
             FishingInputFlags.Tap
         );
     }

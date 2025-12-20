@@ -648,7 +648,7 @@ public static partial class PacketSender
         Network.SendPacket(new SendFailedFishing());
     }
 
-    public static void SendFishingInput(Guid sessionId, int tickMs, FishingInputFlags flags)
+    public static void SendFishingInput(Guid sessionId, uint tickMs, FishingInputFlags flags)
     {
         if (!Options.Instance.Features.NewFishingV2)
         {

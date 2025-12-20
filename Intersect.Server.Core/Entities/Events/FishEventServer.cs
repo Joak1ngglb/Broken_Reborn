@@ -267,7 +267,7 @@ public class FishEventServer
         }
     }
 
-    public void SimulateV2(Guid sessionId, int tickMs, FishingInputFlags flags)
+    public void SimulateV2(Guid sessionId, uint tickMs, FishingInputFlags flags)
     {
         if (!Options.Instance.Features.NewFishingV2)
         {
@@ -286,7 +286,7 @@ public class FishEventServer
             return;
         }
 
-        var deltaMs = tickMs - (int)session.State.TickMs;
+        var deltaMs = (long)tickMs - session.State.TickMs;
         if (deltaMs <= 0 && flags == FishingInputFlags.None)
         {
             return;
@@ -300,7 +300,13 @@ public class FishEventServer
             Flags = flags,
         };
 
-        var result = FishingSimulator.Step(ref session.State, in session.Config, inputFrame, (uint)Math.Max(0, deltaMs), ref session.Rng);
+        var result = FishingSimulator.Step(
+            ref session.State,
+            in session.Config,
+            inputFrame,
+            (uint)Math.Max(0, deltaMs),
+            ref session.Rng
+        );
         session.Stage = FishingStage.Hooked;
         session.CancelRequested = false;
 
