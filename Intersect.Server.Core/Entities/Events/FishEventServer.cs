@@ -34,9 +34,9 @@ public class FishEventServer
         _player = player;
     }
 
-    #region Stage 0 — грок забрасывает удочку или возвращает её
+    #region Stage 0 — player casts or retrieves the fishing rod
 
-    public void ServerCastFishingRod(Guid fishingSpotId) //Удочку игрок закинул
+    public void ServerCastFishingRod(Guid fishingSpotId) //Player cast the fishing rod
     {
         var spot = FishingSpotBase.Get(fishingSpotId);
         if (spot != null && Conditions.MeetsConditionLists(spot.FishingRequirements, _player, null))
@@ -56,7 +56,7 @@ public class FishEventServer
         }
     }
 
-    public void ServerReturnFishingRod() //Удочку игрок вернул
+    public void ServerReturnFishingRod() //Player retrieved the fishing rod
     {
         _stage = 0;
         _fishingSpotId = Guid.Empty;
@@ -65,14 +65,14 @@ public class FishEventServer
 
     #endregion
 
-    #region Stage 1 Спустя время игроку отправляется случайная рыба
+    #region Stage 1 After some time a random fish is sent to the player
 
-    private bool WaitingCatchFish() //Ждём рыбу
+    private bool WaitingCatchFish() //Waiting for a fish
     {
         if (_fishingPosition != null && (_player.X != _fishingPosition[0] || _player.Y != _fishingPosition[1] ||
                                          _fishingDirection != _player.Dir))
         {
-            //Отправить отмену или не стоит.
+            //Cancel the attempt if the player has moved or turned
             _stage = 0;
             _fishingSpotId = Guid.Empty;
             _timerWaitFish = 0;
@@ -82,15 +82,15 @@ public class FishEventServer
         return Timing.Global.MillisecondsUtc >= _timerWaitFish;
     }
 
-    private Guid GetRandomFish() //Даём рыбу
+    private Guid GetRandomFish() //Choose a fish to give the player
     {
         var fishingSpot = FishingSpotBase.Get(_fishingSpotId);
         var fishes = new List<FishBase>();
 
-        //Сортируем рыбку по возрастанию на редкость
+        //Sort fish by rarity in increasing order
         var fishesSort = fishingSpot?.SortingFishByRarity(FishingSpotBase.SortByType.INCREASING).ToArray();
 
-        //Проверяем рыбу на соблюдение требований пожарной безопасности
+        //Check each fish against fishing requirements
         if (fishesSort != null)
         {
             foreach (var fishGuid in fishesSort)
@@ -156,7 +156,7 @@ public class FishEventServer
         _player.IsFishingRodPressed = _isPressed;
         _player.FishingStageTimer = Timing.Global.Milliseconds;
         _player.FishingStageDuration = Options.Instance.Sprites.IdleFrameDuration;
-        //Console.Write($"Обновление игрока {_player.Name}\n");
+        //Console.Write($"Updating player {_player.Name}\n");
     }
 
     public void FishingUpdate()
@@ -200,7 +200,7 @@ public class FishEventServer
         }
     }
 
-    #region Stage 3 Результат рыбалки
+    #region Stage 3 Fishing result
 
     public void FishingSuccess()
     {
@@ -231,7 +231,7 @@ public class FishEventServer
             _player.GiveJobExperience(JobType.Fishing, fishingSpot.FishingJobExperience);
         }
 
-        //Console.Write($"{_player.Name} поймал на удочку {FishBase.Get(_currentFishId).Name}.\n");
+        //Console.Write($"{_player.Name} caught {FishBase.Get(_currentFishId).Name} with a fishing rod.\n");
         _stage = 0;
         _fishingSpotId = Guid.Empty;
         _timerWaitFish = 0;
@@ -242,7 +242,7 @@ public class FishEventServer
     {
         string[] strings =
         {
-            "Сорвалась..", "Блин..", "Неудача.."
+            "Got away..", "Darn..", "No luck.."
         };
         var rand = Randomization.Next(0, strings.Length);
         PacketSender.SendChatBubble(_player.Id, _player.MapInstanceId, (int)EntityType.GlobalEntity, strings[rand],
@@ -251,7 +251,7 @@ public class FishEventServer
         _fishingSpotId = Guid.Empty;
         _timerWaitFish = 0;
         _currentFishId = Guid.Empty;
-        //Console.Write($"{_player.Name} не поймал рыбу.\n");
+        //Console.Write($"{_player.Name} did not catch a fish.\n");
     }
 
     #endregion

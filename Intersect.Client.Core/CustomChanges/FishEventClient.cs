@@ -23,9 +23,9 @@ public partial class FishEventClient
 
     #region FuncVars
     private Player? player;
-    private long lastUpdateTime;//Время последнего обновления для deltaTime
-    private float deltaTime;//Дельта времени
-    private bool isPressed = false;//Зажатие кнопки
+    private long lastUpdateTime;//Time of the last update for deltaTime
+    private float deltaTime;//Delta time value
+    private bool isPressed = false;//Tracks if the button is held down
     private FishingWindow? eventUI;
     private int timerFishingRod = 1000;
     private long timeFishingRod;
@@ -38,14 +38,14 @@ public partial class FishEventClient
 
     private int stage { get; set; } = 0;
 
-    private float currentValue = 0; //Текущий прогресс в ловли рыбы
-    //С какого значения начинается рыбалка
-    //Более дерзкая рыба уменьшает это значение
-    //Более качественная удочка увеличивает это значение
+    private float currentValue = 0; //Current progress while catching a fish
+    //Starting progress value for fishing
+    //More aggressive fish decrease this value
+    //Higher-quality fishing rods increase this value
     private float beginValue = 0.5f;
 
 
-    //Диапазон, в котором игрок удерживает удочку
+    //Range in which the player keeps the hook
     private float currentRangeSize;
     private float targetRangeSize;
     private float currentMoveSpeed;
@@ -55,7 +55,7 @@ public partial class FishEventClient
 
     private long lastUpdateTimeRangeSize;
     private long lastUpdateTimeSpeed;
-    //Текущая позиция диапазона
+    //Current fish position inside the range
     private float currentFishPosition;
 
     private float playerPosition = 0;
@@ -107,11 +107,11 @@ public partial class FishEventClient
     }
 
     bool isDebaging = true;
-    bool isFishing = false;//Если игрок ловит рыбу
-    bool isFishingForAnimation = false;//Если игрок ловит рыбу
-    bool isFishingEvent = false;//Если игрок в ивенте ловли
+    bool isFishing = false;//Indicates the player is fishing
+    bool isFishingForAnimation = false;//Indicates the player is fishing for animation
+    bool isFishingEvent = false;//Indicates the player is in the fishing event
 
-    #region Stage 0 Игрок закидывает удочку.
+    #region Stage 0 Player casts the fishing rod
 
 
     public bool TryFishing()
@@ -119,13 +119,13 @@ public partial class FishEventClient
         if (isFishingEvent)
         {
             if (isDebaging)
-                Log.Information("На текущий момент на крючке рыба.");
-            return true;//true потому, что рыбалка выполняется, а значит удары не должны отправится на сервер
+                Log.Information("There is already a fish on the hook.");
+            return true;//true because fishing is in progress, and attacks should not be sent to the server
         }
         if (!IsFishingRod())
         {
             if (isDebaging)
-                Log.Information("Это не удочка.");
+                Log.Information("This is not a fishing rod.");
             return false;
         }
         if (Timing.Global.Milliseconds < timeFishingRod)
@@ -134,7 +134,7 @@ public partial class FishEventClient
             {
                 float reqsec = (int)timerFishingRod / 1000f;
                 float cursec = (int)(timeFishingRod - Timing.Global.Milliseconds) / 1000f;
-                Log.Information($"Таймер еще не прошёл. {cursec.ToString("0.0sec.")} < {reqsec.ToString("0.0sec.")}");
+                Log.Information($"The timer has not elapsed. {cursec.ToString("0.0sec.")} < {reqsec.ToString("0.0sec.")}");
             }
             return false;
         }
@@ -149,14 +149,14 @@ public partial class FishEventClient
                 if (fishingSpotID == Guid.Empty)
                 {
                     if (isDebaging)
-                        Log.Information("Тип точки рыбалки не указан.");
+                        Log.Information("Fishing spot type is not specified.");
 
                     return false;
                 }
                 FishingSpotBase spot = FishingSpotBase.Get(fishingSpotID);
 
                 if (isDebaging)
-                    Log.Information("Удочка успешно кастанулась.");
+                    Log.Information("Fishing rod cast succeeded.");
 
             if (stage == 0)
             {
@@ -169,7 +169,7 @@ public partial class FishEventClient
                 isFishing = false;
                 stage = 0;
                 if (isDebaging)
-                    Log.Information("Удочку забрали.");
+                    Log.Information("Fishing rod retrieved.");
             }
             timeFishingRod = Timing.Global.Milliseconds + timerFishingRod;
 
@@ -177,7 +177,7 @@ public partial class FishEventClient
         else
         {
             if (isDebaging)
-                Log.Information("Атрибут не найден.");
+                Log.Information("Fishing attribute not found.");
             return false;
         }
 
@@ -197,12 +197,12 @@ public partial class FishEventClient
                 isFishingForAnimation = true;
                 Freeze(timerFishingRod);
                 if (isDebaging)
-                    Log.Information("Удочку закинули.");
+                    Log.Information("Fishing rod cast.");
             }
         }
     }
 
-    #region Функции
+    #region Functions
     private bool IsFishingRod()
     {
         var weaponSlotIndex = Options.Instance.Equipment.WeaponSlot;
@@ -363,7 +363,7 @@ public partial class FishEventClient
         {
 
             MapAttribute result = null;
-            int radarRadius = 3;//значения 3\5\7
+            int radarRadius = 3;//possible values 3\5\7
             for (int radarX = player.X - (radarRadius - 2); radarX < player.X + 2; radarX++)
                 for (int radarY = player.Y - 1; radarY < player.Y + 2; radarY++)
                 {
@@ -392,7 +392,7 @@ public partial class FishEventClient
 
     #endregion
 
-    #region Stage 1 Рыба поймана на крючок. 
+    #region Stage 1 Fish is hooked
 
     public void TheFishWasCaught(Guid fishID)
     {
@@ -408,7 +408,7 @@ public partial class FishEventClient
         lastUpdateTimeRangeSize = Timing.Global.MillisecondsUtc + fish.timeChangeRangeSize;
 
         stage = 2;
-        //Проверяем силу рыбы, не сорвалась-ли она раньше, чем игрок может среагировать на это
+        //Check fish strength to ensure it hasn't escaped before the player can react
         currentValue = beginValue - fish.pushStrength / 100f;
         if (currentValue <= 0)
         {
@@ -462,7 +462,7 @@ public partial class FishEventClient
         }
     }
 
-    #region Stage 2 Борьба с рыбой
+    #region Stage 2 Fighting the fish
 
     private void FishMove(float _deltaTime)
     {
@@ -476,7 +476,7 @@ public partial class FishEventClient
         if (leftRange == 0f || rightRange == 1f)
             currentMoveSpeed = currentMoveSpeed * -1f;
 
-        //Смена скорости, а иногда и направления по окончанию таймера
+        //Change speed and sometimes direction when the timer expires
         if (Timing.Global.MillisecondsUtc > lastUpdateTimeSpeed)
         {
             currentMoveSpeed = ChaosRange(fish.speedMove / 100f, 0, fish.coeffUnpredictability, 1, 2) * Math.Sign(currentMoveSpeed);
@@ -486,14 +486,14 @@ public partial class FishEventClient
             timeChangeSpeed = (int)ChaosRange(fish.timeChangeSpeed, 0, fish.coeffUnpredictability);
             lastUpdateTimeSpeed = Timing.Global.MillisecondsUtc + timeChangeSpeed;
         }
-        //Смена целевого размера диапазона по окончанию таймера
+        //Change the target range size when the timer expires
         if (Timing.Global.MillisecondsUtc > lastUpdateTimeRangeSize)
         {
             targetRangeSize = ChaosRange(fish.rangeSize / 100f, 0, fish.coeffUnpredictability);
             timeChangeRangeSize = (int)ChaosRange(fish.timeChangeRangeSize, 0, fish.coeffUnpredictability);
             lastUpdateTimeRangeSize = Timing.Global.MillisecondsUtc + timeChangeRangeSize;
         }
-        //Подгонка текущего диапазона к целевому
+        //Adjust the current range to match the target
         if (currentRangeSize != targetRangeSize)
         {
             int sign = Math.Sign(targetRangeSize - currentRangeSize);
@@ -534,7 +534,7 @@ public partial class FishEventClient
     private void Progress(float _deltaTime)
     {
         if (fish == null) return;
-        //Если крючок в диапазоне рыбы
+        //If the hook is inside the fish's range
         if (isHookInFish())
         {
             currentValue += playerStrength * _deltaTime;
@@ -597,7 +597,7 @@ public partial class FishEventClient
 
     #endregion
 
-    #region Stage 3 Отправка результата ивента
+    #region Stage 3 Sending the event result
 
     private long timerResultUI = 0;
 
@@ -642,7 +642,7 @@ public partial class FishEventClient
 
     #endregion
 
-    #region Звуки
+    #region Sounds
 
     List<SoundData> soundsData = new List<SoundData>();
 
@@ -658,8 +658,8 @@ public partial class FishEventClient
     }
 
     private bool isSoundLoaded = false;
-    private bool isSuccess = false;//Для звука
-    private void LoadSounds()//Зарузить списки звуков
+    private bool isSuccess = false;//Used to pick success or failure sounds
+    private void LoadSounds()//Load sound lists
     {
         if (isSoundLoaded) return;
         LoadSoundList("fishingUse");
@@ -671,7 +671,7 @@ public partial class FishEventClient
         isSoundLoaded = true;
     }
 
-    private void LoadSoundList(string _name)//Поиск циклом файлов с названием _name(номер)
+    private void LoadSoundList(string _name)//Loop through files named _name(number)
     {
         for (int i = 0; i < 10; i++)
         {
@@ -686,7 +686,7 @@ public partial class FishEventClient
             }
         }
     }
-    private Sound GetRandomSound(string _name, bool loop)//Получить случайное название файла по имени
+    private Sound GetRandomSound(string _name, bool loop)//Get a random sound file by name
     {
         Random randomSound = new Random();
 
@@ -702,7 +702,7 @@ public partial class FishEventClient
         }
         else return null;
     }
-    private void PlaySound(int index)//Играть звук по индексу действия
+    private void PlaySound(int index)//Play a sound based on action index
     {
         if (sounds == null) return;
         if (sounds[index] != null) return;
@@ -720,7 +720,7 @@ public partial class FishEventClient
             case 3:
                 sounds[3] = GetRandomSound("fishingFightOffLoad", true);
                 break;
-            case 4://Не помню за что отвечает 4й номер, но он нигде не встречается.
+            case 4://Unsure what the 4th slot is for; currently unused.
                 sounds[4] = GetRandomSound("fishingUse", false);
                 break;
             case 5:
@@ -733,14 +733,14 @@ public partial class FishEventClient
                 break;
         }
     }
-    private void StopSound(int index)//Остановить звук
+    private void StopSound(int index)//Stop a sound
     {
         if (sounds == null) return;
         if (sounds[index] == null) return;
         sounds[index].Stop();
         sounds[index] = null;
     }
-    private void StopAllSounds()//Остановить все звуки
+    private void StopAllSounds()//Stop all sounds
     {
         if (sounds == null) return;
         for (int soundID = 0; soundID < sounds.Length; soundID++)
@@ -814,7 +814,7 @@ public partial class FishEventClient
 
     #endregion
 
-    #region Заморозка
+    #region Freeze handling
     private bool isFreezen = false;
     private bool isFreezenQuit = false;
     private long timeUnFreeze;
@@ -840,7 +840,7 @@ public partial class FishEventClient
 
     #endregion
 
-    #region Пакет анимации
+    #region Animation packet
 
     private int oldStageForSound = 0;
     private int oldStageForAnimation = 0;
