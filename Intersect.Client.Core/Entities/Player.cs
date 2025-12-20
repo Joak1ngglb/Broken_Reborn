@@ -279,6 +279,8 @@ public partial class Player : Entity, IPlayer
     /// </summary>
     public GuildMember[] GuildMembers = [];
 
+    public FishingController FishingController { get; }
+
     public Player(Guid id, PlayerEntityPacket packet) : base(id, packet, EntityType.Player)
     {
         for (var i = 0; i < Options.Instance.Player.HotbarSlotCount; i++)
@@ -287,6 +289,8 @@ public partial class Player : Entity, IPlayer
         }
 
         mRenderPriority = 2;
+
+        FishingController = new FishingController(this);
     }
 
     IReadOnlyList<IPartyMember> IPlayer.PartyMembers => Party;
@@ -368,6 +372,7 @@ public partial class Player : Entity, IPlayer
         if (Globals.Me == this)
         {
             HandleInput();
+            FishingController.Update();
         }
 
         if (!IsBusy)

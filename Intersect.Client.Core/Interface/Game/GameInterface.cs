@@ -753,7 +753,8 @@ public partial class GameInterface : MutableInterface
         }
 
         _fishingWindow ??= new FishingWindow(GameCanvas);
-        _fishingWindow.Update(Globals.Me);
+
+        Globals.Me.FishingController.SyncWindow(_fishingWindow);
     }
 
     public void UpdateAdminWindowMapList()

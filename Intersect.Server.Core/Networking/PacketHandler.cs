@@ -3450,7 +3450,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        player.FishEvent.CancelV2(packet.SessionId);
+        player.FishEvent.CancelV2(packet.SessionId, packet.Reason);
     }
 
     //FishingInputPacket

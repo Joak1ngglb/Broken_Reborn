@@ -19,6 +19,7 @@ using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets;
 using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.Server.Fishing;
 using Intersect.Utilities;
 using Intersect.Framework;
 using Intersect.Models;
@@ -1619,6 +1620,56 @@ internal sealed partial class PacketHandler
     public void HandlePacket(IPacketSender packetSender, GlobalCooldownPacket packet)
     {
         Globals.Me.GlobalCooldown = Timing.Global.Milliseconds + packet.GlobalCooldown;
+    }
+
+    public void HandlePacket(IPacketSender packetSender, FishingCastResult packet)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        Globals.Me?.FishingController.HandleCastResult(packet);
+    }
+
+    public void HandlePacket(IPacketSender packetSender, FishingBiteStart packet)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        Globals.Me?.FishingController.HandleBiteStart(packet);
+    }
+
+    public void HandlePacket(IPacketSender packetSender, FishingStateSnapshot packet)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        Globals.Me?.FishingController.HandleSnapshot(packet);
+    }
+
+    public void HandlePacket(IPacketSender packetSender, FishingResolve packet)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        Globals.Me?.FishingController.HandleResolve(packet);
+    }
+
+    public void HandlePacket(IPacketSender packetSender, FishingCanceled packet)
+    {
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            return;
+        }
+
+        Globals.Me?.FishingController.HandleCanceled(packet);
     }
 
     public void HandlePacket(IPacketSender packetSender, StartFishingPacket packet)

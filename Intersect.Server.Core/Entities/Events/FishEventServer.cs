@@ -52,6 +52,7 @@ public class FishEventServer
         var spot = FishingSpotBase.Get(fishingSpotId);
         if (spot == null || !Conditions.MeetsConditionLists(spot.FishingRequirements, _player, null))
         {
+            _player.SendPacket(new FishingCastResult(sessionId, false, "Invalid fishing spot"));
             return;
         }
 
@@ -60,9 +61,11 @@ public class FishEventServer
         _pendingFishingPosition = new[] { _player.X, _player.Y };
         _pendingFishingDirection = _player.Dir;
         _pendingBiteAt = Timing.Global.Milliseconds + Randomization.Next(spot.FishingTimeMin, spot.FishingTimeMax);
+
+        _player.SendPacket(new FishingCastResult(sessionId, true));
     }
 
-    public void CancelV2(Guid sessionId)
+    public void CancelV2(Guid sessionId, string? reason = null)
     {
         if (!Options.Instance.Features.NewFishingV2)
         {
@@ -81,13 +84,15 @@ public class FishEventServer
 
         if (_player.FishingSession != null && (sessionId == Guid.Empty || _player.FishingSession.SessionId == sessionId))
         {
-            ResolveCatchV2(true);
+            ResolveCatchV2(true, reason);
         }
         else
         {
             _player.ClearFishingSession();
             _player.SendPacket(new StopFishingPacket(true));
         }
+
+        _player.SendPacket(new FishingCanceled(sessionId, reason));
     }
 
     public void UpdateV2()
@@ -337,9 +342,10 @@ public class FishEventServer
 
         session.NextSnapshotAt = now + 250;
         _player.SendPacket(
-            new FishingSessionStatePacket(
+            new FishingStateSnapshot(
                 session.SessionId,
-                FishingSimStateDto.FromState(session.State)
+                FishingSimStateDto.FromState(session.State),
+                session.Rng?.State ?? 0
             )
         );
     }
@@ -380,6 +386,18 @@ public class FishEventServer
 
         var session = BuildSession(_pendingSessionId, _pendingFishingSpotId, fish);
         _player.StartFishingSession(session);
+
+        _player.SendPacket(
+            new FishingBiteStart(
+                session.SessionId,
+                session.FishId,
+                FishingSimConfigDto.FromConfig(session.Config!),
+                FishingSimStateDto.FromState(session.State!),
+                session.Rng?.State ?? 0,
+                session.StageTimer,
+                session.ResolveTimer
+            )
+        );
 
         _player.SendPacket(
             new FishingSessionConfigPacket(
@@ -470,7 +488,7 @@ public class FishEventServer
         }
     }
 
-    private void ResolveCatchV2(bool canceled)
+    private void ResolveCatchV2(bool canceled, string? reason = null)
     {
         var session = _player.FishingSession;
         if (session == null)
@@ -480,11 +498,23 @@ public class FishEventServer
 
         session.Canceled = canceled;
 
+        var payout = BuildPayout(session, canceled);
+
         _player.SendPacket(
             new ResolveFishingPacket(
                 session.FishId,
                 1000,
                 session.CancelRequested,
+                canceled
+            )
+        );
+
+        _player.SendPacket(
+            new FishingResolve(
+                session.SessionId,
+                session.FishId,
+                payout,
+                !canceled,
                 canceled
             )
         );
@@ -506,6 +536,32 @@ public class FishEventServer
 
         _player.SendPacket(new StopFishingPacket(canceled));
         _player.ClearFishingSession();
+    }
+
+    private FishingSessionPayoutDto? BuildPayout(FishingSession session, bool canceled)
+    {
+        if (canceled)
+        {
+            return null;
+        }
+
+        var fish = FishBase.Get(session.FishId);
+        var fishingSpot = FishingSpotBase.Get(session.FishingSpotId);
+
+        if (fish == null)
+        {
+            return null;
+        }
+
+        var payout = new FishingSessionPayoutDto
+        {
+            Experience = fishingSpot?.FishingJobExperience ?? 0,
+            Currency = 0,
+        };
+
+        payout.Items[fish.ItemId] = payout.Items.TryGetValue(fish.ItemId, out var count) ? count + 1 : 1;
+
+        return payout;
     }
 
     private void ResolvePayout(Guid fishId, Guid fishingSpotId)
