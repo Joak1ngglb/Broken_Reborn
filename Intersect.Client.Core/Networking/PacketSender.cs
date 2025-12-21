@@ -610,7 +610,7 @@ public static partial class PacketSender
 
     public static void SendSuccessFishing()
     {
-        if (!Options.Instance.Features.NewFishingV2)
+        if (Options.Instance.Features.NewFishingV2)
         {
             return;
         }
@@ -640,7 +640,7 @@ public static partial class PacketSender
 
     public static void SendFailedFishing()
     {
-        if (!Options.Instance.Features.NewFishingV2)
+        if (Options.Instance.Features.NewFishingV2)
         {
             return;
         }

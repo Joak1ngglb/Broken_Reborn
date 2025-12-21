@@ -611,7 +611,10 @@ public partial class FishEventClient
     {
         stage = 3;
         isFishingEvent = false;
-        PacketSender.SendFailedFishing();
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            PacketSender.SendFailedFishing();
+        }
         timeFishingRod = Timing.Global.Milliseconds + timerFishingRod;
         if (eventUI != null)
             eventUI.HideBars();
@@ -622,7 +625,10 @@ public partial class FishEventClient
     {
         stage = 3;
         isFishingEvent = false;
-        PacketSender.SendSuccessFishing();
+        if (!Options.Instance.Features.NewFishingV2)
+        {
+            PacketSender.SendSuccessFishing();
+        }
         timeFishingRod = Timing.Global.Milliseconds + timerFishingRod;
         if (eventUI != null && fish != null)
         {
