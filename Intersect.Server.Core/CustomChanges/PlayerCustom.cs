@@ -238,7 +238,7 @@ namespace Intersect.Server.Entities
 
                 // Prepara resumen visual
                 var runeSummary = string.Join(", ", runes
-                    .GroupBy(r => r.Name)
+                    .GroupBy(DescribeRune)
                     .Select(g => $"{g.Count()}x {g.Key}"));
 
                 PacketSender.SendChatMsg(this, $"Rompiste {descriptor.Name} y obtuviste: {runeSummary}.", ChatMessageType.Experience);
@@ -246,6 +246,21 @@ namespace Intersect.Server.Entities
 
             // Actualiza inventario en cliente
             PacketSender.SendInventory(this);
+        }
+
+        private string DescribeRune(ItemDescriptor rune)
+        {
+            var modifier = rune.AmountModifier;
+            var target = rune.TargetEffect != ItemEffect.None
+                ? rune.TargetEffect.ToString()
+                : rune.TargetStat >= 0 && rune.TargetStat < Enum.GetValues<Stat>().Length
+                    ? ((Stat)rune.TargetStat).ToString()
+                    : rune.TargetVital >= 0 && rune.TargetVital < Enum.GetValues<Vital>().Length
+                        ? ((Vital)rune.TargetVital).ToString()
+                        : "Desconocido";
+
+            var suffix = modifier != 0 ? $" ({(modifier > 0 ? "+" : "")}{modifier} {target})" : $" ({target})";
+            return $"{rune.Name}{suffix}";
         }
 
         public void OpenEnchantment()
