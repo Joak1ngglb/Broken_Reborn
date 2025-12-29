@@ -572,7 +572,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
     {
         if (_itemDescriptor == null) return 0;
 
-        var newValue = _itemDescriptor.Damage;
+        var newValue = _itemDescriptor.Damage + (_itemProperties?.BaseDamageModifier ?? 0);
         var slot = _itemDescriptor.EquipmentSlot;
 
         if (slot >= 0 &&
@@ -583,7 +583,8 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             if (firstSlot >= 0 && firstSlot < Globals.Me.Inventory.Length)
             {
                 var equipped = Globals.Me.Inventory[firstSlot];
-                var oldValue = equipped?.Descriptor?.Damage ?? 0;
+                var oldValue = (equipped?.Descriptor?.Damage ?? 0) +
+                               (equipped?.ItemProperties?.BaseDamageModifier ?? 0);
                 return newValue - oldValue;
             }
         }
@@ -662,8 +663,9 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         if (_itemDescriptor.EquipmentSlot == Options.Instance.Equipment.WeaponSlot)
         {
             // Base Damage
+            var baseDamage = _itemDescriptor.Damage + (_itemProperties?.BaseDamageModifier ?? 0);
             var dmgDiff = GetDamageDifference();
-            AddRowWithDifference(rows, Strings.ItemDescription.BaseDamage, _itemDescriptor.Damage.ToString(), dmgDiff);
+            AddRowWithDifference(rows, Strings.ItemDescription.BaseDamage, baseDamage.ToString(), dmgDiff);
 
             // Damage Type
             Strings.ItemDescription.DamageTypes.TryGetValue(_itemDescriptor.DamageType, out var damageType);
