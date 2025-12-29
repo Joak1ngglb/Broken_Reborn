@@ -184,6 +184,11 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                     rows.AddKeyValueRow("Vital Modified", _itemDescriptor.TargetVital.ToString());
                     rows.AddKeyValueRow("Bonus", $"{(amount > 0 ? "+" : "")}{amount}");
                 }
+                else if (_itemDescriptor.TargetEffect != ItemEffect.None)
+                {
+                    rows.AddKeyValueRow("Effect Modified", _itemDescriptor.TargetEffect.ToString());
+                    rows.AddKeyValueRow("Bonus", $"{(amount > 0 ? "+" : "")}{amount}");
+                }
             }
         }
 

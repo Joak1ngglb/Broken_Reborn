@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Intersect.Enums;
 using MessagePack;
 
@@ -21,6 +24,18 @@ public partial class ItemProperties
         BaseDamageModifier = other.BaseDamageModifier;
         Array.Copy(other.StatModifiers, StatModifiers, Enum.GetValues<Stat>().Length);
         Array.Copy(other.VitalModifiers, VitalModifiers, Enum.GetValues<Vital>().Length);
+        EffectModifiers = other.EffectModifiers?.ToDictionary(
+                kvp => kvp.Key,
+                kvp => new EffectData
+                {
+                    Type = kvp.Value.Type,
+                    Percentage = kvp.Value.Percentage,
+                    FlatAmount = kvp.Value.FlatAmount,
+                    IsFlat = kvp.Value.IsFlat,
+                    IsPassive = kvp.Value.IsPassive,
+                    Stacking = kvp.Value.Stacking
+                }
+            ) ?? new Dictionary<ItemEffect, EffectData>();
 
     }
 
@@ -37,4 +52,6 @@ public partial class ItemProperties
     public int MageSink { get;  set; }
     [Key(5)]
     public int BaseDamageModifier { get; set; }
+    [Key(6)]
+    public Dictionary<ItemEffect, EffectData> EffectModifiers { get; set; } = new();
 }

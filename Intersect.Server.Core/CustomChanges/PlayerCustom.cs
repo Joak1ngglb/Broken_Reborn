@@ -405,6 +405,14 @@ namespace Intersect.Server.Entities
                 {
                     p.mEquipmentBonusEffects.ApplyEffect(effect);
                 }
+
+                if (item.Properties?.EffectModifiers != null)
+                {
+                    foreach (var effect in item.Properties.EffectModifiers.Values)
+                    {
+                        p.mEquipmentBonusEffects.ApplyEffect(effect);
+                    }
+                }
             }
 
             var setBonuses = p.GetSetBonuses();

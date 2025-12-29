@@ -13,6 +13,7 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Enums;
 using Intersect.Extensions;
 using Intersect.Client.Interface.Game.Breaking;
+using Intersect.Framework.Core.GameObjects.Items;
 
 public partial class RuneEnchantWindow : Window
 {
@@ -124,6 +125,7 @@ public partial class RuneEnchantWindow : Window
         var rune = _selectedRune.Descriptor;
         var stat = rune.TargetStat;
         var vital = rune.TargetVital;
+        var targetEffect = rune.TargetEffect;
         var amount = rune.AmountModifier;
        
         var residualItem = _selectedItem.ItemProperties.MageSink/100.0;
@@ -146,6 +148,10 @@ public partial class RuneEnchantWindow : Window
             else if (vital >= 0 && (int)vital < Enum.GetValues<Vital>().Length)
             {
                 labelStatOrVital = $"Vital: {Strings.ItemDescription.Vitals[(int)vital]}";
+            }
+            else if (targetEffect != ItemEffect.None)
+            {
+                labelStatOrVital = $"Efecto: {targetEffect}";
             }
             else
             {

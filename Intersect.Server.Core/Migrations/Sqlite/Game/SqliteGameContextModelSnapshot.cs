@@ -365,6 +365,9 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                     b.Property<string>("Subtype")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("TargetEffect")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("TargetStat")
                         .HasColumnType("INTEGER");
 

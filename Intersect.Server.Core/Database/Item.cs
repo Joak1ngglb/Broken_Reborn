@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Intersect.Enums;
 using Intersect.Framework.Core.Config;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -548,8 +550,9 @@ public class Item : IItem
 
         // 2) ¿A qué apunta la runa y cuánto modifica?
         var desc = runeItem.Descriptor;
-       int targetStat = (int)desc.TargetStat;
+        int targetStat = (int)desc.TargetStat;
         int targetVit = (int)desc.TargetVital;
+        var targetEffect = desc.TargetEffect;
         var amount = desc.AmountModifier;
 
         if (amount == 0)
@@ -560,11 +563,22 @@ public class Item : IItem
 
         bool isStat = targetStat >= 0 && targetStat < Properties.StatModifiers.Length;
         bool isVital = targetVit >= 0 && targetVit < Properties.VitalModifiers.Length;
+        bool isEffect = targetEffect != ItemEffect.None;
 
+        var validTargets = 0;
+        validTargets += isStat ? 1 : 0;
+        validTargets += isVital ? 1 : 0;
+        validTargets += isEffect ? 1 : 0;
 
-        if (!isStat && !isVital)
+        if (validTargets == 0)
         {
-            resultMessage = "La Runa no apunta a un atributo válido.";
+            resultMessage = "La Runa no apunta a un destino válido.";
+            return false;
+        }
+
+        if (validTargets > 1)
+        {
+            resultMessage = "La Runa no puede modificar más de un destino a la vez.";
             return false;
         }
 
@@ -574,7 +588,9 @@ public class Item : IItem
             : (int)targetVit;
         int currentValue = isStat
             ? Properties.StatModifiers[idx]
-            : Properties.VitalModifiers[idx];
+            : isVital
+                ? Properties.VitalModifiers[idx]
+                : Properties.EffectModifiers?.GetValueOrDefault(targetEffect)?.Percentage ?? 0;
 
         // 5) Calcular tasa de éxito sólo en función de MageSink
         var sinkMod = RarityMageoSettings.GetSinkMod(Descriptor.Rarity);
@@ -600,22 +616,38 @@ public class Item : IItem
             {
                 Properties.StatModifiers[idx] += amount;
             }
-            else
+            else if (isVital)
             {
                 Properties.VitalModifiers[idx] += amount;
+            }
+            else if (isEffect)
+            {
+                Properties.EffectModifiers ??= new Dictionary<ItemEffect, EffectData>();
+                if (!Properties.EffectModifiers.TryGetValue(targetEffect, out var effectData))
+                {
+                    effectData = new EffectData(targetEffect, 0);
+                }
+                effectData.Percentage += amount;
+                effectData.IsPassive = true;
+                effectData.Stacking = EffectStacking.Stack;
+                Properties.EffectModifiers[targetEffect] = effectData;
             }
 
             // 6c) Penalización suave si pasamos 2× valor base (30% de chance, -½ amount)
             int baseVal = isStat
                 ? equipment.Descriptor.StatsGiven[idx]
-                : (int)equipment.Descriptor.VitalsGiven[idx];
+                : isVital
+                    ? (int)equipment.Descriptor.VitalsGiven[idx]
+                    : equipment.Descriptor.GetEffect(targetEffect)?.Percentage ?? 0;
             int newValue = isStat
                 ? Properties.StatModifiers[idx]
-                : Properties.VitalModifiers[idx];
+                : isVital
+                    ? Properties.VitalModifiers[idx]
+                    : Properties.EffectModifiers!.GetValueOrDefault(targetEffect)?.Percentage ?? 0;
             if (newValue > baseVal * 2 && Random.Shared.NextDouble() < 0.30)
             {
                 int penal = Math.Max(1, amount / 2);
-                PenalizeOtherRandomAttribute(isStat, penal);
+                PenalizeOtherRandomAttribute(isStat, penal, isEffect ? targetEffect : null);
             }
 
             // 6d) Reducir MageSink
@@ -626,7 +658,11 @@ public class Item : IItem
 
             // 6e) Mensaje de éxito
             success = true;
-            var name = (isStat ? targetStat : (object)targetVit).ToString();
+            var name = isStat
+                ? targetStat.ToString()
+                : isVital
+                    ? targetVit.ToString()
+                    : targetEffect.ToString();
             resultMessage = isCritical
                 ? $"🔥 ¡Éxito Crítico! {name} +{amount}."
                 : $"¡Éxito! {name} +{amount}.";
@@ -641,11 +677,29 @@ public class Item : IItem
                 {
                     Properties.StatModifiers[idx] -= penalty;
                 }
-                else
+                else if (isVital)
                 {
                     Properties.VitalModifiers[idx] -= penalty;
                 }
-                var name = (isStat ? targetStat : (object)targetVit).ToString();
+                else if (isEffect)
+                {
+                    Properties.EffectModifiers ??= new Dictionary<ItemEffect, EffectData>();
+                    if (!Properties.EffectModifiers.TryGetValue(targetEffect, out var effectData))
+                    {
+                        effectData = new EffectData(targetEffect, 0);
+                        Properties.EffectModifiers[targetEffect] = effectData;
+                    }
+                    effectData.Percentage -= penalty;
+                    if (effectData.Percentage <= 0)
+                    {
+                        Properties.EffectModifiers.Remove(targetEffect);
+                    }
+                }
+                var name = isStat
+                    ? targetStat.ToString()
+                    : isVital
+                        ? targetVit.ToString()
+                        : targetEffect.ToString();
                 resultMessage = $"Falló. {name} -{penalty}.";
             }
             Properties.MageSink += (int)(amount * 10 * sinkMod);
@@ -658,7 +712,7 @@ public class Item : IItem
         return true;
     }
 
-    private void PenalizeOtherRandomAttribute(bool isStat, int amount)
+    private void PenalizeOtherRandomAttribute(bool isStat, int amount, ItemEffect? effectToProtect = null)
     {
         var rng = Random.Shared;
         if (isStat)
@@ -675,15 +729,39 @@ public class Item : IItem
         }
         else
         {
-            // Igual para vitals
-            var candidates = Properties.VitalModifiers
-                .Select((v, i) => (v, i))
-                .Where(x => x.v > 0)
-                .ToArray();
-            if (candidates.Length == 0) return;
-            var idx = candidates[rng.Next(candidates.Length)].i;
-            int reduce = Math.Min(Properties.VitalModifiers[idx], amount);
-            Properties.VitalModifiers[idx] -= reduce;
+            // Igual para vitals o efectos adicionales
+            if (effectToProtect == null)
+            {
+                var candidates = Properties.VitalModifiers
+                    .Select((v, i) => (v, i))
+                    .Where(x => x.v > 0)
+                    .ToArray();
+                if (candidates.Length == 0) return;
+                var idx = candidates[rng.Next(candidates.Length)].i;
+                int reduce = Math.Min(Properties.VitalModifiers[idx], amount);
+                Properties.VitalModifiers[idx] -= reduce;
+            }
+            else
+            {
+                Properties.EffectModifiers ??= new Dictionary<ItemEffect, EffectData>();
+                var candidates = Properties.EffectModifiers
+                    .Where(kvp => kvp.Key != effectToProtect && kvp.Value.Percentage > 0)
+                    .Select(kvp => kvp.Key)
+                    .ToArray();
+                if (candidates.Length == 0) return;
+                var chosen = candidates[rng.Next(candidates.Length)];
+                var effect = Properties.EffectModifiers[chosen];
+                var reduce = Math.Min(effect.Percentage, amount);
+                effect.Percentage -= reduce;
+                if (effect.Percentage <= 0)
+                {
+                    Properties.EffectModifiers.Remove(chosen);
+                }
+                else
+                {
+                    Properties.EffectModifiers[chosen] = effect;
+                }
+            }
         }
     }
 
