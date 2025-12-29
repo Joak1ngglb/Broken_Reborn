@@ -3542,6 +3542,11 @@ public partial class Player : Entity
     {
         lootOwner = (killer as Player)?.Id ?? Id;
 
+        if (!itemDescriptor.CanDrop)
+        {
+            return false;
+        }
+
         if (itemDescriptor.DropChanceOnDeath == 0)
         {
             return false;
