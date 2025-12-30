@@ -92,22 +92,34 @@ public partial class RuneEnchantWindow : Window
 
     public void SelectTargetItem(Item? item)
     {
-        if (item == null || item.Descriptor == null) return;
-
         _selectedItem = item;
-        _itemSlot.Texture = Globals.ContentManager.GetTexture(Intersect.Client.Framework.Content.TextureType.Item, item.Descriptor.Icon)
-                              ?? Graphics.Renderer.WhitePixel;
+
+        if (item?.Descriptor != null)
+        {
+            _itemSlot.Texture = Globals.ContentManager.GetTexture(Intersect.Client.Framework.Content.TextureType.Item, item.Descriptor.Icon)
+                                  ?? Graphics.Renderer.WhitePixel;
+        }
+        else
+        {
+            _itemSlot.Texture = Graphics.Renderer.WhitePixel;
+        }
 
         UpdateProjection();
     }
 
     public void SelectRuneItem(Item? rune)
     {
-        if (rune == null || rune.Descriptor == null) return;
-
         _selectedRune = rune;
-        _runeSlot.Texture = Globals.ContentManager.GetTexture(Intersect.Client.Framework.Content.TextureType.Item, rune.Descriptor.Icon)
-                             ?? Graphics.Renderer.WhitePixel;
+
+        if (rune?.Descriptor != null)
+        {
+            _runeSlot.Texture = Globals.ContentManager.GetTexture(Intersect.Client.Framework.Content.TextureType.Item, rune.Descriptor.Icon)
+                                 ?? Graphics.Renderer.WhitePixel;
+        }
+        else
+        {
+            _runeSlot.Texture = Graphics.Renderer.WhitePixel;
+        }
 
         UpdateProjection();
     }
@@ -127,36 +139,34 @@ public partial class RuneEnchantWindow : Window
         var vital = rune.TargetVital;
         var targetEffect = rune.TargetEffect;
         var amount = rune.AmountModifier;
-       
+
         var residualItem = _selectedItem.ItemProperties.MageSink/100.0;
 
         string labelStatOrVital;
-        string labelAmount = $"Cantidad: +{amount}";
-      
+        var amountSign = amount > 0 ? "+" : string.Empty;
+        string labelAmount = $"Cantidad: {amountSign}{amount}";
+
         string labelMageSink = $"Carga residual del ítem: {residualItem}";
 
-        if (amount == 0)
+        if (targetEffect != ItemEffect.None)
         {
-            labelStatOrVital = "Efecto: Sin efecto";
+            var effectName = Strings.ItemDescription.BonusEffects.TryGetValue((int)targetEffect, out var localizedEffect)
+                ? localizedEffect.ToString()
+                : targetEffect.ToString();
+            labelStatOrVital = $"Efecto: {effectName.TrimEnd(':')}";
+            labelAmount = $"Bonus: {amountSign}{amount}%";
+        }
+        else if (stat >= 0 && (int)stat < Enum.GetValues<Stat>().Length)
+        {
+            labelStatOrVital = $"Stat: {Strings.ItemDescription.StatCounts[(int)stat]}";
+        }
+        else if (vital >= 0 && (int)vital < Enum.GetValues<Vital>().Length)
+        {
+            labelStatOrVital = $"Vital: {Strings.ItemDescription.Vitals[(int)vital]}";
         }
         else
         {
-            if (stat >= 0 && (int)stat < Enum.GetValues<Stat>().Length)
-            {
-                labelStatOrVital = $"Stat: {Strings.ItemDescription.StatCounts[(int)stat]}";
-            }
-            else if (vital >= 0 && (int)vital < Enum.GetValues<Vital>().Length)
-            {
-                labelStatOrVital = $"Vital: {Strings.ItemDescription.Vitals[(int)vital]}";
-            }
-            else if (targetEffect != ItemEffect.None)
-            {
-                labelStatOrVital = $"Efecto: {targetEffect}";
-            }
-            else
-            {
-                labelStatOrVital = "Efecto: Desconocido";
-            }
+            labelStatOrVital = amount == 0 ? "Efecto: Sin efecto" : "Efecto: Desconocido";
         }
 
         // Posicionamiento dinámico

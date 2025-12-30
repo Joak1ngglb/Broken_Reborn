@@ -169,26 +169,30 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
         if (_itemDescriptor.Subtype == "Rune")
         {
-           
             var amount = _itemDescriptor.AmountModifier;
+            var amountPrefix = amount > 0 ? "+" : string.Empty;
+            var hasStatTarget = Enum.IsDefined(typeof(Stat), _itemDescriptor.TargetStat);
+            var hasVitalTarget = Enum.IsDefined(typeof(Vital), _itemDescriptor.TargetVital);
+            var hasEffectTarget = _itemDescriptor.TargetEffect != ItemEffect.None;
 
-            if (amount != 0)
+            if (hasEffectTarget)
             {
-                if (Enum.IsDefined(typeof(Stat), _itemDescriptor.TargetStat))
-                {
-                    rows.AddKeyValueRow("Stat Modified", _itemDescriptor.TargetStat.ToString());
-                    rows.AddKeyValueRow("Bonus", $"{(amount > 0 ? "+" : "")}{amount}");
-                }
-                else if (Enum.IsDefined(typeof(Vital), _itemDescriptor.TargetVital))
-                {
-                    rows.AddKeyValueRow("Vital Modified", _itemDescriptor.TargetVital.ToString());
-                    rows.AddKeyValueRow("Bonus", $"{(amount > 0 ? "+" : "")}{amount}");
-                }
-                else if (_itemDescriptor.TargetEffect != ItemEffect.None)
-                {
-                    rows.AddKeyValueRow("Effect Modified", _itemDescriptor.TargetEffect.ToString());
-                    rows.AddKeyValueRow("Bonus", $"{(amount > 0 ? "+" : "")}{amount}");
-                }
+                var effectName = Strings.ItemDescription.BonusEffects.TryGetValue((int)_itemDescriptor.TargetEffect, out var localizedEffect)
+                    ? localizedEffect.ToString()
+                    : _itemDescriptor.TargetEffect.ToString();
+
+                rows.AddKeyValueRow("Efecto", effectName.TrimEnd(':'));
+                rows.AddKeyValueRow("Bonus", Strings.ItemDescription.Percentage.ToString(amount));
+            }
+            else if (hasStatTarget)
+            {
+                rows.AddKeyValueRow("Stat Modified", _itemDescriptor.TargetStat.ToString());
+                rows.AddKeyValueRow("Bonus", $"{amountPrefix}{amount}");
+            }
+            else if (hasVitalTarget)
+            {
+                rows.AddKeyValueRow("Vital Modified", _itemDescriptor.TargetVital.ToString());
+                rows.AddKeyValueRow("Bonus", $"{amountPrefix}{amount}");
             }
         }
 

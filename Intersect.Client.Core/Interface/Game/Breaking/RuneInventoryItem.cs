@@ -130,6 +130,11 @@ public class RuneInventoryItem : SlotItem
         if (inventorySlot is not Items.Item item)
             return;
 
+        if (!IsRune(inventorySlot.Descriptor) && arguments.MouseButton is MouseButton.Right)
+        {
+            return;
+        }
+
         if (arguments.MouseButton is MouseButton.Left)
         {
             // Si el item ya está como runa, lo deseleccionamos
@@ -215,5 +220,17 @@ public class RuneInventoryItem : SlotItem
         Icon.Texture = null;
         _quantityLabel.IsVisibleInParent = false;
         _cooldownLabel.IsVisibleInParent = false;
+    }
+
+    private static bool IsRune(ItemDescriptor descriptor)
+    {
+        if (!string.Equals(descriptor.Subtype, "Rune", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return descriptor.TargetStat != (Stat)(-1)
+               || descriptor.TargetVital != (Vital)(-1)
+               || descriptor.TargetEffect != ItemEffect.None;
     }
 }
