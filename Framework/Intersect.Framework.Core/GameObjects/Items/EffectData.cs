@@ -41,8 +41,8 @@ public partial class EffectData
         Percentage = percentage;
         IsPassive = isPassive;
         Stacking = stacking;
-        FlatAmount = 0;
-        IsFlat = false;
+        FlatAmount = flatAmount;
+        IsFlat = isFlat;
     }
 
     public EffectData Clone()
