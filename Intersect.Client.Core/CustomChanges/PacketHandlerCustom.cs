@@ -172,7 +172,8 @@ internal sealed partial class PacketHandler
         {
             // Actualizar nivel de encantamiento
             // Como UpdateItemLevelPacket no tiene ItemProperties, solo usamos NewEnchantmentLevel
-            inventoryItem.ItemProperties = new ItemProperties { EnchantmentLevel = packet.NewEnchantmentLevel };
+            inventoryItem.ItemProperties ??= new ItemProperties();
+            inventoryItem.ItemProperties.EnchantmentLevel = packet.NewEnchantmentLevel;
             Interface.Interface.GameUi?.mEnchantItemWindow.UpdateProjection();
         }
         else

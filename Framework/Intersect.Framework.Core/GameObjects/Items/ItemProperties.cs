@@ -24,7 +24,10 @@ public partial class ItemProperties
         BaseDamageModifier = other.BaseDamageModifier;
         Array.Copy(other.StatModifiers, StatModifiers, Enum.GetValues<Stat>().Length);
         Array.Copy(other.VitalModifiers, VitalModifiers, Enum.GetValues<Vital>().Length);
-        EffectModifiers = other.EffectModifiers?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Clone()) ??
+        EffectModifiers = other.EffectModifiers?.ToDictionary(
+            kvp => kvp.Key,
+            kvp => new EffectData(kvp.Value.Type, kvp.Value.Percentage, kvp.Value.IsPassive, kvp.Value.Stacking)
+        ) ??
                           new Dictionary<ItemEffect, EffectData>();
         EnchantmentEffectRolls =
             other.EnchantmentEffectRolls?.ToDictionary(

@@ -1976,7 +1976,7 @@ namespace Intersect.Editor.Forms.Editors
             grpEffects.Margin = new Padding(4, 3, 4, 3);
             grpEffects.Name = "grpEffects";
             grpEffects.Padding = new Padding(4, 3, 4, 3);
-            grpEffects.Size = new Size(307, 273);
+            grpEffects.Size = new Size(307, 190);
             grpEffects.TabIndex = 57;
             grpEffects.TabStop = false;
             grpEffects.Text = "Bonus Effects";
@@ -1990,6 +1990,7 @@ namespace Intersect.Editor.Forms.Editors
             chkEffectIsFlat.Size = new Size(96, 19);
             chkEffectIsFlat.TabIndex = 59;
             chkEffectIsFlat.Text = "Use flat value";
+            chkEffectIsFlat.Visible = false;
             chkEffectIsFlat.CheckedChanged += chkEffectIsFlat_CheckedChanged;
             // 
             // lblEffectFlat
@@ -2001,6 +2002,7 @@ namespace Intersect.Editor.Forms.Editors
             lblEffectFlat.Size = new Size(105, 15);
             lblEffectFlat.TabIndex = 61;
             lblEffectFlat.Text = "Effect Amount (#):";
+            lblEffectFlat.Visible = false;
             // 
             // nudEffectFlat
             // 
@@ -2012,6 +2014,7 @@ namespace Intersect.Editor.Forms.Editors
             nudEffectFlat.Size = new Size(282, 23);
             nudEffectFlat.TabIndex = 60;
             nudEffectFlat.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudEffectFlat.Visible = false;
             nudEffectFlat.ValueChanged += nudEffectFlat_ValueChanged;
             // 
             // lstBonusEffects

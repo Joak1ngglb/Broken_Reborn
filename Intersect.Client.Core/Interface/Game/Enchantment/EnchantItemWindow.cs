@@ -288,7 +288,7 @@ namespace Intersect.Client.Interface.Game.Enchanting
                     continue;
                 }
 
-                var currentEffect = effect.Value.GetPrimaryValue();
+                var currentEffect = effect.Value;
                 var projectedEffect = currentEffect;
 
                 double bonusFactor = 0.05;
@@ -375,9 +375,9 @@ namespace Intersect.Client.Interface.Game.Enchanting
             PacketSender.SendEnchantItem(itemIndex, targetLevel, currencyId, currencyAmount, useAmulet);
         }
 
-        private static Dictionary<ItemEffect, EffectValue> GetTotalEffects(ItemDescriptor descriptor, ItemProperties? properties)
+        private static Dictionary<ItemEffect, int> GetTotalEffects(ItemDescriptor descriptor, ItemProperties? properties)
         {
-            var totals = new Dictionary<ItemEffect, EffectValue>();
+            var totals = new Dictionary<ItemEffect, int>();
 
             if (descriptor?.Effects != null)
             {

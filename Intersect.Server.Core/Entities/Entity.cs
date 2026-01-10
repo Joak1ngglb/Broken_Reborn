@@ -2004,7 +2004,7 @@ public abstract partial class Entity : IEntity
         return Array.Empty<EffectData>();
     }
 
-    public virtual EffectValue GetPassiveEffectValues(ItemEffect effect)
+    public virtual int GetPassiveEffectValues(ItemEffect effect)
     {
         return default;
     }
@@ -2358,7 +2358,7 @@ public abstract partial class Entity : IEntity
         {
             var lifestealRate = Math.Max(
                 0f,
-                attackerEffects.GetTotalEffectValue(ItemEffect.Lifesteal).GetPrimaryValue() / 100f
+                attackerEffects.GetTotalEffectValue(ItemEffect.Lifesteal) / 100f
             );
             if (hasVampirism)
             {
@@ -2381,7 +2381,7 @@ public abstract partial class Entity : IEntity
 
             var manastealRate = Math.Max(
                 0f,
-                attackerEffects.GetTotalEffectValue(ItemEffect.Manasteal).GetPrimaryValue() / 100f
+                attackerEffects.GetTotalEffectValue(ItemEffect.Manasteal) / 100f
             );
             if (hasVampirism)
             {

@@ -120,15 +120,15 @@ public partial class CharacterWindow : Window
     int CooldownAmount = 0;
     int ManaStealAmount = 0;
 
-    private EffectValue _accuracy = default;
-    private EffectValue _evasion = default;
-    private EffectValue _critBonus = default;
-    private EffectValue _antiCrit = default;
-    private EffectValue _armorPenetration = default;
-    private EffectValue _damageReduction = default;
-    private EffectValue _damageReflect = default;
-    private EffectValue _flatDamage = default;
-    private EffectValue _flatCures = default;
+    private int _accuracy = default;
+    private int _evasion = default;
+    private int _critBonus = default;
+    private int _antiCrit = default;
+    private int _armorPenetration = default;
+    private int _damageReduction = default;
+    private int _damageReflect = default;
+    private int _flatDamage = default;
+    private int _flatCures = default;
 
     // -------------------------
     // Helpers
@@ -196,20 +196,9 @@ public partial class CharacterWindow : Window
         return y + ctrl.Height + spacing;
     }
 
-    private string FormatEffectValue(EffectValue value)
+    private string FormatEffectValue(int value)
     {
-        var segments = new List<string>();
-        if (value.Percentage != 0)
-        {
-            segments.Add($"{value.Percentage}%");
-        }
-
-        if (value.Flat != 0)
-        {
-            segments.Add($"+{value.Flat}");
-        }
-
-        return segments.Count == 0 ? "0" : string.Join(" / ", segments);
+        return value == 0 ? "0" : $"{value}%";
     }
 
     // -------------------------
@@ -777,28 +766,30 @@ public partial class CharacterWindow : Window
 
                 foreach (var effect in descriptor.Effects)
                 {
-                    var effectValue = effect.GetValues();
-                    if (effectValue.GetPrimaryValue() == 0)
+                    var effectValue = effect.Percentage;
+                    if (effectValue == 0)
+                    {
                         continue;
+                    }
 
                     switch (effect.Type)
                     {
-                        case ItemEffect.CooldownReduction: CooldownAmount += effectValue.GetPrimaryValue(); break;
-                        case ItemEffect.Lifesteal: LifeStealAmount += effectValue.GetPrimaryValue(); break;
-                        case ItemEffect.Tenacity: TenacityAmount += effectValue.GetPrimaryValue(); break;
-                        case ItemEffect.Luck: LuckAmount += effectValue.GetPrimaryValue(); break;
-                        case ItemEffect.EXP: ExtraExpAmount += effectValue.GetPrimaryValue(); break;
-                        case ItemEffect.Manasteal: ManaStealAmount += effectValue.GetPrimaryValue(); break;
+                        case ItemEffect.CooldownReduction: CooldownAmount += effectValue; break;
+                        case ItemEffect.Lifesteal: LifeStealAmount += effectValue; break;
+                        case ItemEffect.Tenacity: TenacityAmount += effectValue; break;
+                        case ItemEffect.Luck: LuckAmount += effectValue; break;
+                        case ItemEffect.EXP: ExtraExpAmount += effectValue; break;
+                        case ItemEffect.Manasteal: ManaStealAmount += effectValue; break;
 
-                        case ItemEffect.Accuracy: _accuracy = _accuracy.Add(effectValue); break;
-                        case ItemEffect.Evasion: _evasion = _evasion.Add(effectValue); break;
-                        case ItemEffect.CriticalChance: _critBonus = _critBonus.Add(effectValue); break;
-                        case ItemEffect.AntiCritChance: _antiCrit = _antiCrit.Add(effectValue); break;
-                        case ItemEffect.ArmorPenetration: _armorPenetration = _armorPenetration.Add(effectValue); break;
-                        case ItemEffect.DamageReduction: _damageReduction = _damageReduction.Add(effectValue); break;
-                        case ItemEffect.DamageReflect: _damageReflect = _damageReflect.Add(effectValue); break;
-                        case ItemEffect.Damages: _flatDamage = _flatDamage.Add(effectValue); break;
-                        case ItemEffect.Cures: _flatCures = _flatCures.Add(effectValue); break;
+                        case ItemEffect.Accuracy: _accuracy += effectValue; break;
+                        case ItemEffect.Evasion: _evasion += effectValue; break;
+                        case ItemEffect.CriticalChance: _critBonus += effectValue; break;
+                        case ItemEffect.AntiCritChance: _antiCrit += effectValue; break;
+                        case ItemEffect.ArmorPenetration: _armorPenetration += effectValue; break;
+                        case ItemEffect.DamageReduction: _damageReduction += effectValue; break;
+                        case ItemEffect.DamageReflect: _damageReflect += effectValue; break;
+                        case ItemEffect.Damages: _flatDamage += effectValue; break;
+                        case ItemEffect.Cures: _flatCures += effectValue; break;
                     }
                 }
             }
@@ -823,7 +814,7 @@ public partial class CharacterWindow : Window
 
             var statValue = player.Stat[(int)sourceScalingStat];
             var scaledBase = sourceBaseDamage + statValue * (sourceScalingPercent / 100f);
-            var afterBonuses = (scaledBase + _flatDamage.Flat) * (1f + _flatDamage.Percentage / 100f);
+            var afterBonuses = scaledBase * (1f + _flatDamage / 100f);
 
             var minTrueDamage = afterBonuses * 0.975f;
             var maxTrueDamage = afterBonuses * 1.025f;
