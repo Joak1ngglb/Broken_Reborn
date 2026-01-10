@@ -12,7 +12,6 @@ public static class ItemBreakHelper
     private const int StatThreshold = 10;
     private const int VitalThreshold = 20;
     private const int EffectPercentThreshold = 5;
-    private const int EffectFlatThreshold = 15;
 
     /// <summary>
     /// Debe llamarse una vez al arrancar el servidor, tras cargar los ItemDescriptor.
@@ -71,25 +70,15 @@ public static class ItemBreakHelper
         foreach (var kvp in AggregateEffects(item, props))
         {
             var effect = kvp.Key;
-            var totals = kvp.Value;
-
-            var hasPercent = totals.percent > 0;
-            var totalEffect = hasPercent ? totals.percent : totals.flat;
-            if (hasPercent && totals.flat > 0)
-            {
-                // Ajustar el valor plano a una escala porcentual para no perder potencia combinada.
-                totalEffect += (int)Math.Ceiling(totals.flat / (double)EffectFlatThreshold * EffectPercentThreshold);
-            }
+            var totalEffect = kvp.Value;
 
             if (totalEffect <= 0)
             {
                 continue;
             }
 
-            var pool = GetRunePool(effect, rarity, hasPercent);
-            var threshold = hasPercent ? EffectPercentThreshold : EffectFlatThreshold;
-
-            AddRunesFromValue(result, pool, totalEffect, threshold, multiplier);
+            var pool = GetRunePool(effect, rarity);
+            AddRunesFromValue(result, pool, totalEffect, EffectPercentThreshold, multiplier);
         }
 
         return result;
@@ -100,7 +89,7 @@ public static class ItemBreakHelper
         return AllRunes
             .Where(r =>
                 r.TargetStat == stat &&
-                IsRuneAllowedForRarity(r, rarity, false, false)
+                IsRuneAllowedForRarity(r, rarity, false)
             )
             .OrderBy(r => r.AmountModifier)
             .ToList();
@@ -111,18 +100,18 @@ public static class ItemBreakHelper
         return AllRunes
             .Where(r =>
                 r.TargetVital == vital &&
-                IsRuneAllowedForRarity(r, rarity, false, true)
+                IsRuneAllowedForRarity(r, rarity, true)
             )
             .OrderBy(r => r.AmountModifier)
             .ToList();
     }
 
-    private static List<ItemDescriptor> GetRunePool(ItemEffect effect, int rarity, bool isPercent)
+    private static List<ItemDescriptor> GetRunePool(ItemEffect effect, int rarity)
     {
         return AllRunes
             .Where(r =>
                 r.TargetEffect == effect &&
-                IsRuneAllowedForRarity(r, rarity, isPercent, false, true)
+                IsRuneAllowedForRarity(r, rarity, false, true)
             )
             .OrderBy(r => r.AmountModifier)
             .ToList();
@@ -152,7 +141,6 @@ public static class ItemBreakHelper
     private static bool IsRuneAllowedForRarity(
         ItemDescriptor rune,
         int rarity,
-        bool isPercentEffect,
         bool isVitalRune,
         bool isEffectRune = false
     )
@@ -165,8 +153,6 @@ public static class ItemBreakHelper
 
         if (isEffectRune)
         {
-            // Los efectos porcentuales son más sensibles que los valores planos.
-            var weight = isPercentEffect ? amount * 2 : amount;
             var allowance = rarity switch
             {
                 <= 0 => 3,
@@ -177,7 +163,7 @@ public static class ItemBreakHelper
                 _ => 16,
             };
 
-            return weight <= allowance;
+            return amount <= allowance;
         }
 
         if (!isVitalRune && rune.AmountModifier > 3 && rarity < 3)
@@ -201,9 +187,9 @@ public static class ItemBreakHelper
                descriptor.TargetEffect != ItemEffect.None;
     }
 
-    private static Dictionary<ItemEffect, (int percent, int flat)> AggregateEffects(ItemDescriptor item, ItemProperties? props)
+    private static Dictionary<ItemEffect, int> AggregateEffects(ItemDescriptor item, ItemProperties? props)
     {
-        var totals = new Dictionary<ItemEffect, (int percent, int flat)>();
+        var totals = new Dictionary<ItemEffect, int>();
 
         void AddEffect(EffectData effect)
         {
@@ -213,15 +199,7 @@ public static class ItemBreakHelper
             }
 
             totals.TryGetValue(effect.Type, out var current);
-            if (effect.IsFlat)
-            {
-                current.flat += effect.FlatAmount;
-            }
-            else
-            {
-                current.percent += effect.Percentage;
-            }
-
+            current += effect.Percentage;
             totals[effect.Type] = current;
         }
 
