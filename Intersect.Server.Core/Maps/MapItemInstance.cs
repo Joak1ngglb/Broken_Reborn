@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Intersect.Enums;
 using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData.Players;
 using Newtonsoft.Json;
@@ -90,7 +92,26 @@ public partial class MapItem : Item
             Array.Copy(item.Properties.VitalModifiers, Properties.VitalModifiers, Properties.VitalModifiers.Length);
         }
 
+        if (item.Properties.EffectModifiers != null)
+        {
+            Properties.EffectModifiers =
+                      item.Properties.EffectModifiers.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => new EffectData(
+                        kvp.Value.Type,
+                        kvp.Value.Percentage,
+                        kvp.Value.IsPassive,
+                        kvp.Value.Stacking
+                    )
+                );     
+        }
+
         Properties.EnchantmentRolls = new Dictionary<int, int[]>(item.Properties.EnchantmentRolls);
+        Properties.EnchantmentEffectRolls =
+            item.Properties.EnchantmentEffectRolls.ToDictionary(
+                kvp => kvp.Key,
+                kvp => new Dictionary<ItemEffect, int>(kvp.Value)
+            );
     }
 
 }
