@@ -814,7 +814,7 @@ public partial class CharacterWindow : Window
 
             var statValue = player.Stat[(int)sourceScalingStat];
             var scaledBase = sourceBaseDamage + statValue * (sourceScalingPercent / 100f);
-            var afterBonuses = (scaledBase + _flatDamage.Flat) * (1f + _flatDamage.Percentage / 100f);
+            var afterBonuses = scaledBase * (1f + _flatDamage / 100f);
 
             var minTrueDamage = afterBonuses * 0.975f;
             var maxTrueDamage = afterBonuses * 1.025f;

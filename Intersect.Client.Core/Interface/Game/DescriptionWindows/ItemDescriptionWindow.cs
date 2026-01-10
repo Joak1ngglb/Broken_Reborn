@@ -910,15 +910,11 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                 continue;
             }
 
-            var values = effectEntry.Value;
+            var value = effectEntry.Value;
             var parts = new List<string>();
-            if (values.Percentage != 0)
+            if (value != 0)
             {
-                parts.Add(Strings.ItemDescription.Percentage.ToString(values.Percentage));
-            }
-            if (values.Flat != 0)
-            {
-                parts.Add($"{(values.Flat > 0 ? "+" : string.Empty)}{values.Flat}");
+                parts.Add(Strings.ItemDescription.Percentage.ToString(value));
             }
 
             if (parts.Count == 0)

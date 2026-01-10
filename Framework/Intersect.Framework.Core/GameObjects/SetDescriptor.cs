@@ -138,6 +138,11 @@ public partial class SetDescriptor : DatabaseObject<SetDescriptor>, IFolderable
         ItemIds = ItemIds.Where(id => ItemDescriptor.Get(id)?.SetId == Id).ToList();
     }
 
+    private void NormalizeLoadedEffects()
+    {
+        Effects ??= new List<EffectData>();
+    }
+
     public (int[] stats, int[] percentStats, long[] vitals, long[] vitalsRegen, int[] percentVitals, List<EffectData> effects) GetBonuses(int pieces)
     {
         var totalPieces = Math.Max(1, ItemIds.Count);
