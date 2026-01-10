@@ -8,7 +8,7 @@ namespace Intersect.Server.Entities.Combat;
 
 public sealed class CombatEffectCollection
 {
-    private readonly Dictionary<ItemEffect, EffectValue> mEffects = new();
+    private readonly Dictionary<ItemEffect, int> mEffects = new();
 
     public static CombatEffectCollection From(IEnumerable<EffectData> effects)
     {
@@ -18,7 +18,7 @@ public sealed class CombatEffectCollection
         return collection;
     }
 
-    public EffectValue Get(ItemEffect effect)
+    public int Get(ItemEffect effect)
     {
         return mEffects.TryGetValue(effect, out var value) ? value : default;
     }
@@ -38,7 +38,7 @@ public sealed class CombatEffectCollection
 
     private void Add(EffectData effect)
     {
-        var value = effect.GetValues();
+        var value = effect.Percentage;
         switch (effect.Stacking)
         {
             case EffectStacking.Ignore:
@@ -55,7 +55,7 @@ public sealed class CombatEffectCollection
             default:
                 if (mEffects.ContainsKey(effect.Type))
                 {
-                    mEffects[effect.Type] = mEffects[effect.Type].Add(value);
+                    mEffects[effect.Type] += value;
                 }
                 else
                 {
@@ -69,12 +69,12 @@ public sealed class CombatEffectCollection
 
 public sealed record CombatantEffects(Entity Entity, CombatEffectCollection ActiveEffects)
 {
-    public EffectValue GetTotalEffectValue(ItemEffect effect)
+    public int GetTotalEffectValue(ItemEffect effect)
     {
         var passive = Entity.GetPassiveEffectValues(effect);
         var active = ActiveEffects.Get(effect);
 
-        return passive.Add(active);
+        return passive + active;
     }
 }
 

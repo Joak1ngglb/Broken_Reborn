@@ -12,6 +12,8 @@ using Intersect.Enums;
 using Intersect.Extensions;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.GameObjects;
+using System.Collections.Generic;
+using System.Linq;
 
 
 namespace Intersect.Client.Interface.Game.Enchanting
@@ -277,6 +279,49 @@ namespace Intersect.Client.Interface.Game.Enchanting
                 yOffset += spacing;
             }
 
+            var effectTotals = GetTotalEffects(_selectedItem.Descriptor, _selectedItem.ItemProperties);
+            foreach (var effect in effectTotals.OrderBy(e => (int)e.Key))
+            {
+                var effectType = effect.Key;
+                if (effectType == ItemEffect.None)
+                {
+                    continue;
+                }
+
+                var currentEffect = effect.Value;
+                var projectedEffect = currentEffect;
+
+                double bonusFactor = 0.05;
+                for (int lvl = _selectedItem.ItemProperties.EnchantmentLevel + 1; lvl <= projectedLevel; lvl++)
+                {
+                    int bonus = (int)Math.Ceiling(projectedEffect * bonusFactor);
+                    projectedEffect += bonus;
+                }
+
+                if (currentEffect == 0 && projectedEffect == 0)
+                {
+                    continue;
+                }
+
+                Strings.ItemDescription.BonusEffects.TryGetValue((int)effectType, out var effectLabel);
+                var effectColor = projectedEffect > currentEffect
+                    ? Color.Green
+                    : projectedEffect < currentEffect
+                        ? Color.Red
+                        : Color.White;
+
+                var lblEffect = new Label(_projectionContainer, $"EffectLabel_{(int)effectType}")
+                {
+                    Text = $"{effectLabel ?? effectType.ToString()}: {currentEffect}% → {projectedEffect}%",
+                    FontName = "sourcesansproblack",
+                    FontSize = 10
+                };
+                lblEffect.SetPosition(10, yOffset);
+                lblEffect.SetSize(labelWidth, labelHeight);
+                lblEffect.SetTextColor(effectColor, ComponentState.Normal);
+                yOffset += spacing;
+            }
+
             _projectionContainer.SizeToChildren(true, true);
         }
 
@@ -328,6 +373,29 @@ namespace Intersect.Client.Interface.Game.Enchanting
             }
 
             PacketSender.SendEnchantItem(itemIndex, targetLevel, currencyId, currencyAmount, useAmulet);
+        }
+
+        private static Dictionary<ItemEffect, int> GetTotalEffects(ItemDescriptor descriptor, ItemProperties? properties)
+        {
+            var totals = new Dictionary<ItemEffect, int>();
+
+            if (descriptor?.Effects != null)
+            {
+                foreach (var effect in descriptor.Effects)
+                {
+                    totals.ApplyEffect(effect);
+                }
+            }
+
+            if (properties?.EffectModifiers != null)
+            {
+                foreach (var effect in properties.EffectModifiers.Values)
+                {
+                    totals.ApplyEffect(effect);
+                }
+            }
+
+            return totals;
         }
 
         public override void Hide()

@@ -42,6 +42,8 @@ namespace Intersect.Editor.Forms.Editors
             btnSave = new DarkButton();
             grpGeneral = new DarkGroupBox();
             grpEnchanting = new DarkGroupBox();
+            cmbRuneEffect = new DarkComboBox();
+            lblRuneEffect = new Label();
             cmbRuneVital = new DarkComboBox();
             lblRuneVital = new Label();
             cmbRuneStat = new DarkComboBox();
@@ -134,24 +136,24 @@ namespace Intersect.Editor.Forms.Editors
             cmbTeachSpell = new DarkComboBox();
             lblSpell = new Label();
             grpEquipment = new DarkGroupBox();
-            grpStatRanges = new DarkGroupBox();
-            lblStatRangeFrom = new Label();
-            lblStatRangeTo = new Label();
-            nudStatRangeLow = new DarkNumericUpDown();
-            lstStatRanges = new ListBox();
-            nudStatRangeHigh = new DarkNumericUpDown();
-            grpVitalRanges = new DarkGroupBox();
-            lblVitalRangeFrom = new Label();
-            lblVitalRangeTo = new Label();
-            nudVitalRangeLow = new DarkNumericUpDown();
-            lstVitalRanges = new ListBox();
-            nudVitalRangeHigh = new DarkNumericUpDown();
             grpEffectRanges = new DarkGroupBox();
             lblEffectRangeFrom = new Label();
             lblEffectRangeTo = new Label();
             nudEffectRangeLow = new DarkNumericUpDown();
             lstEffectRanges = new ListBox();
             nudEffectRangeHigh = new DarkNumericUpDown();
+            grpVitalRanges = new DarkGroupBox();
+            lblVitalRangeFrom = new Label();
+            lblVitalRangeTo = new Label();
+            nudVitalRangeLow = new DarkNumericUpDown();
+            lstVitalRanges = new ListBox();
+            nudVitalRangeHigh = new DarkNumericUpDown();
+            grpStatRanges = new DarkGroupBox();
+            lblStatRangeFrom = new Label();
+            lblStatRangeTo = new Label();
+            nudStatRangeLow = new DarkNumericUpDown();
+            lstStatRanges = new ListBox();
+            nudStatRangeHigh = new DarkNumericUpDown();
             grpPaperdoll = new DarkGroupBox();
             picMalePaperdoll = new PictureBox();
             lblMalePaperdoll = new Label();
@@ -160,9 +162,6 @@ namespace Intersect.Editor.Forms.Editors
             lblFemalePaperdoll = new Label();
             cmbFemalePaperdoll = new DarkComboBox();
             grpEffects = new DarkGroupBox();
-            chkEffectIsFlat = new DarkCheckBox();
-            lblEffectFlat = new Label();
-            nudEffectFlat = new DarkNumericUpDown();
             lstBonusEffects = new ListBox();
             lblEffectPercent = new Label();
             nudEffectPercent = new DarkNumericUpDown();
@@ -292,20 +291,19 @@ namespace Intersect.Editor.Forms.Editors
             ((ISupportInitialize)nudBag).BeginInit();
             grpSpell.SuspendLayout();
             grpEquipment.SuspendLayout();
-            grpStatRanges.SuspendLayout();
-            ((ISupportInitialize)nudStatRangeLow).BeginInit();
-            ((ISupportInitialize)nudStatRangeHigh).BeginInit();
-            grpVitalRanges.SuspendLayout();
-            ((ISupportInitialize)nudVitalRangeLow).BeginInit();
-            ((ISupportInitialize)nudVitalRangeHigh).BeginInit();
             grpEffectRanges.SuspendLayout();
             ((ISupportInitialize)nudEffectRangeLow).BeginInit();
             ((ISupportInitialize)nudEffectRangeHigh).BeginInit();
+            grpVitalRanges.SuspendLayout();
+            ((ISupportInitialize)nudVitalRangeLow).BeginInit();
+            ((ISupportInitialize)nudVitalRangeHigh).BeginInit();
+            grpStatRanges.SuspendLayout();
+            ((ISupportInitialize)nudStatRangeLow).BeginInit();
+            ((ISupportInitialize)nudStatRangeHigh).BeginInit();
             grpPaperdoll.SuspendLayout();
             ((ISupportInitialize)picMalePaperdoll).BeginInit();
             ((ISupportInitialize)picFemalePaperdoll).BeginInit();
             grpEffects.SuspendLayout();
-            ((ISupportInitialize)nudEffectFlat).BeginInit();
             ((ISupportInitialize)nudEffectPercent).BeginInit();
             grpRegen.SuspendLayout();
             ((ISupportInitialize)nudMpRegen).BeginInit();
@@ -493,6 +491,8 @@ namespace Intersect.Editor.Forms.Editors
             // 
             grpEnchanting.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpEnchanting.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            grpEnchanting.Controls.Add(cmbRuneEffect);
+            grpEnchanting.Controls.Add(lblRuneEffect);
             grpEnchanting.Controls.Add(cmbRuneVital);
             grpEnchanting.Controls.Add(lblRuneVital);
             grpEnchanting.Controls.Add(cmbRuneStat);
@@ -508,10 +508,38 @@ namespace Intersect.Editor.Forms.Editors
             grpEnchanting.Margin = new Padding(4, 3, 4, 3);
             grpEnchanting.Name = "grpEnchanting";
             grpEnchanting.Padding = new Padding(4, 3, 4, 3);
-            grpEnchanting.Size = new Size(252, 109);
+            grpEnchanting.Size = new Size(252, 145);
             grpEnchanting.TabIndex = 106;
             grpEnchanting.TabStop = false;
             grpEnchanting.Text = "Enchanting";
+            // 
+            // cmbRuneEffect
+            // 
+            cmbRuneEffect.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbRuneEffect.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbRuneEffect.BorderStyle = ButtonBorderStyle.Solid;
+            cmbRuneEffect.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbRuneEffect.DrawDropdownHoverOutline = false;
+            cmbRuneEffect.DrawFocusRectangle = false;
+            cmbRuneEffect.DrawMode = DrawMode.OwnerDrawVariable;
+            cmbRuneEffect.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbRuneEffect.FlatStyle = FlatStyle.Flat;
+            cmbRuneEffect.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbRuneEffect.Location = new System.Drawing.Point(91, 16);
+            cmbRuneEffect.Name = "cmbRuneEffect";
+            cmbRuneEffect.Size = new Size(152, 24);
+            cmbRuneEffect.TabIndex = 84;
+            cmbRuneEffect.Text = null;
+            cmbRuneEffect.TextPadding = new Padding(2);
+            cmbRuneEffect.SelectedIndexChanged += cmbRuneEffect_SelectedIndexChanged;
+            // 
+            // lblRuneEffect
+            // 
+            lblRuneEffect.Location = new System.Drawing.Point(5, 19);
+            lblRuneEffect.Name = "lblRuneEffect";
+            lblRuneEffect.Size = new Size(80, 23);
+            lblRuneEffect.TabIndex = 83;
+            lblRuneEffect.Text = "Effect:";
             // 
             // cmbRuneVital
             // 
@@ -525,7 +553,7 @@ namespace Intersect.Editor.Forms.Editors
             cmbRuneVital.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbRuneVital.FlatStyle = FlatStyle.Flat;
             cmbRuneVital.ForeColor = System.Drawing.Color.Gainsboro;
-            cmbRuneVital.Location = new System.Drawing.Point(91, 16);
+            cmbRuneVital.Location = new System.Drawing.Point(91, 46);
             cmbRuneVital.Name = "cmbRuneVital";
             cmbRuneVital.Size = new Size(152, 24);
             cmbRuneVital.TabIndex = 82;
@@ -535,7 +563,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             // lblRuneVital
             // 
-            lblRuneVital.Location = new System.Drawing.Point(5, 19);
+            lblRuneVital.Location = new System.Drawing.Point(5, 49);
             lblRuneVital.Name = "lblRuneVital";
             lblRuneVital.Size = new Size(80, 23);
             lblRuneVital.TabIndex = 81;
@@ -553,7 +581,7 @@ namespace Intersect.Editor.Forms.Editors
             cmbRuneStat.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbRuneStat.FlatStyle = FlatStyle.Flat;
             cmbRuneStat.ForeColor = System.Drawing.Color.Gainsboro;
-            cmbRuneStat.Location = new System.Drawing.Point(91, 46);
+            cmbRuneStat.Location = new System.Drawing.Point(91, 76);
             cmbRuneStat.Name = "cmbRuneStat";
             cmbRuneStat.Size = new Size(152, 24);
             cmbRuneStat.TabIndex = 78;
@@ -611,7 +639,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             // lblRuneStat
             // 
-            lblRuneStat.Location = new System.Drawing.Point(5, 49);
+            lblRuneStat.Location = new System.Drawing.Point(5, 79);
             lblRuneStat.Name = "lblRuneStat";
             lblRuneStat.Size = new Size(50, 23);
             lblRuneStat.TabIndex = 77;
@@ -619,7 +647,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             // lblRuneValue
             // 
-            lblRuneValue.Location = new System.Drawing.Point(5, 76);
+            lblRuneValue.Location = new System.Drawing.Point(5, 106);
             lblRuneValue.Name = "lblRuneValue";
             lblRuneValue.Size = new Size(64, 23);
             lblRuneValue.TabIndex = 79;
@@ -629,7 +657,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             nudRuneValue.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudRuneValue.ForeColor = System.Drawing.Color.Gainsboro;
-            nudRuneValue.Location = new System.Drawing.Point(91, 76);
+            nudRuneValue.Location = new System.Drawing.Point(91, 106);
             nudRuneValue.Name = "nudRuneValue";
             nudRuneValue.Size = new Size(152, 23);
             nudRuneValue.TabIndex = 80;
@@ -1760,172 +1788,6 @@ namespace Intersect.Editor.Forms.Editors
             grpEquipment.Text = "Equipment";
             grpEquipment.Visible = false;
             // 
-            // grpStatRanges
-            // 
-            grpStatRanges.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-            grpStatRanges.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            grpStatRanges.Controls.Add(lblStatRangeFrom);
-            grpStatRanges.Controls.Add(lblStatRangeTo);
-            grpStatRanges.Controls.Add(nudStatRangeLow);
-            grpStatRanges.Controls.Add(lstStatRanges);
-            grpStatRanges.Controls.Add(nudStatRangeHigh);
-            grpStatRanges.ForeColor = System.Drawing.Color.Gainsboro;
-            grpStatRanges.Location = new System.Drawing.Point(327, 550);
-            grpStatRanges.Margin = new Padding(4, 3, 4, 3);
-            grpStatRanges.Name = "grpStatRanges";
-            grpStatRanges.Padding = new Padding(4, 3, 4, 3);
-            grpStatRanges.Size = new Size(217, 213);
-            grpStatRanges.TabIndex = 83;
-            grpStatRanges.TabStop = false;
-            grpStatRanges.Text = "Stat Ranges";
-            // 
-            // lblStatRangeFrom
-            // 
-            lblStatRangeFrom.AutoSize = true;
-            lblStatRangeFrom.Location = new System.Drawing.Point(8, 177);
-            lblStatRangeFrom.Margin = new Padding(4, 0, 4, 0);
-            lblStatRangeFrom.Name = "lblStatRangeFrom";
-            lblStatRangeFrom.Size = new Size(35, 15);
-            lblStatRangeFrom.TabIndex = 62;
-            lblStatRangeFrom.Text = "From";
-            lblStatRangeFrom.TextAlign = ContentAlignment.TopRight;
-            // 
-            // lblStatRangeTo
-            // 
-            lblStatRangeTo.AutoSize = true;
-            lblStatRangeTo.Location = new System.Drawing.Point(122, 177);
-            lblStatRangeTo.Margin = new Padding(4, 0, 4, 0);
-            lblStatRangeTo.Name = "lblStatRangeTo";
-            lblStatRangeTo.Size = new Size(18, 15);
-            lblStatRangeTo.TabIndex = 61;
-            lblStatRangeTo.Text = "to";
-            lblStatRangeTo.TextAlign = ContentAlignment.TopCenter;
-            // 
-            // nudStatRangeLow
-            // 
-            nudStatRangeLow.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudStatRangeLow.ForeColor = System.Drawing.Color.Gainsboro;
-            nudStatRangeLow.Location = new System.Drawing.Point(54, 175);
-            nudStatRangeLow.Margin = new Padding(4, 3, 4, 3);
-            nudStatRangeLow.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-            nudStatRangeLow.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
-            nudStatRangeLow.Name = "nudStatRangeLow";
-            nudStatRangeLow.Size = new Size(54, 23);
-            nudStatRangeLow.TabIndex = 60;
-            nudStatRangeLow.Value = new decimal(new int[] { 0, 0, 0, 0 });
-            nudStatRangeLow.ValueChanged += nudStatRangeLow_ValueChanged;
-            // 
-            // lstStatRanges
-            // 
-            lstStatRanges.BackColor = System.Drawing.Color.FromArgb(60, 63, 65);
-            lstStatRanges.BorderStyle = BorderStyle.FixedSingle;
-            lstStatRanges.ForeColor = System.Drawing.Color.Gainsboro;
-            lstStatRanges.FormattingEnabled = true;
-            lstStatRanges.ItemHeight = 15;
-            lstStatRanges.Location = new System.Drawing.Point(8, 28);
-            lstStatRanges.Margin = new Padding(4, 3, 4, 3);
-            lstStatRanges.Name = "lstStatRanges";
-            lstStatRanges.Size = new Size(198, 137);
-            lstStatRanges.TabIndex = 59;
-            lstStatRanges.SelectedIndexChanged += lstStatRanges_SelectedIndexChanged;
-            // 
-            // nudStatRangeHigh
-            // 
-            nudStatRangeHigh.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudStatRangeHigh.ForeColor = System.Drawing.Color.Gainsboro;
-            nudStatRangeHigh.Location = new System.Drawing.Point(152, 175);
-            nudStatRangeHigh.Margin = new Padding(4, 3, 4, 3);
-            nudStatRangeHigh.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-            nudStatRangeHigh.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
-            nudStatRangeHigh.Name = "nudStatRangeHigh";
-            nudStatRangeHigh.Size = new Size(54, 23);
-            nudStatRangeHigh.TabIndex = 53;
-            nudStatRangeHigh.Value = new decimal(new int[] { 0, 0, 0, 0 });
-            nudStatRangeHigh.ValueChanged += nudStatRangeHigh_ValueChanged;
-            // 
-            // grpVitalRanges
-            // 
-            grpVitalRanges.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-            grpVitalRanges.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            grpVitalRanges.Controls.Add(lblVitalRangeFrom);
-            grpVitalRanges.Controls.Add(lblVitalRangeTo);
-            grpVitalRanges.Controls.Add(nudVitalRangeLow);
-            grpVitalRanges.Controls.Add(lstVitalRanges);
-            grpVitalRanges.Controls.Add(nudVitalRangeHigh);
-            grpVitalRanges.ForeColor = System.Drawing.Color.Gainsboro;
-            grpVitalRanges.Location = new System.Drawing.Point(550, 550);
-            grpVitalRanges.Margin = new Padding(4, 3, 4, 3);
-            grpVitalRanges.Name = "grpVitalRanges";
-            grpVitalRanges.Padding = new Padding(4, 3, 4, 3);
-            grpVitalRanges.Size = new Size(217, 213);
-            grpVitalRanges.TabIndex = 84;
-            grpVitalRanges.TabStop = false;
-            grpVitalRanges.Text = "Vital Ranges";
-            // 
-            // lblVitalRangeFrom
-            // 
-            lblVitalRangeFrom.AutoSize = true;
-            lblVitalRangeFrom.Location = new System.Drawing.Point(8, 177);
-            lblVitalRangeFrom.Margin = new Padding(4, 0, 4, 0);
-            lblVitalRangeFrom.Name = "lblVitalRangeFrom";
-            lblVitalRangeFrom.Size = new Size(35, 15);
-            lblVitalRangeFrom.TabIndex = 62;
-            lblVitalRangeFrom.Text = "From";
-            lblVitalRangeFrom.TextAlign = ContentAlignment.TopRight;
-            // 
-            // lblVitalRangeTo
-            // 
-            lblVitalRangeTo.AutoSize = true;
-            lblVitalRangeTo.Location = new System.Drawing.Point(122, 177);
-            lblVitalRangeTo.Margin = new Padding(4, 0, 4, 0);
-            lblVitalRangeTo.Name = "lblVitalRangeTo";
-            lblVitalRangeTo.Size = new Size(18, 15);
-            lblVitalRangeTo.TabIndex = 61;
-            lblVitalRangeTo.Text = "to";
-            lblVitalRangeTo.TextAlign = ContentAlignment.TopCenter;
-            // 
-            // nudVitalRangeLow
-            // 
-            nudVitalRangeLow.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudVitalRangeLow.ForeColor = System.Drawing.Color.Gainsboro;
-            nudVitalRangeLow.Location = new System.Drawing.Point(54, 175);
-            nudVitalRangeLow.Margin = new Padding(4, 3, 4, 3);
-            nudVitalRangeLow.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-            nudVitalRangeLow.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
-            nudVitalRangeLow.Name = "nudVitalRangeLow";
-            nudVitalRangeLow.Size = new Size(54, 23);
-            nudVitalRangeLow.TabIndex = 60;
-            nudVitalRangeLow.Value = new decimal(new int[] { 0, 0, 0, 0 });
-            nudVitalRangeLow.ValueChanged += nudVitalRangeLow_ValueChanged;
-            // 
-            // lstVitalRanges
-            // 
-            lstVitalRanges.BackColor = System.Drawing.Color.FromArgb(60, 63, 65);
-            lstVitalRanges.BorderStyle = BorderStyle.FixedSingle;
-            lstVitalRanges.ForeColor = System.Drawing.Color.Gainsboro;
-            lstVitalRanges.FormattingEnabled = true;
-            lstVitalRanges.ItemHeight = 15;
-            lstVitalRanges.Location = new System.Drawing.Point(8, 28);
-            lstVitalRanges.Margin = new Padding(4, 3, 4, 3);
-            lstVitalRanges.Name = "lstVitalRanges";
-            lstVitalRanges.Size = new Size(198, 137);
-            lstVitalRanges.TabIndex = 59;
-            lstVitalRanges.SelectedIndexChanged += lstVitalRanges_SelectedIndexChanged;
-            // 
-            // nudVitalRangeHigh
-            // 
-            nudVitalRangeHigh.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudVitalRangeHigh.ForeColor = System.Drawing.Color.Gainsboro;
-            nudVitalRangeHigh.Location = new System.Drawing.Point(152, 175);
-            nudVitalRangeHigh.Margin = new Padding(4, 3, 4, 3);
-            nudVitalRangeHigh.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-            nudVitalRangeHigh.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
-            nudVitalRangeHigh.Name = "nudVitalRangeHigh";
-            nudVitalRangeHigh.Size = new Size(54, 23);
-            nudVitalRangeHigh.TabIndex = 53;
-            nudVitalRangeHigh.Value = new decimal(new int[] { 0, 0, 0, 0 });
-            nudVitalRangeHigh.ValueChanged += nudVitalRangeHigh_ValueChanged;
-            // 
             // grpEffectRanges
             // 
             grpEffectRanges.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
@@ -2008,6 +1870,172 @@ namespace Intersect.Editor.Forms.Editors
             nudEffectRangeHigh.TabIndex = 53;
             nudEffectRangeHigh.Value = new decimal(new int[] { 0, 0, 0, 0 });
             nudEffectRangeHigh.ValueChanged += nudEffectRangeHigh_ValueChanged;
+            // 
+            // grpVitalRanges
+            // 
+            grpVitalRanges.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+            grpVitalRanges.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            grpVitalRanges.Controls.Add(lblVitalRangeFrom);
+            grpVitalRanges.Controls.Add(lblVitalRangeTo);
+            grpVitalRanges.Controls.Add(nudVitalRangeLow);
+            grpVitalRanges.Controls.Add(lstVitalRanges);
+            grpVitalRanges.Controls.Add(nudVitalRangeHigh);
+            grpVitalRanges.ForeColor = System.Drawing.Color.Gainsboro;
+            grpVitalRanges.Location = new System.Drawing.Point(15, 846);
+            grpVitalRanges.Margin = new Padding(4, 3, 4, 3);
+            grpVitalRanges.Name = "grpVitalRanges";
+            grpVitalRanges.Padding = new Padding(4, 3, 4, 3);
+            grpVitalRanges.Size = new Size(217, 152);
+            grpVitalRanges.TabIndex = 84;
+            grpVitalRanges.TabStop = false;
+            grpVitalRanges.Text = "Vital Ranges";
+            // 
+            // lblVitalRangeFrom
+            // 
+            lblVitalRangeFrom.AutoSize = true;
+            lblVitalRangeFrom.Location = new System.Drawing.Point(8, 116);
+            lblVitalRangeFrom.Margin = new Padding(4, 0, 4, 0);
+            lblVitalRangeFrom.Name = "lblVitalRangeFrom";
+            lblVitalRangeFrom.Size = new Size(35, 15);
+            lblVitalRangeFrom.TabIndex = 62;
+            lblVitalRangeFrom.Text = "From";
+            lblVitalRangeFrom.TextAlign = ContentAlignment.TopRight;
+            // 
+            // lblVitalRangeTo
+            // 
+            lblVitalRangeTo.AutoSize = true;
+            lblVitalRangeTo.Location = new System.Drawing.Point(122, 116);
+            lblVitalRangeTo.Margin = new Padding(4, 0, 4, 0);
+            lblVitalRangeTo.Name = "lblVitalRangeTo";
+            lblVitalRangeTo.Size = new Size(18, 15);
+            lblVitalRangeTo.TabIndex = 61;
+            lblVitalRangeTo.Text = "to";
+            lblVitalRangeTo.TextAlign = ContentAlignment.TopCenter;
+            // 
+            // nudVitalRangeLow
+            // 
+            nudVitalRangeLow.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudVitalRangeLow.ForeColor = System.Drawing.Color.Gainsboro;
+            nudVitalRangeLow.Location = new System.Drawing.Point(54, 114);
+            nudVitalRangeLow.Margin = new Padding(4, 3, 4, 3);
+            nudVitalRangeLow.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nudVitalRangeLow.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
+            nudVitalRangeLow.Name = "nudVitalRangeLow";
+            nudVitalRangeLow.Size = new Size(54, 23);
+            nudVitalRangeLow.TabIndex = 60;
+            nudVitalRangeLow.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudVitalRangeLow.ValueChanged += nudVitalRangeLow_ValueChanged;
+            // 
+            // lstVitalRanges
+            // 
+            lstVitalRanges.BackColor = System.Drawing.Color.FromArgb(60, 63, 65);
+            lstVitalRanges.BorderStyle = BorderStyle.FixedSingle;
+            lstVitalRanges.ForeColor = System.Drawing.Color.Gainsboro;
+            lstVitalRanges.FormattingEnabled = true;
+            lstVitalRanges.ItemHeight = 15;
+            lstVitalRanges.Location = new System.Drawing.Point(8, 28);
+            lstVitalRanges.Margin = new Padding(4, 3, 4, 3);
+            lstVitalRanges.Name = "lstVitalRanges";
+            lstVitalRanges.Size = new Size(198, 77);
+            lstVitalRanges.TabIndex = 59;
+            lstVitalRanges.SelectedIndexChanged += lstVitalRanges_SelectedIndexChanged;
+            // 
+            // nudVitalRangeHigh
+            // 
+            nudVitalRangeHigh.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudVitalRangeHigh.ForeColor = System.Drawing.Color.Gainsboro;
+            nudVitalRangeHigh.Location = new System.Drawing.Point(152, 114);
+            nudVitalRangeHigh.Margin = new Padding(4, 3, 4, 3);
+            nudVitalRangeHigh.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nudVitalRangeHigh.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
+            nudVitalRangeHigh.Name = "nudVitalRangeHigh";
+            nudVitalRangeHigh.Size = new Size(54, 23);
+            nudVitalRangeHigh.TabIndex = 53;
+            nudVitalRangeHigh.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudVitalRangeHigh.ValueChanged += nudVitalRangeHigh_ValueChanged;
+            // 
+            // grpStatRanges
+            // 
+            grpStatRanges.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+            grpStatRanges.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            grpStatRanges.Controls.Add(lblStatRangeFrom);
+            grpStatRanges.Controls.Add(lblStatRangeTo);
+            grpStatRanges.Controls.Add(nudStatRangeLow);
+            grpStatRanges.Controls.Add(lstStatRanges);
+            grpStatRanges.Controls.Add(nudStatRangeHigh);
+            grpStatRanges.ForeColor = System.Drawing.Color.Gainsboro;
+            grpStatRanges.Location = new System.Drawing.Point(327, 550);
+            grpStatRanges.Margin = new Padding(4, 3, 4, 3);
+            grpStatRanges.Name = "grpStatRanges";
+            grpStatRanges.Padding = new Padding(4, 3, 4, 3);
+            grpStatRanges.Size = new Size(217, 213);
+            grpStatRanges.TabIndex = 83;
+            grpStatRanges.TabStop = false;
+            grpStatRanges.Text = "Stat Ranges";
+            // 
+            // lblStatRangeFrom
+            // 
+            lblStatRangeFrom.AutoSize = true;
+            lblStatRangeFrom.Location = new System.Drawing.Point(8, 177);
+            lblStatRangeFrom.Margin = new Padding(4, 0, 4, 0);
+            lblStatRangeFrom.Name = "lblStatRangeFrom";
+            lblStatRangeFrom.Size = new Size(35, 15);
+            lblStatRangeFrom.TabIndex = 62;
+            lblStatRangeFrom.Text = "From";
+            lblStatRangeFrom.TextAlign = ContentAlignment.TopRight;
+            // 
+            // lblStatRangeTo
+            // 
+            lblStatRangeTo.AutoSize = true;
+            lblStatRangeTo.Location = new System.Drawing.Point(122, 177);
+            lblStatRangeTo.Margin = new Padding(4, 0, 4, 0);
+            lblStatRangeTo.Name = "lblStatRangeTo";
+            lblStatRangeTo.Size = new Size(18, 15);
+            lblStatRangeTo.TabIndex = 61;
+            lblStatRangeTo.Text = "to";
+            lblStatRangeTo.TextAlign = ContentAlignment.TopCenter;
+            // 
+            // nudStatRangeLow
+            // 
+            nudStatRangeLow.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudStatRangeLow.ForeColor = System.Drawing.Color.Gainsboro;
+            nudStatRangeLow.Location = new System.Drawing.Point(54, 175);
+            nudStatRangeLow.Margin = new Padding(4, 3, 4, 3);
+            nudStatRangeLow.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nudStatRangeLow.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
+            nudStatRangeLow.Name = "nudStatRangeLow";
+            nudStatRangeLow.Size = new Size(54, 23);
+            nudStatRangeLow.TabIndex = 60;
+            nudStatRangeLow.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudStatRangeLow.ValueChanged += nudStatRangeLow_ValueChanged;
+            // 
+            // lstStatRanges
+            // 
+            lstStatRanges.BackColor = System.Drawing.Color.FromArgb(60, 63, 65);
+            lstStatRanges.BorderStyle = BorderStyle.FixedSingle;
+            lstStatRanges.ForeColor = System.Drawing.Color.Gainsboro;
+            lstStatRanges.FormattingEnabled = true;
+            lstStatRanges.ItemHeight = 15;
+            lstStatRanges.Location = new System.Drawing.Point(8, 28);
+            lstStatRanges.Margin = new Padding(4, 3, 4, 3);
+            lstStatRanges.Name = "lstStatRanges";
+            lstStatRanges.Size = new Size(198, 137);
+            lstStatRanges.TabIndex = 59;
+            lstStatRanges.SelectedIndexChanged += lstStatRanges_SelectedIndexChanged;
+            // 
+            // nudStatRangeHigh
+            // 
+            nudStatRangeHigh.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudStatRangeHigh.ForeColor = System.Drawing.Color.Gainsboro;
+            nudStatRangeHigh.Location = new System.Drawing.Point(152, 175);
+            nudStatRangeHigh.Margin = new Padding(4, 3, 4, 3);
+            nudStatRangeHigh.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nudStatRangeHigh.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
+            nudStatRangeHigh.Name = "nudStatRangeHigh";
+            nudStatRangeHigh.Size = new Size(54, 23);
+            nudStatRangeHigh.TabIndex = 53;
+            nudStatRangeHigh.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudStatRangeHigh.ValueChanged += nudStatRangeHigh_ValueChanged;
             // 
             // grpPaperdoll
             // 
@@ -2119,9 +2147,6 @@ namespace Intersect.Editor.Forms.Editors
             // 
             grpEffects.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpEffects.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            grpEffects.Controls.Add(chkEffectIsFlat);
-            grpEffects.Controls.Add(lblEffectFlat);
-            grpEffects.Controls.Add(nudEffectFlat);
             grpEffects.Controls.Add(lstBonusEffects);
             grpEffects.Controls.Add(lblEffectPercent);
             grpEffects.Controls.Add(nudEffectPercent);
@@ -2130,43 +2155,10 @@ namespace Intersect.Editor.Forms.Editors
             grpEffects.Margin = new Padding(4, 3, 4, 3);
             grpEffects.Name = "grpEffects";
             grpEffects.Padding = new Padding(4, 3, 4, 3);
-            grpEffects.Size = new Size(307, 273);
+            grpEffects.Size = new Size(307, 196);
             grpEffects.TabIndex = 57;
             grpEffects.TabStop = false;
             grpEffects.Text = "Bonus Effects";
-            // 
-            // chkEffectIsFlat
-            // 
-            chkEffectIsFlat.AutoSize = true;
-            chkEffectIsFlat.Location = new System.Drawing.Point(14, 235);
-            chkEffectIsFlat.Margin = new Padding(4, 3, 4, 3);
-            chkEffectIsFlat.Name = "chkEffectIsFlat";
-            chkEffectIsFlat.Size = new Size(96, 19);
-            chkEffectIsFlat.TabIndex = 59;
-            chkEffectIsFlat.Text = "Use flat value";
-            chkEffectIsFlat.CheckedChanged += chkEffectIsFlat_CheckedChanged;
-            // 
-            // lblEffectFlat
-            // 
-            lblEffectFlat.AutoSize = true;
-            lblEffectFlat.Location = new System.Drawing.Point(12, 184);
-            lblEffectFlat.Margin = new Padding(4, 0, 4, 0);
-            lblEffectFlat.Name = "lblEffectFlat";
-            lblEffectFlat.Size = new Size(105, 15);
-            lblEffectFlat.TabIndex = 61;
-            lblEffectFlat.Text = "Effect Amount (#):";
-            // 
-            // nudEffectFlat
-            // 
-            nudEffectFlat.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudEffectFlat.ForeColor = System.Drawing.Color.Gainsboro;
-            nudEffectFlat.Location = new System.Drawing.Point(15, 206);
-            nudEffectFlat.Margin = new Padding(4, 3, 4, 3);
-            nudEffectFlat.Name = "nudEffectFlat";
-            nudEffectFlat.Size = new Size(282, 23);
-            nudEffectFlat.TabIndex = 60;
-            nudEffectFlat.Value = new decimal(new int[] { 0, 0, 0, 0 });
-            nudEffectFlat.ValueChanged += nudEffectFlat_ValueChanged;
             // 
             // lstBonusEffects
             // 
@@ -2451,11 +2443,11 @@ namespace Intersect.Editor.Forms.Editors
             grpStatBonuses.Controls.Add(lblMag);
             grpStatBonuses.Controls.Add(lblStr);
             grpStatBonuses.ForeColor = System.Drawing.Color.Gainsboro;
-            grpStatBonuses.Location = new System.Drawing.Point(16, 606);
+            grpStatBonuses.Location = new System.Drawing.Point(16, 537);
             grpStatBonuses.Margin = new Padding(4, 3, 4, 3);
             grpStatBonuses.Name = "grpStatBonuses";
             grpStatBonuses.Padding = new Padding(4, 3, 4, 3);
-            grpStatBonuses.Size = new Size(307, 410);
+            grpStatBonuses.Size = new Size(307, 299);
             grpStatBonuses.TabIndex = 40;
             grpStatBonuses.TabStop = false;
             grpStatBonuses.Text = "Stat Bonuses";
@@ -3515,25 +3507,24 @@ namespace Intersect.Editor.Forms.Editors
             grpSpell.PerformLayout();
             grpEquipment.ResumeLayout(false);
             grpEquipment.PerformLayout();
-            grpStatRanges.ResumeLayout(false);
-            grpStatRanges.PerformLayout();
-            ((ISupportInitialize)nudStatRangeLow).EndInit();
-            ((ISupportInitialize)nudStatRangeHigh).EndInit();
-            grpVitalRanges.ResumeLayout(false);
-            grpVitalRanges.PerformLayout();
-            ((ISupportInitialize)nudVitalRangeLow).EndInit();
-            ((ISupportInitialize)nudVitalRangeHigh).EndInit();
             grpEffectRanges.ResumeLayout(false);
             grpEffectRanges.PerformLayout();
             ((ISupportInitialize)nudEffectRangeLow).EndInit();
             ((ISupportInitialize)nudEffectRangeHigh).EndInit();
+            grpVitalRanges.ResumeLayout(false);
+            grpVitalRanges.PerformLayout();
+            ((ISupportInitialize)nudVitalRangeLow).EndInit();
+            ((ISupportInitialize)nudVitalRangeHigh).EndInit();
+            grpStatRanges.ResumeLayout(false);
+            grpStatRanges.PerformLayout();
+            ((ISupportInitialize)nudStatRangeLow).EndInit();
+            ((ISupportInitialize)nudStatRangeHigh).EndInit();
             grpPaperdoll.ResumeLayout(false);
             grpPaperdoll.PerformLayout();
             ((ISupportInitialize)picMalePaperdoll).EndInit();
             ((ISupportInitialize)picFemalePaperdoll).EndInit();
             grpEffects.ResumeLayout(false);
             grpEffects.PerformLayout();
-            ((ISupportInitialize)nudEffectFlat).EndInit();
             ((ISupportInitialize)nudEffectPercent).EndInit();
             grpRegen.ResumeLayout(false);
             grpRegen.PerformLayout();
@@ -3765,9 +3756,6 @@ namespace Intersect.Editor.Forms.Editors
         private Label lblDespawnTime;
         private ToolTip tooltips;
         private DarkGroupBox grpEffects;
-        private DarkCheckBox chkEffectIsFlat;
-        private Label lblEffectFlat;
-        private DarkNumericUpDown nudEffectFlat;
         private ListBox lstBonusEffects;
         private DarkGroupBox grpCooldown;
         private DarkGroupBox grpStack;
@@ -3794,6 +3782,8 @@ namespace Intersect.Editor.Forms.Editors
         private Label lblEventForTrigger;
         private ListBox lstEventTriggers;
         private DarkGroupBox grpEnchanting;
+        private DarkComboBox cmbRuneEffect;
+        private Label lblRuneEffect;
         private DarkComboBox cmbRuneVital;
         private Label lblRuneVital;
         private DarkComboBox cmbRuneStat;

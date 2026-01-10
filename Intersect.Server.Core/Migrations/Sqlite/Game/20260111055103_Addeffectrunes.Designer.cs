@@ -3,6 +3,7 @@ using System;
 using Intersect.Server.Database.GameData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Intersect.Server.Migrations.Sqlite.Game
 {
     [DbContext(typeof(SqliteGameContext))]
-    partial class SqliteGameContextModelSnapshot : ModelSnapshot
+    [Migration("20260111055103_Addeffectrunes")]
+    partial class Addeffectrunes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
@@ -1481,291 +1484,6 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_Accuracy", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_AntiCritChance", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_ArmorPenetration", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_CooldownReduction", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_CriticalChance", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_Cures", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_DamageReduction", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_DamageReflect", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_Damages", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_EXP", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_Evasion", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_Lifesteal", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_Luck", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_Manasteal", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "EffectRange_Tenacity", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
                     b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "StatRange_Agility", b1 =>
                         {
                             b1.Property<Guid>("EquipmentPropertiesDescriptorId")
@@ -1880,75 +1598,7 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                                 .HasForeignKey("EquipmentPropertiesDescriptorId");
                         });
 
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "VitalRange_Health", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
-                    b.OwnsOne("Intersect.GameObjects.Ranges.ItemRange", "VitalRange_Mana", b1 =>
-                        {
-                            b1.Property<Guid>("EquipmentPropertiesDescriptorId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("HighRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("LowRange")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("EquipmentPropertiesDescriptorId");
-
-                            b1.ToTable("Items_EquipmentProperties");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EquipmentPropertiesDescriptorId");
-                        });
-
                     b.Navigation("Descriptor");
-
-                    b.Navigation("EffectRange_Accuracy");
-
-                    b.Navigation("EffectRange_AntiCritChance");
-
-                    b.Navigation("EffectRange_ArmorPenetration");
-
-                    b.Navigation("EffectRange_CooldownReduction");
-
-                    b.Navigation("EffectRange_CriticalChance");
-
-                    b.Navigation("EffectRange_Cures");
-
-                    b.Navigation("EffectRange_DamageReduction");
-
-                    b.Navigation("EffectRange_DamageReflect");
-
-                    b.Navigation("EffectRange_Damages");
-
-                    b.Navigation("EffectRange_EXP");
-
-                    b.Navigation("EffectRange_Evasion");
-
-                    b.Navigation("EffectRange_Lifesteal");
-
-                    b.Navigation("EffectRange_Luck");
-
-                    b.Navigation("EffectRange_Manasteal");
-
-                    b.Navigation("EffectRange_Tenacity");
 
                     b.Navigation("StatRange_Agility");
 
@@ -1961,10 +1611,6 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                     b.Navigation("StatRange_Speed");
 
                     b.Navigation("StatRange_Vitality");
-
-                    b.Navigation("VitalRange_Health");
-
-                    b.Navigation("VitalRange_Mana");
                 });
 
             modelBuilder.Entity("Intersect.Framework.Core.GameObjects.Items.ItemDescriptor", b =>
