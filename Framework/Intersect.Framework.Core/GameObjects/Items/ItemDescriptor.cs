@@ -349,7 +349,10 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
     public string EffectsJson
     {
         get => JsonConvert.SerializeObject(Effects);
-        set => Effects = JsonConvert.DeserializeObject<List<EffectData>>(value ?? "") ?? [];
+        set
+        {
+            Effects = JsonConvert.DeserializeObject<List<EffectData>>(value ?? "") ?? [];
+        }
     }
 
     public EquipmentProperties? EquipmentProperties { get; set; }
@@ -529,12 +532,7 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
 
     public int GetEffectPercentage(ItemEffect type)
     {
-        return Effects.Find(effect => effect.Type == type)?.GetValue() ?? 0;
-    }
-
-    public EffectValue GetEffectValues(ItemEffect type)
-    {
-        return Effects.Find(effect => effect.Type == type)?.GetValues() ?? default;
+        return Effects.Find(effect => effect.Type == type)?.Percentage ?? 0;
     }
 
     public EffectData? GetEffect(ItemEffect type)
@@ -548,7 +546,7 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         get => Effects.Select(effect => effect.Type).ToArray();
     }
 
-    public void SetEffectOfType(ItemEffect type, int percentage, int flatAmount, bool isFlat = false)
+    public void SetEffectOfType(ItemEffect type, int percentage)
     {
         var effectToEdit = Effects.Find(effect => effect.Type == type);
         if (effectToEdit == default)
@@ -556,9 +554,7 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
             return;
         }
 
-        effectToEdit.IsFlat = false;
         effectToEdit.Percentage = percentage;
-        effectToEdit.FlatAmount = 0;
     }
 
     /// <inheritdoc />
@@ -618,6 +614,9 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         Consumable = new ConsumableData();
         Effects = [];
         Color = new Color(255, 255, 255, 255);
+        TargetStat = (Stat)(-1);
+        TargetVital = (Vital)(-1);
+        TargetEffect = ItemEffect.None;
         if (ItemType != ItemType.Equipment)
         {
             SetId = Guid.Empty;
@@ -650,7 +649,8 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         return Math.Max(0.1, 1.0 - (0.1 * level)); // Probabilidad decreciente
     }
     public Stat TargetStat { get; set; }
-    public Vital TargetVital { get; set; }  
+    public Vital TargetVital { get; set; }
+    public ItemEffect TargetEffect { get; set; }
     public int AmountModifier { get; set; }
 
 }

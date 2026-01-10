@@ -29,6 +29,7 @@ using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.Security;
 using Intersect.Localization;
 using Microsoft.Extensions.Logging;
@@ -170,9 +171,10 @@ internal sealed partial class PacketHandler
         if (inventoryItem != null)
         {
             // Actualizar nivel de encantamiento
+            // Como UpdateItemLevelPacket no tiene ItemProperties, solo usamos NewEnchantmentLevel
+            inventoryItem.ItemProperties ??= new ItemProperties();
             inventoryItem.ItemProperties.EnchantmentLevel = packet.NewEnchantmentLevel;
             Interface.Interface.GameUi?.mEnchantItemWindow.UpdateProjection();
-
         }
         else
         {

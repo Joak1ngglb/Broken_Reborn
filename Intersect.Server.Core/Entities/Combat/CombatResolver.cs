@@ -35,12 +35,12 @@ public static class CombatResolver
         var accuracy =
             attacker.Stat[(int)Enums.Stat.Agility].Value() * 0.5d +
             attacker.Stat[(int)Enums.Stat.Attack].Value() * 0.3d +
-            attackerEffects.GetTotalEffectValue(ItemEffect.Accuracy).GetPrimaryValue();
+            attackerEffects.GetTotalEffectValue(ItemEffect.Accuracy);
 
         var evasion =
             defender.Stat[(int)Enums.Stat.Agility].Value() * 0.7d +
             defender.Stat[(int)Enums.Stat.Defense].Value() * 0.2d +
-            defenderEffects.GetTotalEffectValue(ItemEffect.Evasion).GetPrimaryValue();
+            defenderEffects.GetTotalEffectValue(ItemEffect.Evasion);
 
         var statBalance = accuracy - evasion;
         var normalization = Math.Max(50d, accuracy + evasion);
@@ -59,10 +59,10 @@ public static class CombatResolver
 
         var agilityPerCrit = Math.Max(1, Options.Instance.Combat.AgilityPerCritChance);
         critChance += attackerEffects.Entity.Stat[(int)Enums.Stat.Agility].Value() / agilityPerCrit;
-        critChance += attackerEffects.GetTotalEffectValue(ItemEffect.CriticalChance).GetPrimaryValue();
+        critChance += attackerEffects.GetTotalEffectValue(ItemEffect.CriticalChance);
 
         var antiCrit = defenderEffects.GetTotalEffectValue(ItemEffect.AntiCritChance);
-        critChance -= antiCrit.Percentage + antiCrit.Flat;
+        critChance -= antiCrit;
 
         return Math.Max(0, critChance);
     }
@@ -74,7 +74,7 @@ public static class CombatResolver
     )
     {
         var penetration = attackerEffects.GetTotalEffectValue(ItemEffect.ArmorPenetration);
-        if (penetration.Percentage == 0 && penetration.Flat == 0)
+        if (penetration == 0)
         {
             return null;
         }
@@ -91,10 +91,7 @@ public static class CombatResolver
             return null;
         }
 
-        var effectiveDefense = Math.Max(
-            0,
-            (baseDefense - penetration.Flat) * (1 - penetration.Percentage / 100f)
-        );
+        var effectiveDefense = Math.Max(0, baseDefense * (1 - penetration / 100f));
 
         var parameter = damageType == DamageType.Magic ? "V_MagicResist" : "V_Defense";
         return new Dictionary<string, object> { [parameter] = effectiveDefense };
@@ -105,14 +102,9 @@ public static class CombatResolver
         var reduction = defenderEffects.GetTotalEffectValue(ItemEffect.DamageReduction);
         var reduced = damage;
 
-        if (reduction.Percentage != 0)
+        if (reduction != 0)
         {
-            reduced = (long)Math.Round(reduced * (1 - reduction.Percentage / 100f));
-        }
-
-        if (reduction.Flat != 0)
-        {
-            reduced = Math.Max(0, reduced - reduction.Flat);
+            reduced = (long)Math.Round(reduced * (1 - reduction / 100f));
         }
 
         return reduced;
@@ -124,12 +116,12 @@ public static class CombatResolver
         var modifier = isHeal ? attackerEffects.GetTotalEffectValue(ItemEffect.Cures) :
             attackerEffects.GetTotalEffectValue(ItemEffect.Damages);
 
-        if (modifier.Percentage == 0)
+        if (modifier == 0)
         {
             return damage;
         }
 
-        var adjusted = Math.Round(damage * (100 + modifier.Percentage) / 100d);
+        var adjusted = Math.Round(damage * (100 + modifier) / 100d);
 
         return (long)adjusted;
     }
@@ -142,17 +134,11 @@ public static class CombatResolver
         }
 
         var reflect = defenderEffects.GetTotalEffectValue(ItemEffect.DamageReflect);
-        if (reflect.Percentage == 0 && reflect.Flat == 0)
+        if (reflect == 0)
         {
             return 0;
         }
 
-        var reflectedDamage = reflect.Flat;
-        if (reflect.Percentage != 0)
-        {
-            reflectedDamage += (int)(long)Math.Round(appliedDamage * (reflect.Percentage / 100f));
-        }
-
-        return reflectedDamage;
+        return (int)(long)Math.Round(appliedDamage * (reflect / 100f));
     }
 }
