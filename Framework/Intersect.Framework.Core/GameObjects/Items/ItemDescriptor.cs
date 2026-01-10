@@ -349,7 +349,11 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
     public string EffectsJson
     {
         get => JsonConvert.SerializeObject(Effects);
-        set => Effects = JsonConvert.DeserializeObject<List<EffectData>>(value ?? "") ?? [];
+        set
+        {
+            Effects = JsonConvert.DeserializeObject<List<EffectData>>(value ?? "") ?? [];
+            NormalizeLoadedEffects();
+        }
     }
 
     public EquipmentProperties? EquipmentProperties { get; set; }
@@ -522,6 +526,25 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         if (ItemType != ItemType.Equipment)
         {
             SetId = Guid.Empty;
+        }
+    }
+
+    private void NormalizeLoadedEffects()
+    {
+        if (Effects == null || Effects.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var effect in Effects)
+        {
+            if (effect.Type == ItemEffect.None)
+            {
+                continue;
+            }
+
+            effect.IsFlat = false;
+            effect.FlatAmount = 0;
         }
     }
 

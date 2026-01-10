@@ -110,7 +110,11 @@ public partial class SetDescriptor : DatabaseObject<SetDescriptor>, IFolderable
     public string EffectsJson
     {
         get => JsonConvert.SerializeObject(Effects);
-        set => Effects = JsonConvert.DeserializeObject<List<EffectData>>(value ?? "") ?? new List<EffectData>();
+        set
+        {
+            Effects = JsonConvert.DeserializeObject<List<EffectData>>(value ?? "") ?? new List<EffectData>();
+            NormalizeLoadedEffects();
+        }
     }
 
     public string Folder { get; set; } = "";
@@ -129,9 +133,29 @@ public partial class SetDescriptor : DatabaseObject<SetDescriptor>, IFolderable
         VitalsRegen = ArrayExtensions.EnsureLen(VitalsRegen, Enum.GetValues<Vital>().Length);
         PercentageVitals = ArrayExtensions.EnsureLen(PercentageVitals, Enum.GetValues<Vital>().Length);
         Effects ??= new List<EffectData>();
+        NormalizeLoadedEffects();
 
         // (Opcional) limpiar ItemIds que ya no coinciden
         ItemIds = ItemIds.Where(id => ItemDescriptor.Get(id)?.SetId == Id).ToList();
+    }
+
+    private void NormalizeLoadedEffects()
+    {
+        if (Effects == null || Effects.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var effect in Effects)
+        {
+            if (effect.Type == ItemEffect.None)
+            {
+                continue;
+            }
+
+            effect.IsFlat = false;
+            effect.FlatAmount = 0;
+        }
     }
 
     public (int[] stats, int[] percentStats, long[] vitals, long[] vitalsRegen, int[] percentVitals, List<EffectData> effects) GetBonuses(int pieces)
