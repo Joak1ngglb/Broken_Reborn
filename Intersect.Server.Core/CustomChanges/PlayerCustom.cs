@@ -237,7 +237,7 @@ namespace Intersect.Server.Entities
 
                 // Prepara resumen visual
                 var runeSummary = string.Join(", ", runes
-                    .GroupBy(r => r.Name)
+                    .GroupBy(DescribeRune)
                     .Select(g => $"{g.Count()}x {g.Key}"));
 
                 PacketSender.SendChatMsg(this, $"Rompiste {descriptor.Name} y obtuviste: {runeSummary}.", ChatMessageType.Experience);
@@ -245,6 +245,21 @@ namespace Intersect.Server.Entities
 
             // Actualiza inventario en cliente
             PacketSender.SendInventory(this);
+        }
+
+        private string DescribeRune(ItemDescriptor rune)
+        {
+            var modifier = rune.AmountModifier;
+            var target = rune.TargetEffect != ItemEffect.None
+                ? rune.TargetEffect.ToString()
+                : Convert.ToInt32(rune.TargetStat) >= 0 && Convert.ToInt32(rune.TargetStat) < Enum.GetValues<Stat>().Length
+                    ? ((Stat)rune.TargetStat).ToString()
+                    : Convert.ToInt32(rune.TargetVital) >= 0 && Convert.ToInt32(rune.TargetVital) < Enum.GetValues<Vital>().Length
+                        ? ((Vital)rune.TargetVital).ToString()
+                        : "Desconocido";
+
+            var suffix = modifier != 0 ? $" ({(modifier > 0 ? "+" : "")}{modifier} {target})" : $" ({target})";
+            return $"{rune.Name}{suffix}";
         }
 
         public void OpenEnchantment()
@@ -359,6 +374,25 @@ namespace Intersect.Server.Entities
             return (mSetBonusStats, mSetBonusPercentStats, mSetBonusVitals, mSetBonusVitalsRegen, mSetBonusPercentVitals, mSetBonusEffects);
         }
 
+        private static IEnumerable<EffectData> GetItemEffects(ItemDescriptor descriptor, ItemProperties? properties)
+        {
+            if (descriptor?.Effects != null)
+            {
+                foreach (var effect in descriptor.Effects)
+                {
+                    yield return effect;
+                }
+            }
+
+            if (properties?.EffectModifiers != null)
+            {
+                foreach (var effect in properties.EffectModifiers.Values)
+                {
+                    yield return effect;
+                }
+            }
+        }
+
         public static void ApplySetBonuses(Player p)
         {
             Array.Clear(p.mEquipmentFlatStats, 0, p.mEquipmentFlatStats.Length);
@@ -397,7 +431,7 @@ namespace Intersect.Server.Entities
                     p.mEquipmentVitalRegen[i] += descriptor.VitalsRegen[i];
                 }
 
-                foreach (var effect in descriptor.Effects)
+                foreach (var effect in GetItemEffects(descriptor, item.Properties))
                 {
                     p.mEquipmentBonusEffects.ApplyEffect(effect);
                 }

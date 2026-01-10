@@ -32,7 +32,8 @@ public partial class FrmItem : EditorForm
 
     private List<string> mKnownCooldownGroups = new List<string>();
 
-    private bool EffectValueUpdating = false;
+    private bool EffectValueUpdating;
+    private bool mUpdatingRuneTargets;
 
     public FrmItem()
     {
@@ -196,6 +197,11 @@ public partial class FrmItem : EditorForm
 
     private static void SetNumericValue(NumericUpDown control, int[] values, int index)
     {
+        if (control == null)
+        {
+            return;
+        }
+
         if (values != null && index < values.Length)
         {
             control.Enabled = true;
@@ -279,7 +285,6 @@ public partial class FrmItem : EditorForm
         lblMag.Text = Strings.ItemEditor.abilitypowerbonus;
         lblMR.Text = Strings.ItemEditor.magicresistbonus;
         lblEffectPercent.Text = Strings.ItemEditor.bonusamount;
-        chkEffectIsFlat.Text = Strings.ItemEditor.bonusflatvalue;
         lblEquipmentAnimation.Text = Strings.ItemEditor.equipmentanimation;
 
         grpStatRanges.Text = Strings.ItemEditor.StatRangeTitle;
@@ -512,15 +517,7 @@ public partial class FrmItem : EditorForm
 
             var subtype = cmbSubType.SelectedItem?.ToString();
 
-            if (cmbRuneStat.Items.Count > (int)mEditorItem.TargetStat)
-                cmbRuneStat.SelectedIndex = (int)mEditorItem.TargetStat;
-            else
-                cmbRuneStat.SelectedIndex = -1;
-
-            if (cmbRuneVital.Items.Count > (int)mEditorItem.TargetVital)
-                cmbRuneVital.SelectedIndex = (int)mEditorItem.TargetVital;
-            else
-                cmbRuneVital.SelectedIndex = -1;
+            UpdateRuneTargetSelections();
 
             nudRuneValue.Value = mEditorItem.AmountModifier;
 
@@ -1037,9 +1034,7 @@ public partial class FrmItem : EditorForm
 
         mEditorItem.SetEffectOfType(
             SelectedEffect,
-            (int)nudEffectPercent.Value,
-            (int)nudEffectFlat.Value,
-            chkEffectIsFlat.Checked
+            (int)nudEffectPercent.Value
         );
         lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(SelectedEffect);
     }
@@ -1053,9 +1048,7 @@ public partial class FrmItem : EditorForm
 
         mEditorItem.SetEffectOfType(
             SelectedEffect,
-            (int)nudEffectPercent.Value,
-            (int)nudEffectFlat.Value,
-            chkEffectIsFlat.Checked
+            (int)nudEffectPercent.Value
         );
         lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(SelectedEffect);
     }
@@ -1068,9 +1061,7 @@ public partial class FrmItem : EditorForm
         }
 
         EffectValueUpdating = true;
-        chkEffectIsFlat.Checked = false;
-        nudEffectPercent.Enabled = true;
-        nudEffectFlat.Enabled = false;
+       nudEffectPercent.Enabled = true;
         EffectValueUpdating = false;
     }
 
@@ -1688,9 +1679,9 @@ public partial class FrmItem : EditorForm
     private string GetBonusEffectRow(ItemEffect itemEffect)
     {
         var effectName = Strings.ItemEditor.bonuseffects[(int)itemEffect];
-        var values = mEditorItem.GetEffectValues(itemEffect);
+        var percentage = mEditorItem.GetEffectPercentage(itemEffect);
 
-        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{values.Percentage}%");
+        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{percentage}%");
     }
 
     private Stat? SelectedStatRange
@@ -1729,17 +1720,13 @@ public partial class FrmItem : EditorForm
         }
 
         EffectValueUpdating = true;
-        var values = mEditorItem.GetEffectValues(selected);
+        var percentage = mEditorItem.GetEffectPercentage(selected);
 
-        chkEffectIsFlat.Enabled = false;
-        chkEffectIsFlat.Checked = false;
-
-        nudEffectPercent.Value = values.Percentage;
-        nudEffectFlat.Value = 0;
+        nudEffectPercent.Value = percentage;
+     
 
         nudEffectPercent.Enabled = true;
-        nudEffectFlat.Enabled = false;
-        EffectValueUpdating = false;
+            EffectValueUpdating = false;
     }
 
     private void nudStatRangeLow_ValueChanged(object sender, EventArgs e)
@@ -1952,6 +1939,13 @@ public partial class FrmItem : EditorForm
             cmbRuneStat.Items.Add(stat.ToString());
         }
 
+        cmbRuneEffect.Items.Clear();
+
+        foreach (var effect in Enum.GetValues<ItemEffect>())
+        {
+            cmbRuneEffect.Items.Add(effect);
+        }
+
         cmbRuneVital.Items.Clear();
 
         foreach (var vital in Enum.GetValues<Vital>())
@@ -1960,22 +1954,133 @@ public partial class FrmItem : EditorForm
         }
     }
 
+    private void UpdateRuneTargetSelections()
+    {
+        mUpdatingRuneTargets = true;
+
+        try
+        {
+            var hasRuneEffectItems = cmbRuneEffect.Items.Count > 0;
+            var hasRuneStatItems = cmbRuneStat.Items.Count > 0;
+            var hasRuneVitalItems = cmbRuneVital.Items.Count > 0;
+
+            if (mEditorItem.TargetEffect != ItemEffect.None)
+            {
+                if (hasRuneEffectItems)
+                {
+                    cmbRuneEffect.SelectedIndex = cmbRuneEffect.Items.IndexOf(mEditorItem.TargetEffect);
+                }
+
+                if (hasRuneStatItems)
+                {
+                    cmbRuneStat.SelectedIndex = -1;
+                }
+
+                if (hasRuneVitalItems)
+                {
+                    cmbRuneVital.SelectedIndex = -1;
+                }
+
+                mEditorItem.TargetStat = (Stat)(-1);
+                mEditorItem.TargetVital = (Vital)(-1);
+
+                return;
+            }
+
+            if (hasRuneEffectItems)
+            {
+                cmbRuneEffect.SelectedIndex = cmbRuneEffect.Items.IndexOf(ItemEffect.None);
+            }
+
+            if (hasRuneStatItems && (int)mEditorItem.TargetStat >= 0 && cmbRuneStat.Items.Count > (int)mEditorItem.TargetStat)
+            {
+                cmbRuneStat.SelectedIndex = (int)mEditorItem.TargetStat;
+            }
+            else if (hasRuneStatItems)
+            {
+                cmbRuneStat.SelectedIndex = -1;
+                mEditorItem.TargetStat = (Stat)(-1);
+            }
+
+            if (hasRuneVitalItems && (int)mEditorItem.TargetVital >= 0 && cmbRuneVital.Items.Count > (int)mEditorItem.TargetVital)
+            {
+                cmbRuneVital.SelectedIndex = (int)mEditorItem.TargetVital;
+            }
+            else if (hasRuneVitalItems)
+            {
+                cmbRuneVital.SelectedIndex = -1;
+                mEditorItem.TargetVital = (Vital)(-1);
+            }
+        }
+        finally
+        {
+            mUpdatingRuneTargets = false;
+        }
+    }
+
     private void cmbRuneStat_SelectedIndexChanged(object sender, EventArgs e)
     {
-        mEditorItem.TargetStat = (Stat)cmbRuneStat.SelectedIndex;
+        if (mUpdatingRuneTargets)
+        {
+            return;
+        }
+
+        mEditorItem.TargetStat = cmbRuneStat.SelectedIndex >= 0 ? (Stat)cmbRuneStat.SelectedIndex : (Stat)(-1);
 
         // Resetear el TargetVital si se asigna un stat
         if (cmbRuneStat.SelectedIndex >= 0)
+        {
             cmbRuneVital.SelectedIndex = -1;
+            cmbRuneEffect.SelectedIndex = cmbRuneEffect.Items.IndexOf(ItemEffect.None);
+            mEditorItem.TargetVital = (Vital)(-1);
+            mEditorItem.TargetEffect = ItemEffect.None;
+        }
     }
 
     private void cmbRuneVital_SelectedIndexChanged(object sender, EventArgs e)
     {
-        mEditorItem.TargetVital = (Vital)cmbRuneVital.SelectedIndex;
+        if (mUpdatingRuneTargets)
+        {
+            return;
+        }
+
+        mEditorItem.TargetVital = cmbRuneVital.SelectedIndex >= 0 ? (Vital)cmbRuneVital.SelectedIndex : (Vital)(-1);
 
         // Resetear el TargetStat si se asigna un vital
         if (cmbRuneVital.SelectedIndex >= 0)
+        {
             cmbRuneStat.SelectedIndex = -1;
+            cmbRuneEffect.SelectedIndex = cmbRuneEffect.Items.IndexOf(ItemEffect.None);
+            mEditorItem.TargetStat = (Stat)(-1);
+            mEditorItem.TargetEffect = ItemEffect.None;
+        }
+    }
+
+    private void cmbRuneEffect_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (mUpdatingRuneTargets)
+        {
+            return;
+        }
+
+        var selectedEffect = cmbRuneEffect.SelectedItem is ItemEffect itemEffect ? itemEffect : ItemEffect.None;
+        mEditorItem.TargetEffect = selectedEffect;
+
+        if (selectedEffect != ItemEffect.None)
+        {
+            mEditorItem.TargetStat = (Stat)(-1);
+            mEditorItem.TargetVital = (Vital)(-1);
+            mUpdatingRuneTargets = true;
+            try
+            {
+                cmbRuneStat.SelectedIndex = -1;
+                cmbRuneVital.SelectedIndex = -1;
+            }
+            finally
+            {
+                mUpdatingRuneTargets = false;
+            }
+        }
     }
 
     private void nudRuneValue_ValueChanged(object sender, EventArgs e)
