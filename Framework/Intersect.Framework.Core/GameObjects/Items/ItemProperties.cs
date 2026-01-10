@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Intersect.Enums;
 using MessagePack;
 
@@ -21,6 +24,13 @@ public partial class ItemProperties
         BaseDamageModifier = other.BaseDamageModifier;
         Array.Copy(other.StatModifiers, StatModifiers, Enum.GetValues<Stat>().Length);
         Array.Copy(other.VitalModifiers, VitalModifiers, Enum.GetValues<Vital>().Length);
+        EffectModifiers = other.EffectModifiers?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Clone()) ??
+                          new Dictionary<ItemEffect, EffectData>();
+        EnchantmentEffectRolls =
+            other.EnchantmentEffectRolls?.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.ToDictionary(effect => effect.Key, effect => effect.Value)
+            ) ?? new Dictionary<int, Dictionary<ItemEffect, int>>();
 
     }
 
@@ -37,4 +47,8 @@ public partial class ItemProperties
     public int MageSink { get;  set; }
     [Key(5)]
     public int BaseDamageModifier { get; set; }
+    [Key(6)]
+    public Dictionary<ItemEffect, EffectData> EffectModifiers { get; set; } = new();
+    [Key(7)]
+    public Dictionary<int, Dictionary<ItemEffect, int>> EnchantmentEffectRolls { get; set; } = new();
 }

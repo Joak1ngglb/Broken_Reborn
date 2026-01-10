@@ -169,21 +169,30 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
         if (_itemDescriptor.Subtype == "Rune")
         {
-           
             var amount = _itemDescriptor.AmountModifier;
+            var amountPrefix = amount > 0 ? "+" : string.Empty;
+            var hasStatTarget = Enum.IsDefined(typeof(Stat), _itemDescriptor.TargetStat);
+            var hasVitalTarget = Enum.IsDefined(typeof(Vital), _itemDescriptor.TargetVital);
+            var hasEffectTarget = _itemDescriptor.TargetEffect != ItemEffect.None;
 
-            if (amount != 0)
+            if (hasEffectTarget)
             {
-                if (Enum.IsDefined(typeof(Stat), _itemDescriptor.TargetStat))
-                {
-                    rows.AddKeyValueRow("Stat Modified", _itemDescriptor.TargetStat.ToString());
-                    rows.AddKeyValueRow("Bonus", $"{(amount > 0 ? "+" : "")}{amount}");
-                }
-                else if (Enum.IsDefined(typeof(Vital), _itemDescriptor.TargetVital))
-                {
-                    rows.AddKeyValueRow("Vital Modified", _itemDescriptor.TargetVital.ToString());
-                    rows.AddKeyValueRow("Bonus", $"{(amount > 0 ? "+" : "")}{amount}");
-                }
+                var effectName = Strings.ItemDescription.BonusEffects.TryGetValue((int)_itemDescriptor.TargetEffect, out var localizedEffect)
+                    ? localizedEffect.ToString()
+                    : _itemDescriptor.TargetEffect.ToString();
+
+                rows.AddKeyValueRow("Efecto", effectName.TrimEnd(':'));
+                rows.AddKeyValueRow("Bonus", Strings.ItemDescription.Percentage.ToString(amount));
+            }
+            else if (hasStatTarget)
+            {
+                rows.AddKeyValueRow("Stat Modified", _itemDescriptor.TargetStat.ToString());
+                rows.AddKeyValueRow("Bonus", $"{amountPrefix}{amount}");
+            }
+            else if (hasVitalTarget)
+            {
+                rows.AddKeyValueRow("Vital Modified", _itemDescriptor.TargetVital.ToString());
+                rows.AddKeyValueRow("Bonus", $"{amountPrefix}{amount}");
             }
         }
 
@@ -591,6 +600,61 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
         return newValue;
     }
+
+    private Dictionary<ItemEffect, EffectValue> GetTotalEffects(ItemDescriptor descriptor, ItemProperties? properties)
+    {
+        var totals = new Dictionary<ItemEffect, EffectValue>();
+
+        if (descriptor?.Effects != null)
+        {
+            foreach (var effect in descriptor.Effects)
+            {
+                totals.ApplyEffect(effect);
+            }
+        }
+
+        if (properties?.EffectModifiers != null)
+        {
+            foreach (var effect in properties.EffectModifiers.Values)
+            {
+                totals.ApplyEffect(effect);
+            }
+        }
+
+        return totals;
+    }
+
+    private int GetEffectDifference(ItemEffect effectType)
+    {
+        if (_itemDescriptor == null)
+        {
+            return 0;
+        }
+
+        var newEffects = GetTotalEffects(_itemDescriptor, _itemProperties);
+        var newValue = newEffects.TryGetValue(effectType, out var value) ? value.GetPrimaryValue() : 0;
+
+        var slot = _itemDescriptor.EquipmentSlot;
+
+        if (slot >= 0 &&
+            Globals.Me.MyEquipment.TryGetValue(slot, out var equippedSlots) &&
+            equippedSlots.Count > 0)
+        {
+            var firstSlot = equippedSlots[0];
+            if (firstSlot >= 0 && firstSlot < Globals.Me.Inventory.Length)
+            {
+                var equipped = Globals.Me.Inventory[firstSlot];
+                if (equipped?.Descriptor != null)
+                {
+                    var equippedEffects = GetTotalEffects(equipped.Descriptor, equipped.ItemProperties);
+                    var oldValue = equippedEffects.TryGetValue(effectType, out var eqValue) ? eqValue.GetPrimaryValue() : 0;
+                    return newValue - oldValue;
+                }
+            }
+        }
+
+        return newValue;
+    }
     private int GetAttackSpeedDifference()
     {
         if (_itemDescriptor == null) return 0;
@@ -832,12 +896,38 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         }
 
         // ====== Bonus Effects ======
-        foreach (var effect in _itemDescriptor.Effects)
+        var effectTotals = GetTotalEffects(_itemDescriptor, _itemProperties);
+        foreach (var effectEntry in effectTotals.OrderBy(e => (int)e.Key))
         {
-            if (effect.Type != ItemEffect.None && effect.Percentage != 0)
+            var effectType = effectEntry.Key;
+            if (effectType == ItemEffect.None)
             {
-                rows.AddKeyValueRow(Strings.ItemDescription.BonusEffects[(int)effect.Type], Strings.ItemDescription.Percentage.ToString(effect.Percentage));
+                continue;
             }
+
+            if (!Strings.ItemDescription.BonusEffects.TryGetValue((int)effectType, out var effectName))
+            {
+                continue;
+            }
+
+            var values = effectEntry.Value;
+            var parts = new List<string>();
+            if (values.Percentage != 0)
+            {
+                parts.Add(Strings.ItemDescription.Percentage.ToString(values.Percentage));
+            }
+            if (values.Flat != 0)
+            {
+                parts.Add($"{(values.Flat > 0 ? "+" : string.Empty)}{values.Flat}");
+            }
+
+            if (parts.Count == 0)
+            {
+                continue;
+            }
+
+            var diff = GetEffectDifference(effectType);
+            AddRowWithDifference(rows, effectName, string.Join(" / ", parts), diff);
         }
         rows.SizeToChildren(true, true);
     }

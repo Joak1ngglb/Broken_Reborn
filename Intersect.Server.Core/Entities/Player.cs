@@ -4170,12 +4170,14 @@ public partial class Player : Entity
         foreach (var item in EquippedItems)
         {
             var descriptor = item.Descriptor;
-            if (descriptor?.Effects == null)
+            if (descriptor == null)
             {
                 continue;
             }
 
-            activeEffects.AddRange(descriptor.Effects.Where(effect => !effect.IsPassive));
+            activeEffects.AddRange(
+                GetItemEffects(descriptor, item.Properties).Where(effect => !effect.IsPassive)
+            );
         }
 
         activeEffects.AddRange(mSetBonusEffects.Where(effect => !effect.IsPassive));

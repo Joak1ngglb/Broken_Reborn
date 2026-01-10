@@ -45,6 +45,19 @@ public partial class EffectData
         IsFlat = false;
     }
 
+    public EffectData Clone()
+    {
+        return new EffectData
+        {
+            Type = Type,
+            Percentage = Percentage,
+            FlatAmount = FlatAmount,
+            IsFlat = IsFlat,
+            IsPassive = IsPassive,
+            Stacking = Stacking,
+        };
+    }
+
     public ItemEffect Type { get; set; }
 
     public int Percentage { get; set; }

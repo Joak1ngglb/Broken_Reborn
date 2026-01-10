@@ -516,6 +516,9 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         Consumable = new ConsumableData();
         Effects = [];
         Color = new Color(255, 255, 255, 255);
+        TargetStat = (Stat)(-1);
+        TargetVital = (Vital)(-1);
+        TargetEffect = ItemEffect.None;
         if (ItemType != ItemType.Equipment)
         {
             SetId = Guid.Empty;
@@ -548,7 +551,8 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         return Math.Max(0.1, 1.0 - (0.1 * level)); // Probabilidad decreciente
     }
     public Stat TargetStat { get; set; }
-    public Vital TargetVital { get; set; }  
+    public Vital TargetVital { get; set; }
+    public ItemEffect TargetEffect { get; set; }
     public int AmountModifier { get; set; }
 
 }

@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.GameObjects.Items;
 using MessagePack;
 
 namespace Intersect.Network.Packets.Server
@@ -17,6 +18,7 @@ namespace Intersect.Network.Packets.Server
         {
             ItemIndex = itemId;
             NewEnchantmentLevel = newEnchantmentLevel;
+           
         }
     }
 }

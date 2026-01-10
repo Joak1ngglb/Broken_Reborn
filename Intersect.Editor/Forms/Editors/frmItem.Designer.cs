@@ -42,6 +42,8 @@ namespace Intersect.Editor.Forms.Editors
             btnSave = new DarkButton();
             grpGeneral = new DarkGroupBox();
             grpEnchanting = new DarkGroupBox();
+            cmbRuneEffect = new DarkComboBox();
+            lblRuneEffect = new Label();
             cmbRuneVital = new DarkComboBox();
             lblRuneVital = new Label();
             cmbRuneStat = new DarkComboBox();
@@ -475,6 +477,8 @@ namespace Intersect.Editor.Forms.Editors
             // 
             grpEnchanting.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpEnchanting.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            grpEnchanting.Controls.Add(cmbRuneEffect);
+            grpEnchanting.Controls.Add(lblRuneEffect);
             grpEnchanting.Controls.Add(cmbRuneVital);
             grpEnchanting.Controls.Add(lblRuneVital);
             grpEnchanting.Controls.Add(cmbRuneStat);
@@ -490,10 +494,38 @@ namespace Intersect.Editor.Forms.Editors
             grpEnchanting.Margin = new Padding(4, 3, 4, 3);
             grpEnchanting.Name = "grpEnchanting";
             grpEnchanting.Padding = new Padding(4, 3, 4, 3);
-            grpEnchanting.Size = new Size(252, 109);
+            grpEnchanting.Size = new Size(252, 145);
             grpEnchanting.TabIndex = 106;
             grpEnchanting.TabStop = false;
             grpEnchanting.Text = "Enchanting";
+            // 
+            // cmbRuneEffect
+            // 
+            cmbRuneEffect.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbRuneEffect.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbRuneEffect.BorderStyle = ButtonBorderStyle.Solid;
+            cmbRuneEffect.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbRuneEffect.DrawDropdownHoverOutline = false;
+            cmbRuneEffect.DrawFocusRectangle = false;
+            cmbRuneEffect.DrawMode = DrawMode.OwnerDrawVariable;
+            cmbRuneEffect.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbRuneEffect.FlatStyle = FlatStyle.Flat;
+            cmbRuneEffect.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbRuneEffect.Location = new System.Drawing.Point(91, 16);
+            cmbRuneEffect.Name = "cmbRuneEffect";
+            cmbRuneEffect.Size = new Size(152, 24);
+            cmbRuneEffect.TabIndex = 84;
+            cmbRuneEffect.Text = null;
+            cmbRuneEffect.TextPadding = new Padding(2);
+            cmbRuneEffect.SelectedIndexChanged += cmbRuneEffect_SelectedIndexChanged;
+            // 
+            // lblRuneEffect
+            // 
+            lblRuneEffect.Location = new System.Drawing.Point(5, 19);
+            lblRuneEffect.Name = "lblRuneEffect";
+            lblRuneEffect.Size = new Size(80, 23);
+            lblRuneEffect.TabIndex = 83;
+            lblRuneEffect.Text = "Effect:";
             // 
             // cmbRuneVital
             // 
@@ -507,7 +539,7 @@ namespace Intersect.Editor.Forms.Editors
             cmbRuneVital.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbRuneVital.FlatStyle = FlatStyle.Flat;
             cmbRuneVital.ForeColor = System.Drawing.Color.Gainsboro;
-            cmbRuneVital.Location = new System.Drawing.Point(91, 16);
+            cmbRuneVital.Location = new System.Drawing.Point(91, 46);
             cmbRuneVital.Name = "cmbRuneVital";
             cmbRuneVital.Size = new Size(152, 24);
             cmbRuneVital.TabIndex = 82;
@@ -517,7 +549,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             // lblRuneVital
             // 
-            lblRuneVital.Location = new System.Drawing.Point(5, 19);
+            lblRuneVital.Location = new System.Drawing.Point(5, 49);
             lblRuneVital.Name = "lblRuneVital";
             lblRuneVital.Size = new Size(80, 23);
             lblRuneVital.TabIndex = 81;
@@ -535,7 +567,7 @@ namespace Intersect.Editor.Forms.Editors
             cmbRuneStat.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbRuneStat.FlatStyle = FlatStyle.Flat;
             cmbRuneStat.ForeColor = System.Drawing.Color.Gainsboro;
-            cmbRuneStat.Location = new System.Drawing.Point(91, 46);
+            cmbRuneStat.Location = new System.Drawing.Point(91, 76);
             cmbRuneStat.Name = "cmbRuneStat";
             cmbRuneStat.Size = new Size(152, 24);
             cmbRuneStat.TabIndex = 78;
@@ -593,7 +625,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             // lblRuneStat
             // 
-            lblRuneStat.Location = new System.Drawing.Point(5, 49);
+            lblRuneStat.Location = new System.Drawing.Point(5, 79);
             lblRuneStat.Name = "lblRuneStat";
             lblRuneStat.Size = new Size(50, 23);
             lblRuneStat.TabIndex = 77;
@@ -601,7 +633,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             // lblRuneValue
             // 
-            lblRuneValue.Location = new System.Drawing.Point(5, 76);
+            lblRuneValue.Location = new System.Drawing.Point(5, 106);
             lblRuneValue.Name = "lblRuneValue";
             lblRuneValue.Size = new Size(64, 23);
             lblRuneValue.TabIndex = 79;
@@ -611,7 +643,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             nudRuneValue.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudRuneValue.ForeColor = System.Drawing.Color.Gainsboro;
-            nudRuneValue.Location = new System.Drawing.Point(91, 76);
+            nudRuneValue.Location = new System.Drawing.Point(91, 106);
             nudRuneValue.Name = "nudRuneValue";
             nudRuneValue.Size = new Size(152, 23);
             nudRuneValue.TabIndex = 80;
@@ -3588,6 +3620,8 @@ namespace Intersect.Editor.Forms.Editors
         private Label lblEventForTrigger;
         private ListBox lstEventTriggers;
         private DarkGroupBox grpEnchanting;
+        private DarkComboBox cmbRuneEffect;
+        private Label lblRuneEffect;
         private DarkComboBox cmbRuneVital;
         private Label lblRuneVital;
         private DarkComboBox cmbRuneStat;

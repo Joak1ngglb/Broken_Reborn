@@ -9,6 +9,11 @@ public static class ItemBreakHelper
     // Lista global de todas las runas
     private static List<ItemDescriptor> AllRunes = new();
 
+    private const int StatThreshold = 10;
+    private const int VitalThreshold = 20;
+    private const int EffectPercentThreshold = 5;
+    private const int EffectFlatThreshold = 15;
+
     /// <summary>
     /// Debe llamarse una vez al arrancar el servidor, tras cargar los ItemDescriptor.
     /// </summary>
@@ -18,7 +23,8 @@ public static class ItemBreakHelper
             .OfType<ItemDescriptor>()
             .Where(d =>
                 d.ItemType == ItemType.Resource &&
-                d.Subtype == "Rune"
+                d.Subtype == "Rune" &&
+                HasRuneTarget(d)
             )
             .ToList();
     }
@@ -43,28 +49,8 @@ public static class ItemBreakHelper
 
             if (totalStat <= 0) continue;
 
-            // Filtrar runas para este stat
-            var pool = AllRunes
-                .Where(r =>
-                    r.TargetStat == stat &&
-                    IsRuneAllowedForRarity(r, rarity)
-                )
-                .OrderBy(r => r.AmountModifier)
-                .ToList();
-
-            if (pool.Count == 0) continue;
-
-            int guaranteed = (totalStat / 10) * multiplier;
-            double extraP = (totalStat % 10) / 10.0;
-
-            for (int i = 0; i < guaranteed; i++)
-            {
-                result.Add(RandomRune(pool));
-            }
-            if (Random.Shared.NextDouble() < extraP)
-            {
-                result.Add(RandomRune(pool));
-            }
+            var pool = GetRunePool(stat, rarity);
+            AddRunesFromValue(result, pool, totalStat, StatThreshold, multiplier);
         }
 
         // --- Procesar TODOS los Vitals ---
@@ -77,37 +63,128 @@ public static class ItemBreakHelper
             int totalVital = baseVal + flatMod;
             if (totalVital <= 0) continue;
 
-            // Filtrar runas para este vital
-            var pool = AllRunes
-                .Where(r =>
-                    r.TargetVital == vital &&
-                    IsRuneAllowedForRarity(r, rarity)
-                )
-                .OrderBy(r => r.AmountModifier)
-                .ToList();
+            var pool = GetRunePool(vital, rarity);
+            AddRunesFromValue(result, pool, (int)totalVital, VitalThreshold, multiplier);
+        }
 
-            if (pool.Count == 0) continue;
+        // --- Procesar TODOS los efectos ---
+        foreach (var kvp in AggregateEffects(item, props))
+        {
+            var effect = kvp.Key;
+            var totals = kvp.Value;
 
-            int guaranteed = (totalVital / 20) * multiplier;
-            double extraP = (totalVital % 20) / 20.0;
-
-            for (int i = 0; i < guaranteed; i++)
+            var hasPercent = totals.percent > 0;
+            var totalEffect = hasPercent ? totals.percent : totals.flat;
+            if (hasPercent && totals.flat > 0)
             {
-                result.Add(RandomRune(pool));
+                // Ajustar el valor plano a una escala porcentual para no perder potencia combinada.
+                totalEffect += (int)Math.Ceiling(totals.flat / (double)EffectFlatThreshold * EffectPercentThreshold);
             }
-            if (Random.Shared.NextDouble() < extraP)
+
+            if (totalEffect <= 0)
             {
-                result.Add(RandomRune(pool));
+                continue;
             }
+
+            var pool = GetRunePool(effect, rarity, hasPercent);
+            var threshold = hasPercent ? EffectPercentThreshold : EffectFlatThreshold;
+
+            AddRunesFromValue(result, pool, totalEffect, threshold, multiplier);
         }
 
         return result;
     }
 
-    private static bool IsRuneAllowedForRarity(ItemDescriptor rune, int rarity)
+    private static List<ItemDescriptor> GetRunePool(Stat stat, int rarity)
     {
-        // Ejemplo de filtro por rareza
-        if (rune.AmountModifier > 3 && rarity < 3) return false;
+        return AllRunes
+            .Where(r =>
+                r.TargetStat == stat &&
+                IsRuneAllowedForRarity(r, rarity, false, false)
+            )
+            .OrderBy(r => r.AmountModifier)
+            .ToList();
+    }
+
+    private static List<ItemDescriptor> GetRunePool(Vital vital, int rarity)
+    {
+        return AllRunes
+            .Where(r =>
+                r.TargetVital == vital &&
+                IsRuneAllowedForRarity(r, rarity, false, true)
+            )
+            .OrderBy(r => r.AmountModifier)
+            .ToList();
+    }
+
+    private static List<ItemDescriptor> GetRunePool(ItemEffect effect, int rarity, bool isPercent)
+    {
+        return AllRunes
+            .Where(r =>
+                r.TargetEffect == effect &&
+                IsRuneAllowedForRarity(r, rarity, isPercent, false, true)
+            )
+            .OrderBy(r => r.AmountModifier)
+            .ToList();
+    }
+
+    private static void AddRunesFromValue(List<ItemDescriptor> acc, List<ItemDescriptor> pool, int totalValue, int threshold, int multiplier)
+    {
+        if (totalValue <= 0 || pool.Count == 0)
+        {
+            return;
+        }
+
+        int guaranteed = (totalValue / threshold) * multiplier;
+        double extraP = (totalValue % threshold) / (double)threshold;
+
+        for (int i = 0; i < guaranteed; i++)
+        {
+            acc.Add(RandomRune(pool));
+        }
+
+        if (Random.Shared.NextDouble() < extraP)
+        {
+            acc.Add(RandomRune(pool));
+        }
+    }
+
+    private static bool IsRuneAllowedForRarity(
+        ItemDescriptor rune,
+        int rarity,
+        bool isPercentEffect,
+        bool isVitalRune,
+        bool isEffectRune = false
+    )
+    {
+        var amount = Math.Abs(rune.AmountModifier);
+        if (amount == 0)
+        {
+            return false;
+        }
+
+        if (isEffectRune)
+        {
+            // Los efectos porcentuales son más sensibles que los valores planos.
+            var weight = isPercentEffect ? amount * 2 : amount;
+            var allowance = rarity switch
+            {
+                <= 0 => 3,
+                1 => 5,
+                2 => 7,
+                3 => 10,
+                4 => 13,
+                _ => 16,
+            };
+
+            return weight <= allowance;
+        }
+
+        if (!isVitalRune && rune.AmountModifier > 3 && rarity < 3)
+        {
+            return false;
+        }
+
         return true;
     }
 
@@ -116,6 +193,51 @@ public static class ItemBreakHelper
         var idx = Random.Shared.Next(runes.Count);
         return runes[idx];
     }
+
+    private static bool HasRuneTarget(ItemDescriptor descriptor)
+    {
+        return descriptor.TargetStat >= 0 ||
+               descriptor.TargetVital >= 0 ||
+               descriptor.TargetEffect != ItemEffect.None;
+    }
+
+    private static Dictionary<ItemEffect, (int percent, int flat)> AggregateEffects(ItemDescriptor item, ItemProperties? props)
+    {
+        var totals = new Dictionary<ItemEffect, (int percent, int flat)>();
+
+        void AddEffect(EffectData effect)
+        {
+            if (!effect.IsPassive || effect.Type == ItemEffect.None)
+            {
+                return;
+            }
+
+            totals.TryGetValue(effect.Type, out var current);
+            if (effect.IsFlat)
+            {
+                current.flat += effect.FlatAmount;
+            }
+            else
+            {
+                current.percent += effect.Percentage;
+            }
+
+            totals[effect.Type] = current;
+        }
+
+        foreach (var effect in item.Effects)
+        {
+            AddEffect(effect);
+        }
+
+        if (props?.EffectModifiers != null)
+        {
+            foreach (var effect in props.EffectModifiers.Values)
+            {
+                AddEffect(effect);
+            }
+        }
+
+        return totals;
+    }
 }
-
-
