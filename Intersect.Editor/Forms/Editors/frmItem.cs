@@ -101,6 +101,12 @@ public partial class FrmItem : EditorForm
         //Send Changed items
         foreach (var item in mChanged)
         {
+            foreach (var effect in item.Effects)
+            {
+                effect.IsFlat = false;
+                effect.FlatAmount = 0;
+            }
+
             PacketSender.SendSaveObject(item);
             item.DeleteBackup();
         }
@@ -1023,8 +1029,8 @@ public partial class FrmItem : EditorForm
         mEditorItem.SetEffectOfType(
             SelectedEffect,
             (int)nudEffectPercent.Value,
-            (int)nudEffectFlat.Value,
-            chkEffectIsFlat.Checked
+            0,
+            false
         );
         lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(SelectedEffect);
     }
@@ -1039,8 +1045,8 @@ public partial class FrmItem : EditorForm
         mEditorItem.SetEffectOfType(
             SelectedEffect,
             (int)nudEffectPercent.Value,
-            (int)nudEffectFlat.Value,
-            chkEffectIsFlat.Checked
+            0,
+            false
         );
         lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(SelectedEffect);
     }

@@ -183,6 +183,12 @@ public partial class frmSets : EditorForm
     {
         foreach (var set in mChanged)
         {
+            foreach (var effect in set.Effects)
+            {
+                effect.IsFlat = false;
+                effect.FlatAmount = 0;
+            }
+
             PacketSender.SendSaveObject(set);
             set.DeleteBackup();
         }
@@ -480,8 +486,8 @@ public partial class frmSets : EditorForm
         mEditorSet.SetEffectOfType(
             SelectedEffect,
             (int)nudEffectPercent.Value,
-            (int)nudEffectFlat.Value,
-            chkEffectIsFlat.Checked
+            0,
+            false
         );
         lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(SelectedEffect);
     }
@@ -496,8 +502,8 @@ public partial class frmSets : EditorForm
         mEditorSet.SetEffectOfType(
             SelectedEffect,
             (int)nudEffectPercent.Value,
-            (int)nudEffectFlat.Value,
-            chkEffectIsFlat.Checked
+            0,
+            false
         );
         lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(SelectedEffect);
     }
