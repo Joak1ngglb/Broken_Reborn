@@ -172,20 +172,10 @@ namespace Intersect.Editor.Forms.Editors
             lblManaBonus = new Label();
             lblHealthBonus = new Label();
             grpStatBonuses = new DarkGroupBox();
-            label3 = new Label();
-            label4 = new Label();
             label5 = new Label();
-            nudCurPercentage = new DarkNumericUpDown();
-            nudDmgPercentage = new DarkNumericUpDown();
             nudAgiPercentage = new DarkNumericUpDown();
-            label6 = new Label();
-            label7 = new Label();
             label8 = new Label();
-            nudCur = new DarkNumericUpDown();
-            nudDmg = new DarkNumericUpDown();
             nudAgi = new DarkNumericUpDown();
-            Curlabel = new Label();
-            dmgLabel = new Label();
             label11 = new Label();
             lblPercentage5 = new Label();
             lblPercentage4 = new Label();
@@ -308,11 +298,7 @@ namespace Intersect.Editor.Forms.Editors
             ((ISupportInitialize)nudManaBonus).BeginInit();
             ((ISupportInitialize)nudHealthBonus).BeginInit();
             grpStatBonuses.SuspendLayout();
-            ((ISupportInitialize)nudCurPercentage).BeginInit();
-            ((ISupportInitialize)nudDmgPercentage).BeginInit();
             ((ISupportInitialize)nudAgiPercentage).BeginInit();
-            ((ISupportInitialize)nudCur).BeginInit();
-            ((ISupportInitialize)nudDmg).BeginInit();
             ((ISupportInitialize)nudAgi).BeginInit();
             ((ISupportInitialize)nudSpdPercentage).BeginInit();
             ((ISupportInitialize)nudMRPercentage).BeginInit();
@@ -2248,20 +2234,10 @@ namespace Intersect.Editor.Forms.Editors
             // 
             grpStatBonuses.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpStatBonuses.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            grpStatBonuses.Controls.Add(label3);
-            grpStatBonuses.Controls.Add(label4);
             grpStatBonuses.Controls.Add(label5);
-            grpStatBonuses.Controls.Add(nudCurPercentage);
-            grpStatBonuses.Controls.Add(nudDmgPercentage);
             grpStatBonuses.Controls.Add(nudAgiPercentage);
-            grpStatBonuses.Controls.Add(label6);
-            grpStatBonuses.Controls.Add(label7);
             grpStatBonuses.Controls.Add(label8);
-            grpStatBonuses.Controls.Add(nudCur);
-            grpStatBonuses.Controls.Add(nudDmg);
             grpStatBonuses.Controls.Add(nudAgi);
-            grpStatBonuses.Controls.Add(Curlabel);
-            grpStatBonuses.Controls.Add(dmgLabel);
             grpStatBonuses.Controls.Add(label11);
             grpStatBonuses.Controls.Add(lblPercentage5);
             grpStatBonuses.Controls.Add(lblPercentage4);
@@ -2298,26 +2274,6 @@ namespace Intersect.Editor.Forms.Editors
             grpStatBonuses.TabStop = false;
             grpStatBonuses.Text = "Stat Bonuses";
             // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Location = new System.Drawing.Point(283, 359);
-            label3.Margin = new Padding(2, 0, 2, 0);
-            label3.Name = "label3";
-            label3.Size = new Size(17, 15);
-            label3.TabIndex = 97;
-            label3.Text = "%";
-            // 
-            // label4
-            // 
-            label4.AutoSize = true;
-            label4.Location = new System.Drawing.Point(283, 312);
-            label4.Margin = new Padding(2, 0, 2, 0);
-            label4.Name = "label4";
-            label4.Size = new Size(17, 15);
-            label4.TabIndex = 96;
-            label4.Text = "%";
-            // 
             // label5
             // 
             label5.AutoSize = true;
@@ -2327,34 +2283,6 @@ namespace Intersect.Editor.Forms.Editors
             label5.Size = new Size(17, 15);
             label5.TabIndex = 95;
             label5.Text = "%";
-            // 
-            // nudCurPercentage
-            // 
-            nudCurPercentage.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudCurPercentage.ForeColor = System.Drawing.Color.Gainsboro;
-            nudCurPercentage.Location = new System.Drawing.Point(194, 357);
-            nudCurPercentage.Margin = new Padding(4, 3, 4, 3);
-            nudCurPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-            nudCurPercentage.Minimum = new decimal(new int[] { -100, 0, 0, int.MinValue });
-            nudCurPercentage.Name = "nudCurPercentage";
-            nudCurPercentage.Size = new Size(76, 23);
-            nudCurPercentage.TabIndex = 94;
-            nudCurPercentage.Value = new decimal(new int[] { 0, 0, 0, 0 });
-            nudCurPercentage.ValueChanged += nudCurPercentage_ValueChanged;
-            // 
-            // nudDmgPercentage
-            // 
-            nudDmgPercentage.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudDmgPercentage.ForeColor = System.Drawing.Color.Gainsboro;
-            nudDmgPercentage.Location = new System.Drawing.Point(194, 310);
-            nudDmgPercentage.Margin = new Padding(4, 3, 4, 3);
-            nudDmgPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-            nudDmgPercentage.Minimum = new decimal(new int[] { -100, 0, 0, int.MinValue });
-            nudDmgPercentage.Name = "nudDmgPercentage";
-            nudDmgPercentage.Size = new Size(76, 23);
-            nudDmgPercentage.TabIndex = 93;
-            nudDmgPercentage.Value = new decimal(new int[] { 0, 0, 0, 0 });
-            nudDmgPercentage.ValueChanged += nudDmgPercentage_ValueChanged;
             // 
             // nudAgiPercentage
             // 
@@ -2370,26 +2298,6 @@ namespace Intersect.Editor.Forms.Editors
             nudAgiPercentage.Value = new decimal(new int[] { 0, 0, 0, 0 });
             nudAgiPercentage.ValueChanged += nudAgiPercentage_ValueChanged;
             // 
-            // label6
-            // 
-            label6.AutoSize = true;
-            label6.Location = new System.Drawing.Point(167, 359);
-            label6.Margin = new Padding(2, 0, 2, 0);
-            label6.Name = "label6";
-            label6.Size = new Size(15, 15);
-            label6.TabIndex = 91;
-            label6.Text = "+";
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Location = new System.Drawing.Point(167, 312);
-            label7.Margin = new Padding(2, 0, 2, 0);
-            label7.Name = "label7";
-            label7.Size = new Size(15, 15);
-            label7.TabIndex = 90;
-            label7.Text = "+";
-            // 
             // label8
             // 
             label8.AutoSize = true;
@@ -2399,32 +2307,6 @@ namespace Intersect.Editor.Forms.Editors
             label8.Size = new Size(15, 15);
             label8.TabIndex = 89;
             label8.Text = "+";
-            // 
-            // nudCur
-            // 
-            nudCur.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudCur.ForeColor = System.Drawing.Color.Gainsboro;
-            nudCur.Location = new System.Drawing.Point(19, 357);
-            nudCur.Margin = new Padding(4, 3, 4, 3);
-            nudCur.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
-            nudCur.Name = "nudCur";
-            nudCur.Size = new Size(140, 23);
-            nudCur.TabIndex = 88;
-            nudCur.Value = new decimal(new int[] { 0, 0, 0, 0 });
-            nudCur.ValueChanged += nudCur_ValueChanged;
-            // 
-            // nudDmg
-            // 
-            nudDmg.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            nudDmg.ForeColor = System.Drawing.Color.Gainsboro;
-            nudDmg.Location = new System.Drawing.Point(18, 310);
-            nudDmg.Margin = new Padding(4, 3, 4, 3);
-            nudDmg.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
-            nudDmg.Name = "nudDmg";
-            nudDmg.Size = new Size(140, 23);
-            nudDmg.TabIndex = 87;
-            nudDmg.Value = new decimal(new int[] { 0, 0, 0, 0 });
-            nudDmg.ValueChanged += nudDmg_ValueChanged;
             // 
             // nudAgi
             // 
@@ -2438,26 +2320,6 @@ namespace Intersect.Editor.Forms.Editors
             nudAgi.TabIndex = 86;
             nudAgi.Value = new decimal(new int[] { 0, 0, 0, 0 });
             nudAgi.ValueChanged += nudAgi_ValueChanged;
-            // 
-            // Curlabel
-            // 
-            Curlabel.AutoSize = true;
-            Curlabel.Location = new System.Drawing.Point(16, 339);
-            Curlabel.Margin = new Padding(2, 0, 2, 0);
-            Curlabel.Name = "Curlabel";
-            Curlabel.Size = new Size(40, 15);
-            Curlabel.TabIndex = 85;
-            Curlabel.Text = "Curas:";
-            // 
-            // dmgLabel
-            // 
-            dmgLabel.AutoSize = true;
-            dmgLabel.Location = new System.Drawing.Point(15, 291);
-            dmgLabel.Margin = new Padding(2, 0, 2, 0);
-            dmgLabel.Name = "dmgLabel";
-            dmgLabel.Size = new Size(43, 15);
-            dmgLabel.TabIndex = 84;
-            dmgLabel.Text = "Daños:";
             // 
             // label11
             // 
@@ -3491,11 +3353,7 @@ namespace Intersect.Editor.Forms.Editors
             ((ISupportInitialize)nudHealthBonus).EndInit();
             grpStatBonuses.ResumeLayout(false);
             grpStatBonuses.PerformLayout();
-            ((ISupportInitialize)nudCurPercentage).EndInit();
-            ((ISupportInitialize)nudDmgPercentage).EndInit();
             ((ISupportInitialize)nudAgiPercentage).EndInit();
-            ((ISupportInitialize)nudCur).EndInit();
-            ((ISupportInitialize)nudDmg).EndInit();
             ((ISupportInitialize)nudAgi).EndInit();
             ((ISupportInitialize)nudSpdPercentage).EndInit();
             ((ISupportInitialize)nudMRPercentage).EndInit();
