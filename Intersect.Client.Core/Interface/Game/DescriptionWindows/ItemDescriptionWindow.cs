@@ -601,9 +601,9 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         return newValue;
     }
 
-    private Dictionary<ItemEffect, EffectValue> GetTotalEffects(ItemDescriptor descriptor, ItemProperties? properties)
+    private Dictionary<ItemEffect, int> GetTotalEffects(ItemDescriptor descriptor, ItemProperties? properties)
     {
-        var totals = new Dictionary<ItemEffect, EffectValue>();
+        var totals = new Dictionary<ItemEffect, int>();
 
         if (descriptor?.Effects != null)
         {
@@ -632,7 +632,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         }
 
         var newEffects = GetTotalEffects(_itemDescriptor, _itemProperties);
-        var newValue = newEffects.TryGetValue(effectType, out var value) ? value.GetPrimaryValue() : 0;
+        var newValue = newEffects.TryGetValue(effectType, out var value) ? value : 0;
 
         var slot = _itemDescriptor.EquipmentSlot;
 
@@ -647,7 +647,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                 if (equipped?.Descriptor != null)
                 {
                     var equippedEffects = GetTotalEffects(equipped.Descriptor, equipped.ItemProperties);
-                    var oldValue = equippedEffects.TryGetValue(effectType, out var eqValue) ? eqValue.GetPrimaryValue() : 0;
+                    var oldValue = equippedEffects.TryGetValue(effectType, out var eqValue) ? eqValue : 0;
                     return newValue - oldValue;
                 }
             }

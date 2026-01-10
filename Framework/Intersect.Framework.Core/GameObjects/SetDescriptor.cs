@@ -133,29 +133,9 @@ public partial class SetDescriptor : DatabaseObject<SetDescriptor>, IFolderable
         VitalsRegen = ArrayExtensions.EnsureLen(VitalsRegen, Enum.GetValues<Vital>().Length);
         PercentageVitals = ArrayExtensions.EnsureLen(PercentageVitals, Enum.GetValues<Vital>().Length);
         Effects ??= new List<EffectData>();
-        NormalizeLoadedEffects();
 
         // (Opcional) limpiar ItemIds que ya no coinciden
         ItemIds = ItemIds.Where(id => ItemDescriptor.Get(id)?.SetId == Id).ToList();
-    }
-
-    private void NormalizeLoadedEffects()
-    {
-        if (Effects == null || Effects.Count == 0)
-        {
-            return;
-        }
-
-        foreach (var effect in Effects)
-        {
-            if (effect.Type == ItemEffect.None)
-            {
-                continue;
-            }
-
-            effect.IsFlat = false;
-            effect.FlatAmount = 0;
-        }
     }
 
     public (int[] stats, int[] percentStats, long[] vitals, long[] vitalsRegen, int[] percentVitals, List<EffectData> effects) GetBonuses(int pieces)
@@ -210,12 +190,7 @@ public partial class SetDescriptor : DatabaseObject<SetDescriptor>, IFolderable
 
     public int GetEffectPercentage(ItemEffect type)
     {
-        return Effects.Find(effect => effect.Type == type)?.GetValue() ?? 0;
-    }
-
-    public EffectValue GetEffectValues(ItemEffect type)
-    {
-        return Effects.Find(effect => effect.Type == type)?.GetValues() ?? default;
+        return Effects.Find(effect => effect.Type == type)?.Percentage ?? 0;
     }
 
     public EffectData? GetEffect(ItemEffect type)
@@ -223,14 +198,12 @@ public partial class SetDescriptor : DatabaseObject<SetDescriptor>, IFolderable
         return Effects.Find(effect => effect.Type == type);
     }
 
-    public void SetEffectOfType(ItemEffect type, int percentage, int flatAmount, bool isFlat = false)
+    public void SetEffectOfType(ItemEffect type, int percentage)
     {
         var effectToEdit = Effects.Find(effect => effect.Type == type);
         if (effectToEdit != null)
         {
-            effectToEdit.IsFlat = false;
             effectToEdit.Percentage = percentage;
-            effectToEdit.FlatAmount = 0;
         }
     }
 

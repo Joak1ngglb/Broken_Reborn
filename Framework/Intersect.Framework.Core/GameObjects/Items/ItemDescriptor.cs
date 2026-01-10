@@ -352,7 +352,6 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         set
         {
             Effects = JsonConvert.DeserializeObject<List<EffectData>>(value ?? "") ?? [];
-            NormalizeLoadedEffects();
         }
     }
 
@@ -431,12 +430,7 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
 
     public int GetEffectPercentage(ItemEffect type)
     {
-        return Effects.Find(effect => effect.Type == type)?.GetValue() ?? 0;
-    }
-
-    public EffectValue GetEffectValues(ItemEffect type)
-    {
-        return Effects.Find(effect => effect.Type == type)?.GetValues() ?? default;
+        return Effects.Find(effect => effect.Type == type)?.Percentage ?? 0;
     }
 
     public EffectData? GetEffect(ItemEffect type)
@@ -450,7 +444,7 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         get => Effects.Select(effect => effect.Type).ToArray();
     }
 
-    public void SetEffectOfType(ItemEffect type, int percentage, int flatAmount, bool isFlat = false)
+    public void SetEffectOfType(ItemEffect type, int percentage)
     {
         var effectToEdit = Effects.Find(effect => effect.Type == type);
         if (effectToEdit == default)
@@ -458,9 +452,7 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
             return;
         }
 
-        effectToEdit.IsFlat = false;
         effectToEdit.Percentage = percentage;
-        effectToEdit.FlatAmount = 0;
     }
 
     /// <inheritdoc />
@@ -526,25 +518,6 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         if (ItemType != ItemType.Equipment)
         {
             SetId = Guid.Empty;
-        }
-    }
-
-    private void NormalizeLoadedEffects()
-    {
-        if (Effects == null || Effects.Count == 0)
-        {
-            return;
-        }
-
-        foreach (var effect in Effects)
-        {
-            if (effect.Type == ItemEffect.None)
-            {
-                continue;
-            }
-
-            effect.IsFlat = false;
-            effect.FlatAmount = 0;
         }
     }
 

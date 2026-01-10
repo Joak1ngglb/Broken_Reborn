@@ -101,12 +101,6 @@ public partial class FrmItem : EditorForm
         //Send Changed items
         foreach (var item in mChanged)
         {
-            foreach (var effect in item.Effects)
-            {
-                effect.IsFlat = false;
-                effect.FlatAmount = 0;
-            }
-
             PacketSender.SendSaveObject(item);
             item.DeleteBackup();
         }
@@ -1028,9 +1022,7 @@ public partial class FrmItem : EditorForm
 
         mEditorItem.SetEffectOfType(
             SelectedEffect,
-            (int)nudEffectPercent.Value,
-            0,
-            false
+            (int)nudEffectPercent.Value
         );
         lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(SelectedEffect);
     }
@@ -1044,9 +1036,7 @@ public partial class FrmItem : EditorForm
 
         mEditorItem.SetEffectOfType(
             SelectedEffect,
-            (int)nudEffectPercent.Value,
-            0,
-            false
+            (int)nudEffectPercent.Value
         );
         lstBonusEffects.Items[lstBonusEffects.SelectedIndex] = GetBonusEffectRow(SelectedEffect);
     }
@@ -1637,9 +1627,9 @@ public partial class FrmItem : EditorForm
     private string GetBonusEffectRow(ItemEffect itemEffect)
     {
         var effectName = Strings.ItemEditor.bonuseffects[(int)itemEffect];
-        var values = mEditorItem.GetEffectValues(itemEffect);
+        var percentage = mEditorItem.GetEffectPercentage(itemEffect);
 
-        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{values.Percentage}%");
+        return Strings.ItemEditor.BonusEffectItem.ToString(effectName, $"{percentage}%");
     }
 
     private Stat? SelectedStatRange
@@ -1671,12 +1661,12 @@ public partial class FrmItem : EditorForm
         }
 
         EffectValueUpdating = true;
-        var values = mEditorItem.GetEffectValues(selected);
+        var percentage = mEditorItem.GetEffectPercentage(selected);
 
         chkEffectIsFlat.Enabled = false;
         chkEffectIsFlat.Checked = false;
 
-        nudEffectPercent.Value = values.Percentage;
+        nudEffectPercent.Value = percentage;
         nudEffectFlat.Value = 0;
 
         nudEffectPercent.Enabled = true;

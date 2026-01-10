@@ -183,7 +183,7 @@ public partial class Player : Entity
     private readonly long[] mEquipmentVitalRegen = new long[Enum.GetValues<Vital>().Length];
 
     [NotMapped, JsonIgnore]
-    private readonly Dictionary<ItemEffect, EffectValue> mEquipmentBonusEffects = new();
+    private readonly Dictionary<ItemEffect, int> mEquipmentBonusEffects = new();
 
     [NotMapped, JsonIgnore]
     private readonly int[] mSetBonusStats = new int[Enum.GetValues<Stat>().Length];
@@ -4151,14 +4151,14 @@ public partial class Player : Entity
     /// </summary>
     /// <param name="effect">The <see cref="ItemEffect"/> to retrieve the amount for.</param>
     /// <returns></returns>
-    public EffectValue GetEquipmentBonusEffectValues(ItemEffect effect)
+    public int GetEquipmentBonusEffectValues(ItemEffect effect)
     {
         return mEquipmentBonusEffects.TryGetValue(effect, out var value) ? value : default;
     }
 
-    public int GetEquipmentBonusEffect(ItemEffect effect) => GetEquipmentBonusEffectValues(effect).GetPrimaryValue();
+    public int GetEquipmentBonusEffect(ItemEffect effect) => GetEquipmentBonusEffectValues(effect);
 
-    public override EffectValue GetPassiveEffectValues(ItemEffect effect)
+    public override int GetPassiveEffectValues(ItemEffect effect)
     {
         return GetEquipmentBonusEffectValues(effect);
     }
