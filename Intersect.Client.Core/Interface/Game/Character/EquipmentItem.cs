@@ -26,12 +26,14 @@ public partial class EquipmentItem
     private string? _loadedTexture;
 
     private int mYindex;
+    private int mSlotItemIndex;
 
     public ImagePanel Pnl;
 
-    public EquipmentItem(int index, WindowControl characterWindow)
+    public EquipmentItem(int index, int slotItemIndex, WindowControl characterWindow)
     {
         mYindex = index;
+        mSlotItemIndex = slotItemIndex;
         mCharacterWindow = characterWindow;
     }
 
@@ -83,12 +85,22 @@ public partial class EquipmentItem
             return;
         }
 
+        if (mCurrentItemIds.Count == 0)
+        {
+            return;
+        }
+
         if (ClientConfiguration.Instance.EnableContextMenus)
         {
             var window = Interface.GameUi.GameMenu.GetInventoryWindow();
             if (window != null && Globals.Me.MyEquipment.TryGetValue(mYindex, out var equippedList) && equippedList.Count > 0)
             {
-                var invSlot = equippedList[0];
+                if (mSlotItemIndex < 0 || mSlotItemIndex >= equippedList.Count)
+                {
+                    return;
+                }
+
+                var invSlot = equippedList[mSlotItemIndex];
                 if (invSlot >= 0 && invSlot < Options.Instance.Player.MaxInventory)
                 {
                     window.OpenContextMenu(invSlot);
@@ -97,7 +109,7 @@ public partial class EquipmentItem
         }
         else
         {
-            PacketSender.SendUnequipItem(mYindex);
+            PacketSender.SendUnequipItem(mYindex, mCurrentItemIds[0]);
         }
     }
 
