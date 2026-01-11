@@ -95,7 +95,15 @@ public partial class MapItem : Item
         if (item.Properties.EffectModifiers != null)
         {
             Properties.EffectModifiers =
-                item.Properties.EffectModifiers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Clone());
+                item.Properties.EffectModifiers.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => new EffectData(
+                        kvp.Value.Type,
+                        kvp.Value.Percentage,
+                        kvp.Value.IsPassive,
+                        kvp.Value.Stacking
+                    )
+                );
         }
 
         Properties.EnchantmentRolls = new Dictionary<int, int[]>(item.Properties.EnchantmentRolls);
