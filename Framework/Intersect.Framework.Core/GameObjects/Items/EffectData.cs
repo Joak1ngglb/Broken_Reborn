@@ -1,7 +1,9 @@
+using MessagePack;
 using Microsoft.EntityFrameworkCore;
 
 namespace Intersect.Framework.Core.GameObjects.Items;
 
+[MessagePackObject]
 [Owned]
 public partial class EffectData
 {
@@ -26,11 +28,15 @@ public partial class EffectData
         Stacking = stacking;
     }
 
+    [Key(0)]
     public ItemEffect Type { get; set; }
 
+    [Key(1)]
     public int Percentage { get; set; }
 
+    [Key(2)]
     public bool IsPassive { get; set; }
 
+    [Key(3)]
     public EffectStacking Stacking { get; set; }
 }
