@@ -197,6 +197,11 @@ public partial class FrmItem : EditorForm
 
     private static void SetNumericValue(NumericUpDown control, int[] values, int index)
     {
+        if (control == null)
+        {
+            return;
+        }
+
         if (values != null && index < values.Length)
         {
             control.Enabled = true;
