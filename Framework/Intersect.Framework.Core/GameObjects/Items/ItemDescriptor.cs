@@ -381,6 +381,20 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         return range != default;
     }
 
+    public bool TryGetRangeFor(Vital vital, [NotNullWhen(true)] out ItemRange? range)
+    {
+        range = default;
+        _ = EquipmentProperties?.VitalRanges?.TryGetValue(vital, out range);
+        return range != default;
+    }
+
+    public bool TryGetRangeFor(ItemEffect effect, [NotNullWhen(true)] out ItemRange? range)
+    {
+        range = default;
+        _ = EquipmentProperties?.EffectRanges?.TryGetValue(effect, out range);
+        return range != default;
+    }
+
     public void ModifyStatRangeHigh(Stat stat, int val)
     {
         EquipmentProperties ??= new();
@@ -411,9 +425,97 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         }
     }
 
+    public void ModifyVitalRangeHigh(Vital vital, int val)
+    {
+        EquipmentProperties ??= new();
+
+        if (EquipmentProperties.VitalRanges.TryGetValue(vital, out var range))
+        {
+            range.HighRange = val;
+        }
+        else
+        {
+            var newRange = new ItemRange(0, val);
+            EquipmentProperties.VitalRanges[vital] = newRange;
+        }
+    }
+
+    public void ModifyVitalRangeLow(Vital vital, int val)
+    {
+        EquipmentProperties ??= new();
+
+        if (EquipmentProperties.VitalRanges.TryGetValue(vital, out var range))
+        {
+            range.LowRange = val;
+        }
+        else
+        {
+            var newRange = new ItemRange(val, 0);
+            EquipmentProperties.VitalRanges[vital] = newRange;
+        }
+    }
+
+    public void ModifyEffectRangeHigh(ItemEffect effect, int val)
+    {
+        EquipmentProperties ??= new();
+
+        if (EquipmentProperties.EffectRanges.TryGetValue(effect, out var range))
+        {
+            range.HighRange = val;
+        }
+        else
+        {
+            var newRange = new ItemRange(0, val);
+            EquipmentProperties.EffectRanges[effect] = newRange;
+        }
+    }
+
+    public void ModifyEffectRangeLow(ItemEffect effect, int val)
+    {
+        EquipmentProperties ??= new();
+
+        if (EquipmentProperties.EffectRanges.TryGetValue(effect, out var range))
+        {
+            range.LowRange = val;
+        }
+        else
+        {
+            var newRange = new ItemRange(val, 0);
+            EquipmentProperties.EffectRanges[effect] = newRange;
+        }
+    }
+
     public void ValidateStatRanges()
     {
         var ranges = EquipmentProperties?.StatRanges?.Values;
+        if (ranges == default)
+        {
+            return;
+        }
+
+        foreach (var range in ranges)
+        {
+            range.Validate();
+        }
+    }
+
+    public void ValidateVitalRanges()
+    {
+        var ranges = EquipmentProperties?.VitalRanges?.Values;
+        if (ranges == default)
+        {
+            return;
+        }
+
+        foreach (var range in ranges)
+        {
+            range.Validate();
+        }
+    }
+
+    public void ValidateEffectRanges()
+    {
+        var ranges = EquipmentProperties?.EffectRanges?.Values;
         if (ranges == default)
         {
             return;
