@@ -62,6 +62,36 @@ public class Item : IItem
                 Properties.StatModifiers[(int)stat] = range.Roll();
             }
         }
+
+        foreach (Vital vital in Enum.GetValues<Vital>())
+        {
+            if (descriptor.TryGetRangeFor(vital, out var range))
+            {
+                Properties.VitalModifiers[(int)vital] = range.Roll();
+            }
+        }
+
+        foreach (ItemEffect effect in Enum.GetValues<ItemEffect>())
+        {
+            if (effect == ItemEffect.None)
+            {
+                continue;
+            }
+
+            if (!descriptor.TryGetRangeFor(effect, out var range))
+            {
+                continue;
+            }
+
+            var roll = range.Roll();
+            if (roll == 0)
+            {
+                continue;
+            }
+
+            Properties.EffectModifiers ??= new Dictionary<ItemEffect, EffectData>();
+            Properties.EffectModifiers[effect] = new EffectData(effect, roll);
+        }
     }
 
     public Item(Item item) : this(item.ItemId, item.Quantity, item.BagId, item.Bag)
