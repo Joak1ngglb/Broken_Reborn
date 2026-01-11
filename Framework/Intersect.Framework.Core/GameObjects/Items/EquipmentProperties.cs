@@ -26,4 +26,10 @@ public partial class EquipmentProperties
 
     [NotMapped]
     public Dictionary<Stat, ItemRange> StatRanges { get; set; } = new();
+
+    [NotMapped]
+    public Dictionary<Vital, ItemRange> VitalRanges { get; set; } = new();
+
+    [NotMapped]
+    public Dictionary<ItemEffect, ItemRange> EffectRanges { get; set; } = new();
 }

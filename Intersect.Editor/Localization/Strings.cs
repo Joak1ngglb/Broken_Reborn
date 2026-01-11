@@ -4154,6 +4154,12 @@ Tick timer saved in server config.json.";
         public static LocalizedString StatRangeTo = @"to";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString VitalRangeTitle = @"Vital Ranges";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString EffectRangeTitle = @"Effect Ranges";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString InventoryStackLimit = @"Inventory Stack Limit:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

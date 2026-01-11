@@ -1531,6 +1531,8 @@ public static partial class DbInterface
                         }
 
                         itemDescriptor.ValidateStatRanges();
+                        itemDescriptor.ValidateVitalRanges();
+                        itemDescriptor.ValidateEffectRanges();
 
                         if (itemDescriptor.EquipmentProperties?.DescriptorId == Guid.Empty)
                         {
