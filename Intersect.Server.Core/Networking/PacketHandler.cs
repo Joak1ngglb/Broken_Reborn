@@ -1910,7 +1910,14 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        player.UnequipItem(packet.Slot);
+        if (packet.ItemId.HasValue && packet.ItemId.Value != Guid.Empty)
+        {
+            player.UnequipItem(packet.ItemId.Value);
+        }
+        else
+        {
+            player.UnequipItem(packet.Slot);
+        }
     }
 
     //UpgradeStatPacket
