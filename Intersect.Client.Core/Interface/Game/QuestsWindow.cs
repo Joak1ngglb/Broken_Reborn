@@ -22,170 +22,271 @@ namespace Intersect.Client.Interface.Game
 {
     public partial class QuestsWindow : IQuestWindow
     {
+        // --- Controles base ---
+        private readonly WindowControl mQuestsWindow;
+
+        private readonly ListBox _questList;
 
         private readonly ScrollControl mQuestDescArea;
         private readonly Base _questDetailsContent;
+
+        // Dentro del área scrolleable:
+        private readonly Label mQuestTitle;
+        private readonly Label mQuestStatus;
+
         private readonly RichLabel mQuestDescLabel;
         private readonly Label mQuestDescTemplateLabel;
+
         private readonly Label mQuestCurrentTaskTitle;
         private readonly RichLabel mQuestCurrentTaskLabel;
 
-        private readonly ListBox _questList;
-        private readonly Label mQuestStatus;
-
-        private readonly ScrollControl mQuestTasksContainer;
         private readonly ListBox mQuestTasksList;
-
-        // Window + título
-        private readonly WindowControl mQuestsWindow;
-        private readonly Label mQuestTitle;
 
         private readonly Button mQuitButton;
 
-        // Contenedor raíz de recompensas (ya existía)
+        // Recompensas
         private readonly ScrollControl _rewardContainer;
-
-        // NUEVO: sub-contenedores para recompensas
         private readonly ScrollControl _rewardItemsContainer;
         private readonly ScrollControl _rewardExpContainer;
 
         private QuestDescriptor mSelectedQuest;
 
-        // Helpers de layout recompensas
+        // Helpers layout recompensas
         private const int RewardPaddingX = 10;
         private const int RewardPaddingY = 10;
         private const int RewardSpacing = 3;
         private const int RewardExpHeight = 44;
-        // --- arriba de la clase (campos nuevos) ---
-        private readonly Label _taskTemplateLabel;   // Para heredar font/estilo desde JSON si existe
 
-        // Colores sugeridos (ajústalos a tus CustomColors si quieres)
+        // Template label para heredar estilo de tasks (dentro del details content)
+        private readonly Label _taskTemplateLabel;
+
+        // Colores tasks
         private static readonly Color TaskColorPending = new Color(220, 220, 220, 255);
-        private static readonly Color TaskColorActive = new Color(255, 230, 110, 255);  // ámbar
-        private static readonly Color TaskColorDone = new Color(120, 230, 120, 255);  // verde
+        private static readonly Color TaskColorActive = new Color(255, 230, 110, 255);
+        private static readonly Color TaskColorDone = new Color(120, 230, 120, 255);
 
-        // Tamaño/spacing de filas
+        // Tamaño/spacing de filas tasks
         private const int TaskRowHeight = 22;
         private const int TaskIconSize = 22;
+
+        private bool _shouldUpdateList;
+
+        // Cache de recompensas
+        private readonly List<Base> _rewardItemWidgets = new();
+        private readonly List<Base> _rewardExpWidgets = new();
+
+        // Layout (espaciados generales)
+        private const int HeaderSpacing = 6;
+        private const int SectionSpacing = 8;
+        private const int TitleToStatusSpacing = 3;
+        private const int TitleToDescSpacing = 6;
+
         public QuestsWindow(Canvas gameCanvas)
         {
+            // 1) Crea ventana y carga JSON primero
             mQuestsWindow = new WindowControl(gameCanvas, Strings.QuestLog.Title, false, "QuestsWindow");
             mQuestsWindow.DisableResizing();
 
-            _questList = new ListBox(mQuestsWindow, "QuestList");
-            _questList.EnableScroll(false, true);
-
-            mQuestTitle = new Label(mQuestsWindow, "QuestTitle");
-            mQuestTitle.SetText("");
-
-            mQuestStatus = new Label(mQuestsWindow, "QuestStatus");
-            mQuestStatus.SetText("");
-
-            mQuestDescArea = new ScrollControl(mQuestsWindow, "QuestDescription");
-            mQuestDescArea.EnableScroll(false, true);
-            _questDetailsContent = new Base(mQuestDescArea, "QuestDetailsContent");
-            _questDetailsContent.SetPosition(0, 0);
-            _questDetailsContent.SetSize(1, 1);
-            mQuestDescTemplateLabel = new Label(_questDetailsContent, "QuestDescriptionTemplate");
-            mQuestDescLabel = new RichLabel(_questDetailsContent);
-            mQuestCurrentTaskTitle = new Label(_questDetailsContent, "QuestCurrentTaskTitle");
-            mQuestCurrentTaskTitle.SetText(Strings.QuestLog.CurrentTask);
-            mQuestCurrentTaskLabel = new RichLabel(_questDetailsContent);
-
-            mQuestDescArea.BoundsChanged += (_, _) => UpdateDetailsLayout();
-
-            mQuestTasksContainer = new ScrollControl(mQuestsWindow, "QuestTasksContainer");
-            mQuestTasksContainer.EnableScroll(false, true);
-            mQuestTasksList = new ListBox(_questDetailsContent, "QuestTasksList");
-            mQuestTasksList.EnableScroll(false, false);
-            mQuestTasksList.Dock = Pos.None;
-            mQuestTasksList.Margin = new Margin(0, 0, 0, 0);
-            _taskTemplateLabel = new Label(mQuestTasksContainer, "QuestTaskTemplate");
-            // Si no existe en JSON, le damos defaults amables:
-            if (_taskTemplateLabel.Font == null)
+            // Si el JSON no define tamaño (a veces queda 0/1), ponemos uno decente:
+            if (mQuestsWindow.Width <= 1 || mQuestsWindow.Height <= 1)
             {
-                // Si tu build permite GetFont por nombre, úsalo; si no, hereda del template de descripción:
-                // _taskTemplateLabel.SetFont(GameContentManager.Current.GetFont("sourcesans", 12));
-                _taskTemplateLabel.Font = mQuestDescTemplateLabel.Font;
+                mQuestsWindow.SetSize(760, 520);
             }
-            _taskTemplateLabel.SetTextColor(TaskColorPending, ComponentState.Normal);
-            _rewardContainer = new ScrollControl(mQuestsWindow, "QuestRewardContainer");
 
-            // Intentamos tomar sub-controles del JSON por nombre; si no existen, los creamos
-            _rewardExpContainer = TryGetOrCreate(_rewardContainer, "QuestRewardExpContainer", 10, 10, 380, RewardExpHeight);
-            _rewardItemsContainer = TryGetOrCreate(_rewardContainer, "QuestRewardItemContainer", 10, 60, 380, 50);
+           
 
-
-            mQuitButton = new Button(mQuestsWindow, "AbandonQuestButton");
-            mQuitButton.SetText(Strings.QuestLog.Abandon);
-            mQuitButton.Clicked += _quitButton_Clicked;
-
-            mQuestsWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
-
-            // Override JSON raro
+            // 3) Agarra o crea los controles por nombre (compat con JSON)
+            _questList = TryGetOrCreateListBox(mQuestsWindow, "QuestList");
+            _questList.EnableScroll(false, true);
             _questList.IsDisabled = false;
             _questList.IsVisibleInTree = true;
 
-            mQuestTasksContainer.Hide();
-            _rewardContainer.Parent = _questDetailsContent;
+            mQuestDescArea = TryGetOrCreateScroll(mQuestsWindow, "QuestDescription");
+            mQuestDescArea.EnableScroll(false, true);
+
+            _questDetailsContent = TryGetOrCreateBase(mQuestDescArea, "QuestDetailsContent");
+            _questDetailsContent.SetPosition(0, 0);
+            _questDetailsContent.SetSize(1, 1);
+
+            // Title + Status adentro del área scrolleable
+            mQuestTitle = TryGetOrCreateLabel(_questDetailsContent, "QuestTitle");
+            mQuestTitle.SetText("");
+            // Si tu skin lo permite: un poquito más grande, si no existe font custom, hereda del template
+            // (No asumo APIs extra aquí para no romper builds)
+
+            mQuestStatus = TryGetOrCreateLabel(_questDetailsContent, "QuestStatus");
+            mQuestStatus.SetText("");
+
+            // Descripción
+            mQuestDescTemplateLabel = TryGetOrCreateLabel(_questDetailsContent, "QuestDescriptionTemplate");
+            mQuestDescLabel = TryGetOrCreateRichLabel(_questDetailsContent, "QuestDescriptionLabel");
+
+            // Current task
+            mQuestCurrentTaskTitle = TryGetOrCreateLabel(_questDetailsContent, "QuestCurrentTaskTitle");
+            mQuestCurrentTaskTitle.SetText(Strings.QuestLog.CurrentTask);
+
+            mQuestCurrentTaskLabel = TryGetOrCreateRichLabel(_questDetailsContent, "QuestCurrentTaskLabel");
+
+            // Lista de tasks (full list)
+            mQuestTasksList = TryGetOrCreateListBox(_questDetailsContent, "QuestTasksList");
+            mQuestTasksList.EnableScroll(false, false);
+            mQuestTasksList.Dock = Pos.None;
+            mQuestTasksList.Margin = new Margin(0, 0, 0, 0);
+
+            // Template label tasks (para heredar font/estilo). Lo ocultamos.
+            _taskTemplateLabel = TryGetOrCreateLabel(_questDetailsContent, "QuestTaskTemplate");
+            _taskTemplateLabel.IsHidden = true;
+            if (_taskTemplateLabel.Font == null)
+            {
+                _taskTemplateLabel.Font = mQuestDescTemplateLabel.Font;
+            }
+            _taskTemplateLabel.SetTextColor(TaskColorPending, ComponentState.Normal);
+
+            // Contenedor recompensas dentro del details content
+            _rewardContainer = TryGetOrCreateScroll(_questDetailsContent, "QuestRewardContainer");
             _rewardContainer.EnableScroll(false, false);
-            mQuestCurrentTaskTitle.Font = mQuestDescTemplateLabel.Font;
-            mQuestCurrentTaskTitle.SetTextColor(CustomColors.QuestWindow.QuestDesc, ComponentState.Normal);
+
+            // Sub contenedores recompensas (se buscan en JSON, si no existen se crean)
+            _rewardExpContainer = TryGetOrCreateScroll(_rewardContainer, "QuestRewardExpContainer");
+            _rewardItemsContainer = TryGetOrCreateScroll(_rewardContainer, "QuestRewardItemContainer");
+
+            // Defaults razonables si no existen en JSON
+            InitRewardContainerDefaults();
+
+            // Botón abandonar (se queda en window porque suele estar fuera del scroll)
+            mQuitButton = TryGetOrCreateButton(mQuestsWindow, "AbandonQuestButton");
+            mQuitButton.SetText(Strings.QuestLog.Abandon);
+            mQuitButton.Clicked -= _quitButton_Clicked;
+            mQuitButton.Clicked += _quitButton_Clicked;
+            // 2) Carga JSON UI (dueño del layout)
+            mQuestsWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+            // Eventos
+            mQuestDescArea.BoundsChanged += (_, _) => UpdateDetailsLayout();
+
+            // Estado inicial
             mQuestCurrentTaskTitle.Hide();
             mQuestCurrentTaskLabel.Hide();
+            mQuestTasksList.Hide();
+            ClearRewardWidgets();
 
-            // Inicial oculto por defecto
+            // Si quieres ocultar title/status hasta seleccionar quest:
+            mQuestTitle.Hide();
+            mQuestStatus.Hide();
+            mQuestDescLabel.ClearText();
+        }
+
+        // -------------------------
+        // Helpers "TryGetOrCreate"
+        // -------------------------
+        private static Base TryGetOrCreateBase(Base parent, string name)
+        {
+            var existing = parent.FindChildByName(name) as Base;
+            if (existing != null) return existing;
+
+            var created = new Base(parent, name);
+            return created;
+        }
+
+        private static ScrollControl TryGetOrCreateScroll(Base parent, string name)
+        {
+            var existing = parent.FindChildByName(name) as ScrollControl;
+            if (existing != null) return existing;
+
+            var created = new ScrollControl(parent, name);
+            created.EnableScroll(false, true);
+            return created;
+        }
+
+        private static ListBox TryGetOrCreateListBox(Base parent, string name)
+        {
+            var existing = parent.FindChildByName(name) as ListBox;
+            if (existing != null) return existing;
+
+            var created = new ListBox(parent, name);
+            return created;
+        }
+
+        private static Label TryGetOrCreateLabel(Base parent, string name)
+        {
+            var existing = parent.FindChildByName(name) as Label;
+            if (existing != null) return existing;
+
+            var created = new Label(parent, name);
+            return created;
+        }
+
+        private static RichLabel TryGetOrCreateRichLabel(Base parent, string name)
+        {
+            // RichLabel no siempre soporta "name" en ctor en todas las builds.
+            // Intentamos buscar primero, si no, creamos uno y le ponemos Name.
+            var existing = parent.FindChildByName(name) as RichLabel;
+            if (existing != null) return existing;
+
+            var created = new RichLabel(parent);
+            created.Name = name;
+            return created;
+        }
+
+        private static Button TryGetOrCreateButton(Base parent, string name)
+        {
+            var existing = parent.FindChildByName(name) as Button;
+            if (existing != null) return existing;
+
+            var created = new Button(parent, name);
+            return created;
+        }
+
+        private void InitRewardContainerDefaults()
+        {
+            // Root
+            _rewardContainer.EnableScroll(false, false);
+
+            // EXP container
+            _rewardExpContainer.EnableScroll(false, true);
+            if (_rewardExpContainer.Width <= 1) _rewardExpContainer.SetSize(380, RewardExpHeight);
+            if (_rewardExpContainer.Height <= 1) _rewardExpContainer.SetSize(_rewardExpContainer.Width, RewardExpHeight);
+
+            // Items container
+            _rewardItemsContainer.EnableScroll(false, true);
+            if (_rewardItemsContainer.Width <= 1) _rewardItemsContainer.SetSize(380, 60);
+            if (_rewardItemsContainer.Height <= 1) _rewardItemsContainer.SetSize(_rewardItemsContainer.Width, 60);
+
             _rewardExpContainer.IsHidden = true;
             _rewardItemsContainer.IsHidden = true;
             _rewardContainer.IsHidden = true;
         }
 
-        private static ScrollControl TryGetOrCreate(ScrollControl parent, string name, int x, int y, int w, int h)
-        {
-            // Busca un hijo con ese name; si no hay, crea uno
-            var child = parent.FindChildByName(name) as ScrollControl;
-            if (child == null)
-            {
-                child = new ScrollControl(parent, name);
-                child.SetPosition(x, y);
-                child.SetSize(w, h);
-                child.EnableScroll(false, true);
-            }
-
-            return child;
-        }
-
+        // -------------------------
+        // Botón abandonar
+        // -------------------------
         private void _quitButton_Clicked(Base sender, MouseButtonState arguments)
         {
-            if (mSelectedQuest != null)
-            {
-                _ = new InputBox(
-                    title: Strings.QuestLog.AbandonTitle.ToString(mSelectedQuest.Name),
-                    prompt: Strings.QuestLog.AbandonPrompt.ToString(mSelectedQuest.Name),
-                    inputType: InputType.YesNo,
-                    userData: mSelectedQuest.Id,
-                    onSubmit: (s, e) =>
+            if (mSelectedQuest == null) return;
+
+            _ = new InputBox(
+                title: Strings.QuestLog.AbandonTitle.ToString(mSelectedQuest.Name),
+                prompt: Strings.QuestLog.AbandonPrompt.ToString(mSelectedQuest.Name),
+                inputType: InputType.YesNo,
+                userData: mSelectedQuest.Id,
+                onSubmit: (s, e) =>
+                {
+                    if (s is InputBox inputBox && inputBox.UserData is Guid questId)
                     {
-                        if (s is InputBox inputBox && inputBox.UserData is Guid questId)
-                        {
-                            PacketSender.SendAbandonQuest(questId);
-                            Globals.RemoveQuestRewards(questId);
-                            // Limpia visual
-                            ClearRewardWidgets();
-                            UpdateQuestList();
-                            UpdateSelectedQuest();
-                            UpdateQuestTasks();
-                        }
+                        PacketSender.SendAbandonQuest(questId);
+                        Globals.RemoveQuestRewards(questId);
+
+                        ClearRewardWidgets();
+                        UpdateQuestList();
+                        UpdateSelectedQuest();
+                        UpdateQuestTasks();
                     }
-                );
-            }
+                }
+            );
         }
 
-        private bool _shouldUpdateList;
-        // Cache de recompensas creadas (para medir/posicionar)
-        private readonly List<Base> _rewardItemWidgets = new();
-        private readonly List<Base> _rewardExpWidgets = new();
-
+        // -------------------------
+        // Update loop
+        // -------------------------
         public void Update(bool shouldUpdateList)
         {
             if (!mQuestsWindow.IsVisibleInTree)
@@ -199,22 +300,9 @@ namespace Intersect.Client.Interface.Game
 
         public void NotifyQuestProgressUpdated(IEnumerable<Guid> questIds)
         {
-            if (questIds == null)
-            {
-                return;
-            }
+            if (questIds == null || mSelectedQuest == null) return;
 
-            if (mSelectedQuest == null)
-            {
-                return;
-            }
-
-            var selectedQuestUpdated = questIds.Contains(mSelectedQuest.Id);
-
-            if (!selectedQuestUpdated)
-            {
-                return;
-            }
+            if (!questIds.Contains(mSelectedQuest.Id)) return;
 
             if (mQuestsWindow.IsHidden || !mQuestsWindow.IsVisibleInTree)
             {
@@ -279,13 +367,13 @@ namespace Intersect.Client.Interface.Game
             }
         }
 
+        // -------------------------
+        // Lista de quests
+        // -------------------------
         private void UpdateQuestList()
         {
             _questList.RemoveAllRows();
-            if (Globals.Me == null)
-            {
-                return;
-            }
+            if (Globals.Me == null) return;
 
             var quests = QuestDescriptor.Lookup.Values;
             var dict = new Dictionary<string, List<Tuple<QuestDescriptor, int, Color>>>();
@@ -303,7 +391,12 @@ namespace Intersect.Client.Interface.Game
                 if (dict.ContainsKey(category))
                 {
                     AddCategoryToList(category, Color.White);
-                    var sortedList = dict[category].OrderBy(l => l.Item2).ThenBy(l => l.Item1.OrderValue).ToList();
+
+                    var sortedList = dict[category]
+                        .OrderBy(l => l.Item2)
+                        .ThenBy(l => l.Item1.OrderValue)
+                        .ToList();
+
                     foreach (var qst in sortedList)
                     {
                         AddQuestToList(qst.Item1.Name, qst.Item3, qst.Item1.Id, true);
@@ -313,7 +406,11 @@ namespace Intersect.Client.Interface.Game
 
             if (dict.ContainsKey(string.Empty))
             {
-                var sortedList = dict[string.Empty].OrderBy(l => l.Item2).ThenBy(l => l.Item1.OrderValue).ToList();
+                var sortedList = dict[string.Empty]
+                    .OrderBy(l => l.Item2)
+                    .ThenBy(l => l.Item1.OrderValue)
+                    .ToList();
+
                 foreach (var qst in sortedList)
                 {
                     AddQuestToList(qst.Item1.Name, qst.Item3, qst.Item1.Id, false);
@@ -380,10 +477,11 @@ namespace Intersect.Client.Interface.Game
         {
             var item = _questList.AddRow((indented ? "\t\t\t" : "") + name);
             item.UserData = questId;
+            item.Clicked -= QuestListItem_Clicked;
             item.Clicked += QuestListItem_Clicked;
-            item.Selected += Item_Selected;
+
+            // Quitamos el Selected handler que deseleccionaba todo (rompía UX)
             item.SetTextColor(clr);
-            item.RenderColor = new Color(50, 255, 255, 255);
             item.SetSize(200, 25);
         }
 
@@ -392,21 +490,12 @@ namespace Intersect.Client.Interface.Game
             var item = _questList.AddRow(name);
             item.MouseInputEnabled = false;
             item.SetTextColor(clr);
-            item.RenderColor = new Color(0, 255, 255, 255);
             item.SetSize(200, 25);
-        }
-
-        private void Item_Selected(Base sender, ItemSelectedEventArgs arguments)
-        {
-            _questList.UnselectAll();
         }
 
         private void QuestListItem_Clicked(Base sender, MouseButtonState arguments)
         {
-            if (sender.UserData is not Guid questId)
-            {
-                return;
-            }
+            if (sender.UserData is not Guid questId) return;
 
             if (!QuestDescriptor.TryGet(questId, out var questDescriptor))
             {
@@ -419,29 +508,47 @@ namespace Intersect.Client.Interface.Game
             UpdateQuestTasks();
         }
 
+        // -------------------------
+        // Selección quest / details
+        // -------------------------
         private void UpdateSelectedQuest()
         {
             _questList.Show();
 
-            if (mSelectedQuest == null)
-            {
-                mQuestTitle.Hide();
-                mQuestDescArea.Hide();
-                mQuestStatus.Hide();
-                mQuitButton.Hide();
-                mQuestCurrentTaskTitle.Hide();
-                mQuestCurrentTaskLabel.Hide();
-                mQuestTasksList.Hide();
-                ClearRewardWidgets();
-                return;
-            }
-
+            // Limpia siempre
             mQuestDescLabel.ClearText();
             mQuestCurrentTaskLabel.ClearText();
             mQuitButton.IsDisabled = true;
+
             mQuestCurrentTaskTitle.Hide();
             mQuestCurrentTaskLabel.Hide();
 
+            mQuestTasksList.RemoveAllRows();
+            mQuestTasksList.Hide();
+
+            ClearRewardWidgets();
+
+            if (mSelectedQuest == null)
+            {
+                mQuestTitle.Hide();
+                mQuestStatus.Hide();
+                mQuestDescArea.Hide();
+                mQuitButton.Hide();
+                UpdateDetailsLayout();
+                return;
+            }
+
+            // Mostrar panel derecho
+            mQuestDescArea.IsHidden = false;
+
+            // Title + Status dentro del scroll
+            mQuestTitle.IsHidden = false;
+            mQuestTitle.Text = mSelectedQuest.Name;
+
+            mQuestStatus.IsHidden = false;
+            mQuestStatus.SetText("");
+
+            // Determinar estado y texto
             if (Globals.Me.QuestProgress.ContainsKey(mSelectedQuest.Id))
             {
                 if (Globals.Me.QuestProgress[mSelectedQuest.Id].TaskId != Guid.Empty)
@@ -458,6 +565,7 @@ namespace Intersect.Client.Interface.Game
                         mQuestDescLabel.AddLineBreak();
                     }
 
+                    // Current task text
                     for (var i = 0; i < mSelectedQuest.Tasks.Count; i++)
                     {
                         if (mSelectedQuest.Tasks[i].Id == Globals.Me.QuestProgress[mSelectedQuest.Id].TaskId)
@@ -516,7 +624,6 @@ namespace Intersect.Client.Interface.Game
                             mQuestStatus.SetText(Strings.QuestLog.NotStarted);
                             mQuestStatus.SetTextColor(CustomColors.QuestWindow.NotStarted, ComponentState.Normal);
                             mQuestDescLabel.AddText(mSelectedQuest.BeforeDescription, mQuestDescTemplateLabel);
-                            mQuitButton?.Hide();
                         }
                     }
                 }
@@ -531,18 +638,13 @@ namespace Intersect.Client.Interface.Game
                 }
             }
 
-            // Mostrar
- 
-            mQuestTitle.IsHidden = false;
-            mQuestTitle.Text = mSelectedQuest.Name;
-            mQuestDescArea.IsHidden = false;
-            UpdateDetailsLayout();
-            mQuestStatus.Show();
+            // Botón abandonar (en window, fuera del scroll)
             mQuitButton.Show();
 
-            // Cargar recompensas de esta quest (ítems + exp) y acomodar
-            _rewardContainer.SetSize(GetDetailsContentWidth(), _rewardContainer.Height);
+            // Recompensas
             LoadRewardWidgets(mSelectedQuest.Id);
+
+            // Layout final
             UpdateDetailsLayout();
         }
 
@@ -556,59 +658,83 @@ namespace Intersect.Client.Interface.Game
         {
             var contentWidth = GetDetailsContentWidth();
             var y = 0;
-            const int sectionSpacing = 6;
-            const int titleSpacing = 2;
 
+            // Title
+            if (!mQuestTitle.IsHidden)
+            {
+                mQuestTitle.Width = contentWidth;
+                mQuestTitle.SizeToChildren(false, true);
+                mQuestTitle.SetPosition(0, y);
+                y += mQuestTitle.Height + TitleToStatusSpacing;
+            }
+
+            // Status
+            if (!mQuestStatus.IsHidden)
+            {
+                mQuestStatus.Width = contentWidth;
+                mQuestStatus.SizeToChildren(false, true);
+                mQuestStatus.SetPosition(0, y);
+                y += mQuestStatus.Height + TitleToDescSpacing;
+            }
+
+            // Description
             if (mQuestDescLabel != null && mQuestDescArea != null)
             {
                 mQuestDescLabel.Width = contentWidth;
                 mQuestDescLabel.SizeToChildren(false, true);
                 mQuestDescLabel.SetPosition(0, y);
+
                 if (mQuestDescLabel.Height > 0)
                 {
-                    y += mQuestDescLabel.Height + sectionSpacing;
+                    y += mQuestDescLabel.Height + SectionSpacing;
                 }
             }
 
+            // Current task
             if (!mQuestCurrentTaskTitle.IsHidden && !mQuestCurrentTaskLabel.IsHidden)
             {
+                mQuestCurrentTaskTitle.Width = contentWidth;
                 mQuestCurrentTaskTitle.SizeToChildren(false, true);
                 mQuestCurrentTaskTitle.SetPosition(0, y);
-                y += mQuestCurrentTaskTitle.Height + titleSpacing;
+                y += mQuestCurrentTaskTitle.Height + HeaderSpacing;
 
                 mQuestCurrentTaskLabel.Width = contentWidth;
                 mQuestCurrentTaskLabel.SizeToChildren(false, true);
                 mQuestCurrentTaskLabel.SetPosition(0, y);
-                y += mQuestCurrentTaskLabel.Height + sectionSpacing;
+                y += mQuestCurrentTaskLabel.Height + SectionSpacing;
             }
 
+            // Tasks list
             if (!mQuestTasksList.IsHidden)
             {
                 mQuestTasksList.Width = contentWidth;
                 mQuestTasksList.SetPosition(0, y);
-                y += mQuestTasksList.Height + sectionSpacing;
+                y += mQuestTasksList.Height + SectionSpacing;
             }
 
+            // Rewards
             if (!_rewardContainer.IsHidden)
             {
                 _rewardContainer.SetSize(contentWidth, _rewardContainer.Height);
                 _rewardContainer.SetPosition(0, y);
-                y += _rewardContainer.Height + sectionSpacing;
+                y += _rewardContainer.Height + SectionSpacing;
             }
 
+            // Ajuste del inner content
             mQuestDescArea.EnableScroll(false, true);
-            if (mQuestDescArea.VerticalScrollBar != null)
-            {
-                mQuestDescArea.VerticalScrollBar.ScrollAmount = 0;
-            }
+         
             _questDetailsContent.SetSize(Math.Max(contentWidth, 1), Math.Max(y, 1));
             mQuestDescArea.SetInnerSize(Math.Max(contentWidth, 1), Math.Max(y, mQuestDescArea.Height));
         }
 
+        // -------------------------
+        // Show/Hide
+        // -------------------------
         public void Show()
         {
             mSelectedQuest = null;
             _questList.UnselectAll();
+
             UpdateSelectedQuest();
             UpdateQuestTasks();
 
@@ -632,16 +758,15 @@ namespace Intersect.Client.Interface.Game
             UpdateQuestTasks();
         }
 
-        // ---------- Recompensas: API de IQuestWindow ----------
-        // Reemplaza TODO el método por esto:
-        // ---------- Recompensas: API de IQuestWindow ----------
+        // -------------------------
+        // Rewards: IQuestWindow API
+        // -------------------------
         public void AddRewardWidget(Base widget)
         {
             if (widget == null) return;
 
             var n = widget.Name ?? string.Empty;
 
-            // Mándalos al contenedor correcto por nombre
             var goesToExp =
                 n.Contains("RewardExp", StringComparison.OrdinalIgnoreCase) ||
                 n.Equals("ExpChip", StringComparison.OrdinalIgnoreCase) ||
@@ -684,7 +809,6 @@ namespace Intersect.Client.Interface.Game
             }
         }
 
-        // ---------- Recompensas: Carga & layout ----------
         private void LoadRewardWidgets(Guid questId)
         {
             ClearRewardWidgets();
@@ -701,20 +825,20 @@ namespace Intersect.Client.Interface.Game
                 (guildExp > 0) ||
                 (factionHonor != null && factionHonor.Count > 0);
 
-            // Posición base fija para EXP
-            _rewardExpContainer.SetPosition(RewardPaddingX, RewardPaddingY);
+            // Ancho disponible del root rewards
+            var contentWidth = GetDetailsContentWidth();
+            _rewardContainer.SetSize(contentWidth, _rewardContainer.Height);
 
-            // Ancho disponible (cont. raíz - padding lateral)
             var availW = Math.Max(_rewardContainer.Width - 2 * RewardPaddingX, 1);
 
             int expHeight = 0;
 
             if (anyExp)
             {
-                // Crea chips (se agregan a _rewardExpWidgets vía AddRewardWidget)
+                // Crea chips (se agregan via AddRewardWidget)
                 _ = new QuestRewardExp(this, playerExp, jobExp, guildExp, factionHonor);
 
-                // Layout con WRAP horizontal
+                // Layout wrap horizontal
                 const int minW = 80;
                 const int spacing = 4;
                 int x = 0;
@@ -725,7 +849,6 @@ namespace Intersect.Client.Interface.Game
                 {
                     var w = Math.Max(chip.Width, minW);
 
-                    // Salto de línea si no entra
                     if (x > 0 && x + w > availW)
                     {
                         x = 0;
@@ -738,6 +861,7 @@ namespace Intersect.Client.Interface.Game
 
                 expHeight = (_rewardExpWidgets.Count > 0) ? (y + rowH) : 0;
 
+                _rewardExpContainer.SetPosition(RewardPaddingX, RewardPaddingY);
                 _rewardExpContainer.SetSize(availW, Math.Max(expHeight, 1));
                 _rewardExpContainer.IsHidden = _rewardExpWidgets.Count == 0;
             }
@@ -747,7 +871,7 @@ namespace Intersect.Client.Interface.Game
                 _rewardExpContainer.SetSize(1, 1);
             }
 
-            // --- ÍTEMS ---
+            // --- Ítems ---
             if (Globals.QuestRewards.TryGetValue(questId, out var rewards) && rewards.Count > 0)
             {
                 foreach (var kv in rewards)
@@ -762,23 +886,20 @@ namespace Intersect.Client.Interface.Game
                 _rewardItemsContainer.IsHidden = true;
             }
 
-            // Si no hay nada, escondemos raíz y salimos
+            // Si no hay nada, escondemos root
             _rewardContainer.IsHidden = _rewardExpContainer.IsHidden && _rewardItemsContainer.IsHidden;
             if (_rewardContainer.IsHidden) return;
 
-            // EXP arriba, ÍTEMS debajo (con separación)
+            // Posición items debajo de exp
             var itemsY = _rewardExpContainer.IsHidden
                 ? RewardPaddingY
                 : RewardPaddingY + _rewardExpContainer.Height + RewardSpacing;
 
             _rewardItemsContainer.SetPosition(RewardPaddingX, itemsY);
 
-            // --- Grilla de ítems ---
-            int itemsHeight = 0;
-
+            // Grilla items
             if (!_rewardItemsContainer.IsHidden && _rewardItemWidgets.Count > 0)
             {
-                // Ancho interno con padding visual propio
                 const int xPad = 10, yPad = 10;
                 var insideW = Math.Max(availW - 2 * xPad, 1);
 
@@ -803,37 +924,30 @@ namespace Intersect.Client.Interface.Game
                 }
 
                 var rows = (int)Math.Ceiling(_rewardItemWidgets.Count / (double)perRow);
-                itemsHeight = yPad * 2 + rows * itemH;
+                var itemsHeight = yPad * 2 + rows * itemH;
 
                 _rewardItemsContainer.SetSize(availW, itemsHeight);
             }
 
-            // Alto total del contenedor raíz (con paddings)
+            // Alto total root rewards
             var totalH = RewardPaddingY;
             if (!_rewardExpContainer.IsHidden) totalH += _rewardExpContainer.Height + RewardSpacing;
             if (!_rewardItemsContainer.IsHidden) totalH += _rewardItemsContainer.Height;
             totalH += RewardPaddingY;
 
             _rewardContainer.SetSize(_rewardContainer.Width, totalH);
+            _rewardContainer.Show();
         }
 
-        // ---------- Tareas ----------
+        // -------------------------
+        // Tasks helpers
+        // -------------------------
         private bool IsTaskCompleted(QuestTaskDescriptor task)
         {
-            if (mSelectedQuest == null || Globals.Me?.QuestProgress == null)
-            {
-                return false;
-            }
+            if (mSelectedQuest == null || Globals.Me?.QuestProgress == null) return false;
+            if (!Globals.Me.QuestProgress.TryGetValue(mSelectedQuest.Id, out var progress)) return false;
 
-            if (!Globals.Me.QuestProgress.TryGetValue(mSelectedQuest.Id, out var progress))
-            {
-                return false;
-            }
-
-            if (progress.Completed)
-            {
-                return true;
-            }
+            if (progress.Completed) return true;
 
             var currentIndex = mSelectedQuest.GetTaskIndex(progress.TaskId);
             var taskIndex = mSelectedQuest.GetTaskIndex(task.Id);
@@ -843,44 +957,29 @@ namespace Intersect.Client.Interface.Game
 
         private int GetTaskProgress(QuestTaskDescriptor task)
         {
-            if (mSelectedQuest == null || Globals.Me?.QuestProgress == null)
-            {
-                return 0;
-            }
-
-            if (!Globals.Me.QuestProgress.TryGetValue(mSelectedQuest.Id, out var progress))
-            {
-                return 0;
-            }
+            if (mSelectedQuest == null || Globals.Me?.QuestProgress == null) return 0;
+            if (!Globals.Me.QuestProgress.TryGetValue(mSelectedQuest.Id, out var progress)) return 0;
 
             var currentIndex = mSelectedQuest.GetTaskIndex(progress.TaskId);
             var taskIndex = mSelectedQuest.GetTaskIndex(task.Id);
 
-            if (progress.Completed || currentIndex > taskIndex)
-            {
-                return task.Quantity;
-            }
-
-            if (currentIndex == taskIndex)
-            {
-                return progress.TaskProgress;
-            }
+            if (progress.Completed || currentIndex > taskIndex) return task.Quantity;
+            if (currentIndex == taskIndex) return progress.TaskProgress;
 
             return 0;
         }
+
         private static void ApplyTaskStyle(Label label, Label template, Color color)
         {
             if (template?.Font != null)
             {
-                label.Font = template.Font; // o label.SetFont(template.Font) según tu build
+                label.Font = template.Font;
             }
 
             label.SetTextColor(color, ComponentState.Normal);
 
-            // Altura consistente; el ListBox maneja el ancho
             int h = Math.Max(TaskRowHeight - 2, 12);
             label.Height = h;
-
         }
 
         private void UpdateQuestTasks()
@@ -896,7 +995,6 @@ namespace Intersect.Client.Interface.Game
 
             mQuestTasksList.Show();
 
-            // Ubicamos el índice de la tarea actual para formateo
             int currentIndex = -1;
             bool questCompleted = false;
 
@@ -915,8 +1013,8 @@ namespace Intersect.Client.Interface.Game
                 int progress = GetTaskProgress(task);
                 bool isCurrent = !questCompleted && (currentIndex == i);
 
-                // Texto amigable
                 var desc = task.Description;
+
                 switch (task.Objective)
                 {
                     case QuestObjective.GatherItems:
@@ -930,35 +1028,34 @@ namespace Intersect.Client.Interface.Game
                         break;
                 }
 
-                // Fila
                 var row = mQuestTasksList.AddRow(string.Empty);
-                // Altura fija; el ancho lo maneja el ListBox
                 row.Height = TaskRowHeight;
 
                 var icon = new ImagePanel(row) { Width = TaskIconSize, Height = TaskIconSize };
-              
 
                 var texture = GameContentManager.Current.GetTexture(
                     Framework.Content.TextureType.Gui,
                     completed ? "checkboxfull.png" : "checkboxempty.png"
                 );
+
                 if (texture != null) icon.Texture = texture;
                 icon.SetPosition(2, (TaskRowHeight - TaskIconSize) / 2);
 
-                // Label
                 var lbl = new Label(row) { Text = "• " + desc };
                 lbl.SetPosition(2 + TaskIconSize + 4, 1);
 
-                // Aplica estilo (ya sin lambda)
                 ApplyTaskStyle(lbl, _taskTemplateLabel, completed ? TaskColorDone : (isCurrent ? TaskColorActive : TaskColorPending));
-
             }
 
             mQuestTasksList.Invalidate();
+
+            // Tamaño consistente con el ancho disponible (no uses Width actual, puede estar 0)
+            var contentWidth = GetDetailsContentWidth();
             var taskHeight = mSelectedQuest.Tasks.Count * TaskRowHeight;
-            mQuestTasksList.SetSize(mQuestTasksList.Width, taskHeight);
+
+            mQuestTasksList.SetSize(Math.Max(contentWidth, 1), taskHeight);
+
             UpdateDetailsLayout();
         }
-
     }
 }
