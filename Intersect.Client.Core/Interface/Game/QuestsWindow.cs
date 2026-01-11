@@ -24,6 +24,7 @@ namespace Intersect.Client.Interface.Game
     {
 
         private readonly ScrollControl mQuestDescArea;
+        private readonly Base _questDetailsContent;
         private readonly RichLabel mQuestDescLabel;
         private readonly Label mQuestDescTemplateLabel;
         private readonly Label mQuestCurrentTaskTitle;
@@ -82,17 +83,20 @@ namespace Intersect.Client.Interface.Game
 
             mQuestDescArea = new ScrollControl(mQuestsWindow, "QuestDescription");
             mQuestDescArea.EnableScroll(false, true);
-            mQuestDescTemplateLabel = new Label(mQuestDescArea, "QuestDescriptionTemplate");
-            mQuestDescLabel = new RichLabel(mQuestDescArea);
-            mQuestCurrentTaskTitle = new Label(mQuestDescArea, "QuestCurrentTaskTitle");
+            _questDetailsContent = new Base(mQuestDescArea, "QuestDetailsContent");
+            _questDetailsContent.SetPosition(0, 0);
+            _questDetailsContent.SetSize(1, 1);
+            mQuestDescTemplateLabel = new Label(_questDetailsContent, "QuestDescriptionTemplate");
+            mQuestDescLabel = new RichLabel(_questDetailsContent);
+            mQuestCurrentTaskTitle = new Label(_questDetailsContent, "QuestCurrentTaskTitle");
             mQuestCurrentTaskTitle.SetText(Strings.QuestLog.CurrentTask);
-            mQuestCurrentTaskLabel = new RichLabel(mQuestDescArea);
+            mQuestCurrentTaskLabel = new RichLabel(_questDetailsContent);
 
             mQuestDescArea.BoundsChanged += (_, _) => UpdateDetailsLayout();
 
             mQuestTasksContainer = new ScrollControl(mQuestsWindow, "QuestTasksContainer");
             mQuestTasksContainer.EnableScroll(false, true);
-            mQuestTasksList = new ListBox(mQuestTasksContainer, "QuestTasksList");
+            mQuestTasksList = new ListBox(_questDetailsContent, "QuestTasksList");
             mQuestTasksList.EnableScroll(false, false);
             mQuestTasksList.Dock = Pos.None;
             mQuestTasksList.Margin = new Margin(0, 0, 0, 0);
@@ -122,9 +126,8 @@ namespace Intersect.Client.Interface.Game
             _questList.IsDisabled = false;
             _questList.IsVisibleInTree = true;
 
-            mQuestTasksList.Parent = mQuestDescArea;
             mQuestTasksContainer.Hide();
-            _rewardContainer.Parent = mQuestDescArea;
+            _rewardContainer.Parent = _questDetailsContent;
             _rewardContainer.EnableScroll(false, false);
             mQuestCurrentTaskTitle.Font = mQuestDescTemplateLabel.Font;
             mQuestCurrentTaskTitle.SetTextColor(CustomColors.QuestWindow.QuestDesc, ComponentState.Normal);
@@ -598,6 +601,7 @@ namespace Intersect.Client.Interface.Game
             {
                 mQuestDescArea.VerticalScrollBar.ScrollAmount = 0;
             }
+            _questDetailsContent.SetSize(Math.Max(contentWidth, 1), Math.Max(y, 1));
             mQuestDescArea.SetInnerSize(Math.Max(contentWidth, 1), Math.Max(y, mQuestDescArea.Height));
         }
 
