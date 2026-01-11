@@ -259,9 +259,9 @@ public static partial class PacketSender
         Network.SendPacket(new UseSpellPacket(slot, targetId, Globals.ShouldSoftRetargetOnSelfCast));
     }
 
-    public static void SendUnequipItem(int slot)
+    public static void SendUnequipItem(int slot, Guid? itemId = null)
     {
-        Network.SendPacket(new UnequipItemPacket(slot));
+        Network.SendPacket(new UnequipItemPacket(slot, itemId));
     }
 
     public static void SendUpgradeStat(byte stat)

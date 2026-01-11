@@ -171,7 +171,7 @@ public partial class CharacterWindow:Window
 
             for (int j = 0; j < slot.MaxItems; j++)
             {
-                var item = new EquipmentItem(slotIndex, this);
+                var item = new EquipmentItem(slotIndex, j, this);
                 Items.Add(item);
 
                 var slotName = slot.Name;
