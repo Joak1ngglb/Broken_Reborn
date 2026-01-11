@@ -285,6 +285,12 @@ public partial class FrmItem : EditorForm
         grpStatRanges.Text = Strings.ItemEditor.StatRangeTitle;
         lblStatRangeFrom.Text = Strings.ItemEditor.StatRangeFrom;
         lblStatRangeTo.Text = Strings.ItemEditor.StatRangeTo;
+        grpVitalRanges.Text = Strings.ItemEditor.VitalRangeTitle;
+        lblVitalRangeFrom.Text = Strings.ItemEditor.StatRangeFrom;
+        lblVitalRangeTo.Text = Strings.ItemEditor.StatRangeTo;
+        grpEffectRanges.Text = Strings.ItemEditor.EffectRangeTitle;
+        lblEffectRangeFrom.Text = Strings.ItemEditor.StatRangeFrom;
+        lblEffectRangeTo.Text = Strings.ItemEditor.StatRangeTo;
 
         grpWeaponProperties.Text = Strings.ItemEditor.weaponproperties;
         chk2Hand.Text = Strings.ItemEditor.twohanded;
@@ -661,6 +667,8 @@ public partial class FrmItem : EditorForm
 
             RefreshBonusList();
             RefreshStatRangeList();
+            RefreshVitalRangeList();
+            RefreshEffectRangeList();
         }
         else if (cmbType.SelectedIndex == (int)ItemType.Bag)
         {
@@ -1614,6 +1622,26 @@ public partial class FrmItem : EditorForm
         }
     }
 
+    private void RefreshVitalRangeList()
+    {
+        lstVitalRanges.Items.Clear();
+        foreach (var (vital, vitalName) in Strings.Combat.vitals)
+        {
+            lstVitalRanges.Items.Add(GetVitalRangeRowText((Vital)vital, vitalName));
+        }
+    }
+
+    private void RefreshEffectRangeList()
+    {
+        lstEffectRanges.Items.Clear();
+        var idx = 1;
+        foreach (var (_, effectName) in Strings.ItemEditor.bonuseffects.Skip(1))
+        {
+            lstEffectRanges.Items.Add(GetEffectRangeRowText((ItemEffect)idx, effectName));
+            idx++;
+        }
+    }
+
     private string GetStatRangeRowText(Stat stat, LocalizedString? statName = null)
     {
         if (statName == null && !Strings.Combat.stats.TryGetValue((int)stat, out statName))
@@ -1623,6 +1651,28 @@ public partial class FrmItem : EditorForm
 
         mEditorItem.TryGetRangeFor(stat, out var range);
         return Strings.ItemEditor.StatRangeItem.ToString(statName, range?.LowRange ?? 0, range?.HighRange ?? 0);
+    }
+
+    private string GetVitalRangeRowText(Vital vital, LocalizedString? vitalName = null)
+    {
+        if (vitalName == null && !Strings.Combat.vitals.TryGetValue((int)vital, out vitalName))
+        {
+            vitalName = Strings.General.None;
+        }
+
+        mEditorItem.TryGetRangeFor(vital, out var range);
+        return Strings.ItemEditor.StatRangeItem.ToString(vitalName, range?.LowRange ?? 0, range?.HighRange ?? 0);
+    }
+
+    private string GetEffectRangeRowText(ItemEffect effect, LocalizedString? effectName = null)
+    {
+        if (effectName == null && !Strings.ItemEditor.bonuseffects.TryGetValue((int)effect, out effectName))
+        {
+            effectName = Strings.General.None;
+        }
+
+        mEditorItem.TryGetRangeFor(effect, out var range);
+        return Strings.ItemEditor.StatRangeItem.ToString(effectName, range?.LowRange ?? 0, range?.HighRange ?? 0);
     }
 
     private bool IsValidBonusSelection
@@ -1646,6 +1696,18 @@ public partial class FrmItem : EditorForm
     private Stat? SelectedStatRange
     {
         get => Enum.IsDefined((Stat)lstStatRanges.SelectedIndex) ? (Stat)(lstStatRanges.SelectedIndex) : null;
+    }
+
+    private Vital? SelectedVitalRange
+    {
+        get => Enum.IsDefined((Vital)lstVitalRanges.SelectedIndex) ? (Vital)(lstVitalRanges.SelectedIndex) : null;
+    }
+
+    private ItemEffect? SelectedEffectRange
+    {
+        get => lstEffectRanges.SelectedIndex >= 0
+            ? (ItemEffect)(lstEffectRanges.SelectedIndex + 1)
+            : ItemEffect.None;
     }
 
     private ItemEventTrigger? SelectedEventTrigger
@@ -1692,6 +1754,30 @@ public partial class FrmItem : EditorForm
         nudStatRangeLow.Focus();
     }
 
+    private void nudVitalRangeLow_ValueChanged(object sender, EventArgs e)
+    {
+        if (!SelectedVitalRange.HasValue)
+        {
+            return;
+        }
+
+        mEditorItem.ModifyVitalRangeLow(SelectedVitalRange.Value, (int)nudVitalRangeLow.Value);
+        UpdateVitalRangeRow(lstVitalRanges.SelectedIndex);
+        nudVitalRangeLow.Focus();
+    }
+
+    private void nudEffectRangeLow_ValueChanged(object sender, EventArgs e)
+    {
+        if (!SelectedEffectRange.HasValue || SelectedEffectRange.Value == ItemEffect.None)
+        {
+            return;
+        }
+
+        mEditorItem.ModifyEffectRangeLow(SelectedEffectRange.Value, (int)nudEffectRangeLow.Value);
+        UpdateEffectRangeRow(lstEffectRanges.SelectedIndex);
+        nudEffectRangeLow.Focus();
+    }
+
     private void nudStatRangeHigh_ValueChanged(object sender, EventArgs e)
     {
         if (!SelectedStatRange.HasValue)
@@ -1704,6 +1790,30 @@ public partial class FrmItem : EditorForm
         nudStatRangeHigh.Focus();
     }
 
+    private void nudVitalRangeHigh_ValueChanged(object sender, EventArgs e)
+    {
+        if (!SelectedVitalRange.HasValue)
+        {
+            return;
+        }
+
+        mEditorItem.ModifyVitalRangeHigh(SelectedVitalRange.Value, (int)nudVitalRangeHigh.Value);
+        UpdateVitalRangeRow(lstVitalRanges.SelectedIndex);
+        nudVitalRangeHigh.Focus();
+    }
+
+    private void nudEffectRangeHigh_ValueChanged(object sender, EventArgs e)
+    {
+        if (!SelectedEffectRange.HasValue || SelectedEffectRange.Value == ItemEffect.None)
+        {
+            return;
+        }
+
+        mEditorItem.ModifyEffectRangeHigh(SelectedEffectRange.Value, (int)nudEffectRangeHigh.Value);
+        UpdateEffectRangeRow(lstEffectRanges.SelectedIndex);
+        nudEffectRangeHigh.Focus();
+    }
+
     private void UpdateStatRangeRow(int selectedIndex)
     {
         if (!SelectedStatRange.HasValue)
@@ -1712,6 +1822,26 @@ public partial class FrmItem : EditorForm
         }
 
         lstStatRanges.Items[selectedIndex] = GetStatRangeRowText(SelectedStatRange.Value);
+    }
+
+    private void UpdateVitalRangeRow(int selectedIndex)
+    {
+        if (!SelectedVitalRange.HasValue)
+        {
+            return;
+        }
+
+        lstVitalRanges.Items[selectedIndex] = GetVitalRangeRowText(SelectedVitalRange.Value);
+    }
+
+    private void UpdateEffectRangeRow(int selectedIndex)
+    {
+        if (!SelectedEffectRange.HasValue || SelectedEffectRange.Value == ItemEffect.None)
+        {
+            return;
+        }
+
+        lstEffectRanges.Items[selectedIndex] = GetEffectRangeRowText(SelectedEffectRange.Value);
     }
 
     private void lstStatRanges_SelectedIndexChanged(object sender, EventArgs e)
@@ -1732,6 +1862,46 @@ public partial class FrmItem : EditorForm
 
         nudStatRangeLow.Value = range.LowRange;
         nudStatRangeHigh.Value = range.HighRange;
+    }
+
+    private void lstVitalRanges_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        var vitalSelected = lstVitalRanges.SelectedIndex >= 0;
+        nudVitalRangeLow.Enabled = vitalSelected;
+        nudVitalRangeHigh.Enabled = vitalSelected;
+
+        if (!SelectedVitalRange.HasValue)
+        {
+            return;
+        }
+
+        if (!mEditorItem.TryGetRangeFor(SelectedVitalRange.Value, out var range))
+        {
+            return;
+        }
+
+        nudVitalRangeLow.Value = range.LowRange;
+        nudVitalRangeHigh.Value = range.HighRange;
+    }
+
+    private void lstEffectRanges_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        var effectSelected = lstEffectRanges.SelectedIndex >= 0;
+        nudEffectRangeLow.Enabled = effectSelected;
+        nudEffectRangeHigh.Enabled = effectSelected;
+
+        if (!SelectedEffectRange.HasValue || SelectedEffectRange.Value == ItemEffect.None)
+        {
+            return;
+        }
+
+        if (!mEditorItem.TryGetRangeFor(SelectedEffectRange.Value, out var range))
+        {
+            return;
+        }
+
+        nudEffectRangeLow.Value = range.LowRange;
+        nudEffectRangeHigh.Value = range.HighRange;
     }
 
     private void lstEventTriggers_SelectedIndexChanged(object sender, EventArgs e)
