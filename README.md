@@ -71,6 +71,10 @@ For the extended engine features, please refer to the [Features](./Documentation
 Extended engine features include things such as:
 - [Built-in Server Website](./Documentation/Features.md#homepage)
 
+### Server-Only Translation API Key
+
+Translation API keys are read only by the server from `resources/localization/apikey.txt` at startup. The client has no reference to this key, so keep the file on the server host only.
+
 ## Intersect Assets
 
 Intersect is distributed with [custom assets](https://github.com/AscensionGameDev/Intersect-Assets) that have been curated from our community and around the net. Assets all match in style and are all safe to use freely in commercial projects.

@@ -22,6 +22,7 @@ using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
+using Intersect.Server.Config;
 using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Server.Metrics;
@@ -213,6 +214,8 @@ internal static class Bootstrapper
 
             return false;
         }
+
+        TranslationConfiguration.LoadFromResources(ServerContext.ResourceDirectory);
 
         if (ServerContext.IsDefaultResourceDirectory)
         {
