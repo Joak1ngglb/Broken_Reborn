@@ -20,15 +20,12 @@ using Intersect.Utilities;
 
 namespace Intersect.Client.Interface.Game
 {
-    public partial class QuestsWindow : IQuestWindow
+    public partial class QuestsWindow : Window, IQuestWindow
     {
         // --- Controles base ---
-        private   WindowControl mQuestsWindow;
-
         private   ListBox _questList;
 
         private   ScrollControl mQuestDescArea;
-        private   Base _questDetailsContent;
 
         // Dentro del área scrolleable:
         private   Label mQuestTitle;
@@ -81,58 +78,52 @@ namespace Intersect.Client.Interface.Game
         private const int TitleToStatusSpacing = 3;
         private const int TitleToDescSpacing = 6;
 
-        public QuestsWindow(Canvas gameCanvas)
+        public QuestsWindow(Canvas gameCanvas) : base(gameCanvas, Strings.QuestLog.Title, false, nameof(QuestsWindow))
         {
-            mQuestsWindow = new WindowControl(gameCanvas, Strings.QuestLog.Title, false, "QuestsWindow");
-            mQuestsWindow.DisableResizing();
+            IsResizable = false;
 
           
             // Si el JSON no define tamaño, fallback
-            if (mQuestsWindow.Width <= 1 || mQuestsWindow.Height <= 1)
+            if (Width <= 1 || Height <= 1)
             {
-                mQuestsWindow.SetSize(760, 520);
+                SetSize(760, 520);
             }
 
             // Agarra controles YA existentes en el árbol del JSON (o crea si faltan)
-            _questList = TryGetOrCreateListBox(mQuestsWindow, "QuestList");
+            _questList = TryGetOrCreateListBox(this, "QuestList");
             _questList.EnableScroll(false, true);
             _questList.IsDisabled = false;
             _questList.IsVisibleInTree = true;
 
-            mQuestDescArea = TryGetOrCreateScroll(mQuestsWindow, "QuestDescription");
+            mQuestDescArea = TryGetOrCreateScroll(this, "QuestDescription");
             mQuestDescArea.EnableScroll(false, true);
 
-            // Esto debe colgar del ScrollControl
-            _questDetailsContent = TryGetOrCreateBase(mQuestDescArea, "QuestDetailsContent");
-            _questDetailsContent.Dock = Pos.None; // CLAVE: que pueda crecer
-            _questDetailsContent.SetPosition(0, 0);
-
             // Title + Status
-            mQuestTitle = TryGetOrCreateLabel(_questDetailsContent, "QuestTitle");
+            mQuestTitle = TryGetOrCreateLabel(mQuestDescArea, "QuestTitle");
             mQuestTitle.SetText("");
 
-            mQuestStatus = TryGetOrCreateLabel(_questDetailsContent, "QuestStatus");
+            mQuestStatus = TryGetOrCreateLabel(mQuestDescArea, "QuestStatus");
             mQuestStatus.SetText("");
 
             // Descripción
-            mQuestDescTemplateLabel = TryGetOrCreateLabel(_questDetailsContent, "QuestDescriptionTemplate");
-            mQuestDescLabel = TryGetOrCreateRichLabel(_questDetailsContent, "QuestDescriptionLabel");
+            mQuestDescTemplateLabel = TryGetOrCreateLabel(mQuestDescArea, "QuestDescriptionTemplate");
+            mQuestDescLabel = TryGetOrCreateRichLabel(mQuestDescArea, "QuestDescriptionLabel");
 
             // Current task
-            mQuestCurrentTaskTitle = TryGetOrCreateLabel(_questDetailsContent, "QuestCurrentTaskTitle");
+            mQuestCurrentTaskTitle = TryGetOrCreateLabel(mQuestDescArea, "QuestCurrentTaskTitle");
             mQuestCurrentTaskTitle.SetText(Strings.QuestLog.CurrentTask);
 
-            mQuestCurrentTaskLabel = TryGetOrCreateRichLabel(_questDetailsContent, "QuestCurrentTaskLabel");
+            mQuestCurrentTaskLabel = TryGetOrCreateRichLabel(mQuestDescArea, "QuestCurrentTaskLabel");
 
             // Tasks list
-            mQuestTasksList = TryGetOrCreateListBox(_questDetailsContent, "QuestTasksList");
+            mQuestTasksList = TryGetOrCreateListBox(mQuestDescArea, "QuestTasksList");
             mQuestTasksList.EnableScroll(false, false);
             mQuestTasksList.Dock = Pos.None;
             mQuestTasksList.Margin = new Margin(0, 0, 0, 0);
             mQuestTasksList.MouseInputEnabled = true; // para wheel propagation
 
             // Template tasks
-            _taskTemplateLabel = TryGetOrCreateLabel(_questDetailsContent, "QuestTaskTemplate");
+            _taskTemplateLabel = TryGetOrCreateLabel(mQuestDescArea, "QuestTaskTemplate");
             _taskTemplateLabel.IsHidden = true;
             if (_taskTemplateLabel.Font == null)
             {
@@ -140,8 +131,8 @@ namespace Intersect.Client.Interface.Game
             }
             _taskTemplateLabel.SetTextColor(TaskColorPending, ComponentState.Normal);
 
-            // Rewards: IMPORTANTE: parent correcto = _questDetailsContent (dentro del scroll)
-            _rewardContainer = TryGetOrCreateScroll(_questDetailsContent, "QuestRewardContainer");
+            // Rewards: IMPORTANTE: parent correcto = mQuestDescArea (dentro del scroll)
+            _rewardContainer = TryGetOrCreateScroll(mQuestDescArea, "QuestRewardContainer");
             _rewardContainer.EnableScroll(false, false);
             _rewardContainer.MouseInputEnabled = true;
 
@@ -152,12 +143,12 @@ namespace Intersect.Client.Interface.Game
             EnsureRewardsAreInsideDetailsScroll(); // << añade este método (abajo)
 
             // Botón abandonar (fuera del scroll)
-            mQuitButton = TryGetOrCreateButton(mQuestsWindow, "AbandonQuestButton");
+            mQuitButton = TryGetOrCreateButton(this, "AbandonQuestButton");
             mQuitButton.SetText(Strings.QuestLog.Abandon);
             mQuitButton.Clicked -= _quitButton_Clicked;
             mQuitButton.Clicked += _quitButton_Clicked;
             // Carga JSON PRIMERO
-            mQuestsWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+            LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
 
             // Scroll fixes (JSON puede venir con zonas muertas)
             if (mQuestDescArea.InnerPanel != null)
@@ -189,15 +180,6 @@ namespace Intersect.Client.Interface.Game
         // -------------------------
         // Helpers "TryGetOrCreate"
         // -------------------------
-        private static Base TryGetOrCreateBase(Base parent, string name)
-        {
-            var existing = parent.FindChildByName(name) as Base;
-            if (existing != null) return existing;
-
-            var created = new Base(parent, name);
-            return created;
-        }
-
         private static ScrollControl TryGetOrCreateScroll(Base parent, string name)
         {
             var existing = parent.FindChildByName(name) as ScrollControl;
@@ -209,8 +191,8 @@ namespace Intersect.Client.Interface.Game
         }
         private void EnsureRewardsAreInsideDetailsScroll()
         {
-            if (_rewardContainer.Parent != _questDetailsContent)
-                _rewardContainer.Parent = _questDetailsContent;
+            if (_rewardContainer.Parent != mQuestDescArea)
+                _rewardContainer.Parent = mQuestDescArea;
 
             if (_rewardExpContainer.Parent != _rewardContainer)
                 _rewardExpContainer.Parent = _rewardContainer;
@@ -318,7 +300,7 @@ namespace Intersect.Client.Interface.Game
         // -------------------------
         public void Update(bool shouldUpdateList)
         {
-            if (!mQuestsWindow.IsVisibleInTree)
+            if (!IsVisibleInTree)
             {
                 _shouldUpdateList |= shouldUpdateList;
                 return;
@@ -333,7 +315,7 @@ namespace Intersect.Client.Interface.Game
 
             if (!questIds.Contains(mSelectedQuest.Id)) return;
 
-            if (mQuestsWindow.IsHidden || !mQuestsWindow.IsVisibleInTree)
+            if (IsHidden || !IsVisibleInTree)
             {
                 _shouldUpdateList = true;
                 return;
@@ -350,7 +332,7 @@ namespace Intersect.Client.Interface.Game
                 UpdateSelectedQuest();
             }
 
-            if (mQuestsWindow.IsHidden)
+            if (IsHidden)
             {
                 _shouldUpdateList |= shouldUpdateList;
                 return;
@@ -753,8 +735,6 @@ namespace Intersect.Client.Interface.Game
             y += bottomPadding;
 
             // CLAVE: el content interno tiene que ser EXACTAMENTE el total calculado
-            _questDetailsContent.SetSize(Math.Max(contentWidth, 1), Math.Max(y, 1));
-
             // CLAVE: inner size del scroll = content size real
             mQuestDescArea.SetInnerSize(Math.Max(contentWidth, 1), Math.Max(y, 1));
 
@@ -770,6 +750,14 @@ namespace Intersect.Client.Interface.Game
         // -------------------------
         // Show/Hide
         // -------------------------
+        protected override void EnsureInitialized()
+        {
+            LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+            UpdateQuestList();
+            UpdateSelectedQuest();
+            UpdateQuestTasks();
+        }
+
         public void Show()
         {
             mSelectedQuest = null;
@@ -784,14 +772,14 @@ namespace Intersect.Client.Interface.Game
                 _shouldUpdateList = false;
             }
 
-            mQuestsWindow.IsHidden = false;
+            IsHidden = false;
         }
 
-        public bool IsVisible() => !mQuestsWindow.IsHidden;
+        public bool IsVisible() => !IsHidden;
 
         public void Hide()
         {
-            mQuestsWindow.IsHidden = true;
+            IsHidden = true;
             mSelectedQuest = null;
             _questList.UnselectAll();
             UpdateSelectedQuest();
