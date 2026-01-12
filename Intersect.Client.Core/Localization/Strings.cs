@@ -20,6 +20,7 @@ namespace Intersect.Client.Localization;
 public static partial class Strings
 {
     private const string StringsFileName = "client_strings.json";
+    private const string StringsCacheFileName = "client_strings.cache.json";
     private static char[] mQuantityTrimChars = new char[] { '.', '0' };
 
     private static string[] _unitsBits = [string.Empty, "Ki", "Mi", "Gi", "Ti"];
@@ -274,10 +275,10 @@ public static partial class Strings
             if (missingStrings.Count > 0)
             {
                 ApplicationContext.Context.Value?.Logger.LogWarning(
-                    "Missing strings, overwriting strings file:\n\t{Strings}",
+                    "Missing strings, writing cache file:\n\t{Strings}",
                     string.Join(",\n\t", missingStrings)
                 );
-                SaveSerialized(serialized);
+                SaveSerializedToCache(serialized);
             }
 
             if (argumentCountMismatch.Count > 0)
@@ -821,16 +822,18 @@ public static partial class Strings
         return serializedGroup;
     }
 
-    private static void SaveSerialized(Dictionary<string, Dictionary<string, object>> serialized)
+    private static void SaveSerializedToCache(Dictionary<string, Dictionary<string, object>> serialized)
     {
-        var languageDirectory = Path.Combine(ClientConfiguration.ResourcesDirectory);
-        if (Directory.Exists(languageDirectory))
+        var cacheDirectory = Path.Combine(ClientConfiguration.ResourcesDirectory, "localization", "cache");
+        if (!Directory.Exists(cacheDirectory))
         {
-            File.WriteAllText(
-                Path.Combine(languageDirectory, StringsFileName),
-                JsonConvert.SerializeObject(serialized, Formatting.Indented)
-            );
+            Directory.CreateDirectory(cacheDirectory);
         }
+
+        File.WriteAllText(
+            Path.Combine(cacheDirectory, StringsCacheFileName),
+            JsonConvert.SerializeObject(serialized, Formatting.Indented)
+        );
     }
 
     public static void Save()
@@ -845,7 +848,7 @@ public static partial class Strings
             serialized.Add(groupType.Name, serializedGroup);
         }
 
-        SaveSerialized(serialized);
+        SaveSerializedToCache(serialized);
     }
 
     public partial struct AdminWindow

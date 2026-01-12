@@ -73,6 +73,7 @@ internal partial class IntersectGame : Game
         try
         {
             Strings.Load();
+            TranslationService.Init();
         }
         catch (Exception exception)
         {

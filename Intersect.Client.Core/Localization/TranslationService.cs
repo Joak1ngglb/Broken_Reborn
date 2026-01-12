@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Intersect.Client.Networking;
@@ -24,6 +26,17 @@ public class TranslationService
     private const int BatchSize = 20;
     private const int BatchTimeoutSeconds = 30;
     private const string TranslationScope = "client";
+    private static readonly string[] PriorityGroups =
+    [
+        "MainMenu",
+        "LoginWindow",
+        "Registration",
+        "ForgotPassword",
+        "PasswordChange",
+        "CharacterSelection",
+        "CharacterCreation",
+        "Credits",
+    ];
 
     private static TranslationService _instance;
     public static TranslationService Instance => _instance ??= new TranslationService();
@@ -310,7 +323,151 @@ public class TranslationService
 
     private static Task TranslateInterface()
     {
-        return Task.CompletedTask;
+        return Instance.TranslateInterfaceAsync();
+    }
+
+    private async Task TranslateInterfaceAsync()
+    {
+        if (!_enabled)
+        {
+            return;
+        }
+
+        await Task.Delay(TimeSpan.FromMilliseconds(250)).ConfigureAwait(false);
+
+        var inputs = BuildInterfaceInputs(out var setters);
+        if (inputs.Count == 0)
+        {
+            return;
+        }
+
+        var priorityInputs = new Dictionary<string, string>(StringComparer.Ordinal);
+        var backgroundInputs = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var entry in inputs)
+        {
+            if (IsPriorityKey(entry.Key))
+            {
+                priorityInputs[entry.Key] = entry.Value;
+            }
+            else
+            {
+                backgroundInputs[entry.Key] = entry.Value;
+            }
+        }
+
+        if (priorityInputs.Count > 0)
+        {
+            await TranslateBatch(priorityInputs, chunkResults =>
+            {
+                ApplyInterfaceTranslations(setters, chunkResults);
+            }).ConfigureAwait(false);
+        }
+
+        if (backgroundInputs.Count > 0)
+        {
+            _ = Task.Run(() => TranslateBatch(backgroundInputs, chunkResults =>
+            {
+                ApplyInterfaceTranslations(setters, chunkResults);
+            }));
+        }
+    }
+
+    private static Dictionary<string, string> BuildInterfaceInputs(
+        out Dictionary<string, Action<string>> setters
+    )
+    {
+        setters = new Dictionary<string, Action<string>>(StringComparer.Ordinal);
+        var inputs = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        var rootType = typeof(Strings);
+        var groupTypes = rootType.GetNestedTypes(BindingFlags.Static | BindingFlags.Public);
+        foreach (var groupType in groupTypes)
+        {
+            foreach (var fieldInfo in groupType.GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                var fieldValue = fieldInfo.GetValue(null);
+                if (fieldValue is LocalizedString localizedString)
+                {
+                    var key = $"{groupType.Name}.{fieldInfo.Name}";
+                    var value = localizedString.ToString();
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        continue;
+                    }
+
+                    inputs[key] = value;
+                    setters[key] = translated =>
+                    {
+                        fieldInfo.SetValue(null, new LocalizedString(translated));
+                    };
+                }
+                else if (fieldValue is IDictionary dictionary)
+                {
+                    foreach (DictionaryEntry entry in dictionary)
+                    {
+                        if (entry.Value is not LocalizedString dictionaryLocalized)
+                        {
+                            continue;
+                        }
+
+                        var dictionaryKey = $"{groupType.Name}.{fieldInfo.Name}[{entry.Key}]";
+                        var value = dictionaryLocalized.ToString();
+                        if (string.IsNullOrWhiteSpace(value))
+                        {
+                            continue;
+                        }
+
+                        inputs[dictionaryKey] = value;
+                        setters[dictionaryKey] = translated =>
+                        {
+                            dictionary[entry.Key] = new LocalizedString(translated);
+                        };
+                    }
+                }
+            }
+        }
+
+        return inputs;
+    }
+
+    private static void ApplyInterfaceTranslations(
+        IReadOnlyDictionary<string, Action<string>> setters,
+        IReadOnlyDictionary<string, string> translations
+    )
+    {
+        if (translations.Count == 0)
+        {
+            return;
+        }
+
+        ThreadQueue.Default.RunOnMainThread(() =>
+        {
+            foreach (var translation in translations)
+            {
+                if (setters.TryGetValue(translation.Key, out var setter))
+                {
+                    setter(translation.Value);
+                }
+            }
+        });
+    }
+
+    private static bool IsPriorityKey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return false;
+        }
+
+        var separatorIndex = key.IndexOf('.');
+        if (separatorIndex <= 0)
+        {
+            return false;
+        }
+
+        var group = key[..separatorIndex];
+        return PriorityGroups.Contains(group, StringComparer.Ordinal);
     }
 
     public static async Task TranslateGameContent()
