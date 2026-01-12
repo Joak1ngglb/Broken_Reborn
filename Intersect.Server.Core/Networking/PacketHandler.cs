@@ -89,6 +89,64 @@ internal sealed partial class PacketHandler
         Instance = this;
     }
 
+    public void HandlePacket(Client client, TranslationBatchRequestPacket packet)
+    {
+        if (client == null || packet == null)
+        {
+            return;
+        }
+
+        _ = HandleTranslationBatchRequestAsync(client, packet);
+    }
+
+    private async Task HandleTranslationBatchRequestAsync(Client client, TranslationBatchRequestPacket packet)
+    {
+        if (packet.Entries == null || packet.Entries.Length == 0)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(packet.TargetLang))
+        {
+            return;
+        }
+
+        var scope = string.IsNullOrWhiteSpace(packet.Scope) ? "default" : packet.Scope;
+        var entries = packet.Entries;
+        var texts = new string[entries.Length];
+        for (var i = 0; i < entries.Length; i++)
+        {
+            texts[i] = entries[i]?.Text ?? string.Empty;
+        }
+
+        IReadOnlyList<string> translations;
+        try
+        {
+            translations = await ServerTranslationService.TranslateBatch(
+                packet.TargetLang,
+                packet.SourceLang,
+                texts,
+                scope,
+                client.User?.Id.ToString(),
+                client.Ip
+            ).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to translate batch for client {ClientId}", client.Id);
+            return;
+        }
+
+        var responseEntries = new TranslationBatchEntry[entries.Length];
+        for (var i = 0; i < entries.Length; i++)
+        {
+            var translatedText = i < translations.Count ? translations[i] ?? string.Empty : entries[i]?.Text ?? string.Empty;
+            responseEntries[i] = new TranslationBatchEntry(entries[i]?.Id ?? string.Empty, translatedText);
+        }
+
+        client.Send(new TranslationBatchResponsePacket(packet.TargetLang, packet.SourceLang, scope, responseEntries));
+    }
+
     public bool PreProcessPacket(IConnection connection, long pSize)
     {
         if (ShouldAcceptPacket(connection, pSize))

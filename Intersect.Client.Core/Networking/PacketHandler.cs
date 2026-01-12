@@ -197,6 +197,11 @@ internal sealed partial class PacketHandler
         Globals.JoiningGame = true;
     }
 
+    public void HandlePacket(IPacketSender packetSender, TranslationBatchResponsePacket packet)
+    {
+        TranslationService.Instance.UpdateFromResponse(packet);
+    }
+
     public void HandlePacket(IPacketSender packetSender, MapAreaPacket packet)
     {
         foreach (var map in packet.Maps)

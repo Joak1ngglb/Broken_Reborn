@@ -120,6 +120,21 @@ public static partial class PacketSender
         Network.SendPacket(new ChatMsgPacket(msg, channel, items));
     }
 
+    public static void SendTranslationBatch(
+        string targetLang,
+        string? sourceLang,
+        string scope,
+        IReadOnlyList<TranslationBatchEntry> entries
+    )
+    {
+        if (entries.Count == 0)
+        {
+            return;
+        }
+
+        Network.SendPacket(new TranslationBatchRequestPacket(targetLang, sourceLang, scope, entries.ToArray()));
+    }
+
     public static void SendAttack(Guid targetId)
     {
         Network.SendPacket(new AttackPacket(targetId));
