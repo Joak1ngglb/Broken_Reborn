@@ -177,6 +177,8 @@ public partial record Options
     #endregion Security
 
     #region Other Game Properties
+    [JsonIgnore]
+    public string TranslationApiKey { get; set; } = string.Empty;
 
     [RequiresRestart]
     public List<string> AnimatedSprites { get; set; } = [];
@@ -275,7 +277,16 @@ public partial record Options
             instance.SyncEquipmentItemSubtypes();
             Instance = instance;
         }
-
+        // Load API Key from separate file (server-side only logic essentially, though code is shared)
+        var pathToApiKey = Path.Combine(ResourcesDirectory, "localization", "apikey.txt");
+        if (File.Exists(pathToApiKey))
+        {
+            try
+            {
+                instance.TranslationApiKey = File.ReadAllText(pathToApiKey).Trim();
+            }
+            catch { }
+        }
         instance.SmtpValid = instance.SmtpSettings.IsValid();
         instance.FixAnimatedSprites();
 
