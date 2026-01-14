@@ -30,6 +30,8 @@ public class TranslationService
     private readonly string _cacheFilePath; // Cache file path
     private bool _enabled;
 
+    public bool UseCacheOnly { get; set; }
+
     // Batching Configuration
     private const int BATCH_SIZE = 20; // Number of strings per request
 
@@ -99,6 +101,11 @@ public class TranslationService
             return cached;
         }
 
+        if (UseCacheOnly)
+        {
+            return text;
+        }
+
         // Use key from Options, which comes from Server or Local Config
         var apiKey = Options.Instance?.TranslationApiKey;
 
@@ -163,6 +170,16 @@ public class TranslationService
         }
 
         if (uncached.Count == 0) return results;
+
+        if (UseCacheOnly)
+        {
+            foreach (var kvp in uncached)
+            {
+                results[kvp.Key] = kvp.Value;
+            }
+
+            return results;
+        }
 
         // Use key from Options
         var apiKey = Options.Instance?.TranslationApiKey;
