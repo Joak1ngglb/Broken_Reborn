@@ -98,11 +98,13 @@ public class TranslationService
 
         if (_translationCache.TryGetValue(text, out var cached))
         {
+            ApplicationContext.Context.Value?.Logger.LogDebug("Translation cache hit (text).");
             return cached;
         }
 
         if (UseCacheOnly)
         {
+            ApplicationContext.Context.Value?.Logger.LogDebug("Translation skipped: cache-only mode enabled.");
             return text;
         }
 
@@ -113,12 +115,14 @@ public class TranslationService
         // Just return the original text.
         if (string.IsNullOrEmpty(apiKey))
         {
+            ApplicationContext.Context.Value?.Logger.LogDebug("Translation skipped: missing API key.");
             return text;
         }
 
         try
         {
             // Fallback to single if called directly
+            ApplicationContext.Context.Value?.Logger.LogDebug("Translation miss (text). Requesting single translation via API.");
             var translated = await RequestTranslationSingle(text);
             _translationCache[text] = translated;
             SaveCache(); // Save after new translation
@@ -145,12 +149,14 @@ public class TranslationService
             // First check Key Cache (ID/Key based) - Priority for Game Content
             if (_translationKeyCache.TryGetValue(kvp.Key, out var keyCached))
             {
+                ApplicationContext.Context.Value?.Logger.LogDebug("Translation cache hit (key): {Key}", kvp.Key);
                 results[kvp.Key] = keyCached;
                 cachedResults[kvp.Key] = keyCached;
             }
             // Fallback to Text Cache (Value based) - Optimization for UI
             else if (_translationCache.TryGetValue(kvp.Value, out var textCached))
             {
+                ApplicationContext.Context.Value?.Logger.LogDebug("Translation cache hit (text) for key: {Key}", kvp.Key);
                 results[kvp.Key] = textCached;
                 cachedResults[kvp.Key] = textCached;
 
@@ -187,6 +193,10 @@ public class TranslationService
         // If no API Key is available, do not process uncached strings
         if (string.IsNullOrEmpty(apiKey))
         {
+            ApplicationContext.Context.Value?.Logger.LogDebug(
+                "Translation skipped for {Count} uncached strings: missing API key.",
+                uncached.Count
+            );
             return results;
         }
 
@@ -202,6 +212,10 @@ public class TranslationService
 
             try
             {
+                ApplicationContext.Context.Value?.Logger.LogDebug(
+                    "Requesting translation for batch of {Count} strings via API.",
+                    chunkDict.Count
+                );
                 var translatedChunk = await RequestTranslationBatch(chunkDict);
 
                 foreach (var kvp in translatedChunk)
@@ -392,6 +406,7 @@ public class TranslationService
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
         }
 
+        ApplicationContext.Context.Value?.Logger.LogDebug("Sending translation request to API endpoint.");
         var response = await _httpClient.PostAsync(ApiUrl, content);
         response.EnsureSuccessStatusCode();
 
