@@ -32,9 +32,11 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.Security;
+using Intersect.Framework.Threading;
 using Intersect.Localization;
 using Microsoft.Extensions.Logging;
 using System.Linq;
+using System.Threading.Tasks;
 using Intersect.Framework.Core.GameObjects.Spells;
 
 namespace Intersect.Client.Networking;
@@ -641,6 +643,35 @@ internal sealed partial class PacketHandler
                 packet.Target, packet.Items
             )
         );
+        // Define which channels contain player communication which should NOT be translated to avoid freezing/lag
+        // Local, Global, Party, Guild, PM, Admin are typically user-generated text.
+        // Server messages (Experience, Loot, Combat, Notice, Error, etc) should be translated.
+        bool shouldTranslate = packet.Type != ChatMessageType.Local &&
+                               packet.Type != ChatMessageType.Global &&
+                               packet.Type != ChatMessageType.Party &&
+                               packet.Type != ChatMessageType.Guild &&
+                               packet.Type != ChatMessageType.PM &&
+                               packet.Type != ChatMessageType.Admin;
+        _ = Task.Run(async () =>
+        {
+            var msgText = packet.Message ?? "";
+            var translatedMsg = msgText;
+            // Only translate if it looks like content (length > 1) and isn't excluded player chat
+            if (shouldTranslate && msgText.Length > 1)
+            {
+                translatedMsg = await TranslationService.Instance.Translate(msgText);
+            }
+            // Post back to main thread to display
+            ThreadQueue.Default.RunOnMainThread(() =>
+            {
+                ChatboxMsg.AddMessage(
+                    new ChatboxMsg(
+                        translatedMsg, new Color(packet.Color.A, packet.Color.R, packet.Color.G, packet.Color.B), packet.Type,
+                        packet.Target
+                    )
+                );
+            });
+        });
 
         if (packet.Type == ChatMessageType.Error && Interface.Interface.GameUi?.mPlayerShopBrowseWindow != null)
         {
@@ -692,6 +723,8 @@ internal sealed partial class PacketHandler
 
         CustomColors.Load(packet.ColorsJson);
         Globals.HasGameData = true;
+        // Trigger translation of game content now that data is loaded
+        _ = Task.Run(TranslationService.TranslateGameContent);
     }
 
     //MapListPacket
