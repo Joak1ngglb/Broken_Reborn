@@ -227,3 +227,4 @@ packages/
 .local/
 
 Custom*.props
+resources/localization/apikey.txt

@@ -42,7 +42,7 @@ public class TranslationService
 
         // Detect System Language
         var currentCulture = CultureInfo.CurrentUICulture;
-        _targetLanguage = currentCulture.DisplayName;
+        _targetLanguage = currentCulture.Name;
 
         // Define cache path
         // Ensure the directory exists
@@ -213,10 +213,35 @@ public class TranslationService
             if (File.Exists(_cacheFilePath))
             {
                 var json = File.ReadAllText(_cacheFilePath, Encoding.UTF8);
-                var loadedCache = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                if (loadedCache != null)
+                var loadedPayload = JsonConvert.DeserializeObject<TranslationCachePayload>(json);
+                if (loadedPayload?.KeyCache != null || loadedPayload?.TextCache != null)
                 {
-                    foreach (var kvp in loadedCache)
+                    if (loadedPayload.KeyCache != null)
+                    {
+                        foreach (var kvp in loadedPayload.KeyCache)
+                        {
+                            _translationKeyCache.TryAdd(kvp.Key, kvp.Value);
+                        }
+                    }
+
+                    if (loadedPayload.TextCache != null)
+                    {
+                        foreach (var kvp in loadedPayload.TextCache)
+                        {
+                            _translationCache.TryAdd(kvp.Key, kvp.Value);
+                        }
+                    }
+
+                    ApplicationContext.Context.Value?.Logger.LogInformation(
+                        $"Loaded {_translationKeyCache.Count} key translations and {_translationCache.Count} text translations from cache."
+                    );
+                    return;
+                }
+
+                var loadedLegacyCache = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                if (loadedLegacyCache != null)
+                {
+                    foreach (var kvp in loadedLegacyCache)
                     {
                         // Identify if it's a GUID/Key or Text based on content or context (Simplified assumption)
                         // If key contains _, it's likely a Game Content Key (ITEM_NAME_...) or UI Key (MainMenu.Login)
@@ -239,7 +264,9 @@ public class TranslationService
                             _translationCache.TryAdd(kvp.Key, kvp.Value);
                         }
                     }
-                    ApplicationContext.Context.Value?.Logger.LogInformation($"Loaded {_translationKeyCache.Count} translations from cache.");
+                    ApplicationContext.Context.Value?.Logger.LogInformation(
+                        $"Loaded {_translationKeyCache.Count} translations from legacy cache."
+                    );
                 }
             }
         }
@@ -253,18 +280,27 @@ public class TranslationService
     {
         try
         {
-            // We want to save primarily the KEY based cache, as it is more specific.
-            // However, to support UI strings that rely on text matching (if any), we might need those too.
-            // But TranslateBatch populates _translationKeyCache for UI strings too (MainMenu.Login).
-            // So saving _translationKeyCache should be sufficient for everything handled by TranslateBatch.
-
-            var json = JsonConvert.SerializeObject(_translationKeyCache, Formatting.Indented);
+            var payload = new TranslationCachePayload
+            {
+                KeyCache = _translationKeyCache.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                TextCache = _translationCache.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+            };
+            var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
             File.WriteAllText(_cacheFilePath, json, Encoding.UTF8);
         }
         catch (Exception ex)
         {
             ApplicationContext.Context.Value?.Logger.LogError($"Failed to save translation cache: {ex.Message}");
         }
+    }
+
+    private sealed class TranslationCachePayload
+    {
+        [JsonProperty("keyCache")]
+        public Dictionary<string, string> KeyCache { get; set; } = new();
+
+        [JsonProperty("textCache")]
+        public Dictionary<string, string> TextCache { get; set; } = new();
     }
 
     private async Task<string> RequestTranslationSingle(string text)
