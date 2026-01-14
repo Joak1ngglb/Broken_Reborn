@@ -67,12 +67,26 @@ public class TranslationService
     {
         if (Instance._enabled)
         {
-            // Start background translation of UI strings
-            Task.Run(TranslateInterface);
-
-            // Start background translation of Game Content (Items, Quests, etc.)
-            // Removed fixed delay task. Replaced by trigger in PacketHandler.
+            // Start background pre-translation at a controlled phase (startup).
+            Task.Run(PreTranslateContent);
         }
+    }
+
+    public static async Task PreTranslateContent()
+    {
+        if (!Instance._enabled)
+        {
+            return;
+        }
+
+        // UI static strings.
+        await Strings.TranslateAll(Instance);
+
+        // Game content (items, quests, spells, etc.).
+        await TranslateGameContent();
+
+        // Ensure any translated results are persisted immediately.
+        Instance.SaveCache();
     }
 
     public async Task<string> Translate(string text)
@@ -367,11 +381,6 @@ public class TranslationService
         var responseString = await response.Content.ReadAsStringAsync();
         dynamic result = JsonConvert.DeserializeObject(responseString);
         return result.choices[0].message.content;
-    }
-
-    private static async Task TranslateInterface()
-    {
-        await Strings.TranslateAll(Instance);
     }
 
     public static async Task TranslateGameContent()
