@@ -2,6 +2,7 @@ using System.Text;
 using System.Globalization;
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Intersect.Client.General;
 using Intersect.Configuration;
 using Intersect.Core;
@@ -19,9 +20,7 @@ public class TranslationService
     private static TranslationService _instance;
     public static TranslationService Instance => _instance ??= new TranslationService();
 
-    // Configuration - In a real app, move these to ClientConfiguration
-    private const string ApiUrl = "https://jlrootsloud-3174sfw-resource.cognitiveservices.azure.com/openai/deployments/gpt-4.1-mini/chat/completions?api-version=2024-05-01-preview";
-    private const string Model = "gpt-4.1-mini"; // Fastest and most cost-effective model currently
+    private const string TranslationEndpointPath = "api/translation";
 
     private readonly HttpClient _httpClient;
     private readonly ConcurrentDictionary<string, string> _translationCache;
@@ -29,6 +28,8 @@ public class TranslationService
     private readonly string _targetLanguage;
     private readonly string _cacheFilePath; // Cache file path
     private bool _enabled;
+
+    public bool UseCacheOnly { get; set; }
 
     // Batching Configuration
     private const int BATCH_SIZE = 20; // Number of strings per request
@@ -67,12 +68,26 @@ public class TranslationService
     {
         if (Instance._enabled)
         {
-            // Start background translation of UI strings
-            Task.Run(TranslateInterface);
-
-            // Start background translation of Game Content (Items, Quests, etc.)
-            // Removed fixed delay task. Replaced by trigger in PacketHandler.
+            // Start background pre-translation at a controlled phase (startup).
+            Task.Run(PreTranslateContent);
         }
+    }
+
+    public static async Task PreTranslateContent()
+    {
+        if (!Instance._enabled)
+        {
+            return;
+        }
+
+        // UI static strings.
+        await Strings.TranslateAll(Instance);
+
+        // Game content (items, quests, spells, etc.).
+        await TranslateGameContent();
+
+        // Ensure any translated results are persisted immediately.
+        Instance.SaveCache();
     }
 
     public async Task<string> Translate(string text)
@@ -85,12 +100,7 @@ public class TranslationService
             return cached;
         }
 
-        // Use key from Options, which comes from Server or Local Config
-        var apiKey = Options.Instance?.TranslationApiKey;
-
-        // If no API Key is available, we cannot translate (and we missed the cache above).
-        // Just return the original text.
-        if (string.IsNullOrEmpty(apiKey))
+        if (UseCacheOnly)
         {
             return text;
         }
@@ -150,12 +160,13 @@ public class TranslationService
 
         if (uncached.Count == 0) return results;
 
-        // Use key from Options
-        var apiKey = Options.Instance?.TranslationApiKey;
-
-        // If no API Key is available, do not process uncached strings
-        if (string.IsNullOrEmpty(apiKey))
+        if (UseCacheOnly)
         {
+            foreach (var kvp in uncached)
+            {
+                results[kvp.Key] = kvp.Value;
+            }
+
             return results;
         }
 
@@ -213,10 +224,11 @@ public class TranslationService
             if (File.Exists(_cacheFilePath))
             {
                 var json = File.ReadAllText(_cacheFilePath, Encoding.UTF8);
-                var loadedPayload = JsonConvert.DeserializeObject<TranslationCachePayload>(json);
-                if (loadedPayload?.KeyCache != null || loadedPayload?.TextCache != null)
+                var token = JsonConvert.DeserializeObject<JToken>(json);
+                if (token is JObject obj && (obj.Property("keyCache") != null || obj.Property("textCache") != null))
                 {
-                    if (loadedPayload.KeyCache != null)
+                    var loadedPayload = obj.ToObject<TranslationCachePayload>();
+                    if (loadedPayload?.KeyCache != null)
                     {
                         foreach (var kvp in loadedPayload.KeyCache)
                         {
@@ -224,7 +236,7 @@ public class TranslationService
                         }
                     }
 
-                    if (loadedPayload.TextCache != null)
+                    if (loadedPayload?.TextCache != null)
                     {
                         foreach (var kvp in loadedPayload.TextCache)
                         {
@@ -238,7 +250,7 @@ public class TranslationService
                     return;
                 }
 
-                var loadedLegacyCache = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                var loadedLegacyCache = token?.ToObject<Dictionary<string, string>>();
                 if (loadedLegacyCache != null)
                 {
                     foreach (var kvp in loadedLegacyCache)
@@ -305,73 +317,67 @@ public class TranslationService
 
     private async Task<string> RequestTranslationSingle(string text)
     {
-        // ... (Keep existing logic if needed for single calls) ...
-        // Re-using batch logic logic for simplicity could be better, but keeping single prompt simple
-        var prompt = $"Translate to {_targetLanguage}. Return ONLY translated text. Text: {text}";
-        return await SendLlmRequest(prompt);
+        var response = await SendLlmRequest(
+            new TranslationRequestBody
+            {
+                Text = text,
+                TargetLanguage = _targetLanguage,
+            }
+        );
+        return response.Translation ?? text;
     }
 
     private async Task<Dictionary<string, string>> RequestTranslationBatch(Dictionary<string, string> texts)
     {
-        // Construct JSON for the LLM to translate values
-        var jsonPayload = JsonConvert.SerializeObject(texts);
-        var prompt = $"You are a localization system. Translate the VALUES of the following JSON object to {_targetLanguage}. \n" +
-                     $"Do NOT translate keys. Do NOT add explanations. Return ONLY the valid JSON object.\n" +
-                     $"Preserve formatting tokens ({{0}}, \\c{{...}}).\n\n" +
-                     $"JSON:\n{jsonPayload}";
-
-        var responseText = await SendLlmRequest(prompt);
-
-        // Clean up response if LLM adds markdown blocks
-        responseText = responseText.Replace("```json", "").Replace("```", "").Trim();
-
-        try
-        {
-            return JsonConvert.DeserializeObject<Dictionary<string, string>>(responseText) ?? new Dictionary<string, string>();
-        }
-        catch (JsonException)
-        {
-            // If JSON parsing fails, log and return empty (or try repair)
-            ApplicationContext.Context.Value?.Logger.LogWarning("LLM returned invalid JSON for batch.");
-            return new Dictionary<string, string>();
-        }
+        var response = await SendLlmRequest(
+            new TranslationRequestBody
+            {
+                Batch = texts,
+                TargetLanguage = _targetLanguage,
+            }
+        );
+        return response.Translations ?? new Dictionary<string, string>();
     }
 
-    private async Task<string> SendLlmRequest(string prompt)
+    private async Task<TranslationResponseBody> SendLlmRequest(TranslationRequestBody request)
     {
-        var requestBody = new
-        {
-            model = Model,
-            messages = new[]
-            {
-                new { role = "system", content = "You are a professional game localization assistant. Be concise." },
-                new { role = "user", content = prompt }
-            },
-            temperature = 0.1, // Lower temperature for more deterministic/consistent JSON
-            max_tokens = 2048
-        };
-
-        var json = JsonConvert.SerializeObject(requestBody);
+        var json = JsonConvert.SerializeObject(request);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var apiKey = Options.Instance?.TranslationApiKey;
-
-        if (!_httpClient.DefaultRequestHeaders.Contains("Authorization") && !string.IsNullOrEmpty(apiKey))
-        {
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-        }
-
-        var response = await _httpClient.PostAsync(ApiUrl, content);
+        var response = await _httpClient.PostAsync(BuildTranslationEndpoint(), content);
         response.EnsureSuccessStatusCode();
-
         var responseString = await response.Content.ReadAsStringAsync();
-        dynamic result = JsonConvert.DeserializeObject(responseString);
-        return result.choices[0].message.content;
+        return JsonConvert.DeserializeObject<TranslationResponseBody>(responseString)
+            ?? new TranslationResponseBody();
     }
 
-    private static async Task TranslateInterface()
+    private static Uri BuildTranslationEndpoint() => new UriBuilder
     {
-        await Strings.TranslateAll(Instance);
+        Scheme = Uri.UriSchemeHttp,
+        Host = ClientConfiguration.Instance.Host,
+        Port = ClientConfiguration.Instance.Port,
+        Path = TranslationEndpointPath,
+    }.Uri;
+
+    private sealed class TranslationRequestBody
+    {
+        [JsonProperty("text")]
+        public string? Text { get; set; }
+
+        [JsonProperty("batch")]
+        public Dictionary<string, string>? Batch { get; set; }
+
+        [JsonProperty("targetLanguage")]
+        public string? TargetLanguage { get; set; }
+    }
+
+    private sealed class TranslationResponseBody
+    {
+        [JsonProperty("translation")]
+        public string? Translation { get; set; }
+
+        [JsonProperty("translations")]
+        public Dictionary<string, string>? Translations { get; set; }
     }
 
     public static async Task TranslateGameContent()
