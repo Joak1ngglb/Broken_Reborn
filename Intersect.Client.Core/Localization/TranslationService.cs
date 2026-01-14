@@ -2,6 +2,7 @@ using System.Text;
 using System.Globalization;
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Intersect.Client.General;
 using Intersect.Configuration;
 using Intersect.Core;
@@ -213,10 +214,11 @@ public class TranslationService
             if (File.Exists(_cacheFilePath))
             {
                 var json = File.ReadAllText(_cacheFilePath, Encoding.UTF8);
-                var loadedPayload = JsonConvert.DeserializeObject<TranslationCachePayload>(json);
-                if (loadedPayload?.KeyCache != null || loadedPayload?.TextCache != null)
+                var token = JsonConvert.DeserializeObject<JToken>(json);
+                if (token is JObject obj && (obj.Property("keyCache") != null || obj.Property("textCache") != null))
                 {
-                    if (loadedPayload.KeyCache != null)
+                    var loadedPayload = obj.ToObject<TranslationCachePayload>();
+                    if (loadedPayload?.KeyCache != null)
                     {
                         foreach (var kvp in loadedPayload.KeyCache)
                         {
@@ -224,7 +226,7 @@ public class TranslationService
                         }
                     }
 
-                    if (loadedPayload.TextCache != null)
+                    if (loadedPayload?.TextCache != null)
                     {
                         foreach (var kvp in loadedPayload.TextCache)
                         {
@@ -238,7 +240,7 @@ public class TranslationService
                     return;
                 }
 
-                var loadedLegacyCache = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                var loadedLegacyCache = token?.ToObject<Dictionary<string, string>>();
                 if (loadedLegacyCache != null)
                 {
                     foreach (var kvp in loadedLegacyCache)
