@@ -42,7 +42,7 @@ public class TranslationService
 
         // Detect System Language
         var currentCulture = CultureInfo.CurrentUICulture;
-        _targetLanguage = currentCulture.DisplayName;
+        _targetLanguage = currentCulture.Name;
 
         // Define cache path
         // Ensure the directory exists
