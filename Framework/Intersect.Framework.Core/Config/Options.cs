@@ -180,6 +180,13 @@ public partial record Options
     [JsonIgnore]
     public string TranslationApiKey { get; set; } = string.Empty;
 
+    public string TranslationEndpoint { get; set; } =
+        "https://jlrootsloud-3174sfw-resource.cognitiveservices.azure.com/";
+
+    public string TranslationDeploymentName { get; set; } = "gpt-4.1-mini";
+
+    public string TranslationApiVersion { get; set; } = "2024-05-01-preview";
+
     [RequiresRestart]
     public List<string> AnimatedSprites { get; set; } = [];
 

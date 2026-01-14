@@ -16,9 +16,10 @@ namespace Intersect.Server.Web.Controllers.Api;
 [Route("api/translation")]
 public sealed class TranslationController : IntersectController
 {
-    private const string ApiUrl =
-        "https://jlrootsloud-3174sfw-resource.cognitiveservices.azure.com/openai/deployments/gpt-4.1-mini/chat/completions?api-version=2024-05-01-preview";
-    private const string Model = "gpt-4.1-mini";
+    private const string DefaultEndpoint =
+        "https://jlrootsloud-3174sfw-resource.cognitiveservices.azure.com/";
+    private const string DefaultDeploymentName = "gpt-4.1-mini";
+    private const string DefaultApiVersion = "2024-05-01-preview";
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     [HttpPost]
@@ -117,9 +118,11 @@ public sealed class TranslationController : IntersectController
 
     private static async Task<string> SendLlmRequest(string prompt, CancellationToken cancellationToken)
     {
+        var settings = GetTranslationSettings();
+        var requestUri = BuildRequestUri(settings);
         var requestBody = new
         {
-            model = Model,
+            model = settings.DeploymentName,
             messages = new[]
             {
                 new { role = "system", content = "You are a professional game localization assistant. Be concise." },
@@ -131,15 +134,16 @@ public sealed class TranslationController : IntersectController
 
         var json = JsonConvert.SerializeObject(requestBody);
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, ApiUrl)
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
         {
             Content = content,
         };
 
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            Options.Instance?.TranslationApiKey
-        );
+        requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        if (!string.IsNullOrWhiteSpace(Options.Instance?.TranslationApiKey))
+        {
+            requestMessage.Headers.Add("api-key", Options.Instance?.TranslationApiKey);
+        }
 
         using var response = await HttpClient.SendAsync(requestMessage, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -148,4 +152,67 @@ public sealed class TranslationController : IntersectController
         var result = JObject.Parse(responseString);
         return result["choices"]?[0]?["message"]?["content"]?.ToString() ?? string.Empty;
     }
+
+    private static TranslationSettings GetTranslationSettings()
+    {
+        var options = Options.Instance;
+
+        var endpoint = string.IsNullOrWhiteSpace(options?.TranslationEndpoint)
+            ? DefaultEndpoint
+            : options!.TranslationEndpoint;
+        var deploymentName = string.IsNullOrWhiteSpace(options?.TranslationDeploymentName)
+            ? DefaultDeploymentName
+            : options!.TranslationDeploymentName;
+        var apiVersion = string.IsNullOrWhiteSpace(options?.TranslationApiVersion)
+            ? DefaultApiVersion
+            : options!.TranslationApiVersion;
+
+        return new TranslationSettings(endpoint, deploymentName, apiVersion);
+    }
+
+    private static Uri BuildRequestUri(TranslationSettings settings)
+    {
+        var baseEndpoint = NormalizeEndpoint(settings.Endpoint);
+        var requestPath =
+            $"openai/deployments/{settings.DeploymentName}/chat/completions?api-version={settings.ApiVersion}";
+        return new Uri(baseEndpoint, requestPath);
+    }
+
+    private static Uri NormalizeEndpoint(string endpoint)
+    {
+        var sanitized = endpoint.Trim();
+        if (!sanitized.EndsWith("/", StringComparison.Ordinal))
+        {
+            sanitized += "/";
+        }
+
+        if (!Uri.TryCreate(sanitized, UriKind.Absolute, out var uri))
+        {
+            return new Uri(DefaultEndpoint);
+        }
+
+        var path = uri.AbsolutePath;
+        var openAiIndex = path.IndexOf("/openai/", StringComparison.OrdinalIgnoreCase);
+        if (openAiIndex < 0)
+        {
+            return uri;
+        }
+
+        var basePath = path[..(openAiIndex + 1)];
+        if (!basePath.EndsWith("/", StringComparison.Ordinal))
+        {
+            basePath += "/";
+        }
+
+        var builder = new UriBuilder(uri)
+        {
+            Path = basePath,
+            Query = string.Empty,
+            Fragment = string.Empty,
+        };
+
+        return builder.Uri;
+    }
+
+    private sealed record TranslationSettings(string Endpoint, string DeploymentName, string ApiVersion);
 }
