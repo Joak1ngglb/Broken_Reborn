@@ -643,9 +643,10 @@ internal sealed partial class PacketHandler
                 packet.Target, packet.Items
             )
         );
-        // Define which channels contain player communication which should NOT be translated to avoid freezing/lag
-        // Local, Global, Party, Guild, PM, Admin are typically user-generated text.
-        // Server messages (Experience, Loot, Combat, Notice, Error, etc) should be translated.
+        // Chat translation policy:
+        // - Player chat channels are excluded from translation for now (Local, Global, Party, Guild, PM, Admin).
+        // - Non-player/system channels (Experience, Loot, Combat, Notice, Error, etc.) can be translated.
+        // This keeps player-to-player chat unmodified while allowing system messages to be localized.
         bool shouldTranslate = packet.Type != ChatMessageType.Local &&
                                packet.Type != ChatMessageType.Global &&
                                packet.Type != ChatMessageType.Party &&

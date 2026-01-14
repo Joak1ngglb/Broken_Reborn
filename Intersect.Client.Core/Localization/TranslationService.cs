@@ -371,11 +371,16 @@ public class TranslationService
 
     private static async Task TranslateInterface()
     {
+        // UI strings are translated here (menus, HUD, dialogs, etc.).
         await Strings.TranslateAll(Instance);
     }
 
     public static async Task TranslateGameContent()
     {
+        // Game content translation scope:
+        // - Included: item, quest, and spell names/descriptions.
+        // - Not yet included: event text, job/class text, and player chat.
+        // Chat translation is handled separately and excludes player chat channels for now.
         // Give the game a moment to load loaded descriptors from server/cache
         // Wait a short delay to ensure deserialization is fully complete if needed, but primarily triggered by GameData
         await Task.Delay(TimeSpan.FromSeconds(2));
