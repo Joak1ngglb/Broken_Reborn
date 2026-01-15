@@ -1234,6 +1234,24 @@ internal sealed partial class NetworkedPacketHandler
             }
         }
 
+        //TranslationUpsertPacket
+        public void HandlePacket(Client client, Network.Packets.Editor.TranslationUpsertPacket packet)
+        {
+            if (!client.IsEditor)
+            {
+                return;
+            }
+
+            LocalizationRepository.Default.Upsert(
+                packet.EntityType ?? string.Empty,
+                packet.EntityId ?? string.Empty,
+                packet.Field ?? string.Empty,
+                packet.Language ?? string.Empty,
+                packet.Text ?? string.Empty,
+                packet.SourceHash ?? string.Empty
+            );
+        }
+
         //SaveTimeDataPacket
         public void HandlePacket(Client client, Network.Packets.Editor.SaveTimeDataPacket packet)
         {

@@ -171,6 +171,18 @@ public static partial class PacketSender
         Network.SendPacket(new SaveTimeDataPacket(timeJson));
     }
 
+    public static void SendTranslationUpsert(
+        string entityType,
+        string entityId,
+        string field,
+        string language,
+        string text,
+        string sourceHash
+    )
+    {
+        Network.SendPacket(new TranslationUpsertPacket(entityType, entityId, field, language, text, sourceHash));
+    }
+
     public static void SendNewTilesets(string[] tilesets)
     {
         Network.SendPacket(new AddTilesetsPacket(tilesets));

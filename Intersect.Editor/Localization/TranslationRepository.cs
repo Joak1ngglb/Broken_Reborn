@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using Intersect.Editor.Networking;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Mono.Data.Sqlite;
@@ -143,22 +144,11 @@ public sealed class TranslationRepository
 
 public static class TranslationSourceUpdater
 {
-    private static readonly object SchemaLock = new();
-    private static bool _schemaEnsured;
-
     public static void UpdateEnglishSource(string entityType, Guid entityId, string field, string text)
     {
-        EnsureSchema();
         var normalizedText = text ?? string.Empty;
         var sourceHash = ComputeHash(normalizedText);
-        TranslationRepository.Default.Upsert(
-            entityType,
-            entityId.ToString(),
-            field,
-            "en",
-            normalizedText,
-            sourceHash
-        );
+        PacketSender.SendTranslationUpsert(entityType, entityId.ToString(), field, "en", normalizedText, sourceHash);
     }
 
     public static void UpdateEventEnglishSources(EventDescriptor eventDescriptor)
@@ -278,20 +268,6 @@ public static class TranslationSourceUpdater
                     }
                 }
             }
-        }
-    }
-
-    private static void EnsureSchema()
-    {
-        lock (SchemaLock)
-        {
-            if (_schemaEnsured)
-            {
-                return;
-            }
-
-            TranslationRepository.Default.EnsureSchema();
-            _schemaEnsured = true;
         }
     }
 
