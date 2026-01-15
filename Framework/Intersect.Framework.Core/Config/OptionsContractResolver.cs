@@ -25,12 +25,8 @@ public sealed class OptionsContractResolver(bool serializePrivateProperties, boo
         typeof(Options).GetProperty(nameof(Options.Security)),
         typeof(Options).GetProperty(nameof(Options.ServerPort)),
         typeof(Options).GetProperty(nameof(Options.SmtpSettings)),
-        typeof(Options).GetProperty(nameof(Options.TranslationApiVersion)),
         typeof(Options).GetProperty(nameof(Options.UPnP)),
         typeof(Options).GetProperty(nameof(Options.ValidPasswordResetTimeMinutes)),
-        typeof(Options).GetProperty(nameof(Options.TranslationDeploymentName)),
-        typeof(Options).GetProperty(nameof(Options.TranslationEndpoint)),
-        typeof(Options).GetProperty(nameof(Options.TranslationApiKey)),
     ];
 
     private static readonly HashSet<PropertyInfo> PublicProperties =
