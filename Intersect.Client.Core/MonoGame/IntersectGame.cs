@@ -105,6 +105,7 @@ internal partial class IntersectGame : Game
 
         // Load configuration.
         Globals.Database.LoadPreferences();
+        Strings.Load(Globals.Database.Language);
 
         Window.IsBorderless = Context.StartupOptions.BorderlessWindow;
 

@@ -181,7 +181,7 @@ internal sealed partial class PacketHandler
         MainMenu.HandleReceivedConfiguration();
         try
         {
-            Strings.Load();
+            Strings.Load(Globals.Database?.Language);
         }
         catch (Exception exception)
         {

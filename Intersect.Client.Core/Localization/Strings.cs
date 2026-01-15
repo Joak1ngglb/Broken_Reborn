@@ -20,6 +20,7 @@ namespace Intersect.Client.Localization;
 public static partial class Strings
 {
     private const string StringsFileName = "client_strings.json";
+    private const string DefaultLanguage = "en";
     private static char[] mQuantityTrimChars = new char[] { '.', '0' };
 
     private static string[] _unitsBits = [string.Empty, "Ki", "Mi", "Gi", "Ti"];
@@ -142,7 +143,7 @@ public static partial class Strings
         public int Compare(T? x, T? y) => string.CompareOrdinal(x?.ToString(), y?.ToString());
     }
 
-    public static void Load() => Load(null);
+    public static void Load() => Load(DefaultLanguage);
 
     public static void Load(string? language)
     {
@@ -150,11 +151,12 @@ public static partial class Strings
 
         try
         {
-            var serialized = string.IsNullOrWhiteSpace(language)
-                ? LoadSerializedStrings(Path.Combine(ClientConfiguration.ResourcesDirectory, StringsFileName))
-                : LoadLocalizedSerializedStrings(language);
+            var normalizedLanguage = string.IsNullOrWhiteSpace(language)
+                ? DefaultLanguage
+                : language.Trim().ToLowerInvariant();
+            var serialized = LoadLocalizedSerializedStrings(normalizedLanguage);
 
-            LoadSerialized(serialized, string.IsNullOrWhiteSpace(language));
+            LoadSerialized(serialized, string.Equals(normalizedLanguage, DefaultLanguage, StringComparison.OrdinalIgnoreCase));
         }
         catch (Exception exception)
         {
@@ -167,6 +169,11 @@ public static partial class Strings
 
     private static Dictionary<string, Dictionary<string, object>> LoadSerializedStrings(string path)
     {
+        if (!File.Exists(path))
+        {
+            return new Dictionary<string, Dictionary<string, object>>();
+        }
+
         return JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, object>>>(
             File.ReadAllText(path)
         ) ?? new Dictionary<string, Dictionary<string, object>>();
@@ -174,12 +181,14 @@ public static partial class Strings
 
     private static Dictionary<string, Dictionary<string, object>> LoadLocalizedSerializedStrings(string language)
     {
-        var normalizedLanguage = language.Trim();
+        var normalizedLanguage = string.IsNullOrWhiteSpace(language)
+            ? DefaultLanguage
+            : language.Trim().ToLowerInvariant();
         var basePath = Path.Combine(
             ClientConfiguration.ResourcesDirectory,
             "localization",
             "client",
-            "en",
+            DefaultLanguage,
             StringsFileName
         );
         var overridePath = Path.Combine(
@@ -189,8 +198,15 @@ public static partial class Strings
             normalizedLanguage,
             StringsFileName
         );
+        var legacyPath = Path.Combine(ClientConfiguration.ResourcesDirectory, StringsFileName);
 
         var baseLoaded = TryLoadSerializedStrings(basePath, out var baseSerialized);
+        if (!baseLoaded && TryLoadSerializedStrings(legacyPath, out var legacySerialized))
+        {
+            baseSerialized = legacySerialized;
+            baseLoaded = true;
+        }
+
         if (!baseLoaded)
         {
             ApplicationContext.Context.Value?.Logger.LogWarning(
@@ -917,14 +933,17 @@ public static partial class Strings
 
     private static void SaveSerialized(Dictionary<string, Dictionary<string, object>> serialized)
     {
-        var languageDirectory = Path.Combine(ClientConfiguration.ResourcesDirectory);
-        if (Directory.Exists(languageDirectory))
-        {
-            File.WriteAllText(
-                Path.Combine(languageDirectory, StringsFileName),
-                JsonConvert.SerializeObject(serialized, Formatting.Indented)
-            );
-        }
+        var languageDirectory = Path.Combine(
+            ClientConfiguration.ResourcesDirectory,
+            "localization",
+            "client",
+            DefaultLanguage
+        );
+        Directory.CreateDirectory(languageDirectory);
+        File.WriteAllText(
+            Path.Combine(languageDirectory, StringsFileName),
+            JsonConvert.SerializeObject(serialized, Formatting.Indented)
+        );
     }
 
     public static void Save()
@@ -2792,6 +2811,9 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Language = @"Language";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString LanguageReloadNotice = @"Algunas ventanas requieren reabrirse.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString MusicVolume = @"Music Volume: {00}%";
