@@ -89,12 +89,27 @@ public sealed class TranslationRepository
 
     private SqliteConnection OpenConnection()
     {
+        EnsureDatabaseExists();
         var connection = new SqliteConnection($"Data Source={_databasePath},Version=3");
         connection.Open();
         using var pragma = connection.CreateCommand();
         pragma.CommandText = "PRAGMA journal_mode=WAL;";
         pragma.ExecuteNonQuery();
         return connection;
+    }
+
+    private void EnsureDatabaseExists()
+    {
+        var directory = Path.GetDirectoryName(_databasePath);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        if (!File.Exists(_databasePath))
+        {
+            using var _ = File.Create(_databasePath);
+        }
     }
 
     private static string NormalizeLanguage(string language)
