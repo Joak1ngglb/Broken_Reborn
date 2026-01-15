@@ -13,6 +13,7 @@ using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.GameObjects;
+using Intersect.Network.Packets.Editor;
 using Intersect.Utilities;
 using System;
 using System.Drawing;
@@ -253,6 +254,26 @@ public partial class FrmSpell : EditorForm
             PacketSender.SendSaveObject(item);
             item.DeleteBackup();
         }
+
+        var entries = new List<TranslationUpsertEntry>();
+        foreach (var item in SpellDescriptor.Lookup.Values)
+        {
+            if (item == null)
+            {
+                continue;
+            }
+
+            TranslationSourceUpdater.AddEnglishSource(entries, item.Type.ToString(), item.Id, "Name", item.Name);
+            TranslationSourceUpdater.AddEnglishSource(
+                entries,
+                item.Type.ToString(),
+                item.Id,
+                "Description",
+                item.Description
+            );
+        }
+
+        TranslationSourceUpdater.QueueBatchEnglishSources(entries);
 
         Hide();
         Globals.CurrentEditor = -1;
