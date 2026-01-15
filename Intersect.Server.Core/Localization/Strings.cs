@@ -6,6 +6,7 @@ using Intersect.Server.Core;
 using Intersect.Server.Networking.Helpers;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Intersect.Server.Localization;
 
@@ -1569,7 +1570,19 @@ public static partial class Strings
     }
     #region Serialization
 
-    public static bool Load()
+    public static bool Load() => Load(null);
+
+    public static bool Load(string? language)
+    {
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            return LoadDefault();
+        }
+
+        return LoadLocalized(language.Trim());
+    }
+
+    private static bool LoadDefault()
     {
         var filepath = Path.Combine(ServerContext.ResourceDirectory, "server_strings.json");
 
@@ -1598,6 +1611,83 @@ public static partial class Strings
         }
 
         return Save();
+    }
+
+    private static bool LoadLocalized(string language)
+    {
+        var basePath = Path.Combine(
+            ServerContext.ResourceDirectory,
+            "localization",
+            "server",
+            "en",
+            "server_strings.json"
+        );
+        var overridePath = Path.Combine(
+            ServerContext.ResourceDirectory,
+            "localization",
+            "server",
+            language,
+            "server_strings.json"
+        );
+
+        var baseLoaded = TryLoadSerializedStrings(basePath, out var baseJson);
+        if (!baseLoaded)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Base localization file not found at {Path}.",
+                basePath
+            );
+        }
+
+        if (TryLoadSerializedStrings(overridePath, out var overrideJson))
+        {
+            baseJson.Merge(
+                overrideJson,
+                new JsonMergeSettings
+                {
+                    MergeArrayHandling = MergeArrayHandling.Replace,
+                    MergeNullValueHandling = MergeNullValueHandling.Ignore,
+                }
+            );
+        }
+
+        if (!baseJson.HasValues)
+        {
+            return true;
+        }
+
+        try
+        {
+            Root = JsonConvert.DeserializeObject<RootNamespace>(baseJson.ToString()) ?? Root;
+        }
+        catch (Exception exception)
+        {
+            if (exception.Message.Contains("Commands.announcement"))
+            {
+                throw new Exception(
+                    "Server strings invalid! Upgrade steps to B6 were not followed correctly. Server must close!"
+                );
+            }
+
+            ApplicationContext.Context.Value?.Logger.LogError(exception, "Failed to deserialize strings");
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryLoadSerializedStrings(string path, out JObject serialized)
+    {
+        if (!File.Exists(path))
+        {
+            serialized = new JObject();
+            return false;
+        }
+
+        var json = File.ReadAllText(path, Encoding.UTF8);
+        serialized = JsonConvert.DeserializeObject<JObject>(json) ?? new JObject();
+        return true;
     }
 
     public static bool Save()
