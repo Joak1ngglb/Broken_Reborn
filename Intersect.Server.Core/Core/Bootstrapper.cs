@@ -231,6 +231,7 @@ internal static class Bootstrapper
         }
 
         DbInterface.CheckDirectories();
+        LocalizationRepository.InitializeDefault();
 
         PrintIntroduction();
 
