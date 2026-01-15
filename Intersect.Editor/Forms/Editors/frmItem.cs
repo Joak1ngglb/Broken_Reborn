@@ -13,6 +13,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.GameObjects;
 using Intersect.Localization;
+using Intersect.Network.Packets.Editor;
 using Intersect.Utilities;
 using Graphics = System.Drawing.Graphics;
 
@@ -106,6 +107,26 @@ public partial class FrmItem : EditorForm
             PacketSender.SendSaveObject(item);
             item.DeleteBackup();
         }
+
+        var entries = new List<TranslationUpsertEntry>();
+        foreach (var item in ItemDescriptor.Lookup.Values)
+        {
+            if (item == null)
+            {
+                continue;
+            }
+
+            TranslationSourceUpdater.AddEnglishSource(entries, item.Type.ToString(), item.Id, "Name", item.Name);
+            TranslationSourceUpdater.AddEnglishSource(
+                entries,
+                item.Type.ToString(),
+                item.Id,
+                "Description",
+                item.Description
+            );
+        }
+
+        TranslationSourceUpdater.QueueBatchEnglishSources(entries);
 
         Hide();
         Globals.CurrentEditor = -1;

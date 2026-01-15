@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
+using Intersect.Network.Packets.Editor;
 using Mono.Data.Sqlite;
 
 namespace Intersect.Editor.Localization;
@@ -144,18 +147,108 @@ public sealed class TranslationRepository
 
 public static class TranslationSourceUpdater
 {
-    public static void UpdateEnglishSource(string entityType, Guid entityId, string field, string text)
+    private const string DefaultLanguage = "en";
+    private const int DefaultBatchSize = 200;
+
+    public static TranslationUpsertEntry CreateEnglishSourceEntry(
+        string entityType,
+        Guid entityId,
+        string field,
+        string text
+    )
     {
         var normalizedText = text ?? string.Empty;
-        var sourceHash = ComputeHash(normalizedText);
-        PacketSender.SendTranslationUpsert(entityType, entityId.ToString(), field, "en", normalizedText, sourceHash);
+        return new TranslationUpsertEntry(
+            entityType,
+            entityId.ToString(),
+            field,
+            DefaultLanguage,
+            normalizedText,
+            ComputeHash(normalizedText)
+        );
+    }
+
+    public static void AddEnglishSource(
+        ICollection<TranslationUpsertEntry> entries,
+        string entityType,
+        Guid entityId,
+        string field,
+        string text
+    )
+    {
+        if (entries == null)
+        {
+            return;
+        }
+
+        entries.Add(CreateEnglishSourceEntry(entityType, entityId, field, text));
+    }
+
+    public static void QueueBatchEnglishSources(
+        IEnumerable<TranslationUpsertEntry> entries,
+        int batchSize = DefaultBatchSize
+    )
+    {
+        if (entries == null)
+        {
+            return;
+        }
+
+        var entryList = entries as IReadOnlyCollection<TranslationUpsertEntry> ?? new List<TranslationUpsertEntry>(entries);
+        if (entryList.Count == 0)
+        {
+            return;
+        }
+
+        Task.Run(() => SendBatchEnglishSources(entryList, batchSize));
+    }
+
+    public static void UpdateEnglishSource(string entityType, Guid entityId, string field, string text)
+    {
+        var entry = CreateEnglishSourceEntry(entityType, entityId, field, text);
+        PacketSender.SendTranslationUpsert(
+            entry.EntityType,
+            entry.EntityId,
+            entry.Field,
+            entry.Language,
+            entry.Text,
+            entry.SourceHash
+        );
     }
 
     public static void UpdateEventEnglishSources(EventDescriptor eventDescriptor)
     {
+        var entries = GetEventEnglishSources(eventDescriptor);
+        foreach (var entry in entries)
+        {
+            if (entry == null)
+            {
+                continue;
+            }
+
+            PacketSender.SendTranslationUpsert(
+                entry.EntityType,
+                entry.EntityId,
+                entry.Field,
+                entry.Language,
+                entry.Text,
+                entry.SourceHash
+            );
+        }
+    }
+
+    private static string ComputeHash(string text)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(text));
+        return Convert.ToHexString(bytes);
+    }
+
+    public static IReadOnlyList<TranslationUpsertEntry> GetEventEnglishSources(EventDescriptor eventDescriptor)
+    {
+        var entries = new List<TranslationUpsertEntry>();
         if (eventDescriptor == null)
         {
-            return;
+            return entries;
         }
 
         var entityType = eventDescriptor.Type.ToString();
@@ -163,12 +256,12 @@ public static class TranslationSourceUpdater
 
         if (!string.IsNullOrWhiteSpace(eventDescriptor.Name))
         {
-            UpdateEnglishSource(entityType, entityId, "Name", eventDescriptor.Name);
+            AddEnglishSource(entries, entityType, entityId, "Name", eventDescriptor.Name);
         }
 
         if (eventDescriptor.Pages == null)
         {
-            return;
+            return entries;
         }
 
         for (var pageIndex = 0; pageIndex < eventDescriptor.Pages.Count; pageIndex++)
@@ -181,7 +274,7 @@ public static class TranslationSourceUpdater
 
             if (!string.IsNullOrWhiteSpace(page.Description))
             {
-                UpdateEnglishSource(entityType, entityId, $"Page:{pageIndex}:Description", page.Description);
+                AddEnglishSource(entries, entityType, entityId, $"Page:{pageIndex}:Description", page.Description);
             }
 
             if (page.CommandLists == null)
@@ -208,7 +301,8 @@ public static class TranslationSourceUpdater
                     switch (command)
                     {
                         case ShowTextCommand showTextCommand:
-                            UpdateEnglishSource(
+                            AddEnglishSource(
+                                entries,
                                 entityType,
                                 entityId,
                                 $"{baseField}:ShowText",
@@ -216,7 +310,8 @@ public static class TranslationSourceUpdater
                             );
                             break;
                         case AddChatboxTextCommand addChatboxTextCommand:
-                            UpdateEnglishSource(
+                            AddEnglishSource(
+                                entries,
                                 entityType,
                                 entityId,
                                 $"{baseField}:ChatboxText",
@@ -224,7 +319,8 @@ public static class TranslationSourceUpdater
                             );
                             break;
                         case ShowOptionsCommand showOptionsCommand:
-                            UpdateEnglishSource(
+                            AddEnglishSource(
+                                entries,
                                 entityType,
                                 entityId,
                                 $"{baseField}:OptionsText",
@@ -234,7 +330,8 @@ public static class TranslationSourceUpdater
                             {
                                 for (var optionIndex = 0; optionIndex < showOptionsCommand.Options.Length; optionIndex++)
                                 {
-                                    UpdateEnglishSource(
+                                    AddEnglishSource(
+                                        entries,
                                         entityType,
                                         entityId,
                                         $"{baseField}:Option:{optionIndex}",
@@ -244,13 +341,15 @@ public static class TranslationSourceUpdater
                             }
                             break;
                         case InputVariableCommand inputVariableCommand:
-                            UpdateEnglishSource(
+                            AddEnglishSource(
+                                entries,
                                 entityType,
                                 entityId,
                                 $"{baseField}:InputTitle",
                                 inputVariableCommand.Title ?? string.Empty
                             );
-                            UpdateEnglishSource(
+                            AddEnglishSource(
+                                entries,
                                 entityType,
                                 entityId,
                                 $"{baseField}:InputText",
@@ -258,7 +357,8 @@ public static class TranslationSourceUpdater
                             );
                             break;
                         case ChangePlayerLabelCommand changePlayerLabelCommand:
-                            UpdateEnglishSource(
+                            AddEnglishSource(
+                                entries,
                                 entityType,
                                 entityId,
                                 $"{baseField}:PlayerLabel",
@@ -269,11 +369,36 @@ public static class TranslationSourceUpdater
                 }
             }
         }
+
+        return entries;
     }
 
-    private static string ComputeHash(string text)
+    private static void SendBatchEnglishSources(
+        IEnumerable<TranslationUpsertEntry> entries,
+        int batchSize
+    )
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(text));
-        return Convert.ToHexString(bytes);
+        var batch = new List<TranslationUpsertEntry>(batchSize);
+        foreach (var entry in entries)
+        {
+            if (entry == null)
+            {
+                continue;
+            }
+
+            batch.Add(entry);
+            if (batch.Count < batchSize)
+            {
+                continue;
+            }
+
+            PacketSender.SendTranslationBatchUpsert(batch);
+            batch.Clear();
+        }
+
+        if (batch.Count > 0)
+        {
+            PacketSender.SendTranslationBatchUpsert(batch);
+        }
     }
 }

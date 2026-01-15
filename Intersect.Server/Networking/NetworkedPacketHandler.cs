@@ -1252,6 +1252,37 @@ internal sealed partial class NetworkedPacketHandler
             );
         }
 
+        //TranslationBatchUpsertPacket
+        public void HandlePacket(Client client, Network.Packets.Editor.TranslationBatchUpsertPacket packet)
+        {
+            if (!client.IsEditor)
+            {
+                return;
+            }
+
+            if (packet.Entries == null)
+            {
+                return;
+            }
+
+            foreach (var entry in packet.Entries)
+            {
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                LocalizationRepository.Default.Upsert(
+                    entry.EntityType ?? string.Empty,
+                    entry.EntityId ?? string.Empty,
+                    entry.Field ?? string.Empty,
+                    entry.Language ?? string.Empty,
+                    entry.Text ?? string.Empty,
+                    entry.SourceHash ?? string.Empty
+                );
+            }
+        }
+
         //SaveTimeDataPacket
         public void HandlePacket(Client client, Network.Packets.Editor.SaveTimeDataPacket packet)
         {
