@@ -66,25 +66,46 @@ public sealed class TranslationRepository
     )
     {
         using var connection = OpenConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText =
+        var normalizedLanguage = NormalizeLanguage(language);
+        var updatedUtc = DateTime.UtcNow.ToString("O");
+        using var update = connection.CreateCommand();
+        update.CommandText =
+            """
+            UPDATE translations
+            SET text = @text,
+                source_hash = @sourceHash,
+                updated_utc = @updatedUtc
+            WHERE entity_type = @entityType
+              AND entity_id = @entityId
+              AND field = @field
+              AND lang = @lang;
+            """;
+        update.Parameters.Add(new SqliteParameter("@text", text));
+        update.Parameters.Add(new SqliteParameter("@sourceHash", sourceHash));
+        update.Parameters.Add(new SqliteParameter("@updatedUtc", updatedUtc));
+        update.Parameters.Add(new SqliteParameter("@entityType", entityType));
+        update.Parameters.Add(new SqliteParameter("@entityId", entityId));
+        update.Parameters.Add(new SqliteParameter("@field", field));
+        update.Parameters.Add(new SqliteParameter("@lang", normalizedLanguage));
+        if (update.ExecuteNonQuery() > 0)
+        {
+            return;
+        }
+
+        using var insert = connection.CreateCommand();
+        insert.CommandText =
             """
             INSERT INTO translations (entity_type, entity_id, field, lang, text, source_hash, updated_utc)
-            VALUES (@entityType, @entityId, @field, @lang, @text, @sourceHash, @updatedUtc)
-            ON CONFLICT(entity_type, entity_id, field, lang)
-            DO UPDATE SET
-                text = excluded.text,
-                source_hash = excluded.source_hash,
-                updated_utc = excluded.updated_utc;
+            VALUES (@entityType, @entityId, @field, @lang, @text, @sourceHash, @updatedUtc);
             """;
-        command.Parameters.Add(new SqliteParameter("@entityType", entityType));
-        command.Parameters.Add(new SqliteParameter("@entityId", entityId));
-        command.Parameters.Add(new SqliteParameter("@field", field));
-        command.Parameters.Add(new SqliteParameter("@lang", NormalizeLanguage(language)));
-        command.Parameters.Add(new SqliteParameter("@text", text));
-        command.Parameters.Add(new SqliteParameter("@sourceHash", sourceHash));
-        command.Parameters.Add(new SqliteParameter("@updatedUtc", DateTime.UtcNow.ToString("O")));
-        command.ExecuteNonQuery();
+        insert.Parameters.Add(new SqliteParameter("@entityType", entityType));
+        insert.Parameters.Add(new SqliteParameter("@entityId", entityId));
+        insert.Parameters.Add(new SqliteParameter("@field", field));
+        insert.Parameters.Add(new SqliteParameter("@lang", normalizedLanguage));
+        insert.Parameters.Add(new SqliteParameter("@text", text));
+        insert.Parameters.Add(new SqliteParameter("@sourceHash", sourceHash));
+        insert.Parameters.Add(new SqliteParameter("@updatedUtc", updatedUtc));
+        insert.ExecuteNonQuery();
     }
 
     private SqliteConnection OpenConnection()
