@@ -394,7 +394,7 @@ namespace Intersect.Client.Interface.Game
             var quests = QuestDescriptor.Lookup.Values.Where(quest => quest != null).ToList();
             var dict = new Dictionary<string, List<Tuple<QuestDescriptor, int, Color>>>();
 
-            RequestQuestListLocalization(quests);
+            RequestQuestListLocalization((IEnumerable<QuestDescriptor>)quests);
 
             foreach (QuestDescriptor quest in quests)
             {

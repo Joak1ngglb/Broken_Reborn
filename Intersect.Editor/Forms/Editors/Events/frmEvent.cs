@@ -13,6 +13,7 @@ using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.GameObjects;
+using Intersect.Network.Packets.Editor;
 using Intersect.Utilities;
 using Newtonsoft.Json;
 using Graphics = System.Drawing.Graphics;
@@ -1200,6 +1201,19 @@ public partial class FrmEvent : Form
         {
             PacketSender.SendSaveObject(MyEvent);
         }
+
+        var entries = new List<TranslationUpsertEntry>();
+        foreach (var eventDescriptor in EventDescriptor.Lookup.Values)
+        {
+            if (eventDescriptor == null)
+            {
+                continue;
+            }
+
+            entries.AddRange(TranslationSourceUpdater.GetEventEnglishSources((EventDescriptor)eventDescriptor));
+        }
+
+        TranslationSourceUpdater.QueueBatchEnglishSources(entries);
 
         Hide();
         Dispose();
