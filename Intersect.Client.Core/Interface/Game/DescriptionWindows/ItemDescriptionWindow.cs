@@ -1,7 +1,6 @@
 using Intersect;
 using Intersect.Enums;
 using Intersect.Client.General;
-using Intersect.Client.Localization;
 using Intersect.Core;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.GameObjects;
@@ -38,7 +37,6 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
         SetupDescriptionWindow();
         PositionToHoveredControl();
-        _ = RequestTranslation(_itemDescriptor);
         // If a spell, also display the spell description!
         if (_itemDescriptor.ItemType == ItemType.Spell && _itemDescriptor.SpellId != Guid.Empty)
         {
@@ -90,49 +88,6 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         }
 
         base.Show();
-    }
-
-    private async Task RequestTranslation(ItemDescriptor item)
-    {
-        if (item == null) return;
-
-        bool updated = false;
-
-        // Translate Name
-        if (!string.IsNullOrWhiteSpace(item.Name))
-        {
-            var translatedName = await TranslationService.Instance.Translate(item.Name);
-            if (item.Name != translatedName)
-            {
-                item.Name = translatedName;
-                updated = true;
-            }
-        }
-
-        // Translate Description
-        if (!string.IsNullOrWhiteSpace(item.Description))
-        {
-            var translatedDesc = await TranslationService.Instance.Translate(item.Description);
-            if (item.Description != translatedDesc)
-            {
-                item.Description = translatedDesc;
-                updated = true;
-            }
-        }
-
-        // If anything changed AND we are currently showing this item, refresh.
-        // We use Interface.GameUi.GameCanvas.Call() or similar if thread safety is an issue, 
-        // but typically async continuation in Client usually runs on UI context or we rely on the framework handling it.
-        // Gwen is not thread safe, but if we are just setting properties and Invalidating, it might be ok?
-        // Actually, async await continuation might return to thread pool. We should use a synchronization context in the engine ideally.
-        // But assuming single-threaded run loop or safe continuation:
-
-        if (updated && _itemDescriptor == item)
-        {
-            Clear();
-            SetupDescriptionWindow();
-            PositionToHoveredControl();
-        }
     }
 
     public override void Hide()

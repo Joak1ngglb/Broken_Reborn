@@ -80,9 +80,6 @@ public class TranslationService
             return;
         }
 
-        // UI static strings.
-        await Strings.TranslateAll(Instance);
-
         // Game content (items, quests, spells, etc.).
         await TranslateGameContent();
 
