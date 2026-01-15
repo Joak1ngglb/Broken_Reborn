@@ -248,6 +248,8 @@ public partial class FrmSpell : EditorForm
         //Send Changed items
         foreach (var item in mChanged)
         {
+            TranslationSourceUpdater.UpdateEnglishSource(item.Type.ToString(), item.Id, "Name", item.Name);
+            TranslationSourceUpdater.UpdateEnglishSource(item.Type.ToString(), item.Id, "Description", item.Description);
             PacketSender.SendSaveObject(item);
             item.DeleteBackup();
         }

@@ -176,6 +176,32 @@ public partial class FrmQuest : EditorForm
                     return;
                 }
 
+                TranslationSourceUpdater.UpdateEnglishSource(item.Type.ToString(), item.Id, "Name", item.Name);
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "BeforeDescription",
+                    item.BeforeDescription
+                );
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "StartDescription",
+                    item.StartDescription
+                );
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "InProgressDescription",
+                    item.InProgressDescription
+                );
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "EndDescription",
+                    item.EndDescription
+                );
+
                 foreach (var id in item.OriginalTaskEventIds.Keys)
                 {
                     var found = false;

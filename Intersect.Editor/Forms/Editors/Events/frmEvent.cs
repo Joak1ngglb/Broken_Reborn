@@ -1191,6 +1191,11 @@ public partial class FrmEvent : Form
             CancelCommandEdit();
         }
 
+        if (MyEvent != null)
+        {
+            TranslationSourceUpdater.UpdateEventEnglishSources(MyEvent);
+        }
+
         if (MyEvent.CommonEvent && MyEvent.Id != Guid.Empty)
         {
             PacketSender.SendSaveObject(MyEvent);
