@@ -12,6 +12,8 @@ using Microsoft.Extensions.Logging;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen.Input;
 using Intersect.Client.Interface.Game.DescriptionWindows.Components;
+using Intersect.Client.Localization;
+using Intersect.Network.Packets.Localization;
 
 namespace Intersect.Client.Interface.Game.DescriptionWindows;
 
@@ -21,6 +23,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
     private ItemProperties? _itemProperties;
     private int _amount;
     private string? _valueLabel;
+    private bool _localizationSubscribed;
 
     public void Show(
         ItemDescriptor item,
@@ -35,6 +38,8 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         _itemProperties = itemProperties;
         _valueLabel = valueLabel;
 
+        SubscribeToLocalizationUpdates();
+        RequestLocalization();
         SetupDescriptionWindow();
         PositionToHoveredControl();
         // If a spell, also display the spell description!
@@ -98,6 +103,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             Interface.GameUi.ItemDescriptionWindow = default;
         }
 
+        UnsubscribeFromLocalizationUpdates();
         if (Interface.GameUi.SpellDescriptionWindow != default)
         {
             Interface.GameUi.GameCanvas.RemoveChild(Interface.GameUi.SpellDescriptionWindow, true);
@@ -121,9 +127,10 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         SetupItemLimits();
 
         // if we have a description, set that up.
-        if (!string.IsNullOrWhiteSpace(_itemDescriptor.Description))
+        var localizedDescription = GetLocalizedItemDescription();
+        if (!string.IsNullOrWhiteSpace(localizedDescription))
         {
-            SetupDescription();
+            SetupDescription(localizedDescription);
         }
 
         // Set up information depending on the item type.
@@ -361,7 +368,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         // Set up the header as the item name.
         CustomColors.Items.Rarities.TryGetValue(_itemDescriptor.Rarity, out var rarityColor);
         var itemLevel = _itemProperties?.EnchantmentLevel ?? 0;
-        var name = _itemDescriptor.Name;
+        var name = GetLocalizedItemName();
         if (itemLevel > 0)
         {
             name += $" +{itemLevel}";
@@ -469,7 +476,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         }
     }
 
-    protected void SetupDescription()
+    protected void SetupDescription(string descriptionText)
     {
         if (_itemDescriptor == default)
         {
@@ -481,7 +488,83 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
         // Add the actual description.
         var description = AddDescription();
-        description.AddText(Strings.ItemDescription.Description.ToString(_itemDescriptor.Description), Color.White);
+        description.AddText(Strings.ItemDescription.Description.ToString(descriptionText), Color.White);
+    }
+
+    private void RequestLocalization()
+    {
+        if (_itemDescriptor == null)
+        {
+            return;
+        }
+
+        GameLocalization.RequestEntries(
+            [
+                new LocalizationRequestEntry(_itemDescriptor.Type.ToString(), _itemDescriptor.Id.ToString(), "Name"),
+                new LocalizationRequestEntry(_itemDescriptor.Type.ToString(), _itemDescriptor.Id.ToString(), "Description")
+            ]
+        );
+    }
+
+    private string GetLocalizedItemName() =>
+        _itemDescriptor == null
+            ? string.Empty
+            : GameLocalization.GetTextOrDefault(
+                _itemDescriptor.Type.ToString(),
+                _itemDescriptor.Id,
+                "Name",
+                _itemDescriptor.Name
+            );
+
+    private string GetLocalizedItemDescription() =>
+        _itemDescriptor == null
+            ? string.Empty
+            : GameLocalization.GetTextOrDefault(
+                _itemDescriptor.Type.ToString(),
+                _itemDescriptor.Id,
+                "Description",
+                _itemDescriptor.Description
+            );
+
+    private void SubscribeToLocalizationUpdates()
+    {
+        if (_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+        _localizationSubscribed = true;
+    }
+
+    private void UnsubscribeFromLocalizationUpdates()
+    {
+        if (!_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
+        _localizationSubscribed = false;
+    }
+
+    private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+    {
+        if (IsHidden || _itemDescriptor == null)
+        {
+            return;
+        }
+
+        var entityType = _itemDescriptor.Type.ToString();
+        var entityId = _itemDescriptor.Id.ToString();
+        if (requests.Any(
+                request => request.EntityType == entityType &&
+                           request.EntityId == entityId &&
+                           (request.Field == "Name" || request.Field == "Description")
+            ))
+        {
+            SetupDescriptionWindow();
+        }
     }
 
     private int GetStatDifference(int index)

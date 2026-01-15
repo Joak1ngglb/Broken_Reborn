@@ -6,6 +6,7 @@ using Intersect.Client.Framework.Entities;
 using Intersect.Client.Framework.Items;
 using Intersect.Client.Controllers;
 using Intersect.Client.General;
+using Intersect.Client.Localization;
 using Intersect.Client.Interface.Game.Chat;
 using Intersect.Client.Interface.Menu;
 using Intersect.Client.Items;
@@ -1291,6 +1292,17 @@ internal sealed partial class PacketHandler
             Interface.Interface.ShowAlert(packet.Error, packet.Header, alertType: AlertType.Error);
             Interface.Interface.MenuUi?.Reset();
         }
+    }
+
+    //LocalizedTextPacket
+    public void HandlePacket(IPacketSender packetSender, LocalizedTextPacket packet)
+    {
+        if (packet?.Entries == null || packet.Entries.Count < 1)
+        {
+            return;
+        }
+
+        GameLocalization.ApplyLocalizedTexts(packet.Language, packet.Entries);
     }
 
     //MapItemsPacket

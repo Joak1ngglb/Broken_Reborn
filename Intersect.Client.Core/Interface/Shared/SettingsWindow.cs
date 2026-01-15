@@ -1276,6 +1276,7 @@ public partial class SettingsWindow : Window
         if (languageChanged)
         {
             Strings.Load(selectedLanguage);
+            GameLocalization.Clear();
             Interface.ShowAlert(Strings.Settings.LanguageReloadNotice, alertType: AlertType.Warning);
         }
 

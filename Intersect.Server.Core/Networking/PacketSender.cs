@@ -21,6 +21,7 @@ using Intersect.Framework.Core.Security;
 using Intersect.GameObjects;
 using Intersect.Models;
 using Intersect.Network;
+using Intersect.Network.Packets.Localization;
 using Intersect.Network.Packets.Server;
 using Intersect.Network.Packets;
 using Intersect.Server.Database;
@@ -68,6 +69,16 @@ public static partial class PacketSender
             client.Send(new PingPacket(request), TransmissionMode.Any);
             client.LastPing = Timing.Global.Milliseconds;
         }
+    }
+
+    public static void SendLocalizedText(Client client, string language, List<LocalizedTextEntry> entries)
+    {
+        if (client == null || entries.Count < 1)
+        {
+            return;
+        }
+
+        client.Send(new LocalizedTextPacket(language, entries), TransmissionMode.Any);
     }
 
     //ConfigPacket
