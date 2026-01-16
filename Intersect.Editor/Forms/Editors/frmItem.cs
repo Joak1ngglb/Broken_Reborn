@@ -109,7 +109,7 @@ public partial class FrmItem : EditorForm
         }
 
         var entries = new List<TranslationUpsertEntry>();
-        foreach (var item in ItemDescriptor.Lookup.Values)
+        foreach (ItemDescriptor item in ItemDescriptor.Lookup.Values)
         {
             if (item == null)
             {
