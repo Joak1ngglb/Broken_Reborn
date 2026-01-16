@@ -202,6 +202,15 @@ public partial class FrmQuest : EditorForm
                     "EndDescription",
                     item.EndDescription
                 );
+                foreach (var task in item.Tasks)
+                {
+                    TranslationSourceUpdater.UpdateEnglishSource(
+                        "QuestTask",
+                        task.Id,
+                        "Description",
+                        task.Description
+                    );
+                }
 
                 foreach (var id in item.OriginalTaskEventIds.Keys)
                 {
@@ -278,6 +287,16 @@ public partial class FrmQuest : EditorForm
                 "EndDescription",
                 quest.EndDescription
             );
+            foreach (var task in quest.Tasks)
+            {
+                TranslationSourceUpdater.AddEnglishSource(
+                    entries,
+                    "QuestTask",
+                    task.Id,
+                    "Description",
+                    task.Description
+                );
+            }
         }
 
         TranslationSourceUpdater.QueueBatchEnglishSources(entries);
