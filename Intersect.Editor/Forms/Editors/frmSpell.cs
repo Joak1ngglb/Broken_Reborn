@@ -256,13 +256,8 @@ public partial class FrmSpell : EditorForm
         }
 
         var entries = new List<TranslationUpsertEntry>();
-        foreach (var item in SpellDescriptor.Lookup.Values)
+        foreach (SpellDescriptor item in SpellDescriptor.Lookup.Values)
         {
-            if (item == null)
-            {
-                continue;
-            }
-
             TranslationSourceUpdater.AddEnglishSource(entries, item.Type.ToString(), item.Id, "Name", item.Name);
             TranslationSourceUpdater.AddEnglishSource(
                 entries,

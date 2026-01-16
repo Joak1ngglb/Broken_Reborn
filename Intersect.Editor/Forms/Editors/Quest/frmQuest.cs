@@ -247,13 +247,8 @@ public partial class FrmQuest : EditorForm
         );
 
         var entries = new List<TranslationUpsertEntry>();
-        foreach (var quest in QuestDescriptor.Lookup.Values)
+        foreach (QuestDescriptor quest in QuestDescriptor.Lookup.Values)
         {
-            if (quest == null)
-            {
-                continue;
-            }
-
             TranslationSourceUpdater.AddEnglishSource(entries, quest.Type.ToString(), quest.Id, "Name", quest.Name);
             TranslationSourceUpdater.AddEnglishSource(
                 entries,
