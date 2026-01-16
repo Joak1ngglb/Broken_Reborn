@@ -1210,7 +1210,7 @@ public partial class FrmEvent : Form
                 continue;
             }
 
-            entries.AddRange(TranslationSourceUpdater.GetEventEnglishSources(eventDescriptor));
+            entries.AddRange(TranslationSourceUpdater.GetEventEnglishSources((EventDescriptor)eventDescriptor));
         }
 
         TranslationSourceUpdater.QueueBatchEnglishSources(entries);
