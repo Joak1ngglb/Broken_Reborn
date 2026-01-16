@@ -205,6 +205,7 @@ public static partial class Strings
         {
             baseSerialized = legacySerialized;
             baseLoaded = true;
+            WriteSerializedStrings(basePath, baseSerialized);
         }
 
         if (!baseLoaded)
@@ -217,6 +218,12 @@ public static partial class Strings
 
         if (!TryLoadSerializedStrings(overridePath, out var overrideSerialized))
         {
+            if (!string.Equals(normalizedLanguage, DefaultLanguage, StringComparison.OrdinalIgnoreCase) &&
+                baseSerialized.Count > 0)
+            {
+                WriteSerializedStrings(overridePath, baseSerialized);
+            }
+
             return baseSerialized;
         }
 
@@ -939,11 +946,19 @@ public static partial class Strings
             "client",
             DefaultLanguage
         );
-        Directory.CreateDirectory(languageDirectory);
-        File.WriteAllText(
-            Path.Combine(languageDirectory, StringsFileName),
-            JsonConvert.SerializeObject(serialized, Formatting.Indented)
-        );
+        WriteSerializedStrings(Path.Combine(languageDirectory, StringsFileName), serialized);
+    }
+
+    private static void WriteSerializedStrings(string path, Dictionary<string, Dictionary<string, object>> serialized)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(directory);
+        File.WriteAllText(path, JsonConvert.SerializeObject(serialized, Formatting.Indented));
     }
 
     public static void Save()

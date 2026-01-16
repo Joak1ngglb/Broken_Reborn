@@ -214,6 +214,14 @@ internal static class Bootstrapper
             return false;
         }
 
+        if (!string.IsNullOrWhiteSpace(Options.Instance.Language) && !Strings.Load(Options.Instance.Language))
+        {
+            Console.WriteLine(Strings.Errors.ErrorLoadingStrings);
+            Console.ReadKey();
+
+            return false;
+        }
+
         if (ServerContext.IsDefaultResourceDirectory)
         {
             if (!Directory.Exists(Path.Combine(ServerContext.ResourceDirectory, "notifications")))

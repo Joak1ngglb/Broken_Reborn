@@ -12,6 +12,8 @@ namespace Intersect.Server.Localization;
 
 public static partial class Strings
 {
+    private const string DefaultLanguage = "en";
+    private const string StringsFileName = "server_strings.json";
 
     public sealed partial class AccountNamespace : LocaleNamespace
     {
@@ -1574,43 +1576,16 @@ public static partial class Strings
 
     public static bool Load(string? language)
     {
-        if (string.IsNullOrWhiteSpace(language))
-        {
-            return LoadDefault();
-        }
+        var normalizedLanguage = string.IsNullOrWhiteSpace(language)
+            ? DefaultLanguage
+            : language.Trim().ToLowerInvariant();
 
-        return LoadLocalized(language.Trim());
+        return LoadLocalized(normalizedLanguage);
     }
 
     private static bool LoadDefault()
     {
-        var filepath = Path.Combine(ServerContext.ResourceDirectory, "server_strings.json");
-
-        // Really don't want two JsonSave() return points...
-        // ReSharper disable once InvertIf
-        if (File.Exists(filepath))
-        {
-            var json = File.ReadAllText(filepath, Encoding.UTF8);
-            try
-            {
-                Root = JsonConvert.DeserializeObject<RootNamespace>(json) ?? Root;
-            }
-            catch (Exception exception)
-            {
-                if (exception.Message.Contains("Commands.announcement"))
-                {
-                    throw new Exception(
-                        "Server strings invalid! Upgrade steps to B6 were not followed correctly. Server must close!"
-                    );
-                }
-
-                ApplicationContext.Context.Value?.Logger.LogError(exception, "Failed to deserialize strings");
-
-                return false;
-            }
-        }
-
-        return Save();
+        return LoadLocalized(DefaultLanguage);
     }
 
     private static bool LoadLocalized(string language)
@@ -1619,24 +1594,24 @@ public static partial class Strings
             ServerContext.ResourceDirectory,
             "localization",
             "server",
-            "en",
-            "server_strings.json"
+            DefaultLanguage,
+            StringsFileName
         );
         var overridePath = Path.Combine(
             ServerContext.ResourceDirectory,
             "localization",
             "server",
             language,
-            "server_strings.json"
+            StringsFileName
         );
+        var legacyPath = Path.Combine(ServerContext.ResourceDirectory, StringsFileName);
 
         var baseLoaded = TryLoadSerializedStrings(basePath, out var baseJson);
-        if (!baseLoaded)
+        if (!baseLoaded && TryLoadSerializedStrings(legacyPath, out var legacyJson))
         {
-            ApplicationContext.Context.Value?.Logger.LogWarning(
-                "Base localization file not found at {Path}.",
-                basePath
-            );
+            baseLoaded = true;
+            baseJson = legacyJson;
+            TryWriteSerializedStrings(basePath, baseJson);
         }
 
         if (TryLoadSerializedStrings(overridePath, out var overrideJson))
@@ -1650,9 +1625,30 @@ public static partial class Strings
                 }
             );
         }
+        else if (!string.Equals(language, DefaultLanguage, StringComparison.OrdinalIgnoreCase) && baseJson.HasValues)
+        {
+            TryWriteSerializedStrings(overridePath, baseJson);
+        }
+
+        if (!baseLoaded)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Base localization file not found at {Path}.",
+                basePath
+            );
+        }
+        else if (string.Equals(language, DefaultLanguage, StringComparison.OrdinalIgnoreCase) && !File.Exists(basePath))
+        {
+            TryWriteSerializedStrings(basePath, baseJson);
+        }
 
         if (!baseJson.HasValues)
         {
+            if (string.Equals(language, DefaultLanguage, StringComparison.OrdinalIgnoreCase))
+            {
+                Save();
+            }
+
             return true;
         }
 
@@ -1694,10 +1690,19 @@ public static partial class Strings
     {
         try
         {
-            var filepath = Path.Combine(ServerContext.ResourceDirectory, "server_strings.json");
+            var filepath = Path.Combine(ServerContext.ResourceDirectory, StringsFileName);
+            var localizedPath = Path.Combine(
+                ServerContext.ResourceDirectory,
+                "localization",
+                "server",
+                DefaultLanguage,
+                StringsFileName
+            );
             Directory.CreateDirectory(ServerContext.ResourceDirectory);
+            Directory.CreateDirectory(Path.GetDirectoryName(localizedPath) ?? ServerContext.ResourceDirectory);
             var json = JsonConvert.SerializeObject(Root, Formatting.Indented, new LocalizedStringConverter());
             File.WriteAllText(filepath, json, Encoding.UTF8);
+            File.WriteAllText(localizedPath, json, Encoding.UTF8);
 
             return true;
         }
@@ -1707,6 +1712,18 @@ public static partial class Strings
 
             return false;
         }
+    }
+
+    private static void TryWriteSerializedStrings(string path, JObject serialized)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(directory);
+        File.WriteAllText(path, serialized.ToString(Formatting.Indented), Encoding.UTF8);
     }
 
     #endregion
