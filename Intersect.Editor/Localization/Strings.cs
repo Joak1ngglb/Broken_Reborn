@@ -1,5 +1,6 @@
 using System.Reflection;
 using Intersect.Config;
+using Intersect.Editor.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata;
@@ -22,6 +23,7 @@ namespace Intersect.Editor.Localization;
 public static partial class Strings
 {
     private const string StringsFileName = "editor_strings.json";
+    private const string DefaultLanguage = "en";
 
     public static string FormatBoolean(bool value, BooleanStyle booleanStyle)
     {
@@ -543,116 +545,21 @@ public static partial class Strings
     {
     }
 
-    public static void Load()
+    public static void Load() => Load(Preferences.Language);
+
+    public static void Load(string? language)
     {
         SynchronizeConfigurableStrings();
 
         try
         {
-            var serialized = new Dictionary<string, Dictionary<string, object>>();
-            serialized = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, object>>>(
-                File.ReadAllText(Path.Combine("resources", StringsFileName))
-            );
+            var normalizedLanguage = string.IsNullOrWhiteSpace(language)
+                ? DefaultLanguage
+                : language.Trim().ToLowerInvariant();
+            var serialized = LoadLocalizedSerializedStrings(normalizedLanguage);
+            var allowSave = string.Equals(normalizedLanguage, DefaultLanguage, StringComparison.OrdinalIgnoreCase);
 
-            var rootType = typeof(Strings);
-            var groupTypes = rootType.GetNestedTypes(BindingFlags.Static | BindingFlags.Public);
-            var missingStrings = new List<string>();
-            foreach (var groupType in groupTypes)
-            {
-                if (!serialized.TryGetValue(groupType.Name, out var serializedGroup))
-                {
-                    missingStrings.Add($"{groupType.Name}");
-                    serialized[groupType.Name] = SerializeGroup(groupType);
-                    continue;
-                }
-
-                foreach (var fieldInfo in groupType.GetFields(BindingFlags.Public | BindingFlags.Static))
-                {
-                    var fieldValue = fieldInfo.GetValue(null);
-                    if (!serializedGroup.TryGetValue(fieldInfo.Name, out var serializedValue))
-                    {
-                        var foundKey = serializedGroup.Keys.FirstOrDefault(key => string.Equals(fieldInfo.Name, key, StringComparison.OrdinalIgnoreCase));
-                        if (foundKey != default)
-                        {
-                            _ = serializedGroup.TryGetValue(foundKey, out serializedValue);
-                        }
-                    }
-
-                    switch (fieldValue)
-                    {
-                        case LocalizedString localizedString:
-                            var jsonString = (string)serializedValue;
-                            if (jsonString == default)
-                            {
-                                Intersect.Core.ApplicationContext.Context.Value?.Logger.LogWarning($"{groupType.Name}.{fieldInfo.Name} is null.");
-                                missingStrings.Add($"{groupType.Name}.{fieldInfo.Name} (string)");
-                                serializedGroup[fieldInfo.Name] = (string)localizedString;
-                            }
-                            else
-                            {
-                                fieldInfo.SetValue(null, new LocalizedString(jsonString));
-                            }
-                            break;
-
-                        case Dictionary<int, LocalizedString> intDictionary:
-                            DeserializeDictionary(missingStrings, groupType, fieldInfo, fieldValue, serializedGroup, serializedValue, intDictionary);
-                            break;
-
-                        case Dictionary<string, LocalizedString> stringDictionary:
-                            DeserializeDictionary(missingStrings, groupType, fieldInfo, fieldValue, serializedGroup, serializedValue, stringDictionary);
-                            break;
-
-                        default:
-                            {
-                                var fieldType = fieldInfo.FieldType;
-                                if (!fieldType.IsGenericType || typeof(Dictionary<,>).ExtendedBy(fieldType) && typeof(LocaleDictionary<,>).ExtendedBy(fieldType))
-                                {
-                                    Intersect.Core.ApplicationContext.Context.Value?.Logger.LogError(
-                                        new NotSupportedException(
-                                            $"Unsupported localization type for {groupType.Name}.{fieldInfo.Name}: {fieldInfo.FieldType.FullName}"
-                                        ),
-                                        $"Unsupported localization type for {groupType.Name}.{fieldInfo.Name}: {fieldInfo.FieldType.FullName}"
-                                    );
-                                    break;
-                                }
-
-                                var parameters = fieldType.GenericTypeArguments;
-                                var localizedParameterType = parameters.Last();
-                                if (localizedParameterType != typeof(LocalizedString))
-                                {
-                                    Intersect.Core.ApplicationContext.Context.Value?.Logger.LogError(
-                                        new NotSupportedException(
-                                            $"Unsupported localization dictionary value type for {groupType.Name}.{fieldInfo.Name}: {localizedParameterType.FullName}"
-                                        ),
-                                        $"Unsupported localization dictionary value type for {groupType.Name}.{fieldInfo.Name}: {localizedParameterType.FullName}"
-                                    );
-                                    break;
-                                }
-
-                                var keyType = parameters.First();
-                                var constructedMethod = _methodInfoDeserializeDictionary.MakeGenericMethod(keyType);
-                                _ = constructedMethod.Invoke(null,
-                                [
-                                    missingStrings,
-                                            groupType,
-                                            fieldInfo,
-                                            fieldValue,
-                                            serializedGroup,
-                                            serializedValue,
-                                            fieldValue,
-                                ]
-                                );
-                                break;
-                            }
-                    }
-                }
-            }
-
-            if (missingStrings.Count > 0)
-            {
-                Intersect.Core.ApplicationContext.Context.Value?.Logger.LogWarning($"Missing strings, overwriting strings file:\n\t{string.Join(",\n\t", missingStrings)}");
-                SaveSerialized(serialized);
-            }
+            LoadSerialized(serialized, allowSave);
         }
         catch (Exception exception)
         {
@@ -661,6 +568,206 @@ public static partial class Strings
         }
 
         PostLoad();
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> LoadLocalizedSerializedStrings(string language)
+    {
+        var normalizedLanguage = string.IsNullOrWhiteSpace(language)
+            ? DefaultLanguage
+            : language.Trim().ToLowerInvariant();
+        var basePath = Path.Combine(
+            "resources",
+            "localization",
+            "editor",
+            DefaultLanguage,
+            StringsFileName
+        );
+        var overridePath = Path.Combine(
+            "resources",
+            "localization",
+            "editor",
+            normalizedLanguage,
+            StringsFileName
+        );
+        var legacyPath = Path.Combine("resources", StringsFileName);
+
+        var baseLoaded = TryLoadSerializedStrings(basePath, out var baseSerialized);
+        if (!baseLoaded && TryLoadSerializedStrings(legacyPath, out var legacySerialized))
+        {
+            baseSerialized = legacySerialized;
+            baseLoaded = true;
+            WriteSerializedStrings(basePath, baseSerialized);
+        }
+
+        if (!baseLoaded)
+        {
+            Intersect.Core.ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Base localization file not found at {Path}.",
+                basePath
+            );
+        }
+
+        if (!TryLoadSerializedStrings(overridePath, out var overrideSerialized))
+        {
+            if (!string.Equals(normalizedLanguage, DefaultLanguage, StringComparison.OrdinalIgnoreCase) &&
+                baseSerialized.Count > 0)
+            {
+                WriteSerializedStrings(overridePath, baseSerialized);
+            }
+
+            return baseSerialized;
+        }
+
+        return MergeSerializedStrings(baseSerialized, overrideSerialized);
+    }
+
+    private static bool TryLoadSerializedStrings(
+        string path,
+        out Dictionary<string, Dictionary<string, object>> serialized
+    )
+    {
+        if (!File.Exists(path))
+        {
+            serialized = new Dictionary<string, Dictionary<string, object>>();
+            return false;
+        }
+
+        serialized = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, object>>>(
+            File.ReadAllText(path)
+        ) ?? new Dictionary<string, Dictionary<string, object>>();
+
+        return true;
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> MergeSerializedStrings(
+        Dictionary<string, Dictionary<string, object>> baseSerialized,
+        Dictionary<string, Dictionary<string, object>> overrideSerialized
+    )
+    {
+        foreach (var (groupName, overrideGroup) in overrideSerialized)
+        {
+            if (!baseSerialized.TryGetValue(groupName, out var baseGroup))
+            {
+                baseSerialized[groupName] = new Dictionary<string, object>(overrideGroup);
+                continue;
+            }
+
+            foreach (var (key, value) in overrideGroup)
+            {
+                baseGroup[key] = value;
+            }
+        }
+
+        return baseSerialized;
+    }
+
+    private static void LoadSerialized(
+        Dictionary<string, Dictionary<string, object>> serialized,
+        bool allowSave
+    )
+    {
+        var rootType = typeof(Strings);
+        var groupTypes = rootType.GetNestedTypes(BindingFlags.Static | BindingFlags.Public);
+        var missingStrings = new List<string>();
+        foreach (var groupType in groupTypes)
+        {
+            if (!serialized.TryGetValue(groupType.Name, out var serializedGroup))
+            {
+                missingStrings.Add($"{groupType.Name}");
+                serialized[groupType.Name] = SerializeGroup(groupType);
+                continue;
+            }
+
+            foreach (var fieldInfo in groupType.GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                var fieldValue = fieldInfo.GetValue(null);
+                if (!serializedGroup.TryGetValue(fieldInfo.Name, out var serializedValue))
+                {
+                    var foundKey = serializedGroup.Keys.FirstOrDefault(key => string.Equals(fieldInfo.Name, key, StringComparison.OrdinalIgnoreCase));
+                    if (foundKey != default)
+                    {
+                        _ = serializedGroup.TryGetValue(foundKey, out serializedValue);
+                    }
+                }
+
+                switch (fieldValue)
+                {
+                    case LocalizedString localizedString:
+                        var jsonString = (string)serializedValue;
+                        if (jsonString == default)
+                        {
+                            Intersect.Core.ApplicationContext.Context.Value?.Logger.LogWarning($"{groupType.Name}.{fieldInfo.Name} is null.");
+                            missingStrings.Add($"{groupType.Name}.{fieldInfo.Name} (string)");
+                            serializedGroup[fieldInfo.Name] = (string)localizedString;
+                        }
+                        else
+                        {
+                            fieldInfo.SetValue(null, new LocalizedString(jsonString));
+                        }
+                        break;
+
+                    case Dictionary<int, LocalizedString> intDictionary:
+                        DeserializeDictionary(missingStrings, groupType, fieldInfo, fieldValue, serializedGroup, serializedValue, intDictionary);
+                        break;
+
+                    case Dictionary<string, LocalizedString> stringDictionary:
+                        DeserializeDictionary(missingStrings, groupType, fieldInfo, fieldValue, serializedGroup, serializedValue, stringDictionary);
+                        break;
+
+                    default:
+                        {
+                            var fieldType = fieldInfo.FieldType;
+                            if (!fieldType.IsGenericType || typeof(Dictionary<,>).ExtendedBy(fieldType) && typeof(LocaleDictionary<,>).ExtendedBy(fieldType))
+                            {
+                                Intersect.Core.ApplicationContext.Context.Value?.Logger.LogError(
+                                    new NotSupportedException(
+                                        $"Unsupported localization type for {groupType.Name}.{fieldInfo.Name}: {fieldInfo.FieldType.FullName}"
+                                    ),
+                                    $"Unsupported localization type for {groupType.Name}.{fieldInfo.Name}: {fieldInfo.FieldType.FullName}"
+                                );
+                                break;
+                            }
+
+                            var parameters = fieldType.GenericTypeArguments;
+                            var localizedParameterType = parameters.Last();
+                            if (localizedParameterType != typeof(LocalizedString))
+                            {
+                                Intersect.Core.ApplicationContext.Context.Value?.Logger.LogError(
+                                    new NotSupportedException(
+                                        $"Unsupported localization dictionary value type for {groupType.Name}.{fieldInfo.Name}: {localizedParameterType.FullName}"
+                                    ),
+                                    $"Unsupported localization dictionary value type for {groupType.Name}.{fieldInfo.Name}: {localizedParameterType.FullName}"
+                                );
+                                break;
+                            }
+
+                            var keyType = parameters.First();
+                            var constructedMethod = _methodInfoDeserializeDictionary.MakeGenericMethod(keyType);
+                            _ = constructedMethod.Invoke(null,
+                            [
+                                missingStrings,
+                                        groupType,
+                                        fieldInfo,
+                                        fieldValue,
+                                        serializedGroup,
+                                        serializedValue,
+                                        fieldValue,
+                            ]
+                            );
+                            break;
+                        }
+                }
+            }
+        }
+
+        if (missingStrings.Count > 0)
+        {
+            Intersect.Core.ApplicationContext.Context.Value?.Logger.LogWarning($"Missing strings, overwriting strings file:\n\t{string.Join(",\n\t", missingStrings)}");
+            if (allowSave)
+            {
+                SaveSerialized(serialized);
+            }
+        }
     }
 
     private static readonly MethodInfo _methodInfoDeserializeDictionary = typeof(Strings).GetMethod(
@@ -769,14 +876,25 @@ public static partial class Strings
 
     private static void SaveSerialized(Dictionary<string, Dictionary<string, object>> serialized)
     {
-        var languageDirectory = Path.Combine("resources");
-        if (Directory.Exists(languageDirectory))
+        var languageDirectory = Path.Combine(
+            "resources",
+            "localization",
+            "editor",
+            DefaultLanguage
+        );
+        WriteSerializedStrings(Path.Combine(languageDirectory, StringsFileName), serialized);
+    }
+
+    private static void WriteSerializedStrings(string path, Dictionary<string, Dictionary<string, object>> serialized)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (string.IsNullOrWhiteSpace(directory))
         {
-            File.WriteAllText(
-                Path.Combine(languageDirectory, StringsFileName),
-                JsonConvert.SerializeObject(serialized, Formatting.Indented)
-            );
+            return;
         }
+
+        Directory.CreateDirectory(directory);
+        File.WriteAllText(path, JsonConvert.SerializeObject(serialized, Formatting.Indented));
     }
 
     public static void Save()
@@ -4958,6 +5076,9 @@ Tick timer saved in server config.json.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString CursorSprites = @"Enable cursor sprites for map tools.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString language = @"Language";
     }
 
     public partial struct ProgressForm

@@ -13,6 +13,7 @@ using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.GameObjects;
+using Intersect.Network.Packets.Editor;
 using Intersect.Utilities;
 using System;
 using System.Drawing;
@@ -248,6 +249,8 @@ public partial class FrmSpell : EditorForm
         //Send Changed items
         foreach (var item in mChanged)
         {
+            TranslationSourceUpdater.UpdateEnglishSource(item.Type.ToString(), item.Id, "Name", item.Name);
+            TranslationSourceUpdater.UpdateEnglishSource(item.Type.ToString(), item.Id, "Description", item.Description);
             PacketSender.SendSaveObject(item);
             item.DeleteBackup();
         }

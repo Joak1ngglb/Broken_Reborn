@@ -14,12 +14,16 @@ using System.Collections.Generic;
 using System.Linq;
 using Intersect.Client.Interface.Game.DescriptionWindows;
 using Intersect.Client.Interface;
+using Intersect.Network.Packets.Localization;
 
 
 namespace Intersect.Client.Interface.Game.Spells;
 
 public partial class SpellsWindow : Window
 {
+    private const int SlotHeight = 40;
+    private const int SlotTopPadding = 4;
+
     public List<SpellItem> Items { get; private set; } = [];
 
     private readonly ScrollControl _slotContainer;
@@ -139,13 +143,12 @@ public partial class SpellsWindow : Window
 
         // Crea y posiciona cada SpellItem dentro del panel interno
         var max = Options.Instance.Player.MaxSpells;
-        const int slotHeight = 40;
         for (var i = 0; i < max; i++)
         {
             var item = new SpellItem(this, _innerSlotPanel, i, _contextMenu);
 
-            var y = 4 + i * slotHeight;
-            item.SetBounds(4, y, innerWidth - 8, slotHeight - 4);
+            var y = SlotTopPadding + i * SlotHeight;
+            item.SetBounds(4, y, innerWidth - 8, SlotHeight - 4);
 
             // (opcional) selección visual inicial si hace falta
             if (_selectedSlot == i) item.SetSelected(true);
@@ -154,7 +157,7 @@ public partial class SpellsWindow : Window
         }
 
         // Altura total del contenido para que el Scroll se active
-        var innerHeight = 4 + max * slotHeight;
+        var innerHeight = SlotTopPadding + max * SlotHeight;
         _innerSlotPanel.SetSize(innerWidth, innerHeight);
 
         // MUY IMPORTANTE: actualizar el área “interna” del Scroll
@@ -205,6 +208,8 @@ public partial class SpellsWindow : Window
             _lastSpellPoints = spellPoints;
             _needsDetailsUpdate = true;
         }
+
+        RequestVisibleSpellLocalization();
 
         var slotCount = Math.Min(Items.Count, maxSpells);
         for (var i = 0; i < slotCount; i++)
@@ -341,5 +346,58 @@ public partial class SpellsWindow : Window
     {
         _contextMenu?.Close();
         base.Hide();
+    }
+
+    private void RequestVisibleSpellLocalization()
+    {
+        if (Globals.Me?.Spells is not { Length: > 0 } spellSlots)
+        {
+            return;
+        }
+
+        var slotCount = Math.Min(Math.Min(spellSlots.Length, Items.Count), Options.Instance.Player.MaxSpells);
+        if (slotCount <= 0)
+        {
+            return;
+        }
+
+        var scrollOffset = -_slotContainer.VerticalScroll;
+        var viewportHeight = _slotContainer.Height;
+
+        var startIndex = Math.Max(
+            0,
+            (int)Math.Floor((scrollOffset - SlotTopPadding) / (double)SlotHeight)
+        );
+        var endIndex = Math.Min(
+            slotCount - 1,
+            (int)Math.Floor((scrollOffset + viewportHeight - SlotTopPadding) / (double)SlotHeight)
+        );
+
+        if (endIndex < startIndex)
+        {
+            endIndex = startIndex;
+        }
+
+        var requests = new List<LocalizationRequestEntry>();
+        for (var i = startIndex; i <= endIndex && i < spellSlots.Length; i++)
+        {
+            var spellId = spellSlots[i].Id;
+            if (spellId == Guid.Empty)
+            {
+                continue;
+            }
+
+            if (!SpellDescriptor.TryGet(spellId, out var spell))
+            {
+                continue;
+            }
+
+            requests.Add(new LocalizationRequestEntry(spell.Type.ToString(), spellId.ToString(), "Name"));
+        }
+
+        if (requests.Count > 0)
+        {
+            GameLocalization.RequestEntries(requests);
+        }
     }
 }

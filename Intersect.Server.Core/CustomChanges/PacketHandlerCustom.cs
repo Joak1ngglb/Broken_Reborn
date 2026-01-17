@@ -1,8 +1,29 @@
+using System;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using Intersect;
+using Intersect.Core;
 using Intersect.Enums;
+using Intersect.Framework.Core;
+using Intersect.Framework.Core.Entities;
+using Intersect.Framework.Core.GameObjects.Crafting;
+using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.PlayerClass;
+using Intersect.Framework.Core.GameObjects.Spells;
+using Intersect.Framework.Core.Security;
 using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets;
 using Intersect.Network.Packets.Client;
+using Intersect.Network.Packets.Editor;
+using Intersect.Network.Packets.Server;
+using Intersect.Server.Core;
 using Intersect.Server.Database;
 using Intersect.Server.Database.Logging.Entities;
 using Intersect.Server.Database.PlayerData;
@@ -32,14 +53,15 @@ using Intersect.Framework.Core.Security;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Core;
 using Intersect;
+using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Extensions.Logging;
+using Serilog;
 using ChatMsgPacket = Intersect.Network.Packets.Client.ChatMsgPacket;
 using LoginPacket = Intersect.Network.Packets.Client.LoginPacket;
 using PartyInvitePacket = Intersect.Network.Packets.Client.PartyInvitePacket;
 using PingPacket = Intersect.Network.Packets.Client.PingPacket;
 using TradeRequestPacket = Intersect.Network.Packets.Client.TradeRequestPacket;
-using Serilog;
-using Microsoft.EntityFrameworkCore;
 
 namespace Intersect.Server.Networking;
 
@@ -724,6 +746,100 @@ internal sealed partial class PacketHandler
         }
 
         PacketSender.SendPriceInfo(player, packet.ItemId);
+    }
+
+    private static bool TryRemoveCurrency(Player player, Guid currencyId, int amount, out int removedAmount)
+    {
+        removedAmount = 0;
+        var remaining = amount;
+
+        foreach (var slot in player.FindInventoryItemSlots(currencyId))
+        {
+            var toRemove = Math.Min(remaining, slot.Quantity);
+            if (toRemove <= 0)
+            {
+                continue;
+            }
+
+            if (!player.TryTakeItem(slot, toRemove))
+            {
+                break;
+            }
+
+            removedAmount += toRemove;
+            remaining -= toRemove;
+
+            if (remaining <= 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    //TranslationBatchUpsertPacket
+    public void HandlePacket(Client client, TranslationBatchUpsertPacket packet)
+    {
+        if (client == null || packet?.Entries == null || packet.Entries.Count < 1)
+        {
+            return;
+        }
+
+        // Seguridad: ya arriba tu switch bloquea EditorPacket si no es editor. :contentReference[oaicite:2]{index=2}
+        // case Network.Packets.EditorPacket _ when !client.IsEditor: return false;
+
+        foreach (var entry in packet.Entries)
+        {
+            if (entry == null)
+            {
+                continue;
+            }
+
+            var entityType = entry.EntityType ?? string.Empty;
+            var entityId = entry.EntityId ?? string.Empty;
+            var field = entry.Field ?? string.Empty;
+
+            // SourceText es lo que nos permite recalcular hash y marcar NEEDS_REVIEW si cambió
+            var sourceText = entry.SourceText ?? string.Empty;
+
+            // Traducción
+            var language = entry.Language ?? "en";
+            var translatedText = entry.TranslatedText ?? string.Empty;
+
+            // 1) Upsert del source (server calcula hash + marca needs_review si cambió)
+            //    Si SourceText llega vacío (clientes viejos), NO podemos recalcular nada.
+            //    En ese caso, seguimos guardando “como legacy” (ver else).
+            if (!string.IsNullOrWhiteSpace(sourceText))
+            {
+                var sourceHash = LocalizationRepository.Default.UpsertSource(entityType, entityId, field, sourceText);
+
+                // 2) Upsert traducción (si hay texto)
+                if (!string.IsNullOrWhiteSpace(translatedText))
+                {
+                    LocalizationRepository.Default.UpsertTranslation(
+                        entityType,
+                        entityId,
+                        field,
+                        language,
+                        translatedText,
+                        entry.Status,
+                        sourceHash
+                    );
+                }
+            }
+            else
+            {
+                // Modo legacy (compatibilidad): no hay sourceText, entonces no podemos detectar cambios.
+                // Aquí guardas como antes (si aún conservas el Upsert viejo), o decides ignorar.
+                //
+                // Si todavía tienes el repo viejo:
+                // LocalizationRepository.Default.Upsert(entityType, entityId, field, language, translatedText, entry.SourceHash ?? "");
+                //
+                // Si ya migraste full al repo nuevo, lo mejor es: NO aceptar legacy para evitar basura.
+            }
+        }
     }
 
 }

@@ -12,6 +12,7 @@ using Intersect.Framework;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Models;
 using Intersect.Network.Packets.Client;
+using Intersect.Network.Packets.Localization;
 using System.Collections.Generic;
 using Intersect.Network.Packets;
 using AdminAction = Intersect.Admin.Actions.AdminAction;
@@ -21,6 +22,16 @@ namespace Intersect.Client.Networking;
 
 public static partial class PacketSender
 {
+    public static void SendLocalizedTextRequest(string language, List<LocalizationRequestEntry> requests)
+    {
+        if (requests.Count < 1)
+        {
+            return;
+        }
+
+        Network.SendPacket(new LocalizedTextRequestPacket(language, requests));
+    }
+
 
     public static void SendPing()
     {

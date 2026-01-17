@@ -13,6 +13,7 @@ using Intersect.Client.Localization;
 using Intersect.Config;
 using Intersect.Core;
 using Intersect.Framework.Core;
+using Intersect.Localization;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using static Intersect.Client.Framework.File_Management.GameContentManager;
@@ -44,6 +45,7 @@ public partial class SettingsWindow : Window
     private readonly LabeledCheckBox _showHealthAsPercentageCheckbox;
     private readonly LabeledCheckBox _showManaAsPercentageCheckbox;
     private readonly LabeledCheckBox _simplifiedEscapeMenu;
+    private readonly LabeledComboBox _languageList;
 
     // Game Settings - Information
     private readonly TabButton _gameSettingsTabInformation;
@@ -176,6 +178,21 @@ public partial class SettingsWindow : Window
         );
 
         // Game Settings - Interface.
+
+        _languageList = new LabeledComboBox(parent: _interfaceSettings, name: nameof(_languageList))
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Label = Strings.Settings.Language,
+            TextPadding = new Padding(8, 4, 0, 4),
+        };
+
+        foreach (var language in SupportedLanguages.All)
+        {
+            var item = _languageList.AddItem(label: language.Label, userData: language.Code);
+            item.TextAlign = Pos.Left;
+        }
 
         // Game Settings - Interface: Auto-close Windows.
         _autoCloseWindowsCheckbox = new LabeledCheckBox(parent: _interfaceSettings, name: nameof(_autoCloseWindowsCheckbox))
@@ -990,6 +1007,11 @@ public partial class SettingsWindow : Window
         _autoTurnToTarget.IsChecked = Globals.Database.AutoTurnToTarget;
         _autoSoftRetargetOnSelfCast.IsChecked = Globals.Database.AutoSoftRetargetOnSelfCast;
         _typewriterCheckbox.IsChecked = Globals.Database.TypewriterBehavior == Enums.TypewriterBehavior.Word;
+        var savedLanguage = string.IsNullOrWhiteSpace(Globals.Database.Language) ? "en" : Globals.Database.Language;
+        if (!_languageList.SelectByUserData(savedLanguage))
+        {
+            _languageList.SelectByUserData("en");
+        }
 
         // Video Settings.
         _fullscreenCheckbox.IsChecked = Globals.Database.FullScreen;
@@ -1171,6 +1193,9 @@ public partial class SettingsWindow : Window
         Globals.Database.AutoTurnToTarget = _autoTurnToTarget.IsChecked;
         Globals.Database.AutoSoftRetargetOnSelfCast = _autoSoftRetargetOnSelfCast.IsChecked;
         Globals.Database.TypewriterBehavior = _typewriterCheckbox.IsChecked ? Enums.TypewriterBehavior.Word : Enums.TypewriterBehavior.Off;
+        var selectedLanguage = _languageList.SelectedItem?.UserData as string ?? "en";
+        var languageChanged = !string.Equals(Globals.Database.Language, selectedLanguage, StringComparison.OrdinalIgnoreCase);
+        Globals.Database.Language = selectedLanguage;
 
         // Video Settings.
         Globals.Database.EnableScrollingWorldZoom = _enableScrollingWorldZoomCheckbox.IsChecked;
@@ -1239,6 +1264,13 @@ public partial class SettingsWindow : Window
 
         // Save Preferences.
         Globals.Database.SavePreferences();
+
+        if (languageChanged)
+        {
+            Strings.Load(selectedLanguage);
+            GameLocalization.Clear();
+            Interface.ShowAlert(Strings.Settings.LanguageReloadNotice, alertType: AlertType.Warning);
+        }
 
         if (shouldReset && Graphics.Renderer != default)
         {

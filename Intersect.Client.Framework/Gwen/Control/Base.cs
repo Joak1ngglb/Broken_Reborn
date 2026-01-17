@@ -1294,6 +1294,8 @@ public partial class Base : IDisposable
 
     public bool SkipSerialization { get; set; } = false;
 
+    public bool IsDisposed => _disposed;
+
     public event GwenEventHandler<EventArgs>? Disposed;
 
     /// <summary>

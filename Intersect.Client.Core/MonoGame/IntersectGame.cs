@@ -1,8 +1,13 @@
+using System.Diagnostics;
+using System.Reflection;
 using Intersect.Client.Core;
+using Intersect.Client.Framework.Database;
+using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Gwen.Input;
 using Intersect.Client.Framework.Gwen.Renderer;
 using Intersect.Client.Framework.Input;
 using Intersect.Client.General;
+using Intersect.Client.Interface.Shared;
 using Intersect.Client.Localization;
 using Intersect.Client.MonoGame.File_Management;
 using Intersect.Client.MonoGame.Graphics;
@@ -18,13 +23,20 @@ using MainMenu = Intersect.Client.Interface.Menu.MainMenu;
 using Intersect.Client.Interface.Shared;
 using Intersect.Client.MonoGame.NativeInterop;
 using Intersect.Client.MonoGame.NativeInterop.OpenGL;
+using Intersect.Client.MonoGame.Network;
+using Intersect.Client.ThirdParty;
+using Intersect.Configuration;
 using Intersect.Core;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.AssetManagement;
 using Intersect.Framework.SystemInformation;
+using Intersect.Framework.Threading;
 using Intersect.Framework.Utilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Exception = System.Exception;
+using MainMenu = Intersect.Client.Interface.Menu.MainMenu;
 
 namespace Intersect.Client.MonoGame;
 
@@ -90,7 +102,7 @@ internal partial class IntersectGame : Game
 
         mGraphics.PreparingDeviceSettings += (_, args) =>
         {
-            args.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage =
+            args.HGraphicsDeviceInformation.PresentationParameters.RenderTargetUsage =
                 RenderTargetUsage.PreserveContents;
             args.GraphicsDeviceInformation.PresentationParameters.MultiSampleCount = 8;
         };
@@ -104,6 +116,7 @@ internal partial class IntersectGame : Game
 
         // Load configuration.
         Globals.Database.LoadPreferences();
+        Strings.Load(Globals.Database.Language);
 
         Window.IsBorderless = Context.StartupOptions.BorderlessWindow;
 
@@ -193,6 +206,9 @@ internal partial class IntersectGame : Game
         mInitialized = true;
 
         PostStartupAction();
+        // Ensure the main thread is correctly set, as background tasks might have initialized calls elsewhere
+        ThreadQueue.Default.SetMainThreadId();
+
     }
 
     private TimeSpan _elapsedSincePlatformStatisticsRefresh;
@@ -205,6 +221,8 @@ internal partial class IntersectGame : Game
     /// <param name="gameTime">Provides a snapshot of timing values.</param>
     protected override void Update(GameTime gameTime)
     {
+        // Ensure pending main thread actions are executed
+        ThreadQueue.Default.InvokePending();
         _elapsedSincePlatformStatisticsRefresh += gameTime.ElapsedGameTime;
         if (_elapsedSincePlatformStatisticsRefresh.TotalSeconds > 1)
         {

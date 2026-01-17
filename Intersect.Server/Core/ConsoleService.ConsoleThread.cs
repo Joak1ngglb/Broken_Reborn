@@ -38,6 +38,7 @@ namespace Intersect.Server.Core
                 Parser.Register<KickCommand>();
                 Parser.Register<KillCommand>();
                 Parser.Register<ListVariablesCommand>();
+                Parser.Register<LocalizationStatusCommand>();
                 Parser.Register<MetricsCommand>();
                 Parser.Register<MakePrivateCommand>();
                 Parser.Register<MakePublicCommand>();
