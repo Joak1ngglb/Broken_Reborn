@@ -21,6 +21,7 @@ using Intersect.Framework.Core.Security;
 using Intersect.GameObjects;
 using Intersect.Models;
 using Intersect.Network;
+using Intersect.Network.Packets.Localization;
 using Intersect.Network.Packets.Server;
 using Intersect.Network.Packets;
 using Intersect.Server.Database;
@@ -68,6 +69,16 @@ public static partial class PacketSender
             client.Send(new PingPacket(request), TransmissionMode.Any);
             client.LastPing = Timing.Global.Milliseconds;
         }
+    }
+
+    public static void SendLocalizedText(Client client, string language, List<LocalizedTextEntry> entries)
+    {
+        if (client == null || entries.Count < 1)
+        {
+            return;
+        }
+
+        client.Send(new LocalizedTextPacket(language, entries), TransmissionMode.Any);
     }
 
     //ConfigPacket
@@ -2090,6 +2101,16 @@ public static partial class PacketSender
     //ActionMsgPacket
     public static void SendActionMsg(Entity en, string message, Color color)
     {
+        SendActionMsg(en, message, color, localizationRequest: null);
+    }
+
+    public static void SendActionMsg(
+        Entity en,
+        string message,
+        Color color,
+        LocalizationRequestEntry? localizationRequest
+    )
+    {
         if (en == null)
         {
             return;
@@ -2097,13 +2118,17 @@ public static partial class PacketSender
 
         if (MapController.TryGetInstanceFromMap(en.Map.Id, en.MapInstanceId, out var mapInstance))
         {
+            var packet = new ActionMsgPacket(en.MapId, en.X, en.Y, message, color)
+            {
+                LocalizationRequest = localizationRequest
+            };
             if (Options.Instance.Packets.BatchActionMessagePackets)
             {
-                mapInstance.AddBatchedActionMessage(new ActionMsgPacket(en.MapId, en.X, en.Y, message, color));
+                mapInstance.AddBatchedActionMessage(packet);
             }
             else
             {
-                SendDataToProximityOnMapInstance(en.MapId, en.MapInstanceId, new ActionMsgPacket(en.MapId, en.X, en.Y, message, color));
+                SendDataToProximityOnMapInstance(en.MapId, en.MapInstanceId, packet);
             }
         }
     }

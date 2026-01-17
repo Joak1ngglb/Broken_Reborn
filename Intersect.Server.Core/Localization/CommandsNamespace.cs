@@ -181,6 +181,15 @@ public static partial class Strings
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocaleCommand LocalizationStatus = new LocaleCommand
+        {
+            Name = @"locstatus",
+            Description =
+                @"Shows missing or needs-review localization counts grouped by language, entity type, and field.",
+            Help = @"shows missing or needs-review localization counts grouped by language, entity type, and field"
+        };
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocaleCommand Migrate = new LocaleCommand
         {
             Name = @"migrate",

@@ -1,4 +1,5 @@
 using Intersect.Configuration;
+using System;
 using Microsoft.Win32;
 
 namespace Intersect.Editor.Core;
@@ -7,6 +8,7 @@ namespace Intersect.Editor.Core;
 public static partial class Preferences
 {
     private static bool? _enableCursorSprites;
+    private static string? _language;
 
     public static bool EnableCursorSprites
     {
@@ -20,6 +22,22 @@ public static partial class Preferences
 
             _enableCursorSprites = value;
             SavePreference(nameof(EnableCursorSprites), _enableCursorSprites.ToString() ?? string.Empty);
+        }
+    }
+
+    public static string Language
+    {
+        get => _language ??= NormalizeLanguage(LoadPreference(nameof(Language))) ?? "en";
+        set
+        {
+            var normalized = NormalizeLanguage(value) ?? "en";
+            if (string.Equals(_language, normalized, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _language = normalized;
+            SavePreference(nameof(Language), _language);
         }
     }
 
@@ -67,5 +85,10 @@ public static partial class Preferences
 
         return value;
     }
+
+    private static string? NormalizeLanguage(string? language) =>
+        string.IsNullOrWhiteSpace(language)
+            ? null
+            : language.Trim().ToLowerInvariant();
 
 }

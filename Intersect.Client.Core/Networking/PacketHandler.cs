@@ -6,10 +6,10 @@ using Intersect.Client.Framework.Entities;
 using Intersect.Client.Framework.Items;
 using Intersect.Client.Controllers;
 using Intersect.Client.General;
+using Intersect.Client.Localization;
 using Intersect.Client.Interface.Game.Chat;
 using Intersect.Client.Interface.Menu;
 using Intersect.Client.Items;
-using Intersect.Client.Localization;
 using Intersect.Client.Maps;
 using Intersect.Configuration;
 using Intersect.Core;
@@ -32,9 +32,11 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.Security;
+using Intersect.Framework.Threading;
 using Intersect.Localization;
 using Microsoft.Extensions.Logging;
 using System.Linq;
+using System.Threading.Tasks;
 using Intersect.Framework.Core.GameObjects.Spells;
 
 namespace Intersect.Client.Networking;
@@ -180,7 +182,7 @@ internal sealed partial class PacketHandler
         MainMenu.HandleReceivedConfiguration();
         try
         {
-            Strings.Load();
+            Strings.Load(Globals.Database?.Language);
         }
         catch (Exception exception)
         {
@@ -673,9 +675,21 @@ internal sealed partial class PacketHandler
         var map = MapInstance.Get(packet.MapId);
         if (map != null)
         {
+            var message = packet.Message;
+            if (packet.LocalizationRequest != null &&
+                Guid.TryParse(packet.LocalizationRequest.EntityId, out var localizedId))
+            {
+                message = GameLocalization.GetTextOrDefault(
+                    packet.LocalizationRequest.EntityType,
+                    localizedId,
+                    packet.LocalizationRequest.Field,
+                    packet.Message
+                );
+            }
+
             map.ActionMessages.Add(
                 new ActionMessage(
-                    map, packet.X, packet.Y, packet.Message,
+                    map, packet.X, packet.Y, message,
                     new Color(packet.Color.A, packet.Color.R, packet.Color.G, packet.Color.B)
                 )
             );
@@ -1290,6 +1304,17 @@ internal sealed partial class PacketHandler
             Interface.Interface.ShowAlert(packet.Error, packet.Header, alertType: AlertType.Error);
             Interface.Interface.MenuUi?.Reset();
         }
+    }
+
+    //LocalizedTextPacket
+    public void HandlePacket(IPacketSender packetSender, LocalizedTextPacket packet)
+    {
+        if (packet?.Entries == null || packet.Entries.Count < 1)
+        {
+            return;
+        }
+
+        GameLocalization.ApplyLocalizedTexts(packet.Language, packet.Entries);
     }
 
     //MapItemsPacket

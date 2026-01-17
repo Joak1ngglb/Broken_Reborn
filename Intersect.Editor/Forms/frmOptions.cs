@@ -1,13 +1,14 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using Intersect.Editor.Core;
 using Intersect.Editor.Localization;
+using Intersect.Localization;
 
 namespace Intersect.Editor.Forms;
 
 
 public partial class FrmOptions : Form
 {
-
     public FrmOptions()
     {
         InitializeComponent();
@@ -72,6 +73,24 @@ public partial class FrmOptions : Form
         {
             cmbTextureSize.SelectedIndex = cmbTextureSize.FindStringExact("2048");
         }
+
+        cmbLanguage.Items.Clear();
+        foreach (var language in SupportedLanguages.All)
+        {
+            cmbLanguage.Items.Add(language.Label);
+        }
+
+        var preferredLanguage = Preferences.Language;
+        var selectedIndex = 0;
+        for (var index = 0; index < SupportedLanguages.All.Length; index++)
+        {
+            if (string.Equals(SupportedLanguages.All[index].Code, preferredLanguage, StringComparison.OrdinalIgnoreCase))
+            {
+                selectedIndex = index;
+                break;
+            }
+        }
+        cmbLanguage.SelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
     }
 
     private void InitLocalization()
@@ -87,6 +106,7 @@ public partial class FrmOptions : Form
         lblMusicBatch.Text = Strings.Options.MusicPackSize;
         lblSoundBatch.Text = Strings.Options.SoundPackSize;
         lblTextureSize.Text = Strings.Options.TextureSize;
+        lblLanguage.Text = Strings.Options.language;
 
     }
 
@@ -99,6 +119,18 @@ public partial class FrmOptions : Form
         Preferences.SavePreference("SoundPackSize", nudSoundBatch.Value.ToString(CultureInfo.InvariantCulture));
         Preferences.SavePreference("MusicPackSize", nudMusicBatch.Value.ToString(CultureInfo.InvariantCulture));
         Preferences.SavePreference("TexturePackSize", cmbTextureSize.GetItemText(cmbTextureSize.SelectedItem));
+
+        var selectedIndex = cmbLanguage.SelectedIndex;
+        var selectedLanguage = selectedIndex >= 0 && selectedIndex < SupportedLanguages.All.Length
+            ? SupportedLanguages.All[selectedIndex].Code
+            : "en";
+        var languageChanged = !string.Equals(Preferences.Language, selectedLanguage, StringComparison.OrdinalIgnoreCase);
+        Preferences.Language = selectedLanguage;
+
+        if (languageChanged)
+        {
+            Strings.Load(selectedLanguage);
+        }
     }
 
     private void btnBrowseClient_Click(object sender, EventArgs e)

@@ -35,6 +35,8 @@ namespace Intersect.Editor.Forms
             this.chkSuppressTilesetWarning = new DarkUI.Controls.DarkCheckBox();
             this.btnGeneralOptions = new DarkUI.Controls.DarkButton();
             this.pnlGeneral = new System.Windows.Forms.Panel();
+            this.cmbLanguage = new DarkUI.Controls.DarkComboBox();
+            this.lblLanguage = new System.Windows.Forms.Label();
             this.chkCursorSprites = new DarkUI.Controls.DarkCheckBox();
             this.grpClientPath = new DarkUI.Controls.DarkGroupBox();
             this.btnUpdateOptions = new DarkUI.Controls.DarkButton();
@@ -99,6 +101,8 @@ namespace Intersect.Editor.Forms
             // 
             this.pnlGeneral.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlGeneral.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pnlGeneral.Controls.Add(this.cmbLanguage);
+            this.pnlGeneral.Controls.Add(this.lblLanguage);
             this.pnlGeneral.Controls.Add(this.chkCursorSprites);
             this.pnlGeneral.Controls.Add(this.chkSuppressTilesetWarning);
             this.pnlGeneral.Controls.Add(this.grpClientPath);
@@ -106,6 +110,36 @@ namespace Intersect.Editor.Forms
             this.pnlGeneral.Name = "pnlGeneral";
             this.pnlGeneral.Size = new System.Drawing.Size(357, 163);
             this.pnlGeneral.TabIndex = 20;
+            // 
+            // cmbLanguage
+            // 
+            this.cmbLanguage.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(69)))), ((int)(((byte)(73)))), ((int)(((byte)(74)))));
+            this.cmbLanguage.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(90)))), ((int)(((byte)(90)))), ((int)(((byte)(90)))));
+            this.cmbLanguage.BorderStyle = System.Windows.Forms.ButtonBorderStyle.Solid;
+            this.cmbLanguage.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(43)))), ((int)(((byte)(43)))));
+            this.cmbLanguage.DrawDropdownHoverOutline = false;
+            this.cmbLanguage.DrawFocusRectangle = false;
+            this.cmbLanguage.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.cmbLanguage.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbLanguage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmbLanguage.ForeColor = System.Drawing.Color.Gainsboro;
+            this.cmbLanguage.FormattingEnabled = true;
+            this.cmbLanguage.Location = new System.Drawing.Point(96, 60);
+            this.cmbLanguage.Name = "cmbLanguage";
+            this.cmbLanguage.Size = new System.Drawing.Size(230, 21);
+            this.cmbLanguage.TabIndex = 6;
+            this.cmbLanguage.Text = "English";
+            this.cmbLanguage.TextPadding = new System.Windows.Forms.Padding(2);
+            // 
+            // lblLanguage
+            // 
+            this.lblLanguage.AutoSize = true;
+            this.lblLanguage.ForeColor = System.Drawing.Color.White;
+            this.lblLanguage.Location = new System.Drawing.Point(8, 64);
+            this.lblLanguage.Name = "lblLanguage";
+            this.lblLanguage.Size = new System.Drawing.Size(58, 13);
+            this.lblLanguage.TabIndex = 7;
+            this.lblLanguage.Text = "Language";
             // 
             // chkCursorSprites
             // 
@@ -122,7 +156,7 @@ namespace Intersect.Editor.Forms
             this.grpClientPath.Controls.Add(this.btnBrowseClient);
             this.grpClientPath.Controls.Add(this.txtGamePath);
             this.grpClientPath.ForeColor = System.Drawing.Color.Gainsboro;
-            this.grpClientPath.Location = new System.Drawing.Point(8, 73);
+            this.grpClientPath.Location = new System.Drawing.Point(8, 94);
             this.grpClientPath.Name = "grpClientPath";
             this.grpClientPath.Size = new System.Drawing.Size(332, 45);
             this.grpClientPath.TabIndex = 3;
@@ -281,6 +315,8 @@ namespace Intersect.Editor.Forms
         }
 
         private DarkUI.Controls.DarkCheckBox chkCursorSprites;
+        private DarkComboBox cmbLanguage;
+        private System.Windows.Forms.Label lblLanguage;
 
         #endregion
         private DarkTextBox txtGamePath;

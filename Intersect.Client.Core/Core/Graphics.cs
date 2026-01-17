@@ -15,7 +15,6 @@ using Intersect.Framework.Core.GameObjects.Lighting;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.GameObjects;
 using Intersect.Utilities;
-
 namespace Intersect.Client.Core;
 
 public static partial class Graphics

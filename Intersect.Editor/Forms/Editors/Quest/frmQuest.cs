@@ -7,6 +7,7 @@ using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.GameObjects;
+using Intersect.Network.Packets.Editor;
 using Microsoft.Extensions.Logging;
 
 
@@ -174,6 +175,41 @@ public partial class FrmQuest : EditorForm
                 if (item == null)
                 {
                     return;
+                }
+
+                TranslationSourceUpdater.UpdateEnglishSource(item.Type.ToString(), item.Id, "Name", item.Name);
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "BeforeDescription",
+                    item.BeforeDescription
+                );
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "StartDescription",
+                    item.StartDescription
+                );
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "InProgressDescription",
+                    item.InProgressDescription
+                );
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "EndDescription",
+                    item.EndDescription
+                );
+                foreach (var task in item.Tasks)
+                {
+                    TranslationSourceUpdater.UpdateEnglishSource(
+                        "QuestTask",
+                        task.Id,
+                        "Description",
+                        task.Description
+                    );
                 }
 
                 foreach (var id in item.OriginalTaskEventIds.Keys)

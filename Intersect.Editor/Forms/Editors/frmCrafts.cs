@@ -10,6 +10,7 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.GameObjects;
 using Intersect.Models;
 using Intersect.Config;
+using Intersect.Network.Packets.Editor;
 
 namespace Intersect.Editor.Forms.Editors;
 
@@ -229,6 +230,7 @@ public partial class FrmCrafts : EditorForm
         //Send Changed items
         foreach (var item in mChanged)
         {
+            TranslationSourceUpdater.UpdateEnglishSource(item.Type.ToString(), item.Id, "Name", item.Name);
             PacketSender.SendSaveObject(item);
             item.DeleteBackup();
         }

@@ -1,4 +1,5 @@
-﻿using MessagePack;
+﻿using Intersect.Network.Packets.Localization;
+using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
 
@@ -33,5 +34,8 @@ public partial class ActionMsgPacket : IntersectPacket
 
     [Key(4)]
     public Color Color { get; set; }
+
+    [Key(5)]
+    public LocalizationRequestEntry? LocalizationRequest { get; set; }
 
 }
