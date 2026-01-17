@@ -115,7 +115,7 @@ namespace Intersect.Client.Interface.Game.Market
             {
                 if (type == ItemType.None) continue;
                 var typeLabel = Strings.ItemDescription.ItemTypes.TryGetValue((int)type, out var localizedType)
-                    ? localizedType
+                    ? localizedType.ToString()
                     : type.ToString();
                 _typeBox.AddItem(typeLabel, userData: type);
             }
