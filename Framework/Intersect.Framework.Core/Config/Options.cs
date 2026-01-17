@@ -90,6 +90,10 @@ public partial record Options
     [RequiresRestart]
     public string Language { get; set; } = "en";
 
+    [Category(CategoryCore)]
+    [JsonProperty(Order = -98)]
+    public bool EnableMachineTranslations { get; set; }
+
     #endregion Game Core
 
     #region Game Access
