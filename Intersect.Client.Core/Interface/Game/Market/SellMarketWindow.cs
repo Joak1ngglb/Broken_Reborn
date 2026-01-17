@@ -114,7 +114,10 @@ namespace Intersect.Client.Interface.Game.Market
             foreach (var type in Enum.GetValues<ItemType>())
             {
                 if (type == ItemType.None) continue;
-                _typeBox.AddItem(type.ToString(), userData: type);
+                var typeLabel = Strings.ItemDescription.ItemTypes.TryGetValue((int)type, out var localizedType)
+                    ? localizedType
+                    : type.ToString();
+                _typeBox.AddItem(typeLabel, userData: type);
             }
 
             BuildSubtypeLookup();
