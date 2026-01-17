@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Intersect.Editor.General;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
@@ -169,6 +170,28 @@ public static partial class PacketSender
     public static void SendSaveTime(string timeJson)
     {
         Network.SendPacket(new SaveTimeDataPacket(timeJson));
+    }
+
+    public static void SendTranslationUpsert(
+        string entityType,
+        string entityId,
+        string field,
+        string language,
+        string text,
+        string sourceHash
+    )
+    {
+        Network.SendPacket(new TranslationUpsertPacket(entityType, entityId, field, language, text, sourceHash));
+    }
+
+    public static void SendTranslationBatchUpsert(IReadOnlyCollection<TranslationUpsertEntry> entries)
+    {
+        if (entries == null || entries.Count == 0)
+        {
+            return;
+        }
+
+        Network.SendPacket(new TranslationBatchUpsertPacket(new List<TranslationUpsertEntry>(entries)));
     }
 
     public static void SendNewTilesets(string[] tilesets)

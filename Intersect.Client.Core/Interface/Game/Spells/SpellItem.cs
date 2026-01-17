@@ -283,9 +283,10 @@ public partial class SpellItem : SlotItem
         var properties = slot.Properties ?? new SpellProperties();
         slot.Properties = properties;
         var level = properties.Level;
-        _nameLabel.Text = $"{spell.Name}";
+        var localizedName = GameLocalization.GetTextOrDefault(spell.Type.ToString(), spell.Id, "Name", spell.Name);
+        _nameLabel.Text = $"{localizedName}";
         SpellProperties = properties;
-        SetToolTipText(spell.Name);
+        SetToolTipText(localizedName);
 
         _levelUpButton.IsDisabled = level >= Options.Instance.Player.MaxSpellLevel || Globals.Me.SpellPoints <= 0;
         _levelDownButton.IsDisabled = level <= 1;

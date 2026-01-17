@@ -85,6 +85,11 @@ public partial record Options
     [RequiresRestart]
     public ushort ServerPort { get; set; } = DefaultServerPort;
 
+    [Category(CategoryCore)]
+    [JsonProperty(Order = -99)]
+    [RequiresRestart]
+    public string Language { get; set; } = "en";
+
     #endregion Game Core
 
     #region Game Access
@@ -275,7 +280,6 @@ public partial record Options
             instance.SyncEquipmentItemSubtypes();
             Instance = instance;
         }
-
         instance.SmtpValid = instance.SmtpSettings.IsValid();
         instance.FixAnimatedSprites();
 

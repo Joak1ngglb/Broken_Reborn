@@ -5,6 +5,7 @@ using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets;
 using Intersect.Network.Packets.Client;
+using Intersect.Network.Packets.Localization;
 using Intersect.Server.Database;
 using Intersect.Server.Database.Logging.Entities;
 using Intersect.Server.Database.PlayerData;
@@ -505,6 +506,39 @@ internal sealed partial class PacketHandler
         if (!packet.Responding)
         {
             PacketSender.SendPing(client, false);
+        }
+    }
+
+    //LocalizedTextRequestPacket
+    public void HandlePacket(Client client, LocalizedTextRequestPacket packet)
+    {
+        if (packet?.Requests == null || packet.Requests.Count < 1)
+        {
+            return;
+        }
+
+        var language = string.IsNullOrWhiteSpace(packet.Language) ? "en" : packet.Language;
+        var entries = new List<LocalizedTextEntry>();
+        foreach (var request in packet.Requests)
+        {
+            if (request == null)
+            {
+                continue;
+            }
+
+            var text = LocalizationRepository.Default.Get(
+                request.EntityType ?? string.Empty,
+                request.EntityId ?? string.Empty,
+                request.Field ?? string.Empty,
+                language
+            ) ?? string.Empty;
+
+            entries.Add(new LocalizedTextEntry(request, text));
+        }
+
+        if (entries.Count > 0)
+        {
+            PacketSender.SendLocalizedText(client, language, entries);
         }
     }
 

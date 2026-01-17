@@ -43,6 +43,7 @@ public sealed class OptionsContractResolver(bool serializePrivateProperties, boo
             property.ShouldDeserialize = AlwaysSerialize;
             property.ShouldSerialize = ShouldSerializePrivateProperty;
             property.Writable = true;
+            property.Ignored = false;
         }
 
         if (PublicProperties.Contains(member))
@@ -50,6 +51,7 @@ public sealed class OptionsContractResolver(bool serializePrivateProperties, boo
             property.ShouldDeserialize = AlwaysSerialize;
             property.ShouldSerialize = ShouldSerializePublicProperty;
             property.Writable = true;
+            property.Ignored = false;
         }
 
         return property;

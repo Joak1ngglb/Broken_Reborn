@@ -7,6 +7,7 @@ using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.GameObjects;
+using Intersect.Network.Packets.Editor;
 using Microsoft.Extensions.Logging;
 
 
@@ -176,6 +177,41 @@ public partial class FrmQuest : EditorForm
                     return;
                 }
 
+                TranslationSourceUpdater.UpdateEnglishSource(item.Type.ToString(), item.Id, "Name", item.Name);
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "BeforeDescription",
+                    item.BeforeDescription
+                );
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "StartDescription",
+                    item.StartDescription
+                );
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "InProgressDescription",
+                    item.InProgressDescription
+                );
+                TranslationSourceUpdater.UpdateEnglishSource(
+                    item.Type.ToString(),
+                    item.Id,
+                    "EndDescription",
+                    item.EndDescription
+                );
+                foreach (var task in item.Tasks)
+                {
+                    TranslationSourceUpdater.UpdateEnglishSource(
+                        "QuestTask",
+                        task.Id,
+                        "Description",
+                        task.Description
+                    );
+                }
+
                 foreach (var id in item.OriginalTaskEventIds.Keys)
                 {
                     var found = false;
@@ -218,6 +254,52 @@ public partial class FrmQuest : EditorForm
                 item.DeleteBackup();
             }
         );
+
+        var entries = new List<TranslationUpsertEntry>();
+        foreach (QuestDescriptor quest in QuestDescriptor.Lookup.Values)
+        {
+            TranslationSourceUpdater.AddEnglishSource(entries, quest.Type.ToString(), quest.Id, "Name", quest.Name);
+            TranslationSourceUpdater.AddEnglishSource(
+                entries,
+                quest.Type.ToString(),
+                quest.Id,
+                "BeforeDescription",
+                quest.BeforeDescription
+            );
+            TranslationSourceUpdater.AddEnglishSource(
+                entries,
+                quest.Type.ToString(),
+                quest.Id,
+                "StartDescription",
+                quest.StartDescription
+            );
+            TranslationSourceUpdater.AddEnglishSource(
+                entries,
+                quest.Type.ToString(),
+                quest.Id,
+                "InProgressDescription",
+                quest.InProgressDescription
+            );
+            TranslationSourceUpdater.AddEnglishSource(
+                entries,
+                quest.Type.ToString(),
+                quest.Id,
+                "EndDescription",
+                quest.EndDescription
+            );
+            foreach (var task in quest.Tasks)
+            {
+                TranslationSourceUpdater.AddEnglishSource(
+                    entries,
+                    "QuestTask",
+                    task.Id,
+                    "Description",
+                    task.Description
+                );
+            }
+        }
+
+        TranslationSourceUpdater.QueueBatchEnglishSources(entries);
 
         mEditorItem = null;
         Hide();

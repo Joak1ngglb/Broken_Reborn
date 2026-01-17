@@ -8,6 +8,7 @@ using Intersect.Utilities;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.General;
 using Intersect.Framework.Core.GameObjects.Spells;
+using Intersect.Network.Packets.Localization;
 
 namespace Intersect.Client.Interface.Game.DescriptionWindows;
 
@@ -16,6 +17,7 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
     private SpellDescriptor? _spellDescriptor;
     private SpellProperties? _spellProperties;
     private SpellProperties? _effectiveProps;
+    private bool _localizationSubscribed;
 
     public void Show(Guid spellId, ItemDescriptionWindow? itemDecriptionContainer = default)
     {
@@ -32,6 +34,8 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
             _effectiveProps = null;
         }
 
+        SubscribeToLocalizationUpdates();
+        RequestLocalization();
         SetupDescriptionWindow();
 
         if (itemDecriptionContainer != default)
@@ -54,6 +58,8 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
             Interface.GameUi.GameCanvas.RemoveChild(Interface.GameUi.SpellDescriptionWindow, true);
             Interface.GameUi.SpellDescriptionWindow = default;
         }
+
+        UnsubscribeFromLocalizationUpdates();
     }
 
     protected void SetupDescriptionWindow()
@@ -72,9 +78,10 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         SetupSpellInfo();
 
         // if we have a description, set that up.
-        if (!string.IsNullOrWhiteSpace(_spellDescriptor.Description))
+        var localizedDescription = GetLocalizedSpellDescription();
+        if (!string.IsNullOrWhiteSpace(localizedDescription))
         {
-            SetupDescription();
+            SetupDescription(localizedDescription);
         }
 
         // Set up information depending on the item type.
@@ -114,7 +121,7 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         }
 
         // Set up the header as the item name.
-        header.SetTitle(_spellDescriptor.Name, Color.White);
+        header.SetTitle(GetLocalizedSpellName(), Color.White);
 
         // Set up the spell type description.
         Strings.SpellDescription.SpellTypes.TryGetValue((int)_spellDescriptor.SpellType, out var spellType);
@@ -230,7 +237,7 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         rows.SizeToChildren(true, true);
     }
 
-    protected void SetupDescription()
+    protected void SetupDescription(string descriptionText)
     {
         if (_spellDescriptor == default)
         {
@@ -242,7 +249,83 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
 
         // Add the actual description.
         var description = AddDescription();
-        description.AddText(Strings.ItemDescription.Description.ToString(_spellDescriptor.Description), Color.White);
+        description.AddText(Strings.ItemDescription.Description.ToString(descriptionText), Color.White);
+    }
+
+    private void RequestLocalization()
+    {
+        if (_spellDescriptor == null)
+        {
+            return;
+        }
+
+        GameLocalization.RequestEntries(
+            [
+                new LocalizationRequestEntry(_spellDescriptor.Type.ToString(), _spellDescriptor.Id.ToString(), "Name"),
+                new LocalizationRequestEntry(_spellDescriptor.Type.ToString(), _spellDescriptor.Id.ToString(), "Description")
+            ]
+        );
+    }
+
+    private string GetLocalizedSpellName() =>
+        _spellDescriptor == null
+            ? string.Empty
+            : GameLocalization.GetTextOrDefault(
+                _spellDescriptor.Type.ToString(),
+                _spellDescriptor.Id,
+                "Name",
+                _spellDescriptor.Name
+            );
+
+    private string GetLocalizedSpellDescription() =>
+        _spellDescriptor == null
+            ? string.Empty
+            : GameLocalization.GetTextOrDefault(
+                _spellDescriptor.Type.ToString(),
+                _spellDescriptor.Id,
+                "Description",
+                _spellDescriptor.Description
+            );
+
+    private void SubscribeToLocalizationUpdates()
+    {
+        if (_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+        _localizationSubscribed = true;
+    }
+
+    private void UnsubscribeFromLocalizationUpdates()
+    {
+        if (!_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
+        _localizationSubscribed = false;
+    }
+
+    private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+    {
+        if (IsHidden || _spellDescriptor == null)
+        {
+            return;
+        }
+
+        var entityType = _spellDescriptor.Type.ToString();
+        var entityId = _spellDescriptor.Id.ToString();
+        if (requests.Any(
+                request => request.EntityType == entityType &&
+                           request.EntityId == entityId &&
+                           (request.Field == "Name" || request.Field == "Description")
+            ))
+        {
+            SetupDescriptionWindow();
+        }
     }
 
     protected void SetupCombatInfo()

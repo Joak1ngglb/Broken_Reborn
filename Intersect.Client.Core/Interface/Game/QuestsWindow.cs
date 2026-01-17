@@ -17,6 +17,7 @@ using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.GameObjects;
 using Intersect.Utilities;
+using Intersect.Network.Packets.Localization;
 
 namespace Intersect.Client.Interface.Game
 {
@@ -47,6 +48,7 @@ namespace Intersect.Client.Interface.Game
         private   ScrollControl _rewardExpContainer;
 
         private QuestDescriptor mSelectedQuest;
+        private bool _localizationSubscribed;
 
         // Helpers layout recompensas
         private const int RewardPaddingX = 10;
@@ -174,6 +176,8 @@ namespace Intersect.Client.Interface.Game
             mQuestTitle.Hide();
             mQuestStatus.Hide();
             mQuestDescLabel.ClearText();
+
+            SubscribeToLocalizationUpdates();
         }
 
 
@@ -274,9 +278,10 @@ namespace Intersect.Client.Interface.Game
         {
             if (mSelectedQuest == null) return;
 
+            var localizedName = GetLocalizedQuestField(mSelectedQuest, "Name", mSelectedQuest.Name);
             _ = new InputBox(
-                title: Strings.QuestLog.AbandonTitle.ToString(mSelectedQuest.Name),
-                prompt: Strings.QuestLog.AbandonPrompt.ToString(mSelectedQuest.Name),
+                title: Strings.QuestLog.AbandonTitle.ToString(localizedName),
+                prompt: Strings.QuestLog.AbandonPrompt.ToString(localizedName),
                 inputType: InputType.YesNo,
                 userData: mSelectedQuest.Id,
                 onSubmit: (s, e) =>
@@ -386,15 +391,14 @@ namespace Intersect.Client.Interface.Game
             _questList.RemoveAllRows();
             if (Globals.Me == null) return;
 
-            var quests = QuestDescriptor.Lookup.Values;
+            var quests = QuestDescriptor.Lookup.Values.Where(quest => quest != null).ToList();
             var dict = new Dictionary<string, List<Tuple<QuestDescriptor, int, Color>>>();
+
+            RequestQuestListLocalization((IEnumerable<QuestDescriptor>)quests);
 
             foreach (QuestDescriptor quest in quests)
             {
-                if (quest != null)
-                {
-                    AddQuestToDict(dict, quest);
-                }
+                AddQuestToDict(dict, quest);
             }
 
             foreach (var category in Options.Instance.Quest.Categories)
@@ -410,7 +414,8 @@ namespace Intersect.Client.Interface.Game
 
                     foreach (var qst in sortedList)
                     {
-                        AddQuestToList(qst.Item1.Name, qst.Item3, qst.Item1.Id, true);
+                        var localizedName = GetLocalizedQuestField(qst.Item1, "Name", qst.Item1.Name);
+                        AddQuestToList(localizedName, qst.Item3, qst.Item1.Id, true);
                     }
                 }
             }
@@ -424,9 +429,85 @@ namespace Intersect.Client.Interface.Game
 
                 foreach (var qst in sortedList)
                 {
-                    AddQuestToList(qst.Item1.Name, qst.Item3, qst.Item1.Id, false);
+                    var localizedName = GetLocalizedQuestField(qst.Item1, "Name", qst.Item1.Name);
+                    AddQuestToList(localizedName, qst.Item3, qst.Item1.Id, false);
                 }
             }
+        }
+
+        private void RequestQuestListLocalization(IEnumerable<QuestDescriptor> quests)
+        {
+            var requests = quests
+                .Select(
+                    quest => new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "Name")
+                )
+                .ToList();
+
+            GameLocalization.RequestEntries(requests);
+        }
+
+        private void RequestQuestLocalization(QuestDescriptor quest)
+        {
+            GameLocalization.RequestEntries(
+                [
+                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "Name"),
+                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "BeforeDescription"),
+                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "InProgressDescription"),
+                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "EndDescription")
+                ]
+            );
+        }
+
+        private static string GetLocalizedQuestField(QuestDescriptor quest, string field, string fallback) =>
+            GameLocalization.GetTextOrDefault(quest.Type.ToString(), quest.Id, field, fallback);
+
+        private static string GetLocalizedItemName(Guid itemId)
+        {
+            if (!ItemDescriptor.TryGet(itemId, out var item) || item == null)
+            {
+                return ItemDescriptor.GetName(itemId);
+            }
+
+            return GameLocalization.GetTextOrDefault(item.Type.ToString(), item.Id, "Name", item.Name);
+        }
+
+        private void SubscribeToLocalizationUpdates()
+        {
+            if (_localizationSubscribed)
+            {
+                return;
+            }
+
+            GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+            _localizationSubscribed = true;
+        }
+
+        private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+        {
+            if (!IsVisibleInTree)
+            {
+                _shouldUpdateList = true;
+                return;
+            }
+
+            if (mSelectedQuest != null)
+            {
+                var entityType = mSelectedQuest.Type.ToString();
+                var entityId = mSelectedQuest.Id.ToString();
+                if (requests.Any(
+                        request => request.EntityType == entityType &&
+                                   request.EntityId == entityId &&
+                                   (request.Field == "Name" ||
+                                    request.Field == "BeforeDescription" ||
+                                    request.Field == "InProgressDescription" ||
+                                    request.Field == "EndDescription")
+                    ))
+                {
+                    UpdateSelectedQuest();
+                }
+            }
+
+            UpdateQuestList();
         }
 
         private void AddQuestToDict(Dictionary<string, List<Tuple<QuestDescriptor, int, Color>>> dict, QuestDescriptor quest)
@@ -549,12 +630,13 @@ namespace Intersect.Client.Interface.Game
                 return;
             }
 
+            RequestQuestLocalization(mSelectedQuest);
             // Mostrar panel derecho
             mQuestDescArea.IsHidden = false;
 
             // Title + Status dentro del scroll
             mQuestTitle.IsHidden = false;
-            mQuestTitle.Text = mSelectedQuest.Name;
+            mQuestTitle.Text = GetLocalizedQuestField(mSelectedQuest, "Name", mSelectedQuest.Name);
 
             mQuestStatus.IsHidden = false;
             mQuestStatus.SetText("");
@@ -569,9 +651,14 @@ namespace Intersect.Client.Interface.Game
                     mQuestStatus.SetTextColor(CustomColors.QuestWindow.InProgress, ComponentState.Normal);
                     mQuestDescTemplateLabel.SetTextColor(CustomColors.QuestWindow.QuestDesc, ComponentState.Normal);
 
-                    if (mSelectedQuest.InProgressDescription.Length > 0)
+                    var localizedInProgressDescription = GetLocalizedQuestField(
+                        mSelectedQuest,
+                        "InProgressDescription",
+                        mSelectedQuest.InProgressDescription
+                    );
+                    if (localizedInProgressDescription.Length > 0)
                     {
-                        mQuestDescLabel.AddText(mSelectedQuest.InProgressDescription, mQuestDescTemplateLabel);
+                        mQuestDescLabel.AddText(localizedInProgressDescription, mQuestDescTemplateLabel);
                         mQuestDescLabel.AddLineBreak();
                         mQuestDescLabel.AddLineBreak();
                     }
@@ -594,7 +681,7 @@ namespace Intersect.Client.Interface.Game
                                     Strings.QuestLog.TaskItem.ToString(
                                         Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress,
                                         mSelectedQuest.Tasks[i].Quantity,
-                                        ItemDescriptor.GetName(mSelectedQuest.Tasks[i].TargetId)
+                                        GetLocalizedItemName(mSelectedQuest.Tasks[i].TargetId)
                                     ),
                                     mQuestDescTemplateLabel
                                 );
@@ -625,7 +712,12 @@ namespace Intersect.Client.Interface.Game
                         {
                             mQuestStatus.SetText(Strings.QuestLog.Completed);
                             mQuestStatus.SetTextColor(CustomColors.QuestWindow.Completed, ComponentState.Normal);
-                            mQuestDescLabel.AddText(mSelectedQuest.EndDescription, mQuestDescTemplateLabel);
+                            var localizedEndDescription = GetLocalizedQuestField(
+                                mSelectedQuest,
+                                "EndDescription",
+                                mSelectedQuest.EndDescription
+                            );
+                            mQuestDescLabel.AddText(localizedEndDescription, mQuestDescTemplateLabel);
                         }
                     }
                     else
@@ -634,7 +726,12 @@ namespace Intersect.Client.Interface.Game
                         {
                             mQuestStatus.SetText(Strings.QuestLog.NotStarted);
                             mQuestStatus.SetTextColor(CustomColors.QuestWindow.NotStarted, ComponentState.Normal);
-                            mQuestDescLabel.AddText(mSelectedQuest.BeforeDescription, mQuestDescTemplateLabel);
+                            var localizedBeforeDescription = GetLocalizedQuestField(
+                                mSelectedQuest,
+                                "BeforeDescription",
+                                mSelectedQuest.BeforeDescription
+                            );
+                            mQuestDescLabel.AddText(localizedBeforeDescription, mQuestDescTemplateLabel);
                         }
                     }
                 }
@@ -645,7 +742,12 @@ namespace Intersect.Client.Interface.Game
                 {
                     mQuestStatus.SetText(Strings.QuestLog.NotStarted);
                     mQuestStatus.SetTextColor(CustomColors.QuestWindow.NotStarted, ComponentState.Normal);
-                    mQuestDescLabel.AddText(mSelectedQuest.BeforeDescription, mQuestDescTemplateLabel);
+                    var localizedBeforeDescription = GetLocalizedQuestField(
+                        mSelectedQuest,
+                        "BeforeDescription",
+                        mSelectedQuest.BeforeDescription
+                    );
+                    mQuestDescLabel.AddText(localizedBeforeDescription, mQuestDescTemplateLabel);
                 }
             }
 
@@ -1047,7 +1149,7 @@ namespace Intersect.Client.Interface.Game
                 {
                     case QuestObjective.GatherItems:
                         desc = Strings.QuestLog.TaskItem.ToString(
-                            progress, task.Quantity, ItemDescriptor.GetName(task.TargetId));
+                            progress, task.Quantity, GetLocalizedItemName(task.TargetId));
                         break;
 
                     case QuestObjective.KillNpcs:
