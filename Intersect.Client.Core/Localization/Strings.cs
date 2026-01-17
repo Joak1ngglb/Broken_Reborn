@@ -22,6 +22,7 @@ public static partial class Strings
     private const string StringsFileName = "client_strings.json";
     private const string DefaultLanguage = "en";
     private static char[] mQuantityTrimChars = new char[] { '.', '0' };
+    private static bool _seeded;
 
     private static string[] _unitsBits = [string.Empty, "Ki", "Mi", "Gi", "Ti"];
     private static string[] _unitsBytes = [string.Empty, "K", "M", "G", "T"];
@@ -148,12 +149,11 @@ public static partial class Strings
     public static void Load(string? language)
     {
         SynchronizeConfigurableStrings();
+        SeedLocalizedStrings();
 
         try
         {
-            var normalizedLanguage = string.IsNullOrWhiteSpace(language)
-                ? DefaultLanguage
-                : language.Trim().ToLowerInvariant();
+            var normalizedLanguage = NormalizeLanguage(language);
             var serialized = LoadLocalizedSerializedStrings(normalizedLanguage);
 
             LoadSerialized(serialized, string.Equals(normalizedLanguage, DefaultLanguage, StringComparison.OrdinalIgnoreCase));
@@ -165,6 +165,34 @@ public static partial class Strings
         }
 
         PostLoad();
+    }
+
+    public static void SeedLocalizedStrings()
+    {
+        if (_seeded)
+        {
+            return;
+        }
+
+        _seeded = true;
+
+        var baseSerialized = BuildSerializedStrings();
+        var baseJson = JObject.FromObject(baseSerialized);
+
+        foreach (var language in SupportedLanguages.All)
+        {
+            var normalizedLanguage = NormalizeLanguage(language.Code);
+            var overridePath = Path.Combine(
+                ClientConfiguration.ResourcesDirectory,
+                "localization",
+                "client",
+                normalizedLanguage,
+                StringsFileName
+            );
+            var overrideJson = ReadSerializedStringsAsJson(overridePath);
+            var mergedJson = LocalizationJsonMerger.MergeWithOverrides(baseJson, overrideJson);
+            WriteSerializedStrings(overridePath, mergedJson);
+        }
     }
 
     private static Dictionary<string, Dictionary<string, object>> LoadSerializedStrings(string path)
@@ -181,9 +209,7 @@ public static partial class Strings
 
     private static Dictionary<string, Dictionary<string, object>> LoadLocalizedSerializedStrings(string language)
     {
-        var normalizedLanguage = string.IsNullOrWhiteSpace(language)
-            ? DefaultLanguage
-            : language.Trim().ToLowerInvariant();
+        var normalizedLanguage = NormalizeLanguage(language);
         var basePath = Path.Combine(
             ClientConfiguration.ResourcesDirectory,
             "localization",
@@ -492,6 +518,9 @@ public static partial class Strings
         public static LocalizedString itemTypeLabel = @"Type:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString all = @"All";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString minPriceLabel = @"Min Price:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -657,11 +686,18 @@ public static partial class Strings
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString attachments = @"Attachments";
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString sendMailButton = @"📤 Send Mail";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString closeButton = @"❌ Close";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString unknownSender = @"Unknown Sender";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString noSubject = @"No Subject";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString selectQuantity=@"Select Quantity";
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString enterQuantity= @"Enter Quantity";
     }
-
 
     public partial struct Breaking
     {
@@ -746,7 +782,6 @@ public static partial class Strings
 
 
     }
-
     public partial struct Job
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -961,7 +996,24 @@ public static partial class Strings
         File.WriteAllText(path, JsonConvert.SerializeObject(serialized, Formatting.Indented));
     }
 
+    private static void WriteSerializedStrings(string path, JObject serialized)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(directory);
+        File.WriteAllText(path, serialized.ToString(Formatting.Indented));
+    }
+
     public static void Save()
+    {
+        SaveSerialized(BuildSerializedStrings());
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> BuildSerializedStrings()
     {
         var serialized = new Dictionary<string, Dictionary<string, object>>();
         var rootType = typeof(Strings);
@@ -973,8 +1025,24 @@ public static partial class Strings
             serialized.Add(groupType.Name, serializedGroup);
         }
 
-        SaveSerialized(serialized);
+        return serialized;
     }
+
+    private static JObject ReadSerializedStringsAsJson(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return new JObject();
+        }
+
+        var json = File.ReadAllText(path);
+        return JsonConvert.DeserializeObject<JObject>(json) ?? new JObject();
+    }
+
+    private static string NormalizeLanguage(string? language) =>
+        string.IsNullOrWhiteSpace(language)
+            ? DefaultLanguage
+            : language.Trim().ToLowerInvariant();
 
     public partial struct AdminWindow
     {
@@ -1168,6 +1236,9 @@ public static partial class Strings
         public static LocalizedString WithdrawItemNoSpace = @"There is no space left in your inventory for that item!";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString All = @"All";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Sort = @"Sort";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1237,6 +1308,24 @@ public static partial class Strings
         public static LocalizedString Title = @"Bestiary";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SearchPlaceholder = @"Buscar...";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionStats = @"Estadísticas";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionDrops = @"Drops";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionSpells = @"Hechizos";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionBehavior = @"Comportamiento";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionLore = @"Historia";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Locked = @"Locked";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1244,6 +1333,33 @@ public static partial class Strings
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString UnlockNotice = @"Unlocked {1} for {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString LockedKills = @"🔒 Derrota {0}/{1} veces para desbloquear.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString LockedInfo = @"🔒 Información bloqueada.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString AggressiveLabel = @"Agresivo: {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MovementLabel = @"Movimiento: {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString FleeHpLabel = @"Flee HP %: {0}%";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SwarmLabel = @"Swarm: {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Yes = @"Sí";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString No = @"No";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString LorePlaceholder = @"(Aquí puedes insertar un sistema de descripciones opcionales por NPC)";
     }
 
     public partial struct Character
@@ -1594,7 +1710,9 @@ public static partial class Strings
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Exp = @"EXP: {00}";
-    }
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString CraftingName = @"Crafting";
+        }
 
     public partial struct Credits
     {
@@ -2363,6 +2481,18 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         public static LocalizedString RegularAndPercentage = @"{00} + {01}%";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceBonusLabel = @"Bonus";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceEffectLabel = @"Effect";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceStatModifiedLabel = @"Stat Modified";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceVitalModifiedLabel = @"Vital Modified";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString ScalingPercentage = @"Scaling Percentage:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -2385,6 +2515,18 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString TwoHand = @"2H";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownEffect = @"Unknown Effect";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownItemType = @"Unknown Type";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownStat = @"Unknown Stat";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownVital = @"Unknown Vital";
 
         // Integer Dictionaries (A - Z):
 
@@ -2476,6 +2618,9 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         };
 
         // String Dictionaries (A - Z):
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static Dictionary<string, LocalizedString> ItemSubtypes = new Dictionary<string, LocalizedString>();
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static Dictionary<string, LocalizedString> Rarity = new Dictionary<string, LocalizedString>

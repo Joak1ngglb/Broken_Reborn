@@ -2101,6 +2101,16 @@ public static partial class PacketSender
     //ActionMsgPacket
     public static void SendActionMsg(Entity en, string message, Color color)
     {
+        SendActionMsg(en, message, color, localizationRequest: null);
+    }
+
+    public static void SendActionMsg(
+        Entity en,
+        string message,
+        Color color,
+        LocalizationRequestEntry? localizationRequest
+    )
+    {
         if (en == null)
         {
             return;
@@ -2108,13 +2118,17 @@ public static partial class PacketSender
 
         if (MapController.TryGetInstanceFromMap(en.Map.Id, en.MapInstanceId, out var mapInstance))
         {
+            var packet = new ActionMsgPacket(en.MapId, en.X, en.Y, message, color)
+            {
+                LocalizationRequest = localizationRequest
+            };
             if (Options.Instance.Packets.BatchActionMessagePackets)
             {
-                mapInstance.AddBatchedActionMessage(new ActionMsgPacket(en.MapId, en.X, en.Y, message, color));
+                mapInstance.AddBatchedActionMessage(packet);
             }
             else
             {
-                SendDataToProximityOnMapInstance(en.MapId, en.MapInstanceId, new ActionMsgPacket(en.MapId, en.X, en.Y, message, color));
+                SendDataToProximityOnMapInstance(en.MapId, en.MapInstanceId, packet);
             }
         }
     }

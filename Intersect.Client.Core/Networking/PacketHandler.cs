@@ -675,9 +675,21 @@ internal sealed partial class PacketHandler
         var map = MapInstance.Get(packet.MapId);
         if (map != null)
         {
+            var message = packet.Message;
+            if (packet.LocalizationRequest != null &&
+                Guid.TryParse(packet.LocalizationRequest.EntityId, out var localizedId))
+            {
+                message = GameLocalization.GetTextOrDefault(
+                    packet.LocalizationRequest.EntityType,
+                    localizedId,
+                    packet.LocalizationRequest.Field,
+                    packet.Message
+                );
+            }
+
             map.ActionMessages.Add(
                 new ActionMessage(
-                    map, packet.X, packet.Y, packet.Message,
+                    map, packet.X, packet.Y, message,
                     new Color(packet.Color.A, packet.Color.R, packet.Color.G, packet.Color.B)
                 )
             );

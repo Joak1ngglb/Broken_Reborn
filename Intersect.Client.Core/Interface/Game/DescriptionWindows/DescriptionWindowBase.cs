@@ -19,6 +19,11 @@ public partial class DescriptionWindowBase : ComponentBase
     /// </summary>
     protected void ClearComponents()
     {
+        if (IsDisposed)
+        {
+            return;
+        }
+
         ClearChildren(true);
         _components.Clear();
         _componentY = 0;

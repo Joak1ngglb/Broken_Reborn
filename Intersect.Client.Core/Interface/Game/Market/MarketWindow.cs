@@ -108,13 +108,13 @@ namespace Intersect.Client.Interface.Game.Market
             mTypeLabel.Text = Strings.Market.itemTypeLabel;
             // Crear mItemTypeCombo
             mItemTypeCombo = new ComboBox(mMarketWindow, "MarketItemTypeCombo");
-            var allType = mItemTypeCombo.AddItem("All", userData: null);
+            var allType = mItemTypeCombo.AddItem(Strings.Market.all, userData: null);
             mItemTypeCombo.SelectedItem = allType;
             foreach (ItemType type in Enum.GetValues<ItemType>())
             {
                 if (type != ItemType.Currency)
                 {
-                    mItemTypeCombo.AddItem(type.ToString(), userData: type);
+                    mItemTypeCombo.AddItem(GetLocalizedItemTypeName(type), userData: type);
                 }
             }
 
@@ -125,7 +125,7 @@ namespace Intersect.Client.Interface.Game.Market
 
             mItemSubTypeCombo = new ComboBox(mMarketWindow, "MarketItemSubTypeCombo");
             mItemSubTypeCombo.SetBounds(620, 40, 160, 25);
-            var allSub = mItemSubTypeCombo.AddItem("All", userData: null);
+            var allSub = mItemSubTypeCombo.AddItem(Strings.Market.all, userData: null);
             mItemSubTypeCombo.SelectedItem = allSub;
 
 
@@ -501,7 +501,7 @@ namespace Intersect.Client.Interface.Game.Market
         private void UpdateSubTypeCombo()
         {
             mItemSubTypeCombo.ClearItems();
-            var all = mItemSubTypeCombo.AddItem("All", userData: null);
+            var all = mItemSubTypeCombo.AddItem(Strings.Market.all, userData: null);
 
             var selectedType = (ItemType?)mItemTypeCombo.SelectedItem?.UserData;
             if (!selectedType.HasValue)
@@ -533,6 +533,11 @@ namespace Intersect.Client.Interface.Game.Market
             mItemSubTypeCombo.SelectedItem = all;
             _selectedSubtype = (string?)mItemSubTypeCombo.SelectedItem?.UserData;
         }
+
+        private static string GetLocalizedItemTypeName(ItemType type) =>
+            Strings.ItemDescription.ItemTypes.TryGetValue((int)type, out var localizedType)
+                ? localizedType.ToString()
+                : type.ToString();
 
         private void ApplyFilters()
         {

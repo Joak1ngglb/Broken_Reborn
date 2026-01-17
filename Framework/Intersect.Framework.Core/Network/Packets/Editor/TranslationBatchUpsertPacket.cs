@@ -6,7 +6,6 @@ namespace Intersect.Network.Packets.Editor;
 [MessagePackObject]
 public sealed partial class TranslationBatchUpsertPacket : EditorPacket
 {
-    // Parameterless Constructor for MessagePack
     public TranslationBatchUpsertPacket()
     {
     }
@@ -23,7 +22,6 @@ public sealed partial class TranslationBatchUpsertPacket : EditorPacket
 [MessagePackObject]
 public sealed class TranslationUpsertEntry
 {
-    // Parameterless Constructor for MessagePack
     public TranslationUpsertEntry()
     {
     }
@@ -32,19 +30,22 @@ public sealed class TranslationUpsertEntry
         string entityType,
         string entityId,
         string field,
+        string sourceText,
         string language,
-        string text,
-        string sourceHash
+        string translatedText,
+        int status
     )
     {
         EntityType = entityType;
         EntityId = entityId;
         Field = field;
+        SourceText = sourceText;
         Language = language;
-        Text = text;
-        SourceHash = sourceHash;
+        TranslatedText = translatedText;
+        Status = status;
     }
 
+    // SourceKey
     [Key(0)]
     public string EntityType { get; set; }
 
@@ -54,12 +55,18 @@ public sealed class TranslationUpsertEntry
     [Key(2)]
     public string Field { get; set; }
 
+    // Source
     [Key(3)]
+    public string SourceText { get; set; }
+
+    // Translation
+    [Key(4)]
     public string Language { get; set; }
 
-    [Key(4)]
-    public string Text { get; set; }
-
     [Key(5)]
-    public string SourceHash { get; set; }
+    public string TranslatedText { get; set; }
+
+    // 0=OK, 1=STALE, 2=MISSING, 3=MACHINE
+    [Key(6)]
+    public int Status { get; set; }
 }
