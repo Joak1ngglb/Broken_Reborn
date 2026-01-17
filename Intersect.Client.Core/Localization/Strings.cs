@@ -657,6 +657,14 @@ public static partial class Strings
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString attachments = @"Attachments";
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString sendMailButton = @"📤 Send Mail";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString closeButton = @"❌ Close";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString unknownSender = @"Unknown Sender";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString noSubject = @"No Subject";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString selectQuantity=@"Select Quantity";
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString enterQuantity= @"Enter Quantity";
@@ -2363,6 +2371,18 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         public static LocalizedString RegularAndPercentage = @"{00} + {01}%";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceBonusLabel = @"Bonus";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceEffectLabel = @"Effect";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceStatModifiedLabel = @"Stat Modified";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceVitalModifiedLabel = @"Vital Modified";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString ScalingPercentage = @"Scaling Percentage:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -2385,6 +2405,18 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString TwoHand = @"2H";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownEffect = @"Unknown Effect";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownItemType = @"Unknown Type";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownStat = @"Unknown Stat";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownVital = @"Unknown Vital";
 
         // Integer Dictionaries (A - Z):
 
@@ -2476,6 +2508,9 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         };
 
         // String Dictionaries (A - Z):
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static Dictionary<string, LocalizedString> ItemSubtypes = new Dictionary<string, LocalizedString>();
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static Dictionary<string, LocalizedString> Rarity = new Dictionary<string, LocalizedString>
