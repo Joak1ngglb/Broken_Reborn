@@ -32,6 +32,7 @@ public sealed class OptionsContractResolver(bool serializePrivateProperties, boo
     private static readonly HashSet<PropertyInfo> PublicProperties =
     [
         typeof(Options).GetProperty(nameof(Options.SmtpValid)),
+        typeof(Options).GetProperty(nameof(Options.Language)), // ✅ NUEVO
     ];
 
     protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
