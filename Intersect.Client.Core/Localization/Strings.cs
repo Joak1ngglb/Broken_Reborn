@@ -657,6 +657,14 @@ public static partial class Strings
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString attachments = @"Attachments";
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString sendMailButton = @"📤 Send Mail";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString closeButton = @"❌ Close";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString unknownSender = @"Unknown Sender";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString noSubject = @"No Subject";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString selectQuantity=@"Select Quantity";
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString enterQuantity= @"Enter Quantity";
