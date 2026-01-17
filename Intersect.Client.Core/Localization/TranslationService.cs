@@ -6,11 +6,11 @@ using Newtonsoft.Json.Linq;
 using Intersect.Client.General;
 using Intersect.Configuration;
 using Intersect.Core;
+using Intersect;
 using Microsoft.Extensions.Logging;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.GameObjects;
-using Intersect.Framework.Threading;
 using System.IO; // Added for file caching
 
 namespace Intersect.Client.Localization;
@@ -60,17 +60,20 @@ public class TranslationService
         // Load existing cache
         LoadCache();
 
-        // Simple logic: if not English, enable translation. Adjust as needed.
-        _enabled = !currentCulture.TwoLetterISOLanguageName.Equals("en", StringComparison.OrdinalIgnoreCase);
+        var machineTranslationsEnabled = Options.Instance?.EnableMachineTranslations ?? false;
+        var isNonEnglish = !currentCulture.TwoLetterISOLanguageName.Equals("en", StringComparison.OrdinalIgnoreCase);
+        _enabled = machineTranslationsEnabled && isNonEnglish;
     }
 
     public static void Init()
     {
-        if (Instance._enabled)
+        if (!Instance._enabled)
         {
-            // Start background pre-translation at a controlled phase (startup).
-            Task.Run(PreTranslateContent);
+            return;
         }
+
+        // Start background pre-translation at a controlled phase (startup).
+        Task.Run(PreTranslateContent);
     }
 
     public static async Task PreTranslateContent()
@@ -431,68 +434,7 @@ public class TranslationService
             ApplicationContext.Context.Value?.Logger.LogInformation($"Queuing {inputs.Count} game strings for translation...");
         }
 
-        // Send to Batch Translator
-        await Instance.TranslateBatch(inputs, (chunkResults) =>
-        {
-            // Execute updates on the Main Thread to prevent deadlocks/UI thread collisions
-            ThreadQueue.Default.RunOnMainThread(() =>
-            {
-                foreach (var kvp in chunkResults)
-                {
-                    var key = kvp.Key;
-                    var translatedText = kvp.Value;
-                    var parts = key.Split('_');
-
-                    if (parts.Length < 3) continue;
-
-                    var type = parts[0];
-                    var field = parts[1];
-
-                    if (!Guid.TryParse(parts[2], out var id)) continue;
-
-                    if (type == "ITEM")
-                    {
-                        if (ItemDescriptor.TryGet(id, out var item))
-                        {
-                            if (field == "NAME") item.Name = translatedText;
-                            else if (field == "DESC") item.Description = translatedText;
-                        }
-                    }
-                    else if (type == "QUEST")
-                    {
-                        if (QuestDescriptor.TryGet(id, out var quest))
-                        {
-                            // Important: Ensure we are updating the actual descriptor properties
-                            // and that these changes persist in memory for the UI to read.
-                            if (field == "NAME") quest.Name = translatedText;
-                            else if (field == "START") quest.StartDescription = translatedText;
-                            else if (field == "BEFORE") quest.BeforeDescription = translatedText;
-                            else if (field == "INPROG") quest.InProgressDescription = translatedText;
-                            else if (field == "END") quest.EndDescription = translatedText;
-                            else if (field == "TASK" && parts.Length >= 4 && Guid.TryParse(parts[3], out var taskId))
-                            {
-                                var task = quest.FindTask(taskId);
-                                if (task != null) task.Description = translatedText;
-                            }
-                        }
-                    }
-                    else if (type == "SPELL")
-                    {
-                        if (SpellDescriptor.TryGet(id, out var spell))
-                        {
-                            if (field == "NAME") spell.Name = translatedText;
-                            else if (field == "DESC") spell.Description = translatedText;
-                        }
-                    }
-                }
-
-                // Force refresh of quest log if open and showing this quest
-                // This logic is a bit UI specific for this service, but necessary
-                if (Intersect.Client.Interface.Interface.HasInGameUI)
-                {
-                    Intersect.Client.Interface.Interface.GameUi.NotifyQuestsUpdated();
-                }
-            });
-        });
+        // Send to Batch Translator (populate cache only; do not mutate descriptors)
+        await Instance.TranslateBatch(inputs);
     }
 }
