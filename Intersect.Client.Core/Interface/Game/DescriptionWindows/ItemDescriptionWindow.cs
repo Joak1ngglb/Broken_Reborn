@@ -185,20 +185,28 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             {
                 var effectName = Strings.ItemDescription.BonusEffects.TryGetValue((int)_itemDescriptor.TargetEffect, out var localizedEffect)
                     ? localizedEffect.ToString()
-                    : _itemDescriptor.TargetEffect.ToString();
+                    : Strings.ItemDescription.UnknownEffect.ToString();
 
-                rows.AddKeyValueRow("Efecto", effectName.TrimEnd(':'));
-                rows.AddKeyValueRow("Bonus", Strings.ItemDescription.Percentage.ToString(amount));
+                rows.AddKeyValueRow(Strings.ItemDescription.ResourceEffectLabel, effectName.TrimEnd(':'));
+                rows.AddKeyValueRow(Strings.ItemDescription.ResourceBonusLabel, Strings.ItemDescription.Percentage.ToString(amount));
             }
             else if (hasStatTarget)
             {
-                rows.AddKeyValueRow("Stat Modified", _itemDescriptor.TargetStat.ToString());
-                rows.AddKeyValueRow("Bonus", $"{amountPrefix}{amount}");
+                var statName = Strings.ItemDescription.Stats.TryGetValue((int)_itemDescriptor.TargetStat, out var localizedStat)
+                    ? localizedStat.ToString()
+                    : Strings.ItemDescription.UnknownStat.ToString();
+
+                rows.AddKeyValueRow(Strings.ItemDescription.ResourceStatModifiedLabel, statName);
+                rows.AddKeyValueRow(Strings.ItemDescription.ResourceBonusLabel, $"{amountPrefix}{amount}");
             }
             else if (hasVitalTarget)
             {
-                rows.AddKeyValueRow("Vital Modified", _itemDescriptor.TargetVital.ToString());
-                rows.AddKeyValueRow("Bonus", $"{amountPrefix}{amount}");
+                var vitalName = Strings.ItemDescription.Vitals.TryGetValue((int)_itemDescriptor.TargetVital, out var localizedVital)
+                    ? localizedVital.ToString().TrimEnd(':')
+                    : Strings.ItemDescription.UnknownVital.ToString();
+
+                rows.AddKeyValueRow(Strings.ItemDescription.ResourceVitalModifiedLabel, vitalName);
+                rows.AddKeyValueRow(Strings.ItemDescription.ResourceBonusLabel, $"{amountPrefix}{amount}");
             }
         }
 
@@ -376,7 +384,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         header.SetTitle(name, rarityColor ?? Color.White);
 
         // Set up the description telling us what type of item this is.
-        Strings.ItemDescription.ItemTypes.TryGetValue((int)_itemDescriptor.ItemType, out var typeDesc);
+        var typeDesc = Strings.GetLocalizedItemTypeName(_itemDescriptor.ItemType);
 
         if (_itemDescriptor.ItemType == ItemType.Equipment)
         {
@@ -384,8 +392,10 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
             if (_itemDescriptor.EquipmentSlot == Options.Instance.Equipment.WeaponSlot && !string.IsNullOrWhiteSpace(_itemDescriptor.Subtype))
             {
+                var subtypeText = Strings.GetLocalizedItemSubtypeName(_itemDescriptor.Subtype);
+
                 // 🔥 Mostrar solo el subtipo si es arma
-                header.SetSubtitle($"{_itemDescriptor.Subtype}", Color.White);
+                header.SetSubtitle($"{subtypeText}", Color.White);
             }
             else
             {
@@ -401,19 +411,16 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         {
             // 🔥 Mostrar subtipo si lo tiene, si no solo el tipo
             var subtypeInfo = !string.IsNullOrWhiteSpace(_itemDescriptor.Subtype)
-       ? _itemDescriptor.Subtype
-       : typeDesc?.ToString() ?? "";
+                ? Strings.GetLocalizedItemSubtypeName(_itemDescriptor.Subtype)
+                : typeDesc;
             header.SetSubtitle(subtypeInfo, Color.White);
         }
 
         // Set up the item rarity label.
         try
         {
-            if (Options.Instance.Items.TryGetRarityName(_itemDescriptor.Rarity, out var rarityName))
-            {
-                _ = Strings.ItemDescription.Rarity.TryGetValue(rarityName, out var rarityLabel);
-                header.SetDescription(rarityLabel, rarityColor ?? Color.White);
-            }
+            var rarityLabel = Strings.GetLocalizedItemRarityName(_itemDescriptor.Rarity);
+            header.SetDescription(rarityLabel, rarityColor ?? Color.White);
         }
         catch (Exception exception)
         {

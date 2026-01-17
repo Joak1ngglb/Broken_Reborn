@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
+using Intersect.Framework.Core.Localization;
 using Intersect.Network.Packets.Editor;
 using Mono.Data.Sqlite;
 
@@ -150,187 +151,115 @@ public static class TranslationSourceUpdater
     private const string DefaultLanguage = "en";
     private const int DefaultBatchSize = 200;
 
-    public static TranslationUpsertEntry CreateEnglishSourceEntry(
+    // Status: 0 OK, 1 NEEDS_REVIEW, 2 MISSING, 3 MACHINE
+
+    public static TranslationUpsertEntry CreateSourceEntry(
         string entityType,
         Guid entityId,
         string field,
-        string text
+        string sourceText
     )
     {
-        var normalizedText = text ?? string.Empty;
         return new TranslationUpsertEntry(
             entityType,
             entityId.ToString(),
             field,
-            DefaultLanguage,
-            normalizedText,
-            ComputeHash(normalizedText)
+            sourceText ?? string.Empty,   // SourceText
+            DefaultLanguage,              // Language (no importa mucho si no hay TranslatedText)
+            string.Empty,                 // TranslatedText vacío = solo source
+            TranslationStatus.Missing
         );
     }
 
-    public static void AddEnglishSource(
+    public static void AddSource(
         ICollection<TranslationUpsertEntry> entries,
         string entityType,
         Guid entityId,
         string field,
-        string text
+        string sourceText
     )
     {
-        if (entries == null)
-        {
-            return;
-        }
-
-        entries.Add(CreateEnglishSourceEntry(entityType, entityId, field, text));
+        if (entries == null) return;
+        entries.Add(CreateSourceEntry(entityType, entityId, field, sourceText));
     }
 
-    public static void QueueBatchEnglishSources(
-        IEnumerable<TranslationUpsertEntry> entries,
-        int batchSize = DefaultBatchSize
-    )
+    public static void QueueBatchSources(IEnumerable<TranslationUpsertEntry> entries, int batchSize = DefaultBatchSize)
     {
-        if (entries == null)
-        {
-            return;
-        }
+        if (entries == null) return;
 
         var entryList = entries as IReadOnlyCollection<TranslationUpsertEntry> ?? new List<TranslationUpsertEntry>(entries);
-        if (entryList.Count == 0)
-        {
-            return;
-        }
+        if (entryList.Count == 0) return;
 
-        Task.Run(() => SendBatchEnglishSources(entryList, batchSize));
+        Task.Run(() => SendBatchSources(entryList, batchSize));
     }
 
-    public static void UpdateEnglishSource(string entityType, Guid entityId, string field, string text)
+    public static void UpdateSource(string entityType, Guid entityId, string field, string sourceText)
     {
-        var entry = CreateEnglishSourceEntry(entityType, entityId, field, text);
-        PacketSender.SendTranslationUpsert(
-            entry.EntityType,
-            entry.EntityId,
-            entry.Field,
-            entry.Language,
-            entry.Text,
-            entry.SourceHash
-        );
+        var entry = CreateSourceEntry(entityType, entityId, field, sourceText);
+        PacketSender.SendTranslationBatchUpsert(new List<TranslationUpsertEntry> { entry });
     }
 
-    public static void UpdateEventEnglishSources(EventDescriptor eventDescriptor)
+    public static void UpdateEventSources(EventDescriptor eventDescriptor)
     {
-        var entries = GetEventEnglishSources(eventDescriptor);
-        foreach (var entry in entries)
-        {
-            if (entry == null)
-            {
-                continue;
-            }
-
-            PacketSender.SendTranslationUpsert(
-                entry.EntityType,
-                entry.EntityId,
-                entry.Field,
-                entry.Language,
-                entry.Text,
-                entry.SourceHash
-            );
-        }
+        var entries = GetEventSources(eventDescriptor);
+        QueueBatchSources(entries);
     }
 
-    private static string ComputeHash(string text)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(text));
-        return Convert.ToHexString(bytes);
-    }
-
-    public static IReadOnlyList<TranslationUpsertEntry> GetEventEnglishSources(EventDescriptor eventDescriptor)
+    public static IReadOnlyList<TranslationUpsertEntry> GetEventSources(EventDescriptor eventDescriptor)
     {
         var entries = new List<TranslationUpsertEntry>();
-        if (eventDescriptor == null)
-        {
-            return entries;
-        }
+        if (eventDescriptor == null) return entries;
 
-        var entityType = eventDescriptor.Type.ToString();
+        var entityType = LocalizationEntityTypes.Event;
         var entityId = eventDescriptor.Id;
 
         if (!string.IsNullOrWhiteSpace(eventDescriptor.Name))
         {
-            AddEnglishSource(entries, entityType, entityId, "Name", eventDescriptor.Name);
+            AddSource(entries, entityType, entityId, LocalizationFields.Name, eventDescriptor.Name);
         }
 
-        if (eventDescriptor.Pages == null)
-        {
-            return entries;
-        }
+
+        if (eventDescriptor.Pages == null) return entries;
 
         for (var pageIndex = 0; pageIndex < eventDescriptor.Pages.Count; pageIndex++)
         {
             var page = eventDescriptor.Pages[pageIndex];
-            if (page == null)
-            {
-                continue;
-            }
+            if (page == null) continue;
 
             if (!string.IsNullOrWhiteSpace(page.Description))
             {
-                AddEnglishSource(entries, entityType, entityId, $"Page:{pageIndex}:Description", page.Description);
+                AddSource(entries, entityType, entityId, $"Page:{pageIndex}:Description", page.Description);
             }
 
-            if (page.CommandLists == null)
-            {
-                continue;
-            }
+            if (page.CommandLists == null) continue;
 
             foreach (var (listId, commands) in page.CommandLists)
             {
-                if (commands == null)
-                {
-                    continue;
-                }
+                if (commands == null) continue;
 
                 for (var commandIndex = 0; commandIndex < commands.Count; commandIndex++)
                 {
                     var command = commands[commandIndex];
-                    if (command == null)
-                    {
-                        continue;
-                    }
+                    if (command == null) continue;
 
                     var baseField = $"Page:{pageIndex}:List:{listId}:Command:{commandIndex}";
                     switch (command)
                     {
                         case ShowTextCommand showTextCommand:
-                            AddEnglishSource(
-                                entries,
-                                entityType,
-                                entityId,
-                                $"{baseField}:ShowText",
-                                showTextCommand.Text
-                            );
+                            AddSource(entries, entityType, entityId, $"{baseField}:ShowText", showTextCommand.Text);
                             break;
+
                         case AddChatboxTextCommand addChatboxTextCommand:
-                            AddEnglishSource(
-                                entries,
-                                entityType,
-                                entityId,
-                                $"{baseField}:ChatboxText",
-                                addChatboxTextCommand.Text
-                            );
+                            AddSource(entries, entityType, entityId, $"{baseField}:ChatboxText", addChatboxTextCommand.Text);
                             break;
+
                         case ShowOptionsCommand showOptionsCommand:
-                            AddEnglishSource(
-                                entries,
-                                entityType,
-                                entityId,
-                                $"{baseField}:OptionsText",
-                                showOptionsCommand.Text
-                            );
+                            AddSource(entries, entityType, entityId, $"{baseField}:OptionsText", showOptionsCommand.Text);
                             if (showOptionsCommand.Options != null)
                             {
                                 for (var optionIndex = 0; optionIndex < showOptionsCommand.Options.Length; optionIndex++)
                                 {
-                                    AddEnglishSource(
+                                    AddSource(
                                         entries,
                                         entityType,
                                         entityId,
@@ -340,30 +269,14 @@ public static class TranslationSourceUpdater
                                 }
                             }
                             break;
+
                         case InputVariableCommand inputVariableCommand:
-                            AddEnglishSource(
-                                entries,
-                                entityType,
-                                entityId,
-                                $"{baseField}:InputTitle",
-                                inputVariableCommand.Title ?? string.Empty
-                            );
-                            AddEnglishSource(
-                                entries,
-                                entityType,
-                                entityId,
-                                $"{baseField}:InputText",
-                                inputVariableCommand.Text
-                            );
+                            AddSource(entries, entityType, entityId, $"{baseField}:InputTitle", inputVariableCommand.Title ?? string.Empty);
+                            AddSource(entries, entityType, entityId, $"{baseField}:InputText", inputVariableCommand.Text);
                             break;
+
                         case ChangePlayerLabelCommand changePlayerLabelCommand:
-                            AddEnglishSource(
-                                entries,
-                                entityType,
-                                entityId,
-                                $"{baseField}:PlayerLabel",
-                                changePlayerLabelCommand.Value ?? string.Empty
-                            );
+                            AddSource(entries, entityType, entityId, $"{baseField}:PlayerLabel", changePlayerLabelCommand.Value ?? string.Empty);
                             break;
                     }
                 }
@@ -373,24 +286,16 @@ public static class TranslationSourceUpdater
         return entries;
     }
 
-    private static void SendBatchEnglishSources(
-        IEnumerable<TranslationUpsertEntry> entries,
-        int batchSize
-    )
+    private static void SendBatchSources(IEnumerable<TranslationUpsertEntry> entries, int batchSize)
     {
         var batch = new List<TranslationUpsertEntry>(batchSize);
+
         foreach (var entry in entries)
         {
-            if (entry == null)
-            {
-                continue;
-            }
+            if (entry == null) continue;
 
             batch.Add(entry);
-            if (batch.Count < batchSize)
-            {
-                continue;
-            }
+            if (batch.Count < batchSize) continue;
 
             PacketSender.SendTranslationBatchUpsert(batch);
             batch.Clear();
@@ -400,5 +305,37 @@ public static class TranslationSourceUpdater
         {
             PacketSender.SendTranslationBatchUpsert(batch);
         }
+    }
+    // --- Backward compatible wrappers (no rompen frmEvent.cs) ---
+
+    public static void UpdateEventEnglishSources(EventDescriptor eventDescriptor)
+    {
+        UpdateEventSources(eventDescriptor);
+    }
+
+    public static IReadOnlyList<TranslationUpsertEntry> GetEventEnglishSources(EventDescriptor eventDescriptor)
+    {
+        return GetEventSources(eventDescriptor);
+    }
+
+    public static void QueueBatchEnglishSources(IEnumerable<TranslationUpsertEntry> entries, int batchSize = DefaultBatchSize)
+    {
+        QueueBatchSources(entries, batchSize);
+    }
+
+    public static void UpdateEnglishSource(string entityType, Guid entityId, string field, string sourceText)
+    {
+        UpdateSource(entityType, entityId, field, sourceText);
+    }
+
+    public static void AddEnglishSource(
+        ICollection<TranslationUpsertEntry> entries,
+        string entityType,
+        Guid entityId,
+        string field,
+        string sourceText
+    )
+    {
+        AddSource(entries, entityType, entityId, field, sourceText);
     }
 }

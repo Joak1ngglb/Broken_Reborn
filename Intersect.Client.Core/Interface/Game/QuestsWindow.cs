@@ -391,10 +391,10 @@ namespace Intersect.Client.Interface.Game
             _questList.RemoveAllRows();
             if (Globals.Me == null) return;
 
-            var quests = QuestDescriptor.Lookup.Values.Where(quest => quest != null).ToList();
+            var quests = QuestDescriptor.Lookup.Values.OfType<QuestDescriptor>().ToList();
             var dict = new Dictionary<string, List<Tuple<QuestDescriptor, int, Color>>>();
 
-            RequestQuestListLocalization((IEnumerable<QuestDescriptor>)quests);
+            RequestQuestListLocalization(quests);
 
             foreach (QuestDescriptor quest in quests)
             {

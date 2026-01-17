@@ -17,6 +17,8 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Client.Utilities;
 using Intersect.Client.General;
 
+using Intersect.Network.Packets.Localization;
+
 namespace Intersect.Client.Interface.Game.Market
 {
     /// <summary> Ventana para publicar objetos en el mercado. </summary>
@@ -62,6 +64,7 @@ namespace Intersect.Client.Interface.Game.Market
         private ItemType? _selectedType;
         private string? _selectedSubtype;
         private bool _slotsDirty;
+        private bool _localizationSubscribed;
         #endregion
 
         public SellMarketWindow(Canvas canvas)
@@ -109,12 +112,12 @@ namespace Intersect.Client.Interface.Game.Market
             _searchBox.TextChanged += (_, _) => Update();
             _subtypeBox.ItemSelected += (_, _) => { _slotsDirty = true; Update(); };
 
-            var allType = _typeBox.AddItem(Strings.Inventory.All, userData: null);
+            var allType = _typeBox.AddItem(Strings.Market.all, userData: null);
             _typeBox.SelectedItem = allType;
             foreach (var type in Enum.GetValues<ItemType>())
             {
                 if (type == ItemType.None) continue;
-                _typeBox.AddItem(type.ToString(), userData: type);
+                _typeBox.AddItem(Strings.GetLocalizedItemTypeName(type), userData: type);
             }
 
             BuildSubtypeLookup();
@@ -127,7 +130,11 @@ namespace Intersect.Client.Interface.Game.Market
             _lastAsc = _sortAscending;
        
             Globals.Me.InventoryUpdated += PlayerOnInventoryUpdated;
-            _window.Disposed += (s, e) => Globals.Me.InventoryUpdated -= PlayerOnInventoryUpdated;
+            _window.Disposed += (s, e) =>
+            {
+                Globals.Me.InventoryUpdated -= PlayerOnInventoryUpdated;
+                UnsubscribeFromLocalizationUpdates();
+            };
 
             BuildLayout();
             _window.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
@@ -135,6 +142,8 @@ namespace Intersect.Client.Interface.Game.Market
             InitItemContainer(); // crea slots visibles
             _slotsDirty = true;
             Update();            // primer pintado
+            SubscribeToLocalizationUpdates();
+            RequestLocalizationEntries();
         }
 
         #region Layout
@@ -264,6 +273,7 @@ namespace Intersect.Client.Interface.Game.Market
                 foreach (var st in kv.Value)
                 {
                     if (string.IsNullOrWhiteSpace(st)) continue;
+                    ItemLocalizationHelper.CacheSubtype(st);
                     set.Add(st);
                     _allSubtypes.Add(st);
                 }
@@ -275,7 +285,7 @@ namespace Intersect.Client.Interface.Game.Market
             _subtypeBox.ClearItems();
             _selectedSubtype = null;
 
-            var all = _subtypeBox.AddItem(Strings.Inventory.All, userData: null);
+            var all = _subtypeBox.AddItem(Strings.Market.all, userData: null);
 
             IEnumerable<string> source = Enumerable.Empty<string>();
             if (type.HasValue)
@@ -289,7 +299,8 @@ namespace Intersect.Client.Interface.Game.Market
 
             foreach (var st in source)
             {
-                _subtypeBox.AddItem(st, userData: st);
+                var localizedSubtype = Strings.GetLocalizedItemSubtypeName(st);
+                _subtypeBox.AddItem(localizedSubtype, userData: st);
             }
 
             _subtypeBox.SelectedItem = all;
@@ -377,7 +388,7 @@ namespace Intersect.Client.Interface.Game.Market
                         return false;
                 }
 
-                var name = descriptor.Name ?? string.Empty;
+                var name = GetLocalizedItemName(descriptor);
                 return SearchHelper.Matches(searchText, name);
             }).ToHashSet();
 
@@ -404,6 +415,7 @@ namespace Intersect.Client.Interface.Game.Market
         private void PlayerOnInventoryUpdated(Player player, int slotIndex)
         {
             _slotsDirty = true;
+            RequestLocalizationEntry(slotIndex);
             Update();
         }
 
@@ -422,7 +434,7 @@ namespace Intersect.Client.Interface.Game.Market
             _confirmButton.Enable();
             if (ItemDescriptor.TryGet(slot.ItemId, out var desc))
             {
-                _infoLabel.Text = Strings.Market.publish_colon + " " + desc.Name;
+                _infoLabel.Text = $"{Strings.Market.publish_colon} {GetLocalizedItemName(desc)}";
 
                 _selectedItemStackable = desc.Stackable;
                 if (_selectedItemStackable)
@@ -463,6 +475,110 @@ namespace Intersect.Client.Interface.Game.Market
             }
 
             RefreshTax();
+        }
+
+        private static string GetLocalizedItemName(ItemDescriptor descriptor) =>
+            GameLocalization.GetTextOrDefault(
+                descriptor.Type.ToString(),
+                descriptor.Id,
+                "Name",
+                descriptor.Name ?? string.Empty
+            );
+
+        private void RequestLocalizationEntries()
+        {
+            if (Globals.Me?.Inventory == null)
+            {
+                return;
+            }
+
+            var requests = new List<LocalizationRequestEntry>();
+            foreach (var slot in Globals.Me.Inventory)
+            {
+                var descriptor = slot?.Descriptor;
+                if (descriptor == null)
+                {
+                    continue;
+                }
+
+                requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+            }
+
+            if (requests.Count > 0)
+            {
+                GameLocalization.RequestEntries(requests);
+            }
+        }
+
+        private void RequestLocalizationEntry(int slotIndex)
+        {
+            if (Globals.Me?.Inventory == null)
+            {
+                return;
+            }
+
+            if (slotIndex < 0 || slotIndex >= Globals.Me.Inventory.Length)
+            {
+                return;
+            }
+
+            var descriptor = Globals.Me.Inventory[slotIndex]?.Descriptor;
+            if (descriptor == null)
+            {
+                return;
+            }
+
+            GameLocalization.RequestEntries(
+                [new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name")]
+            );
+        }
+
+        private void SubscribeToLocalizationUpdates()
+        {
+            if (_localizationSubscribed)
+            {
+                return;
+            }
+
+            GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+            _localizationSubscribed = true;
+        }
+
+        private void UnsubscribeFromLocalizationUpdates()
+        {
+            if (!_localizationSubscribed)
+            {
+                return;
+            }
+
+            GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
+            _localizationSubscribed = false;
+        }
+
+        private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+        {
+            if (Globals.Me?.Inventory == null)
+            {
+                return;
+            }
+
+            var itemType = GameObjectType.Item.ToString();
+            if (!requests.Any(
+                    request => request.EntityType == itemType &&
+                               request.Field == "Name" &&
+                               Globals.Me.Inventory.Any(slot => slot?.ItemId.ToString() == request.EntityId)
+                ))
+            {
+                return;
+            }
+
+            if (_selectedItemId != Guid.Empty && ItemDescriptor.TryGet(_selectedItemId, out var descriptor))
+            {
+                _infoLabel.Text = $"{Strings.Market.publish_colon} {GetLocalizedItemName(descriptor)}";
+            }
+
+            _slotsDirty = true;
+            Update();
         }
 
         private void RefreshTax()

@@ -1202,6 +1202,12 @@ public partial class FrmEvent : Form
             PacketSender.SendSaveObject(MyEvent);
         }
 
+        Hide();
+        Dispose();
+    }
+
+    private void btnReindexTranslations_Click(object sender, EventArgs e)
+    {
         var entries = new List<TranslationUpsertEntry>();
         foreach (var eventDescriptor in EventDescriptor.Lookup.Values)
         {
@@ -1214,9 +1220,6 @@ public partial class FrmEvent : Form
         }
 
         TranslationSourceUpdater.QueueBatchEnglishSources(entries);
-
-        Hide();
-        Dispose();
     }
 
     #endregion

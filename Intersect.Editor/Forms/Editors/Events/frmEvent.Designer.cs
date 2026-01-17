@@ -168,6 +168,7 @@ namespace Intersect.Editor.Forms.Editors.Events
             grpCreateCommands = new DarkGroupBox();
             btnSave = new DarkButton();
             btnCancel = new DarkButton();
+            btnReindexTranslations = new DarkButton();
             commandMenu = new ContextMenuStrip(components);
             btnInsert = new ToolStripMenuItem();
             btnEdit = new ToolStripMenuItem();
@@ -1105,6 +1106,17 @@ namespace Intersect.Editor.Forms.Editors.Events
             btnCancel.Text = "Cancel";
             btnCancel.Click += btnCancel_Click;
             // 
+            // btnReindexTranslations
+            // 
+            btnReindexTranslations.Location = new System.Drawing.Point(238, 714);
+            btnReindexTranslations.Margin = new Padding(4, 3, 4, 3);
+            btnReindexTranslations.Name = "btnReindexTranslations";
+            btnReindexTranslations.Padding = new Padding(6);
+            btnReindexTranslations.Size = new Size(160, 24);
+            btnReindexTranslations.TabIndex = 8;
+            btnReindexTranslations.Text = "Reindex Translations";
+            btnReindexTranslations.Click += btnReindexTranslations_Click;
+            // 
             // commandMenu
             // 
             commandMenu.BackColor = System.Drawing.Color.FromArgb(60, 63, 65);
@@ -1336,6 +1348,7 @@ namespace Intersect.Editor.Forms.Editors.Events
             Controls.Add(pnlEditorComponents);
             Controls.Add(grpPageOptions);
             Controls.Add(grpGeneral);
+            Controls.Add(btnReindexTranslations);
             Controls.Add(btnCancel);
             Controls.Add(btnSave);
             Controls.Add(pnlTabsContainer);
@@ -1391,6 +1404,7 @@ namespace Intersect.Editor.Forms.Editors.Events
         private DarkGroupBox grpInspector;
         private DarkButton btnSave;
         private DarkButton btnCancel;
+        private DarkButton btnReindexTranslations;
         private DarkComboBox cmbEventFreq;
         private DarkComboBox cmbEventSpeed;
         private Label lblFreq;

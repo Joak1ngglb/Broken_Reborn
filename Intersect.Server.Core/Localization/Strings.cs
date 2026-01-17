@@ -445,6 +445,10 @@ public static partial class Strings
         public readonly LocalizedString EventCount = @" - {00} Events.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString LocalizationStatusEmpty =
+            @"No missing or needs-review localization entries were found.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString ExperimentalFeatureEnablement = @"{00} is {01}.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

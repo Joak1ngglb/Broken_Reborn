@@ -108,26 +108,6 @@ public partial class FrmItem : EditorForm
             item.DeleteBackup();
         }
 
-        var entries = new List<TranslationUpsertEntry>();
-        foreach (ItemDescriptor item in ItemDescriptor.Lookup.Values)
-        {
-            if (item == null)
-            {
-                continue;
-            }
-
-            TranslationSourceUpdater.AddEnglishSource(entries, item.Type.ToString(), item.Id, "Name", item.Name);
-            TranslationSourceUpdater.AddEnglishSource(
-                entries,
-                item.Type.ToString(),
-                item.Id,
-                "Description",
-                item.Description
-            );
-        }
-
-        TranslationSourceUpdater.QueueBatchEnglishSources(entries);
-
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();
