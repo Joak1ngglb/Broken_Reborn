@@ -230,7 +230,7 @@ public static class TranslationSourceUpdater
 
             if (!string.IsNullOrWhiteSpace(page.Description))
             {
-                AddSource(entries, entityType, entityId, $"Page:{pageIndex}:Description", page.Description);
+                AddSource(entries, entityType, entityId, EventFieldKey.PageDescription(pageIndex), page.Description);
             }
 
             if (page.CommandLists == null) continue;
@@ -244,19 +244,36 @@ public static class TranslationSourceUpdater
                     var command = commands[commandIndex];
                     if (command == null) continue;
 
-                    var baseField = $"Page:{pageIndex}:List:{listId}:Command:{commandIndex}";
                     switch (command)
                     {
                         case ShowTextCommand showTextCommand:
-                            AddSource(entries, entityType, entityId, $"{baseField}:ShowText", showTextCommand.Text);
+                            AddSource(
+                                entries,
+                                entityType,
+                                entityId,
+                                EventFieldKey.ShowText(pageIndex, listId, commandIndex),
+                                showTextCommand.Text
+                            );
                             break;
 
                         case AddChatboxTextCommand addChatboxTextCommand:
-                            AddSource(entries, entityType, entityId, $"{baseField}:ChatboxText", addChatboxTextCommand.Text);
+                            AddSource(
+                                entries,
+                                entityType,
+                                entityId,
+                                EventFieldKey.ChatboxText(pageIndex, listId, commandIndex),
+                                addChatboxTextCommand.Text
+                            );
                             break;
 
                         case ShowOptionsCommand showOptionsCommand:
-                            AddSource(entries, entityType, entityId, $"{baseField}:OptionsText", showOptionsCommand.Text);
+                            AddSource(
+                                entries,
+                                entityType,
+                                entityId,
+                                EventFieldKey.OptionsText(pageIndex, listId, commandIndex),
+                                showOptionsCommand.Text
+                            );
                             if (showOptionsCommand.Options != null)
                             {
                                 for (var optionIndex = 0; optionIndex < showOptionsCommand.Options.Length; optionIndex++)
@@ -265,7 +282,7 @@ public static class TranslationSourceUpdater
                                         entries,
                                         entityType,
                                         entityId,
-                                        $"{baseField}:Option:{optionIndex}",
+                                        EventFieldKey.Option(pageIndex, listId, commandIndex, optionIndex),
                                         showOptionsCommand.Options[optionIndex] ?? string.Empty
                                     );
                                 }
@@ -273,12 +290,30 @@ public static class TranslationSourceUpdater
                             break;
 
                         case InputVariableCommand inputVariableCommand:
-                            AddSource(entries, entityType, entityId, $"{baseField}:InputTitle", inputVariableCommand.Title ?? string.Empty);
-                            AddSource(entries, entityType, entityId, $"{baseField}:InputText", inputVariableCommand.Text);
+                            AddSource(
+                                entries,
+                                entityType,
+                                entityId,
+                                EventFieldKey.InputTitle(pageIndex, listId, commandIndex),
+                                inputVariableCommand.Title ?? string.Empty
+                            );
+                            AddSource(
+                                entries,
+                                entityType,
+                                entityId,
+                                EventFieldKey.InputText(pageIndex, listId, commandIndex),
+                                inputVariableCommand.Text
+                            );
                             break;
 
                         case ChangePlayerLabelCommand changePlayerLabelCommand:
-                            AddSource(entries, entityType, entityId, $"{baseField}:PlayerLabel", changePlayerLabelCommand.Value ?? string.Empty);
+                            AddSource(
+                                entries,
+                                entityType,
+                                entityId,
+                                EventFieldKey.PlayerLabel(pageIndex, listId, commandIndex),
+                                changePlayerLabelCommand.Value ?? string.Empty
+                            );
                             break;
                     }
                 }
