@@ -131,21 +131,32 @@ public abstract partial class GameTexture<TPlatformTexture, TPlatformRenderer> :
     {
         get
         {
-            if (AtlasReference is not null)
+            // Catch-all for any threading/initialization race conditions during texture access
+            try
             {
-                return AtlasReference.Texture.GetTexture<TPlatformTexture>();
-            }
+                if (AtlasReference is not null)
+                {
+                    return AtlasReference.Texture?.GetTexture<TPlatformTexture>();
+                }
 
-            if (_platformTexture == null)
+                if (_platformTexture == null)
+                {
+                    LoadPlatformTexture();
+                }
+                else
+                {
+                    UpdateAccessTime();
+                }
+
+                return _platformTexture;
+            }
+            catch (Exception)
             {
                 LoadPlatformTexture();
+                // If we fail to get the platform texture, return null to indicate missing/not-loaded texture
+                // This prevents the renderer from crashing the entire application
+                return null;
             }
-            else
-            {
-                UpdateAccessTime();
-            }
-
-            return _platformTexture;
         }
         set
         {

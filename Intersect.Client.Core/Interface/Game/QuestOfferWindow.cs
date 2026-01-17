@@ -12,6 +12,7 @@ using Intersect.Client.Networking;
 using Intersect.Config;
 using Intersect.Enums;
 using Intersect.GameObjects;
+using Intersect.Network.Packets.Localization;
 
 namespace Intersect.Client.Interface.Game
 {
@@ -41,6 +42,7 @@ namespace Intersect.Client.Interface.Game
         private const int RewardPaddingY = 10;
         private const int RewardSpacing = 3;
         private const int RewardExpHeight = 44;
+        private bool _localizationSubscribed;
 
         // Cache de widgets creados para medir/ubicar
         private readonly List<Base> _rewardItemWidgets = new();
@@ -84,6 +86,8 @@ namespace Intersect.Client.Interface.Game
             _rewardExpContainer.IsHidden = true;
             _rewardItemContainer.IsHidden = true;
             _rewardContainer.IsHidden = true;
+
+            SubscribeToLocalizationUpdates();
         }
 
         public void AddRewardWidget(Base widget)
@@ -187,19 +191,74 @@ namespace Intersect.Client.Interface.Game
                 return;
             }
 
+            RequestLocalization(quest);
             Show();
-            mQuestTitle.Text = quest.Name;
+            var localizedName = GetLocalizedQuestField(quest, "Name", quest.Name);
+            mQuestTitle.Text = localizedName;
 
-            if (mQuestOfferText != quest.StartDescription || quest.Id != mLastQuestId)
+            var localizedStartDescription = GetLocalizedQuestField(
+                quest,
+                "StartDescription",
+                quest.StartDescription
+            );
+            if (mQuestOfferText != localizedStartDescription || quest.Id != mLastQuestId)
             {
                 mQuestPromptLabel.ClearText();
                 mQuestPromptLabel.Width = mQuestPromptArea.Width - mQuestPromptArea.VerticalScrollBar.Width;
-                mQuestPromptLabel.AddText(quest.StartDescription, mQuestPromptTemplate);
+                mQuestPromptLabel.AddText(localizedStartDescription, mQuestPromptTemplate);
                 mQuestPromptLabel.SizeToChildren(false, true);
-                mQuestOfferText = quest.StartDescription;
+                mQuestOfferText = localizedStartDescription;
                 LoadRewardWidgets(quest.Id);
 
                 mLastQuestId = quest.Id;
+            }
+        }
+
+        private void RequestLocalization(QuestDescriptor quest)
+        {
+            GameLocalization.RequestEntries(
+                [
+                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "Name"),
+                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "StartDescription")
+                ]
+            );
+        }
+
+        private static string GetLocalizedQuestField(QuestDescriptor quest, string field, string fallback) =>
+            GameLocalization.GetTextOrDefault(quest.Type.ToString(), quest.Id, field, fallback);
+
+        private void SubscribeToLocalizationUpdates()
+        {
+            if (_localizationSubscribed)
+            {
+                return;
+            }
+
+            GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+            _localizationSubscribed = true;
+        }
+
+        private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+        {
+            if (!IsVisible() || mLastQuestId == Guid.Empty)
+            {
+                return;
+            }
+
+            if (!QuestDescriptor.TryGet(mLastQuestId, out var quest))
+            {
+                return;
+            }
+
+            var entityType = quest.Type.ToString();
+            var entityId = quest.Id.ToString();
+            if (requests.Any(
+                    request => request.EntityType == entityType &&
+                               request.EntityId == entityId &&
+                               (request.Field == "Name" || request.Field == "StartDescription")
+                ))
+            {
+                Update(quest);
             }
         }
 

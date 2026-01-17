@@ -7,6 +7,9 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Interface;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
+using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Network.Packets.Localization;
 using Intersect.Network.Packets.Shops;
 
 namespace Intersect.Client.Interface.Game.Shops
@@ -23,6 +26,7 @@ namespace Intersect.Client.Interface.Game.Shops
 
         private bool _uiInitialized;
         private bool _hasPendingPurchase;
+        private bool _localizationSubscribed;
 
         private ShopSnapshot _snapshot;
 
@@ -41,6 +45,7 @@ namespace Intersect.Client.Interface.Game.Shops
             DisableResizing();
 
             InitializeUi();
+            SubscribeToLocalizationUpdates();
         }
 
         internal int RowWidth => Math.Max(520, _itemsScroll.Width - 20);
@@ -143,6 +148,7 @@ namespace Intersect.Client.Interface.Game.Shops
 
             LayoutRows();
             RestoreScrollPosition(anchorId, prevScroll);
+            RequestLocalizationEntries();
         }
 
         public void UpdateSnapshot(ShopSnapshot snapshot)
@@ -151,6 +157,7 @@ namespace Intersect.Client.Interface.Game.Shops
 
             Title = Strings.PlayerShops.BrowserTitle.ToString(snapshot.Name);
             _ownerLabel.Text = Strings.PlayerShops.BrowserOwner.ToString(snapshot.OwnerName);
+            RequestLocalizationEntries();
 
             if (!_uiInitialized || _itemsScroll == null)
             {
@@ -205,6 +212,71 @@ namespace Intersect.Client.Interface.Game.Shops
         public void Update()
         {
             LayoutRows();
+        }
+
+        private void RequestLocalizationEntries()
+        {
+            var requests = new List<LocalizationRequestEntry>();
+            foreach (var item in _snapshot.Items ?? new List<PlayerShopItemSnapshot>())
+            {
+                if (!ItemDescriptor.TryGet(item.ItemId, out var descriptor))
+                {
+                    continue;
+                }
+
+                requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+            }
+
+            if (requests.Count > 0)
+            {
+                GameLocalization.RequestEntries(requests);
+            }
+        }
+
+        private void SubscribeToLocalizationUpdates()
+        {
+            if (_localizationSubscribed)
+            {
+                return;
+            }
+
+            GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+            Disposed += (_, _) => UnsubscribeFromLocalizationUpdates();
+            _localizationSubscribed = true;
+        }
+
+        private void UnsubscribeFromLocalizationUpdates()
+        {
+            if (!_localizationSubscribed)
+            {
+                return;
+            }
+
+            GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
+            _localizationSubscribed = false;
+        }
+
+        private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+        {
+            if (!IsVisibleInTree || _snapshot.Items == null)
+            {
+                return;
+            }
+
+            var itemType = GameObjectType.Item.ToString();
+            if (!requests.Any(
+                    request => request.EntityType == itemType &&
+                               request.Field == "Name" &&
+                               _snapshot.Items.Any(item => item.ItemId.ToString() == request.EntityId)
+                ))
+            {
+                return;
+            }
+
+            foreach (var row in _rows)
+            {
+                row.RefreshLocalization();
+            }
         }
 
         private void LayoutRows()

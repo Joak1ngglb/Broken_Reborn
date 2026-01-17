@@ -13,6 +13,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.GameObjects;
 using Intersect.Localization;
+using Intersect.Network.Packets.Editor;
 using Intersect.Utilities;
 using Graphics = System.Drawing.Graphics;
 
@@ -101,6 +102,8 @@ public partial class FrmItem : EditorForm
         //Send Changed items
         foreach (var item in mChanged)
         {
+            TranslationSourceUpdater.UpdateEnglishSource(item.Type.ToString(), item.Id, "Name", item.Name);
+            TranslationSourceUpdater.UpdateEnglishSource(item.Type.ToString(), item.Id, "Description", item.Description);
             PacketSender.SendSaveObject(item);
             item.DeleteBackup();
         }

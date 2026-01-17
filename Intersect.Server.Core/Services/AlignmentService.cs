@@ -73,9 +73,8 @@ public static class AlignmentService
             "wings" => Strings.Alignment.WingsOn.ToString(),
             "cooldown" when nextAllowed.HasValue =>
                 Strings.Alignment.SwapCooldown.ToString()
-                    .Replace("{fecha}", nextAllowed.Value.ToLocalTime().ToString("g")),
+                    .Replace("{date}", nextAllowed.Value.ToLocalTime().ToString("g")),
             _ => null,
         };
     }
 }
-

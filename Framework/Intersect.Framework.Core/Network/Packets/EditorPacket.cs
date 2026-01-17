@@ -20,6 +20,8 @@ namespace Intersect.Network.Packets;
 [Union(11, typeof(SaveGameObjectPacket))]
 [Union(12, typeof(SaveTimeDataPacket))]
 [Union(13, typeof(UnlinkMapPacket))]
+[Union(14, typeof(TranslationUpsertPacket))]
+[Union(15, typeof(TranslationBatchUpsertPacket))]
 
 public abstract partial class EditorPacket : IntersectPacket
 {
