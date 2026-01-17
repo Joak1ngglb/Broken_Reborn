@@ -129,18 +129,18 @@ public partial class InventoryItem : SlotItem
             case ItemType.Spell:
                 contextMenu.AddChild(_useItemMenuItem);
                 var useItemLabel = descriptor.QuickCast ? Strings.ItemContextMenu.Cast : Strings.ItemContextMenu.Learn;
-                _useItemMenuItem.Text = useItemLabel.ToString(descriptor.Name);
+                _useItemMenuItem.Text = useItemLabel.ToString(GetLocalizedItemName(descriptor));
                 break;
 
             case ItemType.Event:
             case ItemType.Consumable:
                 contextMenu.AddChild(_useItemMenuItem);
-                _useItemMenuItem.Text = Strings.ItemContextMenu.Use.ToString(descriptor.Name);
+                _useItemMenuItem.Text = Strings.ItemContextMenu.Use.ToString(GetLocalizedItemName(descriptor));
                 break;
 
             case ItemType.Bag:
                 contextMenu.AddChild(_useItemMenuItem);
-                _useItemMenuItem.Text = Strings.ItemContextMenu.Open.ToString(descriptor.Name);
+                _useItemMenuItem.Text = Strings.ItemContextMenu.Open.ToString(GetLocalizedItemName(descriptor));
                 break;
 
             case ItemType.Equipment:
@@ -152,7 +152,7 @@ public partial class InventoryItem : SlotItem
                     ? Strings.ItemContextMenu.Unequip
                     : Strings.ItemContextMenu.Equip;
 
-                _useItemMenuItem.Text = equipItemLabel.ToString(descriptor.Name);
+                _useItemMenuItem.Text = equipItemLabel.ToString(GetLocalizedItemName(descriptor));
                 break;
 
         }
@@ -161,33 +161,33 @@ public partial class InventoryItem : SlotItem
         if (Globals.InBag && descriptor.CanBag)
         {
             contextMenu.AddChild(_actionItemMenuItem);
-            _actionItemMenuItem.SetText(Strings.ItemContextMenu.Bag.ToString(descriptor.Name));
+            _actionItemMenuItem.SetText(Strings.ItemContextMenu.Bag.ToString(GetLocalizedItemName(descriptor)));
         }
         else if (Globals.InBank && (descriptor.CanBank || descriptor.CanGuildBank))
         {
             contextMenu.AddChild(_actionItemMenuItem);
-            _actionItemMenuItem.SetText(Strings.ItemContextMenu.Bank.ToString(descriptor.Name));
+            _actionItemMenuItem.SetText(Strings.ItemContextMenu.Bank.ToString(GetLocalizedItemName(descriptor)));
         }
         else if (Globals.InTrade && descriptor.CanTrade)
         {
             contextMenu.AddChild(_actionItemMenuItem);
-            _actionItemMenuItem.SetText(Strings.ItemContextMenu.Trade.ToString(descriptor.Name));
+            _actionItemMenuItem.SetText(Strings.ItemContextMenu.Trade.ToString(GetLocalizedItemName(descriptor)));
         }
         else if (Globals.GameShop != null && descriptor.CanSell)
         {
             contextMenu.AddChild(_actionItemMenuItem);
-            _actionItemMenuItem.SetText(Strings.ItemContextMenu.Sell.ToString(descriptor.Name));
+            _actionItemMenuItem.SetText(Strings.ItemContextMenu.Sell.ToString(GetLocalizedItemName(descriptor)));
         }
 
         // Can we drop this item? if so show the user!
         if (descriptor.CanDrop)
         {
             contextMenu.AddChild(_dropItemMenuItem);
-            _dropItemMenuItem.SetText(Strings.ItemContextMenu.Drop.ToString(descriptor.Name));
+            _dropItemMenuItem.SetText(Strings.ItemContextMenu.Drop.ToString(GetLocalizedItemName(descriptor)));
         }
 
         contextMenu.AddChild(_showItemMenuItem);
-        _showItemMenuItem.SetText(Strings.ItemContextMenu.Show.ToString(descriptor.Name));
+        _showItemMenuItem.SetText(Strings.ItemContextMenu.Show.ToString(GetLocalizedItemName(descriptor)));
 
         base.OnContextMenuOpening(contextMenu);
     }
@@ -238,6 +238,14 @@ public partial class InventoryItem : SlotItem
     }
 
     #endregion
+
+    private static string GetLocalizedItemName(ItemDescriptor descriptor) =>
+        GameLocalization.GetTextOrDefault(
+            descriptor.Type.ToString(),
+            descriptor.Id,
+            "Name",
+            descriptor.Name ?? string.Empty
+        );
 
     #region Mouse Events
 

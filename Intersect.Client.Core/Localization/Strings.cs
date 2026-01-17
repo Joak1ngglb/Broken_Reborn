@@ -7,6 +7,7 @@ using Intersect.Config;
 using Intersect.Configuration;
 using Intersect.Core;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.Security;
 using Intersect.Framework.Reflection;
 using Intersect.Localization;
@@ -20,10 +21,22 @@ namespace Intersect.Client.Localization;
 public static partial class Strings
 {
     private const string StringsFileName = "client_strings.json";
+    private const string DefaultLanguage = "en";
     private static char[] mQuantityTrimChars = new char[] { '.', '0' };
+    private static bool _seeded;
 
     private static string[] _unitsBits = [string.Empty, "Ki", "Mi", "Gi", "Ti"];
     private static string[] _unitsBytes = [string.Empty, "K", "M", "G", "T"];
+
+    static Strings()
+    {
+        Options.OptionsLoaded += OnOptionsLoaded;
+    }
+
+    private static void OnOptionsLoaded(Options options)
+    {
+        SynchronizeConfigurableStrings();
+    }
 
     public static string FormatBits(long quantity)
     {
@@ -120,9 +133,70 @@ public static partial class Strings
         {
             if (!ItemDescription.Rarity.ContainsKey(rarityName))
             {
-                ItemDescription.Rarity[rarityName] = $"{rarity}:{rarityName}";
+                ItemDescription.Rarity[rarityName] = rarityName;
             }
         }
+
+        if (Options.Instance.Items.ItemSubtypes != null)
+        {
+            foreach (var subtype in Options.Instance.Items.ItemSubtypes.Values.SelectMany(subtypes => subtypes))
+            {
+                if (string.IsNullOrWhiteSpace(subtype))
+                {
+                    continue;
+                }
+
+                if (!ItemDescription.ItemSubtypes.ContainsKey(subtype))
+                {
+                    ItemDescription.ItemSubtypes[subtype] = subtype;
+                }
+            }
+        }
+
+        var subtypeSets = Options.Instance.Items.ItemSubtypes;
+        if (subtypeSets != null)
+        {
+            var subtypes = subtypeSets
+                .SelectMany(kvp => kvp.Value ?? [])
+                .Where(subtype => !string.IsNullOrWhiteSpace(subtype))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+            foreach (var subtype in subtypes)
+            {
+                if (!ItemDescription.ItemSubtypes.ContainsKey(subtype))
+                {
+                    ItemDescription.ItemSubtypes[subtype] = subtype;
+                }
+            }
+        }
+    }
+
+    public static string GetLocalizedItemTypeName(ItemType type) =>
+        ItemDescription.ItemTypes.TryGetValue((int)type, out var localizedType)
+            ? localizedType.ToString()
+            : ItemDescription.UnknownItemType.ToString();
+
+    public static string GetLocalizedItemSubtypeName(string? subtype)
+    {
+        if (string.IsNullOrWhiteSpace(subtype))
+        {
+            return string.Empty;
+        }
+
+        return ItemDescription.ItemSubtypes.TryGetValue(subtype, out var localizedSubtype)
+            ? localizedSubtype.ToString()
+            : subtype;
+    }
+
+    public static string GetLocalizedItemRarityName(int rarity)
+    {
+        if (Options.Instance?.Items?.TryGetRarityName(rarity, out var rarityName) == true)
+        {
+            return ItemDescription.Rarity.TryGetValue(rarityName, out var rarityLabel)
+                ? rarityLabel.ToString()
+                : rarityName;
+        }
+
+        return rarity.ToString();
     }
 
     private static void PostLoad()
@@ -142,152 +216,19 @@ public static partial class Strings
         public int Compare(T? x, T? y) => string.CompareOrdinal(x?.ToString(), y?.ToString());
     }
 
-    public static void Load()
+    public static void Load() => Load(DefaultLanguage);
+
+    public static void Load(string? language)
     {
         SynchronizeConfigurableStrings();
+        SeedLocalizedStrings();
 
         try
         {
-            var serialized = new Dictionary<string, Dictionary<string, object>>();
-            serialized = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, object>>>(
-                File.ReadAllText(Path.Combine(ClientConfiguration.ResourcesDirectory, StringsFileName))
-            );
+            var normalizedLanguage = NormalizeLanguage(language);
+            var serialized = LoadLocalizedSerializedStrings(normalizedLanguage);
 
-            var rootType = typeof(Strings);
-            var groupTypes = rootType.GetNestedTypes(BindingFlags.Static | BindingFlags.Public);
-            List<string> missingStrings = [];
-            List<string> argumentCountMismatch = [];
-            foreach (var groupType in groupTypes.OrderBy(t => t.Name, new OrdinalComparer()))
-            {
-                if (!serialized.TryGetValue(groupType.Name, out var serializedGroup))
-                {
-                    missingStrings.Add($"{groupType.Name}");
-                    serialized[groupType.Name] = SerializeGroup(groupType);
-                    continue;
-                }
-
-                foreach (var fieldInfo in groupType.GetFields(BindingFlags.Public | BindingFlags.Static))
-                {
-                    var fieldValue = fieldInfo.GetValue(null);
-                    if (!serializedGroup.TryGetValue(fieldInfo.Name, out var serializedValue))
-                    {
-                        var foundKey = serializedGroup.Keys.FirstOrDefault(key => string.Equals(fieldInfo.Name, key, StringComparison.OrdinalIgnoreCase));
-                        if (foundKey != default)
-                        {
-                            _ = serializedGroup.TryGetValue(foundKey, out serializedValue);
-                        }
-                    }
-
-                    switch (fieldValue)
-                    {
-                        case LocalizedString localizedString:
-                            var jsonString = (string)serializedValue;
-                            if (jsonString == default)
-                            {
-                                ApplicationContext.Context.Value?.Logger.LogWarning($"{groupType.Name}.{fieldInfo.Name} is null.");
-                                missingStrings.Add($"{groupType.Name}.{fieldInfo.Name} (string)");
-                                serializedGroup[fieldInfo.Name] = (string)localizedString;
-                            }
-                            else
-                            {
-                                LocalizedString? existingLocalizedString = null;
-                                try
-                                {
-                                    existingLocalizedString = fieldInfo.GetValue(null) as LocalizedString;
-                                }
-                                catch
-                                {
-                                    // Ignore
-                                }
-
-                                LocalizedString newLocalizedString = new(jsonString);
-                                if (existingLocalizedString?.ArgumentCount != newLocalizedString.ArgumentCount)
-                                {
-                                    argumentCountMismatch.Add(
-                                        $"{groupType.Name}.{fieldInfo.Name} expected {existingLocalizedString?.ArgumentCount.ToString() ?? "ERROR"} argument(s) but the loaded string had {newLocalizedString.ArgumentCount}"
-                                    );
-                                }
-
-                                fieldInfo.SetValue(null, newLocalizedString);
-                            }
-                            break;
-
-                        case Dictionary<int, LocalizedString> intDictionary:
-                            DeserializeDictionary(missingStrings, groupType, fieldInfo, fieldValue, serializedGroup, serializedValue, intDictionary);
-                            break;
-
-                        case Dictionary<string, LocalizedString> stringDictionary:
-                            DeserializeDictionary(missingStrings, groupType, fieldInfo, fieldValue, serializedGroup, serializedValue, stringDictionary);
-                            break;
-
-                        default:
-                            {
-                                var fieldType = fieldInfo.FieldType;
-                                if (!fieldType.IsGenericType || typeof(Dictionary<,>) != fieldType.GetGenericTypeDefinition())
-                                {
-                                    ApplicationContext.Context.Value?.Logger.LogError(
-                                        new NotSupportedException(
-                                            $"Unsupported localization type for {groupType.Name}.{fieldInfo.Name}: {fieldInfo.FieldType.FullName}"
-                                        ),
-                                        "Invalid field type {Type}",
-                                        fieldType
-                                    );
-                                    break;
-                                }
-
-                                var parameters = fieldType.GenericTypeArguments;
-                                var localizedParameterType = parameters.Last();
-                                if (localizedParameterType != typeof(LocalizedString))
-                                {
-                                    ApplicationContext.Context.Value?.Logger.LogError(
-                                        new NotSupportedException(
-                                            $"Unsupported localization dictionary value type for {groupType.Name}.{fieldInfo.Name}: {localizedParameterType.FullName}"
-                                        ),
-                                        "Unsupported localization dictionary value type for {GroupName}.{FieldName}: {ParameterTypeName}",
-                                        groupType.Name,
-                                        fieldInfo.Name,
-                                        localizedParameterType.FullName
-                                    );
-                                    break;
-                                }
-
-                                var genericDeserializeDictionary = _methodInfoDeserializeDictionary.MakeGenericMethod(parameters.First());
-                                _ = genericDeserializeDictionary
-                                    .Invoke(
-                                        default,
-                                        [
-                                            missingStrings,
-                                            groupType,
-                                            fieldInfo,
-                                            fieldValue,
-                                            serializedGroup,
-                                            serializedValue,
-                                            fieldValue,
-                                        ]
-                                    );
-                                break;
-                            }
-                    }
-                }
-            }
-
-            if (missingStrings.Count > 0)
-            {
-                ApplicationContext.Context.Value?.Logger.LogWarning(
-                    "Missing strings, overwriting strings file:\n\t{Strings}",
-                    string.Join(",\n\t", missingStrings)
-                );
-                SaveSerialized(serialized);
-            }
-
-            if (argumentCountMismatch.Count > 0)
-            {
-                ApplicationContext.Context.Value?.Logger.LogWarning(
-                    "Argument count mismatch on {MismatchCount} strings:\n\t{Strings}",
-                    argumentCountMismatch.Count,
-                    string.Join(",\n\t", argumentCountMismatch)
-                );
-            }
+            LoadSerialized(serialized, string.Equals(normalizedLanguage, DefaultLanguage, StringComparison.OrdinalIgnoreCase));
         }
         catch (Exception exception)
         {
@@ -296,6 +237,280 @@ public static partial class Strings
         }
 
         PostLoad();
+    }
+
+    public static void SeedLocalizedStrings()
+    {
+        if (_seeded)
+        {
+            return;
+        }
+
+        _seeded = true;
+
+        var baseSerialized = BuildSerializedStrings();
+        var baseJson = JObject.FromObject(baseSerialized);
+
+        foreach (var language in SupportedLanguages.All)
+        {
+            var normalizedLanguage = NormalizeLanguage(language.Code);
+            var overridePath = Path.Combine(
+                ClientConfiguration.ResourcesDirectory,
+                "localization",
+                "client",
+                normalizedLanguage,
+                StringsFileName
+            );
+            var overrideJson = ReadSerializedStringsAsJson(overridePath);
+            var mergedJson = LocalizationJsonMerger.MergeWithOverrides(baseJson, overrideJson);
+            WriteSerializedStrings(overridePath, mergedJson);
+        }
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> LoadSerializedStrings(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return new Dictionary<string, Dictionary<string, object>>();
+        }
+
+        return JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, object>>>(
+            File.ReadAllText(path)
+        ) ?? new Dictionary<string, Dictionary<string, object>>();
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> LoadLocalizedSerializedStrings(string language)
+    {
+        var normalizedLanguage = NormalizeLanguage(language);
+        var basePath = Path.Combine(
+            ClientConfiguration.ResourcesDirectory,
+            "localization",
+            "client",
+            DefaultLanguage,
+            StringsFileName
+        );
+        var overridePath = Path.Combine(
+            ClientConfiguration.ResourcesDirectory,
+            "localization",
+            "client",
+            normalizedLanguage,
+            StringsFileName
+        );
+        var legacyPath = Path.Combine(ClientConfiguration.ResourcesDirectory, StringsFileName);
+
+        var baseLoaded = TryLoadSerializedStrings(basePath, out var baseSerialized);
+        if (!baseLoaded && TryLoadSerializedStrings(legacyPath, out var legacySerialized))
+        {
+            baseSerialized = legacySerialized;
+            baseLoaded = true;
+            WriteSerializedStrings(basePath, baseSerialized);
+        }
+
+        if (!baseLoaded)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Base localization file not found at {Path}.",
+                basePath
+            );
+        }
+
+        if (!TryLoadSerializedStrings(overridePath, out var overrideSerialized))
+        {
+            if (!string.Equals(normalizedLanguage, DefaultLanguage, StringComparison.OrdinalIgnoreCase) &&
+                baseSerialized.Count > 0)
+            {
+                WriteSerializedStrings(overridePath, baseSerialized);
+            }
+
+            return baseSerialized;
+        }
+
+        return MergeSerializedStrings(baseSerialized, overrideSerialized);
+    }
+
+    private static bool TryLoadSerializedStrings(
+        string path,
+        out Dictionary<string, Dictionary<string, object>> serialized
+    )
+    {
+        if (!File.Exists(path))
+        {
+            serialized = new Dictionary<string, Dictionary<string, object>>();
+            return false;
+        }
+
+        serialized = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, object>>>(
+            File.ReadAllText(path)
+        ) ?? new Dictionary<string, Dictionary<string, object>>();
+
+        return true;
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> MergeSerializedStrings(
+        Dictionary<string, Dictionary<string, object>> baseSerialized,
+        Dictionary<string, Dictionary<string, object>> overrideSerialized
+    )
+    {
+        foreach (var (groupName, overrideGroup) in overrideSerialized)
+        {
+            if (!baseSerialized.TryGetValue(groupName, out var baseGroup))
+            {
+                baseSerialized[groupName] = new Dictionary<string, object>(overrideGroup);
+                continue;
+            }
+
+            foreach (var (key, value) in overrideGroup)
+            {
+                baseGroup[key] = value;
+            }
+        }
+
+        return baseSerialized;
+    }
+
+    private static void LoadSerialized(
+        Dictionary<string, Dictionary<string, object>> serialized,
+        bool allowSave
+    )
+    {
+        var rootType = typeof(Strings);
+        var groupTypes = rootType.GetNestedTypes(BindingFlags.Static | BindingFlags.Public);
+        List<string> missingStrings = [];
+        List<string> argumentCountMismatch = [];
+        foreach (var groupType in groupTypes.OrderBy(t => t.Name, new OrdinalComparer()))
+        {
+            if (!serialized.TryGetValue(groupType.Name, out var serializedGroup))
+            {
+                missingStrings.Add($"{groupType.Name}");
+                serialized[groupType.Name] = SerializeGroup(groupType);
+                continue;
+            }
+
+            foreach (var fieldInfo in groupType.GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                var fieldValue = fieldInfo.GetValue(null);
+                if (!serializedGroup.TryGetValue(fieldInfo.Name, out var serializedValue))
+                {
+                    var foundKey = serializedGroup.Keys.FirstOrDefault(key => string.Equals(fieldInfo.Name, key, StringComparison.OrdinalIgnoreCase));
+                    if (foundKey != default)
+                    {
+                        _ = serializedGroup.TryGetValue(foundKey, out serializedValue);
+                    }
+                }
+
+                switch (fieldValue)
+                {
+                    case LocalizedString localizedString:
+                        var jsonString = (string)serializedValue;
+                        if (jsonString == default)
+                        {
+                            ApplicationContext.Context.Value?.Logger.LogWarning($"{groupType.Name}.{fieldInfo.Name} is null.");
+                            missingStrings.Add($"{groupType.Name}.{fieldInfo.Name} (string)");
+                            serializedGroup[fieldInfo.Name] = (string)localizedString;
+                        }
+                        else
+                        {
+                            LocalizedString? existingLocalizedString = null;
+                            try
+                            {
+                                existingLocalizedString = fieldInfo.GetValue(null) as LocalizedString;
+                            }
+                            catch
+                            {
+                                // Ignore
+                            }
+
+                            LocalizedString newLocalizedString = new(jsonString);
+                            if (existingLocalizedString?.ArgumentCount != newLocalizedString.ArgumentCount)
+                            {
+                                argumentCountMismatch.Add(
+                                    $"{groupType.Name}.{fieldInfo.Name} expected {existingLocalizedString?.ArgumentCount.ToString() ?? "ERROR"} argument(s) but the loaded string had {newLocalizedString.ArgumentCount}"
+                                );
+                            }
+
+                            fieldInfo.SetValue(null, newLocalizedString);
+                        }
+                        break;
+
+                    case Dictionary<int, LocalizedString> intDictionary:
+                        DeserializeDictionary(missingStrings, groupType, fieldInfo, fieldValue, serializedGroup, serializedValue, intDictionary);
+                        break;
+
+                    case Dictionary<string, LocalizedString> stringDictionary:
+                        DeserializeDictionary(missingStrings, groupType, fieldInfo, fieldValue, serializedGroup, serializedValue, stringDictionary);
+                        break;
+
+                    default:
+                        {
+                            var fieldType = fieldInfo.FieldType;
+                            if (!fieldType.IsGenericType || typeof(Dictionary<,>) != fieldType.GetGenericTypeDefinition())
+                            {
+                                ApplicationContext.Context.Value?.Logger.LogError(
+                                    new NotSupportedException(
+                                        $"Unsupported localization type for {groupType.Name}.{fieldInfo.Name}: {fieldInfo.FieldType.FullName}"
+                                    ),
+                                    "Invalid field type {Type}",
+                                    fieldType
+                                );
+                                break;
+                            }
+
+                            var parameters = fieldType.GenericTypeArguments;
+                            var localizedParameterType = parameters.Last();
+                            if (localizedParameterType != typeof(LocalizedString))
+                            {
+                                ApplicationContext.Context.Value?.Logger.LogError(
+                                    new NotSupportedException(
+                                        $"Unsupported localization dictionary value type for {groupType.Name}.{fieldInfo.Name}: {localizedParameterType.FullName}"
+                                    ),
+                                    "Unsupported localization dictionary value type for {GroupName}.{FieldName}: {ParameterTypeName}",
+                                    groupType.Name,
+                                    fieldInfo.Name,
+                                    localizedParameterType.FullName
+                                );
+                                break;
+                            }
+
+                            var genericDeserializeDictionary = _methodInfoDeserializeDictionary.MakeGenericMethod(parameters.First());
+                            _ = genericDeserializeDictionary
+                                .Invoke(
+                                    default,
+                                    [
+                                        missingStrings,
+                                        groupType,
+                                        fieldInfo,
+                                        fieldValue,
+                                        serializedGroup,
+                                        serializedValue,
+                                        fieldValue,
+                                    ]
+                                );
+                            break;
+                        }
+                }
+            }
+        }
+
+        if (missingStrings.Count > 0)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Missing strings, overwriting strings file:\n\t{Strings}",
+                string.Join(",\n\t", missingStrings)
+            );
+            if (allowSave)
+            {
+                SaveSerialized(serialized);
+            }
+        }
+
+        if (argumentCountMismatch.Count > 0)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Argument count mismatch on {MismatchCount} strings:\n\t{Strings}",
+                argumentCountMismatch.Count,
+                string.Join(",\n\t", argumentCountMismatch)
+            );
+        }
     }
 
     private static readonly MethodInfo _methodInfoDeserializeDictionary = typeof(Strings).GetMethod(
@@ -373,6 +588,9 @@ public static partial class Strings
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString itemTypeLabel = @"Type:";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString all = @"All";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString minPriceLabel = @"Min Price:";
@@ -540,11 +758,18 @@ public static partial class Strings
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString attachments = @"Attachments";
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString sendMailButton = @"📤 Send Mail";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString closeButton = @"❌ Close";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString unknownSender = @"Unknown Sender";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString noSubject = @"No Subject";
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString selectQuantity=@"Select Quantity";
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString enterQuantity= @"Enter Quantity";
     }
-
 
     public partial struct Breaking
     {
@@ -629,7 +854,6 @@ public static partial class Strings
 
 
     }
-
     public partial struct Job
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -823,17 +1047,45 @@ public static partial class Strings
 
     private static void SaveSerialized(Dictionary<string, Dictionary<string, object>> serialized)
     {
-        var languageDirectory = Path.Combine(ClientConfiguration.ResourcesDirectory);
-        if (Directory.Exists(languageDirectory))
+        var languageDirectory = Path.Combine(
+            ClientConfiguration.ResourcesDirectory,
+            "localization",
+            "client",
+            DefaultLanguage
+        );
+        WriteSerializedStrings(Path.Combine(languageDirectory, StringsFileName), serialized);
+    }
+
+    private static void WriteSerializedStrings(string path, Dictionary<string, Dictionary<string, object>> serialized)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (string.IsNullOrWhiteSpace(directory))
         {
-            File.WriteAllText(
-                Path.Combine(languageDirectory, StringsFileName),
-                JsonConvert.SerializeObject(serialized, Formatting.Indented)
-            );
+            return;
         }
+
+        Directory.CreateDirectory(directory);
+        File.WriteAllText(path, JsonConvert.SerializeObject(serialized, Formatting.Indented));
+    }
+
+    private static void WriteSerializedStrings(string path, JObject serialized)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(directory);
+        File.WriteAllText(path, serialized.ToString(Formatting.Indented));
     }
 
     public static void Save()
+    {
+        SaveSerialized(BuildSerializedStrings());
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> BuildSerializedStrings()
     {
         var serialized = new Dictionary<string, Dictionary<string, object>>();
         var rootType = typeof(Strings);
@@ -845,8 +1097,24 @@ public static partial class Strings
             serialized.Add(groupType.Name, serializedGroup);
         }
 
-        SaveSerialized(serialized);
+        return serialized;
     }
+
+    private static JObject ReadSerializedStringsAsJson(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return new JObject();
+        }
+
+        var json = File.ReadAllText(path);
+        return JsonConvert.DeserializeObject<JObject>(json) ?? new JObject();
+    }
+
+    private static string NormalizeLanguage(string? language) =>
+        string.IsNullOrWhiteSpace(language)
+            ? DefaultLanguage
+            : language.Trim().ToLowerInvariant();
 
     public partial struct AdminWindow
     {
@@ -1040,6 +1308,9 @@ public static partial class Strings
         public static LocalizedString WithdrawItemNoSpace = @"There is no space left in your inventory for that item!";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString All = @"All";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Sort = @"Sort";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1109,6 +1380,24 @@ public static partial class Strings
         public static LocalizedString Title = @"Bestiary";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SearchPlaceholder = @"Buscar...";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionStats = @"Estadísticas";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionDrops = @"Drops";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionSpells = @"Hechizos";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionBehavior = @"Comportamiento";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionLore = @"Historia";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Locked = @"Locked";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1116,6 +1405,33 @@ public static partial class Strings
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString UnlockNotice = @"Unlocked {1} for {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString LockedKills = @"🔒 Derrota {0}/{1} veces para desbloquear.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString LockedInfo = @"🔒 Información bloqueada.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString AggressiveLabel = @"Agresivo: {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MovementLabel = @"Movimiento: {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString FleeHpLabel = @"Flee HP %: {0}%";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SwarmLabel = @"Swarm: {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Yes = @"Sí";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString No = @"No";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString LorePlaceholder = @"(Aquí puedes insertar un sistema de descripciones opcionales por NPC)";
     }
 
     public partial struct Character
@@ -1456,7 +1772,9 @@ public static partial class Strings
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Exp = @"EXP: {00}";
-    }
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString CraftingName = @"Crafting";
+        }
 
     public partial struct Credits
     {
@@ -2231,6 +2549,18 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         public static LocalizedString RegularAndPercentage = @"{00} + {01}%";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceBonusLabel = @"Bonus";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceEffectLabel = @"Effect";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceStatModifiedLabel = @"Stat Modified";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ResourceVitalModifiedLabel = @"Vital Modified";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString ScalingPercentage = @"Scaling Percentage:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -2253,6 +2583,18 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString TwoHand = @"2H";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownEffect = @"Unknown Effect";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownItemType = @"Unknown Type";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownStat = @"Unknown Stat";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString UnknownVital = @"Unknown Vital";
 
         // Integer Dictionaries (A - Z):
 
@@ -2342,6 +2684,9 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         };
 
         // String Dictionaries (A - Z):
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static Dictionary<string, LocalizedString> ItemSubtypes = new Dictionary<string, LocalizedString>();
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static Dictionary<string, LocalizedString> Rarity = new Dictionary<string, LocalizedString>
@@ -2692,6 +3037,9 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Language = @"Language";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString LanguageReloadNotice = @"Algunas ventanas requieren reabrirse.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString MusicVolume = @"Music Volume: {00}%";

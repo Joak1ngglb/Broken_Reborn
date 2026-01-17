@@ -14,6 +14,8 @@ using Intersect.Client.Localization;
 using Intersect.Client.Utilities;
 using Intersect.Client.Framework.Items;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Network.Packets.Localization;
+using Intersect.Enums;
 
 namespace Intersect.Client.Interface.Game.Inventory;
 
@@ -42,6 +44,7 @@ public partial class InventoryWindow : Window
     private string? _lastQuery;
     private bool _lastAsc;
     private bool _inventoryDirty;
+    private bool _localizationSubscribed;
 
     // --- Layout ---
     private const int PAD = 8;       // margen externo
@@ -106,7 +109,7 @@ public partial class InventoryWindow : Window
         foreach (var type in Enum.GetValues<ItemType>())
         {
             if (type == ItemType.None) continue;
-            _typeBox.AddItem(type.ToString(), userData: type);
+            _typeBox.AddItem(Strings.GetLocalizedItemTypeName(type), userData: type);
         }
 
         // Combo de subtipo
@@ -154,6 +157,8 @@ public partial class InventoryWindow : Window
 
         _lastW = Width;
         _lastH = Height;
+
+        SubscribeToLocalizationUpdates();
     }
 
     // Recalcula posiciones/tamaños si cambia el tamaño de la ventana
@@ -234,6 +239,7 @@ public partial class InventoryWindow : Window
             foreach (var st in kv.Value)
             {
                 if (string.IsNullOrWhiteSpace(st)) continue;
+                ItemLocalizationHelper.CacheSubtype(st);
                 set.Add(st);
                 _allSubtypes.Add(st);
             }
@@ -264,7 +270,8 @@ public partial class InventoryWindow : Window
 
         foreach (var st in source)
         {
-            _subtypeBox.AddItem(st, userData: st);
+            var localizedSubtype = Strings.GetLocalizedItemSubtypeName(st);
+            _subtypeBox.AddItem(localizedSubtype, userData: st);
         }
 
         _subtypeBox.SelectedItem = all;
@@ -294,9 +301,9 @@ public partial class InventoryWindow : Window
             {
                 if (!string.Equals(descriptor.Subtype, _selectedSubtype, StringComparison.OrdinalIgnoreCase))
                     return false;
-            }
+                }
 
-            var name = descriptor.Name ?? string.Empty;
+            var name = GetLocalizedItemName(descriptor);
             return SearchHelper.Matches(searchText, name);
         }).ToHashSet();
 
@@ -356,6 +363,7 @@ public partial class InventoryWindow : Window
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
         InitItemContainer();
         RecomputeLayout();
+        RequestLocalizationEntries();
         ApplyFilters();
     }
 
@@ -430,6 +438,106 @@ public partial class InventoryWindow : Window
     private void PlayerOnInventoryUpdated(Player player, int slotIndex)
     {
         _inventoryDirty = true;
+        RequestLocalizationEntry(slotIndex);
+    }
+
+    private static string GetLocalizedItemName(ItemDescriptor descriptor) =>
+        GameLocalization.GetTextOrDefault(
+            descriptor.Type.ToString(),
+            descriptor.Id,
+            "Name",
+            descriptor.Name ?? string.Empty
+        );
+
+    private void RequestLocalizationEntries()
+    {
+        if (Globals.Me?.Inventory == null)
+        {
+            return;
+        }
+
+        var requests = new List<LocalizationRequestEntry>();
+        foreach (var slot in Globals.Me.Inventory)
+        {
+            var descriptor = slot?.Descriptor;
+            if (descriptor == null)
+            {
+                continue;
+            }
+
+            requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+        }
+
+        if (requests.Count > 0)
+        {
+            GameLocalization.RequestEntries(requests);
+        }
+    }
+
+    private void RequestLocalizationEntry(int slotIndex)
+    {
+        if (Globals.Me?.Inventory == null)
+        {
+            return;
+        }
+
+        if (slotIndex < 0 || slotIndex >= Globals.Me.Inventory.Length)
+        {
+            return;
+        }
+
+        var descriptor = Globals.Me.Inventory[slotIndex]?.Descriptor;
+        if (descriptor == null)
+        {
+            return;
+        }
+
+        GameLocalization.RequestEntries(
+            [new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name")]
+        );
+    }
+
+    private void SubscribeToLocalizationUpdates()
+    {
+        if (_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+        Disposed += (_, _) => UnsubscribeFromLocalizationUpdates();
+        _localizationSubscribed = true;
+    }
+
+    private void UnsubscribeFromLocalizationUpdates()
+    {
+        if (!_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
+        _localizationSubscribed = false;
+    }
+
+    private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+    {
+        if (!IsVisibleInTree || Globals.Me?.Inventory == null)
+        {
+            return;
+        }
+
+        var itemType = GameObjectType.Item.ToString();
+        if (!requests.Any(
+                request => request.EntityType == itemType &&
+                           request.Field == "Name" &&
+                           Globals.Me.Inventory.Any(slot => slot?.ItemId.ToString() == request.EntityId)
+            ))
+        {
+            return;
+        }
+
+        ApplyFilters();
     }
 
     private void InitItemContainer()

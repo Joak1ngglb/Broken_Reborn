@@ -95,7 +95,7 @@ public partial class MailBoxWindow : Window
         // 🎁 Adjuntos (Debajo del Mensaje)
         mAttachmentLabel = new Label(this, "Attachments")
         {
-            Text = "Attachments",
+            Text = Strings.MailBox.attachments.ToString(),
             FontName = defaultFont,
             FontSize = fontSize
         };
@@ -160,7 +160,7 @@ public partial class MailBoxWindow : Window
         {
             // 📤 Enviar Correo
             mSendMailButton = new Button(this, "SendMailButton");
-            mSendMailButton.SetText("📤 Send Mail");
+            mSendMailButton.SetText(Strings.MailBox.sendMailButton.ToString());
             mSendMailButton.SetBounds(20, 460, 120, 30);
             mSendMailButton.Clicked += SendMail_Clicked;
 
@@ -173,7 +173,7 @@ public partial class MailBoxWindow : Window
 
             // ❌ Cerrar Ventana
             mCloseButton = new Button(this, "CloseButton");
-            mCloseButton.SetText("❌ Close");
+            mCloseButton.SetText(Strings.MailBox.closeButton.ToString());
             mCloseButton.SetBounds(500, 460, 150, 30);
             mCloseButton.Clicked += CloseButton_Clicked;
         }
@@ -199,9 +199,14 @@ public partial class MailBoxWindow : Window
     {
         if (mMailListBox.SelectedRow?.UserData is Client.Mail mail)
         {
-            string senderName = !string.IsNullOrWhiteSpace(mail.SenderName) ? mail.SenderName : "Unknown Sender";
-            mSender.Text = $"{Strings.MailBox.sender}: {senderName}";
-            mTitle.Text = $"{Strings.MailBox.mailtitle}: {mail.Name}";
+            string senderName = !string.IsNullOrWhiteSpace(mail.SenderName)
+                ? mail.SenderName
+                : Strings.MailBox.unknownSender.ToString();
+            string mailTitle = !string.IsNullOrWhiteSpace(mail.Name)
+                ? mail.Name.Trim()
+                : Strings.MailBox.noSubject.ToString();
+            mSender.Text = $"{Strings.MailBox.sender.ToString()}: {senderName}";
+            mTitle.Text = $"{Strings.MailBox.mailtitle.ToString()}: {mailTitle}";
             mMessage.ClearText();
             mMessage.AddText(mail.Message, Color.White);
 
@@ -289,8 +294,12 @@ public partial class MailBoxWindow : Window
                     mail.SenderName,
                     mail.Name);
 
-                string senderName = !string.IsNullOrWhiteSpace(mail.SenderName) ? mail.SenderName : "Unknown Sender";
-                string mailTitle = !string.IsNullOrWhiteSpace(mail.Name) ? mail.Name.Trim() : "No Subject";
+                string senderName = !string.IsNullOrWhiteSpace(mail.SenderName)
+                    ? mail.SenderName
+                    : Strings.MailBox.unknownSender.ToString();
+                string mailTitle = !string.IsNullOrWhiteSpace(mail.Name)
+                    ? mail.Name.Trim()
+                    : Strings.MailBox.noSubject.ToString();
                 string displayText = $"📩 {senderName}: {mailTitle}";
 
                 var row = mMailListBox.AddRow(displayText, "", mail);
@@ -323,4 +332,3 @@ public partial class MailBoxWindow : Window
             base.Show();
         }
     }
-

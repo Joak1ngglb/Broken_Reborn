@@ -108,13 +108,13 @@ namespace Intersect.Client.Interface.Game.Market
             mTypeLabel.Text = Strings.Market.itemTypeLabel;
             // Crear mItemTypeCombo
             mItemTypeCombo = new ComboBox(mMarketWindow, "MarketItemTypeCombo");
-            var allType = mItemTypeCombo.AddItem("All", userData: null);
+            var allType = mItemTypeCombo.AddItem(Strings.Market.all, userData: null);
             mItemTypeCombo.SelectedItem = allType;
             foreach (ItemType type in Enum.GetValues<ItemType>())
             {
                 if (type != ItemType.Currency)
                 {
-                    mItemTypeCombo.AddItem(type.ToString(), userData: type);
+                    mItemTypeCombo.AddItem(Strings.GetLocalizedItemTypeName(type), userData: type);
                 }
             }
 
@@ -125,7 +125,7 @@ namespace Intersect.Client.Interface.Game.Market
 
             mItemSubTypeCombo = new ComboBox(mMarketWindow, "MarketItemSubTypeCombo");
             mItemSubTypeCombo.SetBounds(620, 40, 160, 25);
-            var allSub = mItemSubTypeCombo.AddItem("All", userData: null);
+            var allSub = mItemSubTypeCombo.AddItem(Strings.Market.all, userData: null);
             mItemSubTypeCombo.SelectedItem = allSub;
 
 
@@ -501,7 +501,7 @@ namespace Intersect.Client.Interface.Game.Market
         private void UpdateSubTypeCombo()
         {
             mItemSubTypeCombo.ClearItems();
-            var all = mItemSubTypeCombo.AddItem("All", userData: null);
+            var all = mItemSubTypeCombo.AddItem(Strings.Market.all, userData: null);
 
             var selectedType = (ItemType?)mItemTypeCombo.SelectedItem?.UserData;
             if (!selectedType.HasValue)
@@ -510,11 +510,18 @@ namespace Intersect.Client.Interface.Game.Market
                 {
                     var allSubtypes = Options.Instance.Items.ItemSubtypes
                         .SelectMany(kvp => kvp.Value)
-                        .Distinct()
-                        .OrderBy(subtype => subtype);
+                        .Where(subtype => !string.IsNullOrWhiteSpace(subtype))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Select(subtype => new
+                        {
+                            Subtype = subtype,
+                            Label = ItemLocalizationHelper.GetItemSubtypeName(subtype),
+                        })
+                        .OrderBy(entry => entry.Label, StringComparer.OrdinalIgnoreCase);
                     foreach (var subtype in allSubtypes)
                     {
-                        mItemSubTypeCombo.AddItem(subtype, userData: subtype);
+                        var localizedSubtype = Strings.GetLocalizedItemSubtypeName(subtype);
+                        mItemSubTypeCombo.AddItem(localizedSubtype, userData: subtype);
                     }
                 }
             }
@@ -523,9 +530,18 @@ namespace Intersect.Client.Interface.Game.Market
                 if (Options.Instance?.Items?.ItemSubtypes != null &&
                     Options.Instance.Items.ItemSubtypes.TryGetValue(selectedType.Value, out var subtypes))
                 {
-                    foreach (var subtype in subtypes.Distinct().OrderBy(sub => sub))
+                    foreach (var subtype in subtypes
+                                 .Where(sub => !string.IsNullOrWhiteSpace(sub))
+                                 .Distinct(StringComparer.OrdinalIgnoreCase)
+                                 .Select(sub => new
+                                 {
+                                     Subtype = sub,
+                                     Label = ItemLocalizationHelper.GetItemSubtypeName(sub),
+                                 })
+                                 .OrderBy(entry => entry.Label, StringComparer.OrdinalIgnoreCase))
                     {
-                        mItemSubTypeCombo.AddItem(subtype, userData: subtype);
+                        var localizedSubtype = Strings.GetLocalizedItemSubtypeName(subtype);
+                        mItemSubTypeCombo.AddItem(localizedSubtype, userData: subtype);
                     }
                 }
             }
