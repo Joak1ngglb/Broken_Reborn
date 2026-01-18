@@ -27,6 +27,8 @@ public partial class Client : IPacketSender
 
     public static readonly List<Client> Instances = [];
 
+    private const string DefaultLanguage = "en";
+
     public Guid EditorMap = Guid.Empty;
 
     private bool _crashing;
@@ -57,6 +59,8 @@ public partial class Client : IPacketSender
         Options.Instance.Security?.Packets.DefaultThresholds;
 
     public long LastPing { get; set; } = -1;
+
+    private string _preferredLanguage = DefaultLanguage;
 
     protected long mTimeout = 20000; //20 seconds
 
@@ -118,6 +122,14 @@ public partial class Client : IPacketSender
 
     public long LastPacketDesyncForgiven { get; set; }
 
+    public string GetPreferredLanguage() => _preferredLanguage;
+
+    public string SetPreferredLanguage(string? language)
+    {
+        _preferredLanguage = NormalizeLanguage(language);
+        return _preferredLanguage;
+    }
+
     public UserRights Power
     {
         get => User?.Power ?? UserRights.None;
@@ -141,6 +153,11 @@ public partial class Client : IPacketSender
     public IApplicationContext ApplicationContext { get; }
 
     public INetwork Network { get; }
+
+    private static string NormalizeLanguage(string? language) =>
+        string.IsNullOrWhiteSpace(language)
+            ? DefaultLanguage
+            : language.Trim().ToLowerInvariant();
 
     public void SetUser(User user)
     {

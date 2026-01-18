@@ -517,7 +517,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        var language = string.IsNullOrWhiteSpace(packet.Language) ? "en" : packet.Language;
+        var language = client.SetPreferredLanguage(packet.Language);
         var entries = new List<LocalizedTextEntry>();
         foreach (var request in packet.Requests)
         {
@@ -1824,7 +1824,16 @@ internal sealed partial class PacketHandler
 
                 if (ItemDescriptor.TryGet(mapItem.ItemId, out var item))
                 {
-                    PacketSender.SendActionMsg(player, item.Name, CustomColors.Items.Rarities[item.Rarity]);
+                    var clientLanguage = client.GetPreferredLanguage();
+                    var entityType = item.Type.ToString();
+                    var localizedName = LocalizationRepository.Default.Get(
+                        entityType,
+                        item.Id.ToString(),
+                        "Name",
+                        clientLanguage
+                    );
+                    var itemName = string.IsNullOrWhiteSpace(localizedName) ? item.Name : localizedName;
+                    PacketSender.SendActionMsg(player, itemName, CustomColors.Items.Rarities[item.Rarity]);
                 }
             }
         }
