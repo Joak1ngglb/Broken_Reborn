@@ -114,7 +114,7 @@ namespace Intersect.Client.Interface.Game.Market
             {
                 if (type != ItemType.Currency)
                 {
-                    mItemTypeCombo.AddItem(GetLocalizedItemTypeName(type), userData: type);
+                    mItemTypeCombo.AddItem(Strings.GetLocalizedItemTypeName(type), userData: type);
                 }
             }
 
@@ -514,7 +514,8 @@ namespace Intersect.Client.Interface.Game.Market
                         .OrderBy(subtype => subtype);
                     foreach (var subtype in allSubtypes)
                     {
-                        mItemSubTypeCombo.AddItem(subtype, userData: subtype);
+                        var localizedSubtype = Strings.GetLocalizedItemSubtypeName(subtype);
+                        mItemSubTypeCombo.AddItem(localizedSubtype, userData: subtype);
                     }
                 }
             }
@@ -525,7 +526,8 @@ namespace Intersect.Client.Interface.Game.Market
                 {
                     foreach (var subtype in subtypes.Distinct().OrderBy(sub => sub))
                     {
-                        mItemSubTypeCombo.AddItem(subtype, userData: subtype);
+                        var localizedSubtype = Strings.GetLocalizedItemSubtypeName(subtype);
+                        mItemSubTypeCombo.AddItem(localizedSubtype, userData: subtype);
                     }
                 }
             }
@@ -533,11 +535,6 @@ namespace Intersect.Client.Interface.Game.Market
             mItemSubTypeCombo.SelectedItem = all;
             _selectedSubtype = (string?)mItemSubTypeCombo.SelectedItem?.UserData;
         }
-
-        private static string GetLocalizedItemTypeName(ItemType type) =>
-            Strings.ItemDescription.ItemTypes.TryGetValue((int)type, out var localizedType)
-                ? localizedType.ToString()
-                : type.ToString();
 
         private void ApplyFilters()
         {

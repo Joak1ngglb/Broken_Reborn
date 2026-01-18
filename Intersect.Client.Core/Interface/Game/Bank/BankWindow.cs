@@ -88,7 +88,7 @@ public partial class BankWindow : Window
         foreach (var type in Enum.GetValues<ItemType>())
         {
             if (type == ItemType.None) continue;
-            _typeBox.AddItem(GetLocalizedItemTypeName(type), userData: type);
+            _typeBox.AddItem(Strings.GetLocalizedItemTypeName(type), userData: type);
         }
 
         _subtypeBox = new ComboBox(topPanel, "SubtypeFilter");
@@ -265,8 +265,8 @@ public partial class BankWindow : Window
         {
             foreach (var st in subtypes)
             {
-                var local = st;
-                _subtypeBox.AddItem(local, userData: local);
+                var localizedSubtype = Strings.GetLocalizedItemSubtypeName(st);
+                _subtypeBox.AddItem(localizedSubtype, userData: st);
             }
         }
 
@@ -346,11 +346,6 @@ public partial class BankWindow : Window
             "Name",
             descriptor.Name ?? string.Empty
         );
-
-    private static string GetLocalizedItemTypeName(ItemType type) =>
-        Strings.ItemDescription.ItemTypes.TryGetValue((int)type, out var localizedType)
-            ? localizedType.ToString()
-            : type.ToString();
 
     private void RequestLocalizationEntries()
     {

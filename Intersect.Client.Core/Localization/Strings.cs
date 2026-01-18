@@ -27,6 +27,16 @@ public static partial class Strings
     private static string[] _unitsBits = [string.Empty, "Ki", "Mi", "Gi", "Ti"];
     private static string[] _unitsBytes = [string.Empty, "K", "M", "G", "T"];
 
+    static Strings()
+    {
+        Options.OptionsLoaded += OnOptionsLoaded;
+    }
+
+    private static void OnOptionsLoaded(Options options)
+    {
+        SynchronizeConfigurableStrings();
+    }
+
     public static string FormatBits(long quantity)
     {
         var log = quantity < 2 ? 0 : Math.Log2(quantity);
@@ -122,9 +132,54 @@ public static partial class Strings
         {
             if (!ItemDescription.Rarity.ContainsKey(rarityName))
             {
-                ItemDescription.Rarity[rarityName] = $"{rarity}:{rarityName}";
+                ItemDescription.Rarity[rarityName] = rarityName;
             }
         }
+
+        if (Options.Instance.Items.ItemSubtypes != null)
+        {
+            foreach (var subtype in Options.Instance.Items.ItemSubtypes.Values.SelectMany(subtypes => subtypes))
+            {
+                if (string.IsNullOrWhiteSpace(subtype))
+                {
+                    continue;
+                }
+
+                if (!ItemDescription.ItemSubtypes.ContainsKey(subtype))
+                {
+                    ItemDescription.ItemSubtypes[subtype] = subtype;
+                }
+            }
+        }
+    }
+
+    public static string GetLocalizedItemTypeName(ItemType type) =>
+        ItemDescription.ItemTypes.TryGetValue((int)type, out var localizedType)
+            ? localizedType.ToString()
+            : ItemDescription.UnknownItemType.ToString();
+
+    public static string GetLocalizedItemSubtypeName(string? subtype)
+    {
+        if (string.IsNullOrWhiteSpace(subtype))
+        {
+            return string.Empty;
+        }
+
+        return ItemDescription.ItemSubtypes.TryGetValue(subtype, out var localizedSubtype)
+            ? localizedSubtype.ToString()
+            : subtype;
+    }
+
+    public static string GetLocalizedItemRarityName(int rarity)
+    {
+        if (Options.Instance?.Items?.TryGetRarityName(rarity, out var rarityName) == true)
+        {
+            return ItemDescription.Rarity.TryGetValue(rarityName, out var rarityLabel)
+                ? rarityLabel.ToString()
+                : rarityName;
+        }
+
+        return rarity.ToString();
     }
 
     private static void PostLoad()

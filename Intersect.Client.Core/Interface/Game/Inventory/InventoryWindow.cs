@@ -109,7 +109,7 @@ public partial class InventoryWindow : Window
         foreach (var type in Enum.GetValues<ItemType>())
         {
             if (type == ItemType.None) continue;
-            _typeBox.AddItem(GetLocalizedItemTypeName(type), userData: type);
+            _typeBox.AddItem(Strings.GetLocalizedItemTypeName(type), userData: type);
         }
 
         // Combo de subtipo
@@ -269,7 +269,8 @@ public partial class InventoryWindow : Window
 
         foreach (var st in source)
         {
-            _subtypeBox.AddItem(st, userData: st);
+            var localizedSubtype = Strings.GetLocalizedItemSubtypeName(st);
+            _subtypeBox.AddItem(localizedSubtype, userData: st);
         }
 
         _subtypeBox.SelectedItem = all;
@@ -446,11 +447,6 @@ public partial class InventoryWindow : Window
             "Name",
             descriptor.Name ?? string.Empty
         );
-
-    private static string GetLocalizedItemTypeName(ItemType type) =>
-        Strings.ItemDescription.ItemTypes.TryGetValue((int)type, out var localizedType)
-            ? localizedType.ToString()
-            : type.ToString();
 
     private void RequestLocalizationEntries()
     {

@@ -384,9 +384,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         header.SetTitle(name, rarityColor ?? Color.White);
 
         // Set up the description telling us what type of item this is.
-        var typeDesc = Strings.ItemDescription.ItemTypes.TryGetValue((int)_itemDescriptor.ItemType, out var localizedType)
-            ? localizedType.ToString()
-            : Strings.ItemDescription.UnknownItemType.ToString();
+        var typeDesc = Strings.GetLocalizedItemTypeName(_itemDescriptor.ItemType);
 
         if (_itemDescriptor.ItemType == ItemType.Equipment)
         {
@@ -394,9 +392,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
             if (_itemDescriptor.EquipmentSlot == Options.Instance.Equipment.WeaponSlot && !string.IsNullOrWhiteSpace(_itemDescriptor.Subtype))
             {
-                var subtypeText = Strings.ItemDescription.ItemSubtypes.TryGetValue(_itemDescriptor.Subtype, out var localizedSubtype)
-                    ? localizedSubtype.ToString()
-                    : _itemDescriptor.Subtype;
+                var subtypeText = Strings.GetLocalizedItemSubtypeName(_itemDescriptor.Subtype);
 
                 // 🔥 Mostrar solo el subtipo si es arma
                 header.SetSubtitle($"{subtypeText}", Color.White);
@@ -415,21 +411,16 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         {
             // 🔥 Mostrar subtipo si lo tiene, si no solo el tipo
             var subtypeInfo = !string.IsNullOrWhiteSpace(_itemDescriptor.Subtype)
-                ? Strings.ItemDescription.ItemSubtypes.TryGetValue(_itemDescriptor.Subtype, out var localizedSubtype)
-                    ? localizedSubtype.ToString()
-                    : _itemDescriptor.Subtype
+                ? Strings.GetLocalizedItemSubtypeName(_itemDescriptor.Subtype)
                 : typeDesc;
-            header.SetSubtitle(subtypeInfo ?? string.Empty, Color.White);
+            header.SetSubtitle(subtypeInfo, Color.White);
         }
 
         // Set up the item rarity label.
         try
         {
-            if (Options.Instance.Items.TryGetRarityName(_itemDescriptor.Rarity, out var rarityName))
-            {
-                _ = Strings.ItemDescription.Rarity.TryGetValue(rarityName, out var rarityLabel);
-                header.SetDescription(rarityLabel, rarityColor ?? Color.White);
-            }
+            var rarityLabel = Strings.GetLocalizedItemRarityName(_itemDescriptor.Rarity);
+            header.SetDescription(rarityLabel, rarityColor ?? Color.White);
         }
         catch (Exception exception)
         {
