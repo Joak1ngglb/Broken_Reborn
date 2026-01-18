@@ -151,9 +151,7 @@ public static class TranslationSourceUpdater
     private const string DefaultLanguage = "en";
     private const int DefaultBatchSize = 200;
 
-    // Status: 0 OK, 1 STALE, 2 MISSING, 3 MACHINE
-    private const int StatusOk = 0;
-    private const int StatusMissing = 2;
+    // Status: 0 OK, 1 NEEDS_REVIEW, 2 MISSING, 3 MACHINE
 
     public static TranslationUpsertEntry CreateSourceEntry(
         string entityType,
@@ -169,7 +167,7 @@ public static class TranslationSourceUpdater
             sourceText ?? string.Empty,   // SourceText
             DefaultLanguage,              // Language (no importa mucho si no hay TranslatedText)
             string.Empty,                 // TranslatedText vacío = solo source
-            StatusMissing
+            TranslationStatus.Missing
         );
     }
 

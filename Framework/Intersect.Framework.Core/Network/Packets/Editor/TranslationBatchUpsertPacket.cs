@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Intersect.Framework.Core.Localization;
 using MessagePack;
 
 namespace Intersect.Network.Packets.Editor;
@@ -33,7 +34,7 @@ public sealed class TranslationUpsertEntry
         string sourceText,
         string language,
         string translatedText,
-        int status
+        TranslationStatus status
     )
     {
         EntityType = entityType;
@@ -66,7 +67,7 @@ public sealed class TranslationUpsertEntry
     [Key(5)]
     public string TranslatedText { get; set; }
 
-    // 0=OK, 1=STALE, 2=MISSING, 3=MACHINE
+    // 0=OK, 1=NEEDS_REVIEW, 2=MISSING, 3=MACHINE
     [Key(6)]
-    public int Status { get; set; }
+    public TranslationStatus Status { get; set; }
 }

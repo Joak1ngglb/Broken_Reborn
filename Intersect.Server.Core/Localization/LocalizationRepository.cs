@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using Intersect.Framework.Core.Localization;
 using Intersect.Server.Core;
 using Microsoft.Data.Sqlite;
 
@@ -92,18 +93,9 @@ public sealed class LocalizationRepository
         command.ExecuteNonQuery();
     }
 
-    // Estados para gestión (OK, STALE, MISSING, MACHINE)
-    public enum TranslationStatus
-    {
-        Ok = 0,
-        Stale = 1,
-        Missing = 2,
-        Machine = 3
-    }
-
     /// <summary>
     /// Upsert del texto fuente (lo que sale del editor). El hash se calcula EN SERVER.
-    /// Esto es lo que hace que "si yo edito un texto" se actualice la base y marque stale lo viejo.
+    /// Esto es lo que hace que "si yo edito un texto" se actualice la base y marque needs_review lo viejo.
     /// </summary>
     public string UpsertSource(string entityType, string entityId, string field, string sourceText)
     {
@@ -162,12 +154,12 @@ public sealed class LocalizationRepository
             upsert.ExecuteNonQuery();
         }
 
-        // 3) Si cambió el hash, marcamos STALE todas las traducciones del sourceKey que NO sean el hash actual
+        // 3) Si cambió el hash, marcamos NEEDS_REVIEW todas las traducciones del sourceKey que NO sean el hash actual
         if (!string.IsNullOrWhiteSpace(oldHash) && !string.Equals(oldHash, newHash, StringComparison.Ordinal))
         {
-            using var stale = connection.CreateCommand();
-            stale.Transaction = tx;
-            stale.CommandText =
+            using var needsReview = connection.CreateCommand();
+            needsReview.Transaction = tx;
+            needsReview.CommandText =
                 """
                 UPDATE localization_translation
                 SET status = $stale, updated_utc = $updatedUtc
@@ -176,13 +168,13 @@ public sealed class LocalizationRepository
                   AND field = $field
                   AND source_hash <> $newHash;
                 """;
-            stale.Parameters.AddWithValue("$stale", (int)TranslationStatus.Stale);
-            stale.Parameters.AddWithValue("$updatedUtc", now);
-            stale.Parameters.AddWithValue("$entityType", entityType);
-            stale.Parameters.AddWithValue("$entityId", entityId);
-            stale.Parameters.AddWithValue("$field", field);
-            stale.Parameters.AddWithValue("$newHash", newHash);
-            stale.ExecuteNonQuery();
+            needsReview.Parameters.AddWithValue("$stale", (int)TranslationStatus.NeedsReview);
+            needsReview.Parameters.AddWithValue("$updatedUtc", now);
+            needsReview.Parameters.AddWithValue("$entityType", entityType);
+            needsReview.Parameters.AddWithValue("$entityId", entityId);
+            needsReview.Parameters.AddWithValue("$field", field);
+            needsReview.Parameters.AddWithValue("$newHash", newHash);
+            needsReview.ExecuteNonQuery();
         }
 
         tx.Commit();
@@ -249,7 +241,7 @@ public sealed class LocalizationRepository
     /// <summary>
     /// Obtiene el texto para el idioma elegido:
     /// - Busca el source actual
-    /// - Busca traducción SOLO para el source_hash actual (y que no sea STALE)
+    /// - Busca traducción SOLO para el source_hash actual (y que no sea NEEDS_REVIEW)
     /// - Si no hay, fallback a DefaultLanguage
     /// - Si no hay, devuelve null (y tú haces fallback al original donde lo llames)
     /// </summary>
@@ -283,7 +275,7 @@ public sealed class LocalizationRepository
             return null;
         }
 
-        // 2) Traducción (idioma elegido -> fallback default), SOLO para hash actual y NO stale
+        // 2) Traducción (idioma elegido -> fallback default), SOLO para hash actual y NO needs_review
         using var tr = connection.CreateCommand();
         tr.CommandText =
             """
@@ -304,7 +296,7 @@ public sealed class LocalizationRepository
         tr.Parameters.AddWithValue("$entityId", entityId);
         tr.Parameters.AddWithValue("$field", field);
         tr.Parameters.AddWithValue("$sourceHash", currentHash);
-        tr.Parameters.AddWithValue("$stale", (int)TranslationStatus.Stale);
+        tr.Parameters.AddWithValue("$stale", (int)TranslationStatus.NeedsReview);
         tr.Parameters.AddWithValue("$language", normalizedLanguage);
         tr.Parameters.AddWithValue("$fallback", DefaultLanguage);
 

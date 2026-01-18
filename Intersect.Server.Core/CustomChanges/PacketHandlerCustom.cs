@@ -1080,14 +1080,14 @@ internal sealed partial class PacketHandler
             var entityId = entry.EntityId ?? string.Empty;
             var field = entry.Field ?? string.Empty;
 
-            // SourceText es lo que nos permite recalcular hash y marcar STALE si cambió
+            // SourceText es lo que nos permite recalcular hash y marcar NEEDS_REVIEW si cambió
             var sourceText = entry.SourceText ?? string.Empty;
 
             // Traducción
             var language = entry.Language ?? "en";
             var translatedText = entry.TranslatedText ?? string.Empty;
 
-            // 1) Upsert del source (server calcula hash + marca stale si cambió)
+            // 1) Upsert del source (server calcula hash + marca needs_review si cambió)
             //    Si SourceText llega vacío (clientes viejos), NO podemos recalcular nada.
             //    En ese caso, seguimos guardando “como legacy” (ver else).
             if (!string.IsNullOrWhiteSpace(sourceText))
@@ -1097,15 +1097,13 @@ internal sealed partial class PacketHandler
                 // 2) Upsert traducción (si hay texto)
                 if (!string.IsNullOrWhiteSpace(translatedText))
                 {
-                    var status = (LocalizationRepository.TranslationStatus)entry.Status;
-
                     LocalizationRepository.Default.UpsertTranslation(
                         entityType,
                         entityId,
                         field,
                         language,
                         translatedText,
-                        status,
+                        entry.Status,
                         sourceHash
                     );
                 }
