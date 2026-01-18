@@ -117,7 +117,7 @@ namespace Intersect.Client.Interface.Game.Shops
             }
             else
             {
-                _nameLabel.Text = _descriptor.Name ?? Strings.PlayerShops.UnknownItem;
+                _nameLabel.Text = GetLocalizedItemName(_descriptor);
 
                 var tex = GameContentManager.Current.GetTexture(
                     Framework.Content.TextureType.Item,
@@ -162,6 +162,19 @@ namespace Intersect.Client.Interface.Game.Shops
                 UpdateTotal(RequestedQuantity);
             }
         }
+
+        public void RefreshLocalization()
+        {
+            UpdateRow();
+        }
+
+        private static string GetLocalizedItemName(ItemDescriptor descriptor) =>
+            GameLocalization.GetTextOrDefault(
+                descriptor.Type.ToString(),
+                descriptor.Id,
+                "Name",
+                descriptor.Name ?? Strings.PlayerShops.UnknownItem
+            );
 
         // 🔧 Firma corregida: TextBoxNumeric + double
         private void QuantityInputOnValueChanged(TextBoxNumeric sender, ValueChangedEventArgs<double> args)

@@ -13,6 +13,7 @@ using Intersect;
 using Intersect.Enums;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Intersect.Localization;
 namespace Intersect.Client.Interface.Game.Bestiary;
 public sealed class BestiaryWindow : Window
 {

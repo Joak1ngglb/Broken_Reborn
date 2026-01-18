@@ -332,7 +332,7 @@ public partial class CraftingWindow : Window
     {
         if (Globals.ActiveCraftingTable == null)
         {
-            return Strings.Crafting.Crafting;
+            return Strings.Crafting.CraftingName;
         }
 
         return GameLocalization.GetTextOrDefault(

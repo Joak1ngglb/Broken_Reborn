@@ -12,6 +12,7 @@ using Intersect.Client.Framework.Gwen.Control.Layout;
 using Intersect.Client.Interface.Shared;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
+using Intersect.Framework.Core.Descriptors;
 using Intersect.Framework.Core.GameObjects.Items;
 using static Intersect.Client.Framework.File_Management.GameContentManager;
 
@@ -28,6 +29,7 @@ public sealed class AdminMailBroadcastWindow : Window
     private readonly TextBoxNumeric[] _attachmentQuantityInputs;
     private readonly LabeledCheckBox _onlineOnlyCheckbox;
     private readonly Button _sendButton;
+    private bool _localizationSubscribed;
 
     public AdminMailBroadcastWindow() : base(
         Interface.GameUi.GameCanvas,
@@ -171,6 +173,7 @@ public sealed class AdminMailBroadcastWindow : Window
         _sendButton.Clicked += SendButtonOnClicked;
 
         UpdateActionControls();
+        SubscribeToLocalizationUpdates();
     }
 
     private static Padding StdPad(int x = 8, int y = 4) => new(x, y);
@@ -184,22 +187,26 @@ public sealed class AdminMailBroadcastWindow : Window
         button.FontSize = 12;
     }
 
-    private static void PopulateItemDropdown(LabeledComboBox dropdown)
+    private void PopulateItemDropdown(LabeledComboBox dropdown)
     {
+        var selectedItemId = dropdown.SelectedItem?.UserData as Guid?;
         dropdown.ClearItems();
 
         var noneItem = dropdown.AddItem(Strings.AdminWindow.None, userData: Guid.Empty);
 
         foreach (var descriptor in ItemDescriptor.Lookup.Values
                      .OfType<ItemDescriptor>()
-                     .OrderBy(descriptor => descriptor?.Name ?? string.Empty, StringComparer.CurrentCultureIgnoreCase))
+                     .OrderBy(
+                         descriptor => GetLocalizedItemName(descriptor),
+                         StringComparer.CurrentCultureIgnoreCase
+                     ))
         {
             if (descriptor == null)
             {
                 continue;
             }
 
-            var displayName = descriptor.Name;
+            var displayName = GetLocalizedItemName(descriptor);
             if (string.IsNullOrWhiteSpace(displayName))
             {
                 displayName = descriptor.Id.ToString();
@@ -209,6 +216,80 @@ public sealed class AdminMailBroadcastWindow : Window
         }
 
         dropdown.SelectedItem = noneItem;
+        if (selectedItemId is { } selectedId)
+        {
+            var selectedItem = dropdown.Items.FirstOrDefault(item => item.UserData is Guid id && id == selectedId);
+            if (selectedItem != null)
+            {
+                dropdown.SelectedItem = selectedItem;
+            }
+        }
+
+        RequestLocalizationEntries();
+    }
+
+    private static string GetLocalizedItemName(ItemDescriptor descriptor) =>
+        GameLocalization.GetTextOrDefault(
+            descriptor.Type.ToString(),
+            descriptor.Id,
+            "Name",
+            descriptor.Name ?? string.Empty
+        );
+
+    private void RequestLocalizationEntries()
+    {
+        var requests = new List<LocalizationRequestEntry>();
+        foreach (var descriptor in ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>())
+        {
+            if (descriptor == null)
+            {
+                continue;
+            }
+
+            requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+        }
+
+        if (requests.Count > 0)
+        {
+            GameLocalization.RequestEntries(requests);
+        }
+    }
+
+    private void SubscribeToLocalizationUpdates()
+    {
+        if (_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+        Disposed += (_, _) => UnsubscribeFromLocalizationUpdates();
+        _localizationSubscribed = true;
+    }
+
+    private void UnsubscribeFromLocalizationUpdates()
+    {
+        if (!_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
+        _localizationSubscribed = false;
+    }
+
+    private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+    {
+        var itemType = GameObjectType.Items.ToString();
+        if (!requests.Any(request => request.EntityType == itemType && request.Field == "Name"))
+        {
+            return;
+        }
+
+        foreach (var dropdown in _attachmentDropdowns)
+        {
+            PopulateItemDropdown(dropdown);
+        }
     }
 
     private void SendButtonOnClicked(Base sender, MouseButtonState args)

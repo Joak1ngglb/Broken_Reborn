@@ -492,6 +492,9 @@ public static partial class Strings
         public static LocalizedString itemTypeLabel = @"Type:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString all = @"All";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString minPriceLabel = @"Min Price:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1176,6 +1179,9 @@ public static partial class Strings
         public static LocalizedString WithdrawItemNoSpace = @"There is no space left in your inventory for that item!";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString All = @"All";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Sort = @"Sort";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1647,7 +1653,9 @@ public static partial class Strings
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Exp = @"EXP: {00}";
-    }
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString CraftingName = @"Crafting";
+        }
 
     public partial struct Credits
     {

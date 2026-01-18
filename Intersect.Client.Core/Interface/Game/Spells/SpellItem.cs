@@ -135,13 +135,13 @@ public partial class SpellItem : SlotItem
             (spellSlots[SlotIndex].Properties?.Level ?? 1) < Options.Instance.Player.MaxSpellLevel)
         {
             contextMenu.AddChild(_levelUpMenuItem);
-            _levelUpMenuItem.SetText(Strings.SpellContextMenu.LevelUp.ToString(spell.Name));
+            _levelUpMenuItem.SetText(Strings.SpellContextMenu.LevelUp.ToString(GetLocalizedSpellName(spell)));
         }
 
         if (!spell.Bound)
         {
             contextMenu.AddChild(_forgetSpellMenuItem);
-            _forgetSpellMenuItem.SetText(Strings.SpellContextMenu.Forget.ToString(spell.Name));
+            _forgetSpellMenuItem.SetText(Strings.SpellContextMenu.Forget.ToString(GetLocalizedSpellName(spell)));
         }
 
         base.OnContextMenuOpening(contextMenu);
@@ -153,6 +153,9 @@ public partial class SpellItem : SlotItem
     }
 
     #endregion
+
+    private static string GetLocalizedSpellName(SpellDescriptor spell) =>
+        GameLocalization.GetTextOrDefault(spell.Type.ToString(), spell.Id, "Name", spell.Name);
 
     #region Mouse Events
 
