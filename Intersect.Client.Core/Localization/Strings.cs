@@ -190,9 +190,7 @@ public static partial class Strings
                 StringsFileName
             );
             var overrideJson = ReadSerializedStringsAsJson(overridePath);
-            var builtInOverrides = ClientLocalizationOverrides.GetOverrides(normalizedLanguage);
-            var mergedOverrides = LocalizationJsonMerger.MergeWithOverrides(builtInOverrides, overrideJson);
-            var mergedJson = LocalizationJsonMerger.MergeWithOverrides(baseJson, mergedOverrides);
+            var mergedJson = LocalizationJsonMerger.MergeWithOverrides(baseJson, overrideJson);
             WriteSerializedStrings(overridePath, mergedJson);
         }
     }
