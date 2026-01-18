@@ -13,6 +13,8 @@ using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
 using Intersect.Core;
+using Intersect.Enums;
+using Intersect.Network.Packets.Localization;
 using Microsoft.Extensions.Logging;
 
 namespace Intersect.Client.Interface.Game.Job
@@ -34,6 +36,8 @@ namespace Intersect.Client.Interface.Game.Job
         private Label mJobtDescTemplateLabel;
         private List<RecipeItem> mItems = new List<RecipeItem>();
         private RecipeItem mCombinedItem;
+        private readonly HashSet<Guid> _visibleRecipeIds = new();
+        private bool _localizationSubscribed;
 
         private JobType SelectedJob = JobType.None;
 
@@ -202,6 +206,32 @@ namespace Intersect.Client.Interface.Game.Job
             LoadRecipes(jobType);
         }
 
+        private void RequestRecipeLocalization(IEnumerable<CraftingRecipeDescriptor> recipes)
+        {
+            if (recipes == null)
+            {
+                return;
+            }
+
+            var requests = new List<LocalizationRequestEntry>();
+            foreach (var recipe in recipes)
+            {
+                if (recipe == null)
+                {
+                    continue;
+                }
+
+                requests.Add(new LocalizationRequestEntry(recipe.Type.ToString(), recipe.Id.ToString(), "Name"));
+            }
+
+            GameLocalization.RequestEntries(requests);
+        }
+
+        private string GetLocalizedRecipeName(CraftingRecipeDescriptor recipe) =>
+            recipe == null
+                ? string.Empty
+                : GameLocalization.GetTextOrDefault(recipe.Type.ToString(), recipe.Id, "Name", recipe.Name);
+
         private void LoadRecipes(JobType jobType)
         {  // Record current scroll position before clearing to preserve it
             var currentScroll = mRecipePanel.VerticalScrollBar.ScrollAmount;
@@ -236,11 +266,21 @@ namespace Intersect.Client.Interface.Game.Job
 
             int yOffset = 0;
 
-            foreach (var recipeId in table.Crafts)
+            var recipes = table.Crafts
+                .Select(CraftingRecipeDescriptor.Get)
+                .Where(recipe => recipe != null && recipe.Jobs == jobType)
+                .ToList();
+
+            _visibleRecipeIds.Clear();
+            foreach (var recipe in recipes)
             {
-                var recipe = CraftingRecipeDescriptor.Get(recipeId);
-                if (recipe == null || recipe.Jobs != jobType)
-                    continue;
+                _visibleRecipeIds.Add(recipe.Id);
+            }
+
+            RequestRecipeLocalization(recipes);
+
+            foreach (var recipe in recipes)
+            {
 
                 // Contenedor de receta
                 var recipeContainer = new ImagePanel(mRecipePanel, "JobsRecipeContainer");
@@ -251,7 +291,7 @@ namespace Intersect.Client.Interface.Game.Job
                 // Nombre
                 var nameLbl = new Label(recipeContainer, "RecipeName")
                 {
-                    Text = recipe.Name,
+                    Text = GetLocalizedRecipeName(recipe),
                     FontName = "sourcesansproblack",
                     FontSize = 10,
                     RenderColor = Color.White,
@@ -342,6 +382,7 @@ namespace Intersect.Client.Interface.Game.Job
         public override void Show()
         {
             base.Show();
+            SubscribeToLocalizationUpdates();
             ExpBackground.Show();
             ExpBar.Show();
             ExpLabel.Show();
@@ -354,6 +395,7 @@ namespace Intersect.Client.Interface.Game.Job
         public override void Hide()
         {
             base.Hide();
+            UnsubscribeFromLocalizationUpdates();
 
             JobDescriptionLabel.ClearText();
         }
@@ -373,6 +415,48 @@ namespace Intersect.Client.Interface.Game.Job
         {
 
             if (Globals.ActiveCraftingTable?.Crafts?.Count > 0)
+            {
+                LoadRecipes(SelectedJob);
+            }
+        }
+
+        private void SubscribeToLocalizationUpdates()
+        {
+            if (_localizationSubscribed)
+            {
+                return;
+            }
+
+            GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+            _localizationSubscribed = true;
+        }
+
+        private void UnsubscribeFromLocalizationUpdates()
+        {
+            if (!_localizationSubscribed)
+            {
+                return;
+            }
+
+            GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
+            _localizationSubscribed = false;
+        }
+
+        private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+        {
+            if (IsHidden || SelectedJob == JobType.None || _visibleRecipeIds.Count == 0)
+            {
+                return;
+            }
+
+            var entityType = GameObjectType.Crafts.ToString();
+            if (requests.Any(
+                    request => request != null &&
+                               request.EntityType == entityType &&
+                               request.Field == "Name" &&
+                               Guid.TryParse(request.EntityId, out var recipeId) &&
+                               _visibleRecipeIds.Contains(recipeId)
+                ))
             {
                 LoadRecipes(SelectedJob);
             }

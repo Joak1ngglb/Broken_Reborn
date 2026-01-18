@@ -14,6 +14,7 @@ using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Reflection;
 using Intersect.GameObjects;
+using Intersect.Network.Packets.Localization;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using System.Linq;
@@ -34,6 +35,7 @@ public partial class CraftingWindow : Window
     private readonly ScrollControl mItemContainer;
 
     private readonly List<RecipeItem> mItems = [];
+    private readonly HashSet<Guid> _visibleRecipeIds = new();
 
     private readonly Label mLblCraftingChance;
 
@@ -57,6 +59,8 @@ public partial class CraftingWindow : Window
 
     private Guid _craftRecipeDescriptorId;
 
+    private bool _localizationSubscribed;
+
     private long mBarTimer;
 
     private Label mCombinedValue;
@@ -65,7 +69,7 @@ public partial class CraftingWindow : Window
 
     public CraftingWindow(Canvas gameCanvas, bool journalMode) : base(
         gameCanvas,
-        Globals.ActiveCraftingTable.Name,
+        GetLocalizedCraftingTableName(),
         false,
         nameof(CraftingWindow)
     )
@@ -324,6 +328,66 @@ public partial class CraftingWindow : Window
         }
     }
 
+    private static string GetLocalizedCraftingTableName()
+    {
+        if (Globals.ActiveCraftingTable == null)
+        {
+            return Strings.Crafting.Crafting;
+        }
+
+        return GameLocalization.GetTextOrDefault(
+            Globals.ActiveCraftingTable.Type.ToString(),
+            Globals.ActiveCraftingTable.Id,
+            "Name",
+            Globals.ActiveCraftingTable.Name
+        );
+    }
+
+    private void UpdateWindowTitle()
+    {
+        Title = GetLocalizedCraftingTableName();
+    }
+
+    private void RequestCraftingTableLocalization()
+    {
+        if (Globals.ActiveCraftingTable == null)
+        {
+            return;
+        }
+
+        GameLocalization.RequestEntries(
+            [
+                new LocalizationRequestEntry(Globals.ActiveCraftingTable.Type.ToString(), Globals.ActiveCraftingTable.Id.ToString(), "Name")
+            ]
+        );
+    }
+
+    private void RequestRecipeLocalization(IEnumerable<CraftingRecipeDescriptor> recipes)
+    {
+        if (recipes == null)
+        {
+            return;
+        }
+
+        var requests = new List<LocalizationRequestEntry>();
+        foreach (var recipe in recipes)
+        {
+            if (recipe == null)
+            {
+                continue;
+            }
+
+            requests.Add(new LocalizationRequestEntry(recipe.Type.ToString(), recipe.Id.ToString(), "Name"));
+        }
+
+        GameLocalization.RequestEntries(requests);
+    }
+
+    private static string GetLocalizedRecipeName(CraftingRecipeDescriptor recipe) =>
+        recipe == null
+            ? string.Empty
+            : GameLocalization.GetTextOrDefault(recipe.Type.ToString(), recipe.Id, "Name", recipe.Name);
+
     public override void Hide()
     {
         if (IsCrafting)
@@ -332,6 +396,14 @@ public partial class CraftingWindow : Window
         }
 
         base.Hide();
+        UnsubscribeFromLocalizationUpdates();
+    }
+
+    public override void Show()
+    {
+        base.Show();
+        SubscribeToLocalizationUpdates();
+        UpdateWindowTitle();
     }
 
     //Load new recepie
@@ -520,15 +592,21 @@ public partial class CraftingWindow : Window
             return;
         }
 
-        RefreshRecipeList();
+        RequestCraftingTableLocalization();
+        UpdateWindowTitle();
+        RefreshRecipeList(false);
     }
 
-    private void RefreshRecipeList()
+    private void RefreshRecipeList(bool preserveSelection)
     {
         if (Globals.ActiveCraftingTable.Crafts is not { Count: > 0 } craftIds)
         {
             return;
         }
+
+        var selectedRecipeId = preserveSelection
+            ? _craftRecipeDescriptorId
+            : Guid.Empty;
 
         mRecipes.Clear();
 
@@ -536,24 +614,109 @@ public partial class CraftingWindow : Window
             .Select(id => CraftingRecipeDescriptor.TryGet(id, out var desc) ? desc : null)
             .Where(d => d != null)!;
 
+        _visibleRecipeIds.Clear();
+        foreach (var descriptor in descriptors)
+        {
+            _visibleRecipeIds.Add(descriptor!.Id);
+        }
+
+        RequestRecipeLocalization(descriptors!);
 
         CraftingRecipeDescriptor? first = null;
+        CraftingRecipeDescriptor? selected = null;
 
         foreach (var descriptor in descriptors)
         {
             var craftNumber = Math.Max(1, mRecipes.RowCount + 1);
             var row = mRecipes.AddRow(
-                Strings.Crafting.RecipeListEntry.ToString(craftNumber, descriptor!.Name)
+                Strings.Crafting.RecipeListEntry.ToString(craftNumber, GetLocalizedRecipeName(descriptor!))
             );
             row.UserData = descriptor;
             row.DoubleClicked += CraftingRecipeRowOnClicked;
             row.Clicked += CraftingRecipeRowOnClicked;
             first ??= descriptor;
+            if (descriptor!.Id == selectedRecipeId)
+            {
+                selected = descriptor;
+            }
+        }
+
+        if (selected != null)
+        {
+            LoadCraftRecipe(selected);
+            return;
         }
 
         if (first != null)
         {
             LoadCraftRecipe(first);
+        }
+    }
+
+    private void SubscribeToLocalizationUpdates()
+    {
+        if (_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+        _localizationSubscribed = true;
+    }
+
+    private void UnsubscribeFromLocalizationUpdates()
+    {
+        if (!_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
+        _localizationSubscribed = false;
+    }
+
+    private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+    {
+        if (IsHidden || requests == null || requests.Count == 0)
+        {
+            return;
+        }
+
+        var tableType = GameObjectType.CraftTables.ToString();
+        var recipeType = GameObjectType.Crafts.ToString();
+        var refreshList = false;
+        var refreshTitle = false;
+
+        foreach (var request in requests)
+        {
+            if (request == null || request.Field != "Name")
+            {
+                continue;
+            }
+
+            if (request.EntityType == tableType &&
+                Globals.ActiveCraftingTable != null &&
+                request.EntityId == Globals.ActiveCraftingTable.Id.ToString())
+            {
+                refreshTitle = true;
+            }
+
+            if (request.EntityType == recipeType &&
+                Guid.TryParse(request.EntityId, out var recipeId) &&
+                _visibleRecipeIds.Contains(recipeId))
+            {
+                refreshList = true;
+            }
+        }
+
+        if (refreshTitle)
+        {
+            UpdateWindowTitle();
+        }
+
+        if (refreshList)
+        {
+            RefreshRecipeList(true);
         }
     }
 
