@@ -1752,9 +1752,22 @@ public static partial class Strings
             return false;
         }
 
-        var json = File.ReadAllText(path, Encoding.UTF8);
-        serialized = JsonConvert.DeserializeObject<JObject>(json) ?? new JObject();
-        return true;
+        try
+        {
+            var json = File.ReadAllText(path, Encoding.UTF8);
+            serialized = JsonConvert.DeserializeObject<JObject>(json) ?? new JObject();
+            return true;
+        }
+        catch (Exception exception)
+        {
+            serialized = new JObject();
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                exception,
+                "Failed to parse localization file at {Path}.",
+                path
+            );
+            return false;
+        }
     }
 
     public static bool Save()
