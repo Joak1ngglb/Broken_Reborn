@@ -15,6 +15,7 @@ public static partial class Strings
 {
     private const string DefaultLanguage = "en";
     private const string StringsFileName = "server_strings.json";
+    private static bool _seeded;
 
     public sealed partial class AccountNamespace : LocaleNamespace
     {
@@ -1581,6 +1582,7 @@ public static partial class Strings
 
     public static bool Load(string? language)
     {
+        SeedLocalizedStrings();
         var normalizedLanguage = NormalizeLanguage(language);
         var loaded = LoadLocalized(normalizedLanguage);
         if (loaded)
@@ -1629,6 +1631,32 @@ public static partial class Strings
     private static bool LoadDefault()
     {
         return LoadLocalized(DefaultLanguage);
+    }
+
+    public static void SeedLocalizedStrings()
+    {
+        if (_seeded)
+        {
+            return;
+        }
+
+        _seeded = true;
+
+        var baseJson = BuildBaseJson();
+        foreach (var language in SupportedLanguages.All)
+        {
+            var normalizedLanguage = NormalizeLanguage(language.Code);
+            var overridePath = Path.Combine(
+                ServerContext.ResourceDirectory,
+                "localization",
+                "server",
+                normalizedLanguage,
+                StringsFileName
+            );
+            _ = TryLoadSerializedStrings(overridePath, out var overrideJson);
+            var mergedJson = LocalizationJsonMerger.MergeWithOverrides(baseJson, overrideJson);
+            TryWriteSerializedStrings(overridePath, mergedJson);
+        }
     }
 
     private static bool LoadLocalized(string language)
@@ -1775,6 +1803,12 @@ public static partial class Strings
         string.IsNullOrWhiteSpace(language)
             ? DefaultLanguage
             : language.Trim().ToLowerInvariant();
+
+    private static JObject BuildBaseJson()
+    {
+        var json = JsonConvert.SerializeObject(Root, Formatting.Indented, new LocalizedStringConverter());
+        return JsonConvert.DeserializeObject<JObject>(json) ?? new JObject();
+    }
 
     #region Root Namespace
 
