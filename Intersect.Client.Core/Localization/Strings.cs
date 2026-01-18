@@ -699,7 +699,6 @@ public static partial class Strings
         public static LocalizedString enterQuantity= @"Enter Quantity";
     }
 
-
     public partial struct Breaking
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -783,7 +782,6 @@ public static partial class Strings
 
 
     }
-
     public partial struct Job
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

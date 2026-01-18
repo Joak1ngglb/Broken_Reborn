@@ -116,22 +116,22 @@ public static partial class Strings
     public sealed partial class AlignmentNamespace : LocaleNamespace
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString ChangedTo = @"Ahora perteneces a {00}.";
+        public readonly LocalizedString ChangedTo = @"You now belong to {00}.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString AlreadyInFaction = @"Ya perteneces a esta facción.";
+        public readonly LocalizedString AlreadyInFaction = @"You already belong to this faction.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString GuildMismatch = @"Tu gremio pertenece a una facción distinta.";
+        public readonly LocalizedString GuildMismatch = @"Your guild belongs to a different faction.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString WingsOn = @"No puedes cambiar de facción mientras tus alas estén activadas.";
+        public readonly LocalizedString WingsOn = @"You cannot change faction while your wings are on.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString WingsNeutral = @"No puedes activar tus alas mientras estés en la facción neutral.";
+        public readonly LocalizedString WingsNeutral = @"You cannot turn your wings on while you are in the neutral faction.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString SwapCooldown = @"Podrás cambiar el {fecha}.";
+        public readonly LocalizedString SwapCooldown = @"You can change again on {date}.";
     }
 
     public sealed partial class BagNamespace : LocaleNamespace

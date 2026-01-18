@@ -7,6 +7,12 @@ internal static partial class ClientLocalizationOverrides
 {
     private static partial void AddEnOverrides(IDictionary<string, JObject> overrides)
     {
-        overrides["en"] = new JObject();
+        overrides["en"] = new JObject
+        {
+            ["Internals"] = new JObject
+            {
+                ["Alignment"] = "Alignment",
+            }
+        };
     }
 }
