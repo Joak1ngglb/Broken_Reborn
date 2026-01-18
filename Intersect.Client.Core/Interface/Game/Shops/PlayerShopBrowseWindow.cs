@@ -7,8 +7,9 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Interface;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
-using Intersect.Framework.Core.Descriptors;
+using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Network.Packets.Localization;
 using Intersect.Network.Packets.Shops;
 
 namespace Intersect.Client.Interface.Game.Shops
@@ -262,7 +263,7 @@ namespace Intersect.Client.Interface.Game.Shops
                 return;
             }
 
-            var itemType = GameObjectType.Items.ToString();
+            var itemType = GameObjectType.Item.ToString();
             if (!requests.Any(
                     request => request.EntityType == itemType &&
                                request.Field == "Name" &&

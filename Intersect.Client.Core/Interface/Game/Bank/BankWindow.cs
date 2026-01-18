@@ -12,8 +12,9 @@ using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Client.Utilities;
 using System.Linq;
+using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
-using Intersect.Framework.Core.Descriptors;
+using Intersect.Network.Packets.Localization;
 
 namespace Intersect.Client.Interface.Game.Bank;
 
@@ -406,7 +407,7 @@ public partial class BankWindow : Window
             return;
         }
 
-        var itemType = GameObjectType.Items.ToString();
+        var itemType = GameObjectType.Item.ToString();
         if (!requests.Any(
                 request => request.EntityType == itemType &&
                            request.Field == "Name" &&

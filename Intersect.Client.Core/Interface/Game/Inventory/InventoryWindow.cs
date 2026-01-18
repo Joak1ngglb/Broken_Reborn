@@ -13,8 +13,9 @@ using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Client.Utilities;
 using Intersect.Client.Framework.Items;
+using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
-using Intersect.Framework.Core.Descriptors;
+using Intersect.Network.Packets.Localization;
 
 namespace Intersect.Client.Interface.Game.Inventory;
 
@@ -529,7 +530,7 @@ public partial class InventoryWindow : Window
             return;
         }
 
-        var itemType = GameObjectType.Items.ToString();
+        var itemType = GameObjectType.Item.ToString();
         if (!requests.Any(
                 request => request.EntityType == itemType &&
                            request.Field == "Name" &&

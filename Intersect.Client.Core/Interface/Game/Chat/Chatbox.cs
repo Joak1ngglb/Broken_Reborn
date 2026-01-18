@@ -18,10 +18,10 @@ using Intersect.Client.Networking;
 using Intersect.Configuration;
 using Intersect.Core;
 using Intersect.Enums;
-using Intersect.Framework.Core.Descriptors;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Localization;
+using Intersect.Network.Packets.Localization;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using Intersect.Network.Packets;
@@ -794,7 +794,7 @@ public partial class Chatbox
             return;
         }
 
-        var itemType = GameObjectType.Items.ToString();
+        var itemType = GameObjectType.Item.ToString();
         if (!requests.Any(request => request.EntityType == itemType && request.Field == "Name"))
         {
             return;

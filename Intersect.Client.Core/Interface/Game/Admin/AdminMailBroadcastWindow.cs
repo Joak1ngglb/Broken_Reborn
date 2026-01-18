@@ -12,8 +12,9 @@ using Intersect.Client.Framework.Gwen.Control.Layout;
 using Intersect.Client.Interface.Shared;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
-using Intersect.Framework.Core.Descriptors;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Enums;
+using Intersect.Network.Packets.Localization;
 using static Intersect.Client.Framework.File_Management.GameContentManager;
 
 namespace Intersect.Client.Interface.Game.Admin;
@@ -218,11 +219,7 @@ public sealed class AdminMailBroadcastWindow : Window
         dropdown.SelectedItem = noneItem;
         if (selectedItemId is { } selectedId)
         {
-            var selectedItem = dropdown.Items.FirstOrDefault(item => item.UserData is Guid id && id == selectedId);
-            if (selectedItem != null)
-            {
-                dropdown.SelectedItem = selectedItem;
-            }
+            dropdown.SelectByUserData(selectedId);
         }
 
         RequestLocalizationEntries();
@@ -280,7 +277,7 @@ public sealed class AdminMailBroadcastWindow : Window
 
     private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
     {
-        var itemType = GameObjectType.Items.ToString();
+        var itemType = GameObjectType.Item.ToString();
         if (!requests.Any(request => request.EntityType == itemType && request.Field == "Name"))
         {
             return;
