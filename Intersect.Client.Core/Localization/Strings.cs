@@ -1245,6 +1245,24 @@ public static partial class Strings
         public static LocalizedString Title = @"Bestiary";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SearchPlaceholder = @"Buscar...";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionStats = @"Estadísticas";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionDrops = @"Drops";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionSpells = @"Hechizos";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionBehavior = @"Comportamiento";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SectionLore = @"Historia";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Locked = @"Locked";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1252,6 +1270,33 @@ public static partial class Strings
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString UnlockNotice = @"Unlocked {1} for {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString LockedKills = @"🔒 Derrota {0}/{1} veces para desbloquear.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString LockedInfo = @"🔒 Información bloqueada.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString AggressiveLabel = @"Agresivo: {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MovementLabel = @"Movimiento: {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString FleeHpLabel = @"Flee HP %: {0}%";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SwarmLabel = @"Swarm: {0}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Yes = @"Sí";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString No = @"No";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString LorePlaceholder = @"(Aquí puedes insertar un sistema de descripciones opcionales por NPC)";
     }
 
     public partial struct Character

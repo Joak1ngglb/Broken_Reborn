@@ -33,7 +33,11 @@ public sealed class BestiaryWindow : Window
         IsResizable = false;
         IsClosable = true;
 
-        _searchBox = new TextBox(this,$"Searcher") { PlaceholderText = "Buscar...", Margin = new Margin(8, 8, 0, 0) };
+        _searchBox = new TextBox(this,$"Searcher")
+        {
+            PlaceholderText = Strings.Bestiary.SearchPlaceholder,
+            Margin = new Margin(8, 8, 0, 0),
+        };
         _searchBox.SetPosition(16, 8);
         _searchBox.SetSize(320, 40);
         _searchBox.TextChanged += (_, _) => RebuildTiles();
@@ -169,16 +173,16 @@ public sealed class BestiaryWindow : Window
         yOffset += 35;
 
         // Secciones condicionales por desbloqueo
-        AddSection(npcId, BestiaryUnlock.Stats, "Estadísticas", desc, ref yOffset);
-        AddSection(npcId, BestiaryUnlock.Drops, "Drops", desc, ref yOffset);
-        AddSection(npcId, BestiaryUnlock.Spells, "Hechizos", desc, ref yOffset);
-        AddSection(npcId, BestiaryUnlock.Behavior, "Comportamiento", desc, ref yOffset);
-        AddSection(npcId, BestiaryUnlock.Lore, "Historia", desc, ref yOffset);
+        AddSection(npcId, BestiaryUnlock.Stats, Strings.Bestiary.SectionStats, desc, ref yOffset);
+        AddSection(npcId, BestiaryUnlock.Drops, Strings.Bestiary.SectionDrops, desc, ref yOffset);
+        AddSection(npcId, BestiaryUnlock.Spells, Strings.Bestiary.SectionSpells, desc, ref yOffset);
+        AddSection(npcId, BestiaryUnlock.Behavior, Strings.Bestiary.SectionBehavior, desc, ref yOffset);
+        AddSection(npcId, BestiaryUnlock.Lore, Strings.Bestiary.SectionLore, desc, ref yOffset);
 
         _detailsContent.SetSize(_detailsScroll.Width - 20, yOffset);
     }
 
-    private void AddSection(Guid npcId, BestiaryUnlock unlock, string title, NPCDescriptor desc, ref int yOffset)
+    private void AddSection(Guid npcId, BestiaryUnlock unlock, LocalizedString title, NPCDescriptor desc, ref int yOffset)
     {
         var unlocked = BestiaryController.HasUnlock(npcId, unlock);
 
@@ -206,8 +210,8 @@ public sealed class BestiaryWindow : Window
             var killsReq = desc.BestiaryRequirements.TryGetValue(unlock, out var req) ? req : 0;
             var currentKills = BestiaryController.GetKillCount(npcId);
             var lockedText = killsReq > 0
-                ? $"🔒 Derrota {currentKills}/{killsReq} veces para desbloquear."
-                : "🔒 Información bloqueada.";
+                ? Strings.Bestiary.LockedKills.ToString(currentKills, killsReq)
+                : Strings.Bestiary.LockedInfo.ToString();
 
             var label = new Label(_detailsContent, $"{unlock}LockedLabel")
             {
@@ -298,14 +302,20 @@ public sealed class BestiaryWindow : Window
                 break;
 
             case BestiaryUnlock.Behavior:
-                AddText($"Agresivo: {(desc.Aggressive ? "Sí" : "No")}", ref yOffset, "AggressiveLabel");
-                AddText($"Movimiento: {desc.Movement}", ref yOffset, "MovementLabel");
-                AddText($"Flee HP %: {desc.FleeHealthPercentage}%", ref yOffset, "FleeHpLabel");
-                AddText($"Swarm: {(desc.Swarm ? "Sí" : "No")}", ref yOffset, "SwarmLabel");
+                var aggressiveText = desc.Aggressive ? Strings.Bestiary.Yes : Strings.Bestiary.No;
+                var swarmText = desc.Swarm ? Strings.Bestiary.Yes : Strings.Bestiary.No;
+                AddText(Strings.Bestiary.AggressiveLabel.ToString(aggressiveText), ref yOffset, "AggressiveLabel");
+                AddText(Strings.Bestiary.MovementLabel.ToString(desc.Movement), ref yOffset, "MovementLabel");
+                AddText(
+                    Strings.Bestiary.FleeHpLabel.ToString(desc.FleeHealthPercentage),
+                    ref yOffset,
+                    "FleeHpLabel"
+                );
+                AddText(Strings.Bestiary.SwarmLabel.ToString(swarmText), ref yOffset, "SwarmLabel");
                 break;
 
             case BestiaryUnlock.Lore:
-                AddText("(Aquí puedes insertar un sistema de descripciones opcionales por NPC)", ref yOffset, "LoreLabel");
+                AddText(Strings.Bestiary.LorePlaceholder, ref yOffset, "LoreLabel");
                 break;
         }
 
