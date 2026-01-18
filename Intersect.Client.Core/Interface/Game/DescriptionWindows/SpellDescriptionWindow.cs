@@ -311,7 +311,7 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
 
     private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
     {
-        if (IsHidden || _spellDescriptor == null)
+        if (IsDisposed || IsHidden || _spellDescriptor == null)
         {
             return;
         }
