@@ -134,6 +134,8 @@ public partial class Client : IPacketSender
 
     public User? User { get; private set; }
 
+    public string Language { get; set; } = "en";
+
     public List<Player> Characters => User?.Players;
 
     public Player Entity { get; set; }

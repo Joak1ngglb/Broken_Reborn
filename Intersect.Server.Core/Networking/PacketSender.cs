@@ -2133,6 +2133,43 @@ public static partial class PacketSender
         }
     }
 
+    public static void SendLocalizedActionMsg(Entity en, string message, Color color, LocalizationRequestEntry? localizationRequest)
+    {
+        if (en == null)
+        {
+            return;
+        }
+
+        if (localizationRequest == null)
+        {
+            SendActionMsg(en, message, color);
+            return;
+        }
+
+        foreach (var mapInstance in MapController.GetSurroundingMapInstances(en.Map.Id, en.MapInstanceId, true))
+        {
+            foreach (var player in mapInstance.GetPlayers())
+            {
+                if (player == null)
+                {
+                    continue;
+                }
+
+                var localizedMessage = LocalizationRepository.Default.Get(
+                    localizationRequest.EntityType ?? string.Empty,
+                    localizationRequest.EntityId ?? string.Empty,
+                    localizationRequest.Field ?? string.Empty,
+                    player.Client?.Language ?? string.Empty
+                ) ?? message;
+
+                player.SendPacket(
+                    new ActionMsgPacket(en.MapId, en.X, en.Y, localizedMessage, color),
+                    TransmissionMode.Any
+                );
+            }
+        }
+    }
+
     //EnterMapPacket
     public static void SendEnterMap(Client client, Guid mapId)
     {

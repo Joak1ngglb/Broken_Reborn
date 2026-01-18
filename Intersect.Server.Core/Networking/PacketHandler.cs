@@ -517,7 +517,8 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        var language = string.IsNullOrWhiteSpace(packet.Language) ? "en" : packet.Language;
+        var language = NormalizeLanguage(string.IsNullOrWhiteSpace(packet.Language) ? client.Language : packet.Language);
+        client.Language = language;
         var entries = new List<LocalizedTextEntry>();
         foreach (var request in packet.Requests)
         {
@@ -540,6 +541,16 @@ internal sealed partial class PacketHandler
         {
             PacketSender.SendLocalizedText(client, language, entries);
         }
+    }
+
+    public void HandlePacket(Client client, ClientLanguagePacket packet)
+    {
+        if (packet == null)
+        {
+            return;
+        }
+
+        client.Language = NormalizeLanguage(packet.Language);
     }
 
     //LoginPacket
@@ -1813,9 +1824,10 @@ internal sealed partial class PacketHandler
                 if (!player.TryGiveItem(mapItem, ItemHandling.Overflow, false, -1, true, mapItem.X, mapItem.Y))
                 {
                     // We couldn't give the player their item, notify them.
+                    var noSpaceMessage = Strings.WithLanguage(client.Language, () => Strings.Items.NoSpaceForItem);
                     PacketSender.SendChatMsg(
                         player,
-                        Strings.Items.NoSpaceForItem,
+                        noSpaceMessage,
                         ChatMessageType.Inventory,
                         CustomColors.Alerts.Error
                     );
@@ -1829,7 +1841,7 @@ internal sealed partial class PacketHandler
                         item.Id.ToString(),
                         "Name"
                     );
-                    PacketSender.SendActionMsg(
+                    PacketSender.SendLocalizedActionMsg(
                         player,
                         item.Name,
                         CustomColors.Items.Rarities[item.Rarity],
@@ -3403,6 +3415,11 @@ internal sealed partial class PacketHandler
             PacketSender.SendPlayerShopSnapshot(player, summary.Snapshot);
         }
     }
+
+    private static string NormalizeLanguage(string? language) =>
+        string.IsNullOrWhiteSpace(language)
+            ? "en"
+            : language.Trim().ToLowerInvariant();
 
 
     #endregion

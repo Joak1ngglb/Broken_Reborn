@@ -34,6 +34,16 @@ public static partial class PacketSender
         Network.SendPacket(new LocalizedTextRequestPacket(language, requests));
     }
 
+    public static void SendClientLanguage(string language)
+    {
+        if (!Network.IsConnected)
+        {
+            return;
+        }
+
+        Network.SendPacket(new ClientLanguagePacket(language));
+    }
+
 
     public static void SendPing()
     {

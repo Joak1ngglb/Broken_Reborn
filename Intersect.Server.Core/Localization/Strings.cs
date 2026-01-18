@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using Intersect.Config;
 using Intersect.Core;
@@ -1572,15 +1573,57 @@ public static partial class Strings
     }
     #region Serialization
 
+    private static readonly object LanguageLock = new();
+
+    private static string CurrentLanguage { get; set; } = DefaultLanguage;
+
     public static bool Load() => Load(null);
 
     public static bool Load(string? language)
     {
-        var normalizedLanguage = string.IsNullOrWhiteSpace(language)
-            ? DefaultLanguage
-            : language.Trim().ToLowerInvariant();
+        var normalizedLanguage = NormalizeLanguage(language);
+        var loaded = LoadLocalized(normalizedLanguage);
+        if (loaded)
+        {
+            CurrentLanguage = normalizedLanguage;
+        }
 
-        return LoadLocalized(normalizedLanguage);
+        return loaded;
+    }
+
+    public static string WithLanguage(string? language, Func<string> valueFactory)
+    {
+        if (valueFactory == null)
+        {
+            throw new ArgumentNullException(nameof(valueFactory));
+        }
+
+        var normalizedLanguage = NormalizeLanguage(language);
+
+        lock (LanguageLock)
+        {
+            var previousLanguage = CurrentLanguage;
+            var loaded = true;
+
+            if (!string.Equals(previousLanguage, normalizedLanguage, StringComparison.OrdinalIgnoreCase))
+            {
+                loaded = LoadLocalized(normalizedLanguage);
+                if (loaded)
+                {
+                    CurrentLanguage = normalizedLanguage;
+                }
+            }
+
+            var value = valueFactory();
+
+            if (loaded && !string.Equals(previousLanguage, normalizedLanguage, StringComparison.OrdinalIgnoreCase))
+            {
+                LoadLocalized(previousLanguage);
+                CurrentLanguage = previousLanguage;
+            }
+
+            return value;
+        }
     }
 
     private static bool LoadDefault()
@@ -1727,6 +1770,11 @@ public static partial class Strings
     }
 
     #endregion
+
+    private static string NormalizeLanguage(string? language) =>
+        string.IsNullOrWhiteSpace(language)
+            ? DefaultLanguage
+            : language.Trim().ToLowerInvariant();
 
     #region Root Namespace
 

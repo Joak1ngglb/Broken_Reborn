@@ -10,6 +10,7 @@ using Intersect.Client.Framework.Gwen.ControlInternal;
 using Intersect.Client.Framework.Input;
 using Intersect.Client.General;
 using Intersect.Client.Localization;
+using Intersect.Client.Networking;
 using Intersect.Config;
 using Intersect.Core;
 using Intersect.Framework.Core;
@@ -1277,6 +1278,7 @@ public partial class SettingsWindow : Window
         {
             Strings.Load(selectedLanguage);
             GameLocalization.Clear();
+            PacketSender.SendClientLanguage(selectedLanguage);
             Interface.ShowAlert(Strings.Settings.LanguageReloadNotice, alertType: AlertType.Warning);
         }
 
