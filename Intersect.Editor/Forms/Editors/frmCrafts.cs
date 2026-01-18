@@ -235,19 +235,6 @@ public partial class FrmCrafts : EditorForm
             item.DeleteBackup();
         }
 
-        var entries = new List<TranslationUpsertEntry>();
-        foreach (CraftingRecipeDescriptor item in CraftingRecipeDescriptor.Lookup.Values)
-        {
-            if (item == null)
-            {
-                continue;
-            }
-
-            TranslationSourceUpdater.AddEnglishSource(entries, item.Type.ToString(), item.Id, "Name", item.Name);
-        }
-
-        TranslationSourceUpdater.QueueBatchEnglishSources(entries);
-
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();

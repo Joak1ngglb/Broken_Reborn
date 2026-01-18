@@ -255,21 +255,6 @@ public partial class FrmSpell : EditorForm
             item.DeleteBackup();
         }
 
-        var entries = new List<TranslationUpsertEntry>();
-        foreach (SpellDescriptor item in SpellDescriptor.Lookup.Values)
-        {
-            TranslationSourceUpdater.AddEnglishSource(entries, item.Type.ToString(), item.Id, "Name", item.Name);
-            TranslationSourceUpdater.AddEnglishSource(
-                entries,
-                item.Type.ToString(),
-                item.Id,
-                "Description",
-                item.Description
-            );
-        }
-
-        TranslationSourceUpdater.QueueBatchEnglishSources(entries);
-
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();
