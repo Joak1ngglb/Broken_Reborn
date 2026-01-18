@@ -18,6 +18,7 @@ using Intersect.Client.Networking;
 using Intersect.Configuration;
 using Intersect.Core;
 using Intersect.Enums;
+using Intersect.Framework.Core.Descriptors;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Localization;
@@ -103,6 +104,7 @@ public partial class Chatbox
     private MenuItem mPartyInviteContextItem;
 
     private MenuItem mGuildInviteContextItem;
+    private bool _localizationSubscribed;
 
     //Init
     public Chatbox(Canvas gameCanvas, GameInterface gameUi)
@@ -213,6 +215,7 @@ public partial class Chatbox
         mContextMenu.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
 
         mChatboxWindow.BeforeLayout += ChatboxWindowOnBeforeLayout;
+        SubscribeToLocalizationUpdates();
     }
 
     public void OpenContextMenu(string name)
@@ -477,6 +480,7 @@ public partial class Chatbox
 
     public void AppendItem(ItemDescriptor descriptor, ItemProperties properties)
     {
+        RequestLocalizationEntry(descriptor);
         var linkedItemName = GetLinkedItemName(descriptor, properties);
         AppendText($"[{linkedItemName}]");
         var item = new ChatItem(descriptor.Id, new ItemProperties(properties));
@@ -498,6 +502,7 @@ public partial class Chatbox
                 continue;
             }
 
+            RequestLocalizationEntry(descriptor);
             var linkedItemName = GetLinkedItemName(descriptor, item.Properties);
             sLinkedItems[linkedItemName] = item;
         }
@@ -750,13 +755,81 @@ public partial class Chatbox
 
     private static string GetLinkedItemName(ItemDescriptor descriptor, ItemProperties properties)
     {
-        var itemName = descriptor.Name;
+        var itemName = GameLocalization.GetTextOrDefault(
+            descriptor.Type.ToString(),
+            descriptor.Id,
+            "Name",
+            descriptor.Name ?? string.Empty
+        );
         if (properties.EnchantmentLevel > 0)
         {
             itemName += $" +{properties.EnchantmentLevel}";
         }
 
         return itemName;
+    }
+
+    private static void RequestLocalizationEntry(ItemDescriptor descriptor)
+    {
+        GameLocalization.RequestEntries(
+            [new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name")]
+        );
+    }
+
+    private void SubscribeToLocalizationUpdates()
+    {
+        if (_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+        _localizationSubscribed = true;
+    }
+
+    private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+    {
+        if (_pendingItemLinks.Count == 0)
+        {
+            return;
+        }
+
+        var itemType = GameObjectType.Items.ToString();
+        if (!requests.Any(request => request.EntityType == itemType && request.Field == "Name"))
+        {
+            return;
+        }
+
+        var updatedText = mChatboxInput.Text;
+        var updated = false;
+        for (var i = 0; i < _pendingItemLinks.Count; i++)
+        {
+            var (oldName, item) = _pendingItemLinks[i];
+            if (!ItemDescriptor.TryGet(item.ItemId, out var descriptor))
+            {
+                continue;
+            }
+
+            var newName = GetLinkedItemName(descriptor, item.Properties ?? new ItemProperties());
+            if (string.Equals(oldName, newName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (sLinkedItems.Remove(oldName))
+            {
+                sLinkedItems[newName] = item;
+            }
+
+            _pendingItemLinks[i] = (newName, item);
+            updatedText = updatedText.Replace($"[{oldName}]", $"[{newName}]", StringComparison.Ordinal);
+            updated = true;
+        }
+
+        if (updated)
+        {
+            mChatboxInput.Text = updatedText;
+        }
     }
 
     private static string StripEnchantmentSuffix(string itemName)

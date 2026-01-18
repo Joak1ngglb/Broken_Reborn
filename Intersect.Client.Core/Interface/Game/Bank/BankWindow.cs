@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
@@ -12,6 +13,7 @@ using Intersect.Client.Networking;
 using Intersect.Client.Utilities;
 using System.Linq;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.Descriptors;
 
 namespace Intersect.Client.Interface.Game.Bank;
 
@@ -33,6 +35,7 @@ public partial class BankWindow : Window
     private ItemType? _selectedType;
     private string? _selectedSubtype;
     private bool _slotsDirty;
+    private bool _localizationSubscribed;
 
     //Init
     public BankWindow(Canvas gameCanvas) : base(
@@ -79,23 +82,23 @@ public partial class BankWindow : Window
         _typeBox = new ComboBox(topPanel, "TypeFilter");
         _typeBox.SetSize(100, 24);
         _typeBox.SetPosition(200, 8);
-        var allType = _typeBox.AddItem("All", userData: null);
+        var allType = _typeBox.AddItem(Strings.Bank.All, userData: null);
         _typeBox.SelectedItem = allType;
         foreach (var type in Enum.GetValues<ItemType>())
         {
             if (type == ItemType.None) continue;
-            _typeBox.AddItem(type.ToString(), userData: type);
+            _typeBox.AddItem(GetLocalizedItemTypeName(type), userData: type);
         }
 
         _subtypeBox = new ComboBox(topPanel, "SubtypeFilter");
         _subtypeBox.SetSize(100, 24);
         _subtypeBox.SetPosition(310, 8);
-        var allSub = _subtypeBox.AddItem("All", userData: null);
+        var allSub = _subtypeBox.AddItem(Strings.Bank.All, userData: null);
         _subtypeBox.SelectedItem = allSub;
 
         _valueLabel = new Label(topPanel, "ValueLabel");
         _valueLabel.SetPosition(380, 11);
-        _valueLabel.SetText("Bank Value: 0");
+        _valueLabel.SetText(Strings.Bank.BankValue.ToString(Strings.FormatQuantityAbbreviated(Globals.BankValue)));
         _valueLabel.TextColor = Color.White;
         _valueLabel.FontSize = 10;
 
@@ -120,12 +123,15 @@ public partial class BankWindow : Window
         _selectedType = (ItemType?)_typeBox.SelectedItem?.UserData;
         _selectedSubtype = (string?)_subtypeBox.SelectedItem?.UserData;
         _lastAsc = _sortAscending;
+
+        SubscribeToLocalizationUpdates();
     }
 
     protected override void EnsureInitialized()
     {
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
         InitItemContainer();
+        RequestLocalizationEntries();
         ApplyFilters();
     }
 
@@ -221,7 +227,7 @@ public partial class BankWindow : Window
     private void UpdateSortButtonText()
     {
         var arrow = _sortAscending ? "▲" : "▼";
-        _sortButton.SetText($"{Strings.Inventory.Sort}: {_criterion} {arrow}");
+        _sortButton.SetText($"{Strings.Bank.Sort}: {_criterion} {arrow}");
     }
 
     private void SortItems(Base sender, MouseButtonState arguments)
@@ -251,7 +257,7 @@ public partial class BankWindow : Window
     private void UpdateSubtypeOptions()
     {
         _subtypeBox.ClearItems();
-        var all = _subtypeBox.AddItem("All", userData: null);
+        var all = _subtypeBox.AddItem(Strings.Bank.All, userData: null);
 
         if (_selectedType.HasValue &&
             Options.Instance.Items.ItemSubtypes.TryGetValue(_selectedType.Value, out var subtypes))
@@ -295,7 +301,8 @@ public partial class BankWindow : Window
                 return false;
             }
 
-            return SearchHelper.Matches(searchText, descriptor.Name);
+            var localizedName = GetLocalizedItemName(descriptor);
+            return SearchHelper.Matches(searchText, localizedName);
         }).ToHashSet();
 
         var filterActive = !string.IsNullOrWhiteSpace(searchText) ||
@@ -322,11 +329,93 @@ public partial class BankWindow : Window
     public void Refresh()
     {
         _slotsDirty = true;
+        RequestLocalizationEntries();
     }
 
     public override void Hide()
     {
         _contextMenu?.Close();
         base.Hide();
+    }
+
+    private static string GetLocalizedItemName(ItemDescriptor descriptor) =>
+        GameLocalization.GetTextOrDefault(
+            descriptor.Type.ToString(),
+            descriptor.Id,
+            "Name",
+            descriptor.Name ?? string.Empty
+        );
+
+    private static string GetLocalizedItemTypeName(ItemType type) =>
+        Strings.ItemDescription.ItemTypes.TryGetValue((int)type, out var localizedType)
+            ? localizedType.ToString()
+            : type.ToString();
+
+    private void RequestLocalizationEntries()
+    {
+        if (Globals.BankSlots is null)
+        {
+            return;
+        }
+
+        var requests = new List<LocalizationRequestEntry>();
+        foreach (var slot in Globals.BankSlots)
+        {
+            var descriptor = slot?.Descriptor;
+            if (descriptor == null)
+            {
+                continue;
+            }
+
+            requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+        }
+
+        if (requests.Count > 0)
+        {
+            GameLocalization.RequestEntries(requests);
+        }
+    }
+
+    private void SubscribeToLocalizationUpdates()
+    {
+        if (_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+        Disposed += (_, _) => UnsubscribeFromLocalizationUpdates();
+        _localizationSubscribed = true;
+    }
+
+    private void UnsubscribeFromLocalizationUpdates()
+    {
+        if (!_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
+        _localizationSubscribed = false;
+    }
+
+    private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+    {
+        if (!IsVisibleInTree || Globals.BankSlots is null)
+        {
+            return;
+        }
+
+        var itemType = GameObjectType.Items.ToString();
+        if (!requests.Any(
+                request => request.EntityType == itemType &&
+                           request.Field == "Name" &&
+                           Globals.BankSlots.Any(slot => slot?.ItemId.ToString() == request.EntityId)
+            ))
+        {
+            return;
+        }
+
+        ApplyFilters();
     }
 }

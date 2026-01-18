@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Intersect.Admin.Actions;
 using Intersect.Client.Core;
@@ -11,6 +12,7 @@ using Intersect.Client.Framework.Gwen.Control.Layout;
 using Intersect.Client.Interface.Shared;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
+using Intersect.Framework.Core.Descriptors;
 using Intersect.Framework.Core.GameObjects.Items;
 using static Intersect.Client.Framework.File_Management.GameContentManager;
 
@@ -26,6 +28,7 @@ public sealed class AdminItemManagementWindow : Window
     private readonly LabeledCheckBox _reserveCheckbox;
     private readonly Button _giveItemButton;
     private readonly Button _spawnItemButton;
+    private bool _localizationSubscribed;
 
     public AdminItemManagementWindow() : base(
         Interface.GameUi.GameCanvas,
@@ -74,7 +77,7 @@ public sealed class AdminItemManagementWindow : Window
             Label = Strings.AdminWindow.Item,
             TextPadding = new Padding(8, 4, 0, 4),
         };
-        PopulateItemDropdown(_itemDropdown);
+        PopulateItemDropdown();
         _itemDropdown.ItemSelected += (_, _) => UpdateActionControls();
 
         var quantityPanel = new Panel(contentPanel, "QuantityPanel")
@@ -147,6 +150,7 @@ public sealed class AdminItemManagementWindow : Window
         _spawnItemButton.Clicked += SpawnItemButtonOnClicked;
 
         UpdateActionControls();
+        SubscribeToLocalizationUpdates();
     }
 
     private string PlayerName => _playerNameInput.Text?.Trim() ?? string.Empty;
@@ -162,31 +166,106 @@ public sealed class AdminItemManagementWindow : Window
         button.FontSize = 12;
     }
 
-    private static void PopulateItemDropdown(LabeledComboBox dropdown)
+    private void PopulateItemDropdown()
     {
-        dropdown.ClearItems();
+        var selectedItemId = _itemDropdown.SelectedItem?.UserData as Guid?;
+        _itemDropdown.ClearItems();
 
-        var noneItem = dropdown.AddItem(Strings.AdminWindow.None, userData: Guid.Empty);
+        var noneItem = _itemDropdown.AddItem(Strings.AdminWindow.None, userData: Guid.Empty);
 
         foreach (var descriptor in ItemDescriptor.Lookup.Values
                      .OfType<ItemDescriptor>()
-                     .OrderBy(descriptor => descriptor?.Name ?? string.Empty, StringComparer.CurrentCultureIgnoreCase))
+                     .OrderBy(
+                         descriptor => GetLocalizedItemName(descriptor),
+                         StringComparer.CurrentCultureIgnoreCase
+                     ))
         {
             if (descriptor == null)
             {
                 continue;
             }
 
-            var displayName = descriptor.Name;
+            var displayName = GetLocalizedItemName(descriptor);
             if (string.IsNullOrWhiteSpace(displayName))
             {
                 displayName = descriptor.Id.ToString();
             }
 
-            _ = dropdown.AddItem(displayName, userData: descriptor.Id);
+            _ = _itemDropdown.AddItem(displayName, userData: descriptor.Id);
         }
 
-        dropdown.SelectedItem = noneItem;
+        _itemDropdown.SelectedItem = noneItem;
+        if (selectedItemId is { } selectedId)
+        {
+            var selectedItem = _itemDropdown.Items.FirstOrDefault(item => item.UserData is Guid id && id == selectedId);
+            if (selectedItem != null)
+            {
+                _itemDropdown.SelectedItem = selectedItem;
+            }
+        }
+
+        RequestLocalizationEntries();
+    }
+
+    private static string GetLocalizedItemName(ItemDescriptor descriptor) =>
+        GameLocalization.GetTextOrDefault(
+            descriptor.Type.ToString(),
+            descriptor.Id,
+            "Name",
+            descriptor.Name ?? string.Empty
+        );
+
+    private void RequestLocalizationEntries()
+    {
+        var requests = new List<LocalizationRequestEntry>();
+        foreach (var descriptor in ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>())
+        {
+            if (descriptor == null)
+            {
+                continue;
+            }
+
+            requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+        }
+
+        if (requests.Count > 0)
+        {
+            GameLocalization.RequestEntries(requests);
+        }
+    }
+
+    private void SubscribeToLocalizationUpdates()
+    {
+        if (_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+        Disposed += (_, _) => UnsubscribeFromLocalizationUpdates();
+        _localizationSubscribed = true;
+    }
+
+    private void UnsubscribeFromLocalizationUpdates()
+    {
+        if (!_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
+        _localizationSubscribed = false;
+    }
+
+    private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+    {
+        var itemType = GameObjectType.Items.ToString();
+        if (!requests.Any(request => request.EntityType == itemType && request.Field == "Name"))
+        {
+            return;
+        }
+
+        PopulateItemDropdown();
     }
 
     private bool TryGetItemActionParameters(out string playerName, out Guid itemId, out int quantity)
