@@ -1046,13 +1046,18 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             }
 
             // Set up all information we need to draw this name.
-            var name = mapItemInstance.Descriptor.Name;
+            var localizedName = GameLocalization.GetTextOrDefault(
+                "Item",
+                mapItemInstance.ItemId,
+                "Name",
+                itemDescriptor.Name
+            );
             var quantity = mapItemInstance.Quantity;
             var rarity = itemDescriptor.Rarity;
             if (mapItemInstance.Quantity > 1)
             {
-                name = Strings.General.MapItemStackable.ToString(
-                    name,
+                localizedName = Strings.General.MapItemStackable.ToString(
+                    localizedName,
                     Strings.FormatQuantityAbbreviated(quantity)
                 );
             }
@@ -1062,7 +1067,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                 new LabelColor(Color.White, Color.Black, new Color(100, 0, 0, 0))
             );
             var textSize = Graphics.Renderer.MeasureText(
-                name,
+                localizedName,
                 Graphics.EntityNameFont,
                 Graphics.EntityNameFontSize,
                 1
@@ -1084,7 +1089,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
             // Finaly, draw the actual name!
             Graphics.Renderer.DrawString(
-                name,
+                localizedName,
                 Graphics.EntityNameFont,
                 Graphics.EntityNameFontSize,
                 destX,
