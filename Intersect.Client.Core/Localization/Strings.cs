@@ -151,6 +151,22 @@ public static partial class Strings
                 }
             }
         }
+
+        var subtypeSets = Options.Instance.Items.ItemSubtypes;
+        if (subtypeSets != null)
+        {
+            var subtypes = subtypeSets
+                .SelectMany(kvp => kvp.Value ?? [])
+                .Where(subtype => !string.IsNullOrWhiteSpace(subtype))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+            foreach (var subtype in subtypes)
+            {
+                if (!ItemDescription.ItemSubtypes.ContainsKey(subtype))
+                {
+                    ItemDescription.ItemSubtypes[subtype] = subtype;
+                }
+            }
+        }
     }
 
     public static string GetLocalizedItemTypeName(ItemType type) =>

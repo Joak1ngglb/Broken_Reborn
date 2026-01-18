@@ -273,6 +273,7 @@ namespace Intersect.Client.Interface.Game.Market
                 foreach (var st in kv.Value)
                 {
                     if (string.IsNullOrWhiteSpace(st)) continue;
+                    ItemLocalizationHelper.CacheSubtype(st);
                     set.Add(st);
                     _allSubtypes.Add(st);
                 }
