@@ -22,6 +22,7 @@ public static partial class Strings
     private const string StringsFileName = "client_strings.json";
     private const string DefaultLanguage = "en";
     private static char[] mQuantityTrimChars = new char[] { '.', '0' };
+    private static bool _seeded;
 
     private static string[] _unitsBits = [string.Empty, "Ki", "Mi", "Gi", "Ti"];
     private static string[] _unitsBytes = [string.Empty, "K", "M", "G", "T"];
@@ -148,12 +149,11 @@ public static partial class Strings
     public static void Load(string? language)
     {
         SynchronizeConfigurableStrings();
+        SeedLocalizedStrings();
 
         try
         {
-            var normalizedLanguage = string.IsNullOrWhiteSpace(language)
-                ? DefaultLanguage
-                : language.Trim().ToLowerInvariant();
+            var normalizedLanguage = NormalizeLanguage(language);
             var serialized = LoadLocalizedSerializedStrings(normalizedLanguage);
 
             LoadSerialized(serialized, string.Equals(normalizedLanguage, DefaultLanguage, StringComparison.OrdinalIgnoreCase));
@@ -165,6 +165,36 @@ public static partial class Strings
         }
 
         PostLoad();
+    }
+
+    public static void SeedLocalizedStrings()
+    {
+        if (_seeded)
+        {
+            return;
+        }
+
+        _seeded = true;
+
+        var baseSerialized = BuildSerializedStrings();
+        var baseJson = JObject.FromObject(baseSerialized);
+
+        foreach (var language in SupportedLanguages.All)
+        {
+            var normalizedLanguage = NormalizeLanguage(language.Code);
+            var overridePath = Path.Combine(
+                ClientConfiguration.ResourcesDirectory,
+                "localization",
+                "client",
+                normalizedLanguage,
+                StringsFileName
+            );
+            var overrideJson = ReadSerializedStringsAsJson(overridePath);
+            var builtInOverrides = ClientLocalizationOverrides.GetOverrides(normalizedLanguage);
+            var mergedOverrides = LocalizationJsonMerger.MergeWithOverrides(builtInOverrides, overrideJson);
+            var mergedJson = LocalizationJsonMerger.MergeWithOverrides(baseJson, mergedOverrides);
+            WriteSerializedStrings(overridePath, mergedJson);
+        }
     }
 
     private static Dictionary<string, Dictionary<string, object>> LoadSerializedStrings(string path)
@@ -181,9 +211,7 @@ public static partial class Strings
 
     private static Dictionary<string, Dictionary<string, object>> LoadLocalizedSerializedStrings(string language)
     {
-        var normalizedLanguage = string.IsNullOrWhiteSpace(language)
-            ? DefaultLanguage
-            : language.Trim().ToLowerInvariant();
+        var normalizedLanguage = NormalizeLanguage(language);
         var basePath = Path.Combine(
             ClientConfiguration.ResourcesDirectory,
             "localization",
@@ -972,7 +1000,24 @@ public static partial class Strings
         File.WriteAllText(path, JsonConvert.SerializeObject(serialized, Formatting.Indented));
     }
 
+    private static void WriteSerializedStrings(string path, JObject serialized)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(directory);
+        File.WriteAllText(path, serialized.ToString(Formatting.Indented));
+    }
+
     public static void Save()
+    {
+        SaveSerialized(BuildSerializedStrings());
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> BuildSerializedStrings()
     {
         var serialized = new Dictionary<string, Dictionary<string, object>>();
         var rootType = typeof(Strings);
@@ -984,8 +1029,24 @@ public static partial class Strings
             serialized.Add(groupType.Name, serializedGroup);
         }
 
-        SaveSerialized(serialized);
+        return serialized;
     }
+
+    private static JObject ReadSerializedStringsAsJson(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return new JObject();
+        }
+
+        var json = File.ReadAllText(path);
+        return JsonConvert.DeserializeObject<JObject>(json) ?? new JObject();
+    }
+
+    private static string NormalizeLanguage(string? language) =>
+        string.IsNullOrWhiteSpace(language)
+            ? DefaultLanguage
+            : language.Trim().ToLowerInvariant();
 
     public partial struct AdminWindow
     {
