@@ -2,21 +2,13 @@
 using System.Globalization;
 using Intersect.Editor.Core;
 using Intersect.Editor.Localization;
+using Intersect.Localization;
 
 namespace Intersect.Editor.Forms;
 
 
 public partial class FrmOptions : Form
 {
-    private static readonly (string Code, string Label)[] LanguageOptions =
-    [
-        ("en", "English"),
-        ("es", "Español"),
-        ("pt", "Português"),
-        ("fr", "Français"),
-        ("ru", "Русский"),
-    ];
-
     public FrmOptions()
     {
         InitializeComponent();
@@ -83,16 +75,21 @@ public partial class FrmOptions : Form
         }
 
         cmbLanguage.Items.Clear();
-        foreach (var (_, label) in LanguageOptions)
+        foreach (var language in SupportedLanguages.All)
         {
-            cmbLanguage.Items.Add(label);
+            cmbLanguage.Items.Add(language.Label);
         }
 
         var preferredLanguage = Preferences.Language;
-        var selectedIndex = Array.FindIndex(
-            LanguageOptions,
-            option => string.Equals(option.Code, preferredLanguage, StringComparison.OrdinalIgnoreCase)
-        );
+        var selectedIndex = 0;
+        for (var index = 0; index < SupportedLanguages.All.Length; index++)
+        {
+            if (string.Equals(SupportedLanguages.All[index].Code, preferredLanguage, StringComparison.OrdinalIgnoreCase))
+            {
+                selectedIndex = index;
+                break;
+            }
+        }
         cmbLanguage.SelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
     }
 
@@ -124,8 +121,8 @@ public partial class FrmOptions : Form
         Preferences.SavePreference("TexturePackSize", cmbTextureSize.GetItemText(cmbTextureSize.SelectedItem));
 
         var selectedIndex = cmbLanguage.SelectedIndex;
-        var selectedLanguage = selectedIndex >= 0 && selectedIndex < LanguageOptions.Length
-            ? LanguageOptions[selectedIndex].Code
+        var selectedLanguage = selectedIndex >= 0 && selectedIndex < SupportedLanguages.All.Length
+            ? SupportedLanguages.All[selectedIndex].Code
             : "en";
         var languageChanged = !string.Equals(Preferences.Language, selectedLanguage, StringComparison.OrdinalIgnoreCase);
         Preferences.Language = selectedLanguage;

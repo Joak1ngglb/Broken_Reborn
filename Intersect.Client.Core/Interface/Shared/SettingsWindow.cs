@@ -14,6 +14,7 @@ using Intersect.Client.Networking;
 using Intersect.Config;
 using Intersect.Core;
 using Intersect.Framework.Core;
+using Intersect.Localization;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using static Intersect.Client.Framework.File_Management.GameContentManager;
@@ -110,15 +111,6 @@ public partial class SettingsWindow : Window
 
     private Base? _returnTo;
 
-    private static readonly (string Code, string Label)[] LanguageOptions =
-    [
-        ("en", "English"),
-        ("es", "Español"),
-        ("pt", "Português"),
-        ("fr", "Français"),
-        ("ru", "Русский"),
-    ];
-
     // Initialize.
     public SettingsWindow(Base parent) : base(parent: parent, title: Strings.Settings.Title, modal: false, name: nameof(SettingsWindow))
     {
@@ -197,9 +189,9 @@ public partial class SettingsWindow : Window
             TextPadding = new Padding(8, 4, 0, 4),
         };
 
-        foreach (var (code, label) in LanguageOptions)
+        foreach (var language in SupportedLanguages.All)
         {
-            var item = _languageList.AddItem(label: label, userData: code);
+            var item = _languageList.AddItem(label: language.Label, userData: language.Code);
             item.TextAlign = Pos.Left;
         }
 
