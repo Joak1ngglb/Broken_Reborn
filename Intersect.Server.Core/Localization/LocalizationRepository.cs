@@ -95,7 +95,7 @@ public sealed class LocalizationRepository
 
     /// <summary>
     /// Upsert del texto fuente (lo que sale del editor). El hash se calcula EN SERVER.
-    /// Esto es lo que hace que "si yo edito un texto" se actualice la base y marque needs_review lo viejo.
+    /// Esto es lo que hace que "si yo edito un texto" se actualice la base y marque NEEDS_REVIEW lo viejo.
     /// </summary>
     public string UpsertSource(string entityType, string entityId, string field, string sourceText)
     {
