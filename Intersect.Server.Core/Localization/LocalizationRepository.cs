@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Intersect.Framework.Core.Localization;
@@ -29,6 +30,7 @@ public sealed class LocalizationRepository
     {
         Default.EnsureSchema();
         Default.MigrateLegacySchemaIfNeeded();
+        Default.MigrateTranslationStatusConstraintIfNeeded();
     }
 
     public void EnsureSchema()
@@ -445,6 +447,96 @@ public sealed class LocalizationRepository
                 """;
             insertTranslations.Parameters.AddWithValue("$ok", (int)TranslationStatus.Ok);
             insertTranslations.ExecuteNonQuery();
+        }
+
+        tx.Commit();
+    }
+
+    private void MigrateTranslationStatusConstraintIfNeeded()
+    {
+        using var connection = OpenConnection();
+
+        string? createSql;
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.CommandText =
+                """
+                SELECT sql
+                FROM sqlite_master
+                WHERE type='table' AND name='localization_translation'
+                LIMIT 1;
+                """;
+            createSql = cmd.ExecuteScalar() as string;
+        }
+
+        if (string.IsNullOrWhiteSpace(createSql))
+        {
+            return;
+        }
+
+        var normalizedSql = new string(createSql.Where(c => !char.IsWhiteSpace(c)).ToArray())
+            .ToLowerInvariant();
+        var hasStatusCheck = normalizedSql.Contains("check(statusin(0,1))", StringComparison.Ordinal);
+
+        if (!hasStatusCheck)
+        {
+            return;
+        }
+
+        // Older servers created localization_translation with CHECK(status IN (0,1)).
+        // We now support additional statuses, and SQLite cannot drop CHECK constraints
+        // in-place, so we rebuild the table only when we detect the legacy constraint.
+        using var tx = connection.BeginTransaction();
+
+        using (var rebuild = connection.CreateCommand())
+        {
+            rebuild.Transaction = tx;
+            rebuild.CommandText =
+                """
+                CREATE TABLE localization_translation_new (
+                    entity_type TEXT NOT NULL,
+                    entity_id   TEXT NOT NULL,
+                    field       TEXT NOT NULL,
+                    lang        TEXT NOT NULL,
+
+                    source_hash     TEXT NOT NULL,
+                    translated_text TEXT NOT NULL,
+
+                    status      INTEGER NOT NULL,
+                    updated_utc TEXT NOT NULL,
+
+                    PRIMARY KEY (entity_type, entity_id, field, lang, source_hash),
+
+                    FOREIGN KEY (entity_type, entity_id, field)
+                        REFERENCES localization_source (entity_type, entity_id, field)
+                        ON DELETE CASCADE
+                );
+
+                INSERT INTO localization_translation_new (
+                    entity_type, entity_id, field, lang,
+                    source_hash, translated_text,
+                    status, updated_utc
+                )
+                SELECT
+                    entity_type, entity_id, field, lang,
+                    source_hash, translated_text,
+                    status, updated_utc
+                FROM localization_translation;
+
+                DROP TABLE localization_translation;
+
+                ALTER TABLE localization_translation_new RENAME TO localization_translation;
+
+                CREATE INDEX IF NOT EXISTS idx_localization_translation_lookup
+                    ON localization_translation (entity_type, entity_id, field, lang);
+
+                CREATE INDEX IF NOT EXISTS idx_localization_translation_lang
+                    ON localization_translation (lang);
+
+                CREATE INDEX IF NOT EXISTS idx_localization_translation_status
+                    ON localization_translation (status);
+                """;
+            rebuild.ExecuteNonQuery();
         }
 
         tx.Commit();
