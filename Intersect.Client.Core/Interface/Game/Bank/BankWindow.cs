@@ -12,9 +12,9 @@ using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Client.Utilities;
 using System.Linq;
-using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Localization;
+using Intersect.Enums;
 
 namespace Intersect.Client.Interface.Game.Bank;
 
