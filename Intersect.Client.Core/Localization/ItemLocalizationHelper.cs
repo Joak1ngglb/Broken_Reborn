@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Intersect.Config;
-using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Items;
 
 namespace Intersect.Client.Localization;
 
