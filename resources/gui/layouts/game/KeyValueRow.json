@@ -1,0 +1,23 @@
+{
+  "Icon": {
+    "Bounds": "0,0,16,16"
+  },
+  "Key": {
+    "Bounds": "20,0,140,16"
+  },
+  "Value": {
+    "Bounds": "170,0,120,16"
+  },
+  "Bounds": "0,0,300,16",
+  "Dock": "None",
+  "Padding": "0,0,0,0",
+  "AlignmentEdgeDistances": "0,0,0,0",
+  "AlignmentTransform": "0,0",
+  "Margin": "0,0,0,0",
+  "RenderColor": "255,255,255,255",
+  "DrawBackground": false,
+  "Disabled": false,
+  "Hidden": false,
+  "RestrictToParent": false,
+  "MouseInputEnabled": true
+}
