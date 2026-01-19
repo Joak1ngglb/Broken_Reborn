@@ -12,12 +12,12 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Interface.Game.Chat;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
-using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Client.Utilities;
 using Intersect.Client.General;
 
 using Intersect.Network.Packets.Localization;
+using Intersect.Enums;
 
 namespace Intersect.Client.Interface.Game.Market
 {

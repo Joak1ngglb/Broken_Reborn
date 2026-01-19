@@ -7,6 +7,7 @@ using Intersect.Config;
 using Intersect.Configuration;
 using Intersect.Core;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.Security;
 using Intersect.Framework.Reflection;
 using Intersect.Localization;
