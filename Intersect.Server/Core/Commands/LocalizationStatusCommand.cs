@@ -24,10 +24,14 @@ internal sealed partial class LocalizationStatusCommand : ServerCommand
         var entityTypeWidth = Math.Max("EntityType".Length, entries.Max(entry => entry.EntityType.Length));
         var fieldWidth = Math.Max("Field".Length, entries.Max(entry => entry.Field.Length));
 
-        Console.WriteLine($"{"Lang",-langWidth} {"EntityType",-entityTypeWidth} {"Field",-fieldWidth} {"Count",5}");
+        var header =
+            $"{ "Lang".PadRight(langWidth) } { "EntityType".PadRight(entityTypeWidth) } { "Field".PadRight(fieldWidth) } {"Count",5}";
+        Console.WriteLine(header);
         foreach (var entry in entries.OrderBy(entry => entry.Language).ThenBy(entry => entry.EntityType).ThenBy(entry => entry.Field))
         {
-            Console.WriteLine($"{entry.Language,-langWidth} {entry.EntityType,-entityTypeWidth} {entry.Field,-fieldWidth} {entry.Count,5}");
+            Console.WriteLine(
+                $"{entry.Language.PadRight(langWidth)} {entry.EntityType.PadRight(entityTypeWidth)} {entry.Field.PadRight(fieldWidth)} {entry.Count,5}"
+            );
         }
     }
 }
