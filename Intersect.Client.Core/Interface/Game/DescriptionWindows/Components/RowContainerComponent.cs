@@ -3,6 +3,8 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Core;
 using Microsoft.Extensions.Logging;
 using Intersect.Client.Core;
+using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Interface.Game.DescriptionWindows;
 
 namespace Intersect.Client.Interface.Game.DescriptionWindows.Components;
 
@@ -15,6 +17,7 @@ public partial class RowContainerComponent : ComponentBase
     public RowContainerComponent(Base parent, string name) : base(parent, name)
     {
         var _keyValueRow = new KeyValueRowComponent(this);
+        _keyValueRow.LoadJsonUi(Framework.File_Management.GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
         LoadJsonUi(Framework.File_Management.GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
         _keyValueRowLayout = _keyValueRow.GetJson() ?? throw new Exception($"Failed to load {nameof(KeyValueRowComponent)} layout for {Name}.");
         RemoveChild(_keyValueRow, true);
@@ -64,5 +67,26 @@ public partial class RowContainerComponent : ComponentBase
         row.SetValueTextColor(valueColor);
         PositionComponent(row);
         return row;
+    }
+
+    public KeyValueRowComponent AddKeyValueRow(string key, string value, string? iconName, Color keyColor, Color valueColor)
+    {
+        var row = AddKeyValueRow(key, value, keyColor, valueColor);
+        if (!string.IsNullOrWhiteSpace(iconName))
+        {
+            row.SetIcon(StatEffectIconProvider.GetIconTexture(iconName));
+        }
+        else
+        {
+            row.SetIcon(null);
+        }
+
+        return row;
+    }
+
+    public void ClearRows()
+    {
+        DeleteAllChildren();
+        _componentY = 0;
     }
 }
