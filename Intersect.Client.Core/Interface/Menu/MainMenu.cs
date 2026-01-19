@@ -105,6 +105,7 @@ public partial class MainMenu : MutableInterface
             Y = 480,
             IsVisibleInTree = true,
         };
+        LoginWindow.Show();
 
         var logo = new ImagePanel(menuCanvas, "Logo");
         logo.LoadJsonUi(GameContentManager.UI.Menu, Graphics.Renderer.GetResolutionString());
@@ -209,7 +210,6 @@ public partial class MainMenu : MutableInterface
     public void NotifyOpenLogin()
     {
         Reset();
-        Hide();
         LoginWindow.Show();
     }
 

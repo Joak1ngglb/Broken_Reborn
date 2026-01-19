@@ -17,7 +17,6 @@ public partial class MainMenuWindow
         Button[] visibleButtons = new []
         {
             _buttonStart,
-            _buttonLogin,
             _buttonRegister,
             _buttonSettings,
             _buttonCredits,
