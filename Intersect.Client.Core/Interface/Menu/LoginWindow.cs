@@ -12,6 +12,8 @@ using Intersect.Client.Interface.Shared;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Security;
+using Intersect.Network;
+using Intersect.Network.Events;
 using Intersect.Utilities;
 
 namespace Intersect.Client.Interface.Menu;
@@ -33,6 +35,7 @@ public partial class LoginWindow : Window, IMainMenuWindow
     private readonly LabeledCheckBox _savePasswordCheckbox;
     private readonly Button _forgotPasswordButton;
     private readonly Button _loginButton;
+    private readonly Button _registerButton;
     private bool _useSavedPass;
     private string _savedPass = string.Empty;
     private readonly Label _passwordLabel;
@@ -78,6 +81,20 @@ public partial class LoginWindow : Window, IMainMenuWindow
             Text = Strings.LoginWindow.Login,
         };
         _loginButton.Clicked += LoginButtonOnClicked;
+
+        _registerButton = new Button(_buttonPanel, nameof(_registerButton))
+        {
+            AutoSizeToContents = true,
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            IsDisabled = MainMenu.ActiveNetworkStatus != NetworkStatus.Online || (Options.IsLoaded && Options.Instance.BlockClientRegistrations),
+            IsHidden = ClientContext.IsSinglePlayer,
+            MinimumSize = new Point(160, 24),
+            Padding = new Padding(8, 4),
+            Text = Strings.MainMenu.Register,
+        };
+        _registerButton.Clicked += RegisterButtonOnClicked;
 
         _backButton = new Button(_buttonPanel, nameof(_backButton))
         {
@@ -250,6 +267,44 @@ public partial class LoginWindow : Window, IMainMenuWindow
         Interface.MenuUi.MainMenu.NotifyOpenForgotPassword();
     }
 
+    private void RegisterButtonOnClicked(Base sender, MouseButtonState arguments)
+    {
+        if (Networking.Network.InterruptDisconnectsIfConnected())
+        {
+            _mainMenu.SwitchToWindow<RegistrationWindow>();
+        }
+        else
+        {
+            _registerButton.IsDisabled = Globals.WaitingOnServer;
+            AddRegisterEvents();
+            Networking.Network.TryConnect();
+        }
+    }
+
+    private void AddRegisterEvents()
+    {
+        MainMenu.ReceivedConfiguration += RegisterConnected;
+        Networking.Network.Socket.ConnectionFailed += RegisterConnectionFailed;
+        Networking.Network.Socket.Disconnected += RegisterDisconnected;
+    }
+
+    private void RemoveRegisterEvents()
+    {
+        MainMenu.ReceivedConfiguration -= RegisterConnected;
+        Networking.Network.Socket.ConnectionFailed -= RegisterConnectionFailed;
+        Networking.Network.Socket.Disconnected -= RegisterDisconnected;
+    }
+
+    private void RegisterConnectionFailed(INetworkLayerInterface nli, ConnectionEventArgs args, bool denied) => RemoveRegisterEvents();
+
+    private void RegisterDisconnected(INetworkLayerInterface nli, ConnectionEventArgs args) => RemoveRegisterEvents();
+
+    private void RegisterConnected(object? sender, EventArgs eventArgs)
+    {
+        RemoveRegisterEvents();
+        _mainMenu.SwitchToWindow<RegistrationWindow>();
+    }
+
     private void BackButtonOnClicked(Base sender, MouseButtonState arguments)
     {
         Hide();
@@ -273,6 +328,15 @@ public partial class LoginWindow : Window, IMainMenuWindow
         {
             _loginButton.Enable();
         }
+
+        if (Networking.Network.IsConnected)
+        {
+            _registerButton.IsDisabled = Globals.WaitingOnServer;
+        }
+        else
+        {
+            UpdateRegisterDisabled();
+        }
     }
 
     public override void Show()
@@ -282,6 +346,7 @@ public partial class LoginWindow : Window, IMainMenuWindow
         {
             _forgotPasswordButton.IsHidden = !Options.Instance.SmtpValid;
         }
+        UpdateRegisterDisabled();
 
         // Set focus to the appropriate elements.
         if (!string.IsNullOrWhiteSpace(_usernameInput.Text))
@@ -334,6 +399,13 @@ public partial class LoginWindow : Window, IMainMenuWindow
         PacketSender.SendLogin(_usernameInput.Text, password);
         SaveCredentials();
         ChatboxMsg.ClearMessages();
+    }
+
+    private void UpdateRegisterDisabled()
+    {
+        var networkStatus = MainMenu.ActiveNetworkStatus;
+        var isOffline = networkStatus != NetworkStatus.Online;
+        _registerButton.IsDisabled = isOffline || (Options.IsLoaded && Options.Instance.BlockClientRegistrations);
     }
 
     private const string DefaultPasswordInputMask = "****************";

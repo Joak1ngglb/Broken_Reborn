@@ -8,8 +8,6 @@ using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Core;
-using Intersect.Network;
-using Intersect.Network.Events;
 using Microsoft.Extensions.Logging;
 
 namespace Intersect.Client.Interface.Menu;
@@ -18,7 +16,6 @@ public partial class MainMenuWindow : Window
 {
     private readonly Button _buttonCredits;
     private readonly Button _buttonExit;
-    private readonly Button _buttonRegister;
     private readonly Button _buttonSettings;
     private readonly Button _buttonStart;
     private readonly MainMenu _mainMenu;
@@ -43,15 +40,6 @@ public partial class MainMenuWindow : Window
             Text = Strings.MainMenu.Start,
         };
         _buttonStart.Clicked += _buttonStart_Clicked;
-
-        _buttonRegister = new Button(this, nameof(_buttonRegister))
-        {
-            IsDisabled = MainMenu.ActiveNetworkStatus != NetworkStatus.Online || (Options.IsLoaded && Options.Instance.BlockClientRegistrations),
-            IsHidden = ClientContext.IsSinglePlayer,
-            IsTabable = true,
-            Text = Strings.MainMenu.Register,
-        };
-        _buttonRegister.Clicked += _buttonRegister_Clicked;
 
         _buttonSettings = new Button(this, nameof(_buttonSettings))
         {
@@ -88,48 +76,6 @@ public partial class MainMenuWindow : Window
         Globals.IsRunning = false;
     }
 
-    #region Register
-
-    private void _buttonRegister_Clicked(Base sender, MouseButtonState arguments)
-    {
-        if (Networking.Network.InterruptDisconnectsIfConnected())
-        {
-            _mainMenu.SwitchToWindow<RegistrationWindow>();
-        }
-        else
-        {
-            _buttonRegister.IsDisabled = Globals.WaitingOnServer;
-            _addRegisterEvents();
-            Networking.Network.TryConnect();
-        }
-    }
-
-    private void _addRegisterEvents()
-    {
-        MainMenu.ReceivedConfiguration += _registerConnected;
-        Networking.Network.Socket.ConnectionFailed += _registerConnectionFailed;
-        Networking.Network.Socket.Disconnected += _registerDisconnected;
-    }
-
-    private void _removeRegisterEvents()
-    {
-        MainMenu.ReceivedConfiguration -= _registerConnected;
-        Networking.Network.Socket.ConnectionFailed -= _registerConnectionFailed;
-        Networking.Network.Socket.Disconnected -= _registerDisconnected;
-    }
-
-    private void _registerConnectionFailed(INetworkLayerInterface nli, ConnectionEventArgs args, bool denied) => _removeRegisterEvents();
-
-    private void _registerDisconnected(INetworkLayerInterface nli, ConnectionEventArgs args) => _removeRegisterEvents();
-
-    private void _registerConnected(object? sender, EventArgs eventArgs)
-    {
-        _removeRegisterEvents();
-        _mainMenu.SwitchToWindow<RegistrationWindow>();
-    }
-
-    #endregion Register
-
     private void _buttonSettings_Clicked(Base sender, MouseButtonState arguments) => _mainMenu.SettingsButton_Clicked();
 
     private void _buttonStart_Clicked(Base sender, MouseButtonState arguments)
@@ -144,21 +90,10 @@ public partial class MainMenuWindow : Window
 
     internal void Update()
     {
-        if (Networking.Network.IsConnected)
-        {
-            _buttonRegister.IsDisabled = Globals.WaitingOnServer;
-        }
-        else
-        {
-            UpdateDisabled();
-        }
     }
 
 
     internal void UpdateDisabled()
     {
-        var networkStatus = MainMenu.ActiveNetworkStatus;
-        var isOffline = networkStatus != NetworkStatus.Online;
-        _buttonRegister.IsDisabled = isOffline || (Options.IsLoaded && Options.Instance.BlockClientRegistrations);
     }
 }
