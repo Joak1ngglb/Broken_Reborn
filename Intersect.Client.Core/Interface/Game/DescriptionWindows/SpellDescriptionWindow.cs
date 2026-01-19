@@ -14,6 +14,10 @@ namespace Intersect.Client.Interface.Game.DescriptionWindows;
 
 public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.GameUi.GameCanvas, "DescriptionWindow")
 {
+    private const string CooldownIconName = "effect_cooldown_reduction.png";
+    private const string CritIconName = "crit.png";
+    private const string DamageTypeIconName = "damage_type.png";
+
     private SpellDescriptor? _spellDescriptor;
     private SpellProperties? _spellProperties;
     private SpellProperties? _effectiveProps;
@@ -204,7 +208,14 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
             var cost = _spellDescriptor.GetEffectiveVitalCost((Vital)i, _effectiveProps);
             if (cost != 0)
             {
-                rows.AddKeyValueRow(Strings.SpellDescription.VitalCosts[i], cost.ToString());
+                var vitalIconName = StatEffectIconProvider.GetIconForVital((Vital)i);
+                rows.AddKeyValueRow(
+                    Strings.SpellDescription.VitalCosts[i],
+                    cost.ToString(),
+                    vitalIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
             }
         }
 
@@ -212,7 +223,13 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         var cooldown = _spellDescriptor.GetEffectiveCooldownDuration(_effectiveProps);
         if (cooldown > 0)
         {
-            rows.AddKeyValueRow(Strings.SpellDescription.Cooldown, TimeSpan.FromMilliseconds(cooldown).WithSuffix());
+            rows.AddKeyValueRow(
+                Strings.SpellDescription.Cooldown,
+                TimeSpan.FromMilliseconds(cooldown).WithSuffix(),
+                CooldownIconName,
+                CustomColors.ItemDesc.Muted,
+                CustomColors.ItemDesc.Muted
+            );
         }
 
         // Add Cooldown Group
@@ -348,28 +365,62 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         for (var i = 0; i < Enum.GetValues<Vital>().Length; i++)
         {
             var diff = _spellDescriptor.Combat.GetEffectiveVitalDiff((Vital)i, _effectiveProps);
+            var vitalIconName = StatEffectIconProvider.GetIconForVital((Vital)i);
             if (diff < 0)
             {
-                rows.AddKeyValueRow(Strings.SpellDescription.VitalRecovery[i], Math.Abs(diff).ToString());
+                rows.AddKeyValueRow(
+                    Strings.SpellDescription.VitalRecovery[i],
+                    Math.Abs(diff).ToString(),
+                    vitalIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
                 isHeal = true;
             }
             else if (diff > 0)
             {
-                rows.AddKeyValueRow(Strings.SpellDescription.VitalDamage[i], diff.ToString());
+                rows.AddKeyValueRow(
+                    Strings.SpellDescription.VitalDamage[i],
+                    diff.ToString(),
+                    vitalIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
                 isDamage = true;
             }
         }
 
         // Damage Type:
         Strings.SpellDescription.DamageTypes.TryGetValue(_spellDescriptor.Combat.DamageType, out var damageType);
-        rows.AddKeyValueRow(Strings.SpellDescription.DamageType, damageType);
+        rows.AddKeyValueRow(
+            Strings.SpellDescription.DamageType,
+            damageType,
+            DamageTypeIconName,
+            CustomColors.ItemDesc.Muted,
+            CustomColors.ItemDesc.Muted
+        );
 
         var scaling = _spellDescriptor.Combat.GetEffectiveScaling(_effectiveProps);
         if (scaling > 0)
         {
             Strings.SpellDescription.Stats.TryGetValue(_spellDescriptor.Combat.ScalingStat, out var stat);
-            rows.AddKeyValueRow(Strings.SpellDescription.ScalingStat, stat);
-            rows.AddKeyValueRow(Strings.SpellDescription.ScalingPercentage, Strings.SpellDescription.Percentage.ToString(scaling));
+            var statIconName = Enum.IsDefined(typeof(Stat), _spellDescriptor.Combat.ScalingStat)
+                ? StatEffectIconProvider.GetIconForStat((Stat)_spellDescriptor.Combat.ScalingStat)
+                : null;
+            rows.AddKeyValueRow(
+                Strings.SpellDescription.ScalingStat,
+                stat,
+                statIconName,
+                CustomColors.ItemDesc.Muted,
+                CustomColors.ItemDesc.Muted
+            );
+            rows.AddKeyValueRow(
+                Strings.SpellDescription.ScalingPercentage,
+                Strings.SpellDescription.Percentage.ToString(scaling),
+                statIconName,
+                CustomColors.ItemDesc.Muted,
+                CustomColors.ItemDesc.Muted
+            );
         }
 
         // Crit Chance
@@ -380,8 +431,20 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         }
         if (critChance > 0)
         {
-            rows.AddKeyValueRow(Strings.SpellDescription.CritChance, Strings.SpellDescription.Percentage.ToString(critChance));
-            rows.AddKeyValueRow(Strings.SpellDescription.CritMultiplier, Strings.SpellDescription.Multiplier.ToString(_spellDescriptor.Combat.GetEffectiveCritMultiplier(_effectiveProps)));
+            rows.AddKeyValueRow(
+                Strings.SpellDescription.CritChance,
+                Strings.SpellDescription.Percentage.ToString(critChance),
+                CritIconName,
+                CustomColors.ItemDesc.Muted,
+                CustomColors.ItemDesc.Muted
+            );
+            rows.AddKeyValueRow(
+                Strings.SpellDescription.CritMultiplier,
+                Strings.SpellDescription.Multiplier.ToString(_spellDescriptor.Combat.GetEffectiveCritMultiplier(_effectiveProps)),
+                CritIconName,
+                CustomColors.ItemDesc.Muted,
+                CustomColors.ItemDesc.Muted
+            );
         }
 
         var showDuration = false;
@@ -414,7 +477,14 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
                     blankAdded = true;
                 }
 
-                rows.AddKeyValueRow(data.Item1, data.Item2);
+                var statIconName = Enum.IsDefined(typeof(Stat), i) ? StatEffectIconProvider.GetIconForStat((Stat)i) : null;
+                rows.AddKeyValueRow(
+                    data.Item1,
+                    data.Item2,
+                    statIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
                 showDuration = true;
             }
         }
