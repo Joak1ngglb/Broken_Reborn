@@ -275,33 +275,89 @@ public sealed class LocalizationRepository
             return null;
         }
 
-        // 2) Traducción (idioma elegido -> fallback default), SOLO para hash actual y NO needs_review
-        using var tr = connection.CreateCommand();
-        tr.CommandText =
-            """
-            SELECT translated_text
-            FROM localization_translation
-            WHERE entity_type = $entityType
-              AND entity_id = $entityId
-              AND field = $field
-              AND source_hash = $sourceHash
-              AND status <> $stale
-              AND lang IN ($language, $fallback)
-            ORDER BY CASE WHEN lang = $language THEN 0 ELSE 1 END
-            LIMIT 1;
-            """;
-
         var normalizedLanguage = NormalizeLanguage(language);
-        tr.Parameters.AddWithValue("$entityType", entityType);
-        tr.Parameters.AddWithValue("$entityId", entityId);
-        tr.Parameters.AddWithValue("$field", field);
-        tr.Parameters.AddWithValue("$sourceHash", currentHash);
-        tr.Parameters.AddWithValue("$stale", (int)TranslationStatus.NeedsReview);
-        tr.Parameters.AddWithValue("$language", normalizedLanguage);
-        tr.Parameters.AddWithValue("$fallback", DefaultLanguage);
 
-        var result = tr.ExecuteScalar();
-        return result == DBNull.Value ? null : result as string;
+        string? GetTranslationForHash(string lang, string sourceHash)
+        {
+            using var tr = connection.CreateCommand();
+            tr.CommandText =
+                """
+                SELECT translated_text
+                FROM localization_translation
+                WHERE entity_type = $entityType
+                  AND entity_id = $entityId
+                  AND field = $field
+                  AND source_hash = $sourceHash
+                  AND status <> $missing
+                  AND lang = $language
+                LIMIT 1;
+                """;
+
+            tr.Parameters.AddWithValue("$entityType", entityType);
+            tr.Parameters.AddWithValue("$entityId", entityId);
+            tr.Parameters.AddWithValue("$field", field);
+            tr.Parameters.AddWithValue("$sourceHash", sourceHash);
+            tr.Parameters.AddWithValue("$missing", (int)TranslationStatus.Missing);
+            tr.Parameters.AddWithValue("$language", lang);
+
+            var result = tr.ExecuteScalar();
+            return result == DBNull.Value ? null : result as string;
+        }
+
+        string? GetLatestTranslation(string lang)
+        {
+            using var tr = connection.CreateCommand();
+            tr.CommandText =
+                """
+                SELECT translated_text
+                FROM localization_translation
+                WHERE entity_type = $entityType
+                  AND entity_id = $entityId
+                  AND field = $field
+                  AND status <> $missing
+                  AND lang = $language
+                ORDER BY updated_utc DESC
+                LIMIT 1;
+                """;
+
+            tr.Parameters.AddWithValue("$entityType", entityType);
+            tr.Parameters.AddWithValue("$entityId", entityId);
+            tr.Parameters.AddWithValue("$field", field);
+            tr.Parameters.AddWithValue("$missing", (int)TranslationStatus.Missing);
+            tr.Parameters.AddWithValue("$language", lang);
+
+            var result = tr.ExecuteScalar();
+            return result == DBNull.Value ? null : result as string;
+        }
+
+        var translation = GetTranslationForHash(normalizedLanguage, currentHash);
+        if (!string.IsNullOrWhiteSpace(translation))
+        {
+            return translation;
+        }
+
+        translation = GetLatestTranslation(normalizedLanguage);
+        if (!string.IsNullOrWhiteSpace(translation))
+        {
+            return translation;
+        }
+
+        if (!string.Equals(normalizedLanguage, DefaultLanguage, StringComparison.OrdinalIgnoreCase))
+        {
+            translation = GetTranslationForHash(DefaultLanguage, currentHash);
+            if (!string.IsNullOrWhiteSpace(translation))
+            {
+                return translation;
+            }
+
+            translation = GetLatestTranslation(DefaultLanguage);
+            if (!string.IsNullOrWhiteSpace(translation))
+            {
+                return translation;
+            }
+        }
+
+        return null;
     }
 
     public Dictionary<LocalizationKey, string> GetBatch(IEnumerable<LocalizationKey> keys, string language)
