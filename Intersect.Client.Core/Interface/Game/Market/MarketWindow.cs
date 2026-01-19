@@ -520,8 +520,8 @@ namespace Intersect.Client.Interface.Game.Market
                         .OrderBy(entry => entry.Label, StringComparer.OrdinalIgnoreCase);
                     foreach (var subtype in allSubtypes)
                     {
-                        var localizedSubtype = Strings.GetLocalizedItemSubtypeName(subtype);
-                        mItemSubTypeCombo.AddItem(localizedSubtype, userData: subtype);
+                        var localizedSubtype = Strings.GetLocalizedItemSubtypeName(subtype.Subtype);
+                        mItemSubTypeCombo.AddItem(localizedSubtype, userData: subtype.Subtype);
                     }
                 }
             }
@@ -540,8 +540,8 @@ namespace Intersect.Client.Interface.Game.Market
                                  })
                                  .OrderBy(entry => entry.Label, StringComparer.OrdinalIgnoreCase))
                     {
-                        var localizedSubtype = Strings.GetLocalizedItemSubtypeName(subtype);
-                        mItemSubTypeCombo.AddItem(localizedSubtype, userData: subtype);
+                        var localizedSubtype = Strings.GetLocalizedItemSubtypeName(subtype.Subtype);
+                        mItemSubTypeCombo.AddItem(localizedSubtype, userData: subtype.Subtype);
                     }
                 }
             }
