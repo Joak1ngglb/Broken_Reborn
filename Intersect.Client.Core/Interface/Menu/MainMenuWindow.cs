@@ -19,6 +19,7 @@ public partial class MainMenuWindow : Window
     private readonly Button _buttonSettings;
     private readonly Button _buttonStart;
     private readonly MainMenu _mainMenu;
+    private readonly Panel _secondaryButtonsPanel;
 
     // ReSharper disable once SuggestBaseTypeForParameterInConstructor
     public MainMenuWindow(Canvas canvas, MainMenu mainMenu) : base(canvas, Strings.MainMenu.Title, false, $"{nameof(MainMenuWindow)}_{(ClientContext.IsSinglePlayer ? "singleplayer" : "online")}")
@@ -33,6 +34,14 @@ public partial class MainMenuWindow : Window
         InnerPanelPadding = new Padding(8);
         Titlebar.MouseInputEnabled = false;
 
+        _secondaryButtonsPanel = new Panel(this, nameof(_secondaryButtonsPanel))
+        {
+            DisplayMode = DisplayMode.FlowTopToBottom,
+            Dock = Pos.Top | Pos.Right,
+            DockChildSpacing = new Padding(0, 8, 0, 0),
+            ShouldDrawBackground = false,
+        };
+
         _buttonStart = new Button(this, nameof(_buttonStart))
         {
             IsTabable = true,
@@ -41,7 +50,7 @@ public partial class MainMenuWindow : Window
         };
         _buttonStart.Clicked += _buttonStart_Clicked;
 
-        _buttonSettings = new Button(this, nameof(_buttonSettings))
+        _buttonSettings = new Button(_secondaryButtonsPanel, nameof(_buttonSettings))
         {
             IsTabable = true,
             Text = Strings.MainMenu.Settings,
@@ -53,7 +62,7 @@ public partial class MainMenuWindow : Window
             _buttonSettings.SetToolTipText(Strings.MainMenu.SettingsTooltip);
         }
 
-        _buttonCredits = new Button(this, nameof(_buttonCredits))
+        _buttonCredits = new Button(_secondaryButtonsPanel, nameof(_buttonCredits))
         {
             IsTabable = true,
             Text = Strings.MainMenu.Credits,
