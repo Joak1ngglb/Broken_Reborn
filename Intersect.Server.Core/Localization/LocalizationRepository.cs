@@ -378,6 +378,34 @@ public sealed class LocalizationRepository
         return results;
     }
 
+    public IReadOnlyList<LocalizationTranslationStatusCount> GetMissingAndNeedsReviewCounts()
+    {
+        using var connection = OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText =
+            """
+            SELECT lang, entity_type, field, COUNT(*)
+            FROM localization_translation
+            WHERE status IN ($missing, $needsReview)
+            GROUP BY lang, entity_type, field;
+            """;
+        command.Parameters.AddWithValue("$missing", (int)TranslationStatus.Missing);
+        command.Parameters.AddWithValue("$needsReview", (int)TranslationStatus.NeedsReview);
+
+        var results = new List<LocalizationTranslationStatusCount>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var lang = reader.GetString(0);
+            var entityType = reader.GetString(1);
+            var field = reader.GetString(2);
+            var count = reader.GetInt64(3);
+            results.Add(new LocalizationTranslationStatusCount(lang, entityType, field, count));
+        }
+
+        return results;
+    }
+
     // --- Helpers / Migration ---
 
     private void MigrateLegacySchemaIfNeeded()
@@ -624,3 +652,10 @@ public sealed class LocalizationRepository
 }
 
 public readonly record struct LocalizationKey(string EntityType, string EntityId, string Field);
+
+public readonly record struct LocalizationTranslationStatusCount(
+    string Language,
+    string EntityType,
+    string Field,
+    long Count
+);
