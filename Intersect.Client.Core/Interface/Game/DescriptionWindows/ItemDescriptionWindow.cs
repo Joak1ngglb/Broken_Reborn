@@ -19,6 +19,12 @@ namespace Intersect.Client.Interface.Game.DescriptionWindows;
 
 public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.GameUi.GameCanvas, "DescriptionWindow")
 {
+    private const string AttackSpeedIconName = "attack_speed.png";
+    private const string BlockIconName = "block.png";
+    private const string CritIconName = "crit.png";
+    private const string DamageIconName = "damage.png";
+    private const string DamageTypeIconName = "damage_type.png";
+
     private ItemDescriptor? _itemDescriptor;
     private ItemProperties? _itemProperties;
     private int _amount;
@@ -187,7 +193,14 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                     ? localizedEffect.ToString()
                     : Strings.ItemDescription.UnknownEffect.ToString();
 
-                rows.AddKeyValueRow(Strings.ItemDescription.ResourceEffectLabel, effectName.TrimEnd(':'));
+                var effectIconName = StatEffectIconProvider.GetIconForItemEffect(_itemDescriptor.TargetEffect);
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.ResourceEffectLabel,
+                    effectName.TrimEnd(':'),
+                    effectIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
                 rows.AddKeyValueRow(Strings.ItemDescription.ResourceBonusLabel, Strings.ItemDescription.Percentage.ToString(amount));
             }
             else if (hasStatTarget)
@@ -196,7 +209,14 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                     ? localizedStat.ToString()
                     : Strings.ItemDescription.UnknownStat.ToString();
 
-                rows.AddKeyValueRow(Strings.ItemDescription.ResourceStatModifiedLabel, statName);
+                var statIconName = StatEffectIconProvider.GetIconForStat((Stat)_itemDescriptor.TargetStat);
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.ResourceStatModifiedLabel,
+                    statName,
+                    statIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
                 rows.AddKeyValueRow(Strings.ItemDescription.ResourceBonusLabel, $"{amountPrefix}{amount}");
             }
             else if (hasVitalTarget)
@@ -205,7 +225,14 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                     ? localizedVital.ToString().TrimEnd(':')
                     : Strings.ItemDescription.UnknownVital.ToString();
 
-                rows.AddKeyValueRow(Strings.ItemDescription.ResourceVitalModifiedLabel, vitalName);
+                var vitalIconName = StatEffectIconProvider.GetIconForVital((Vital)_itemDescriptor.TargetVital);
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.ResourceVitalModifiedLabel,
+                    vitalName,
+                    vitalIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
                 rows.AddKeyValueRow(Strings.ItemDescription.ResourceBonusLabel, $"{amountPrefix}{amount}");
             }
         }
@@ -284,7 +311,8 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                         parts.Add($"{percentStats[i]}%");
                     }
 
-                    bonusRows.AddKeyValueRow(statName, string.Join(" / ", parts), Color.Magenta, Color.White);
+                    var statIconName = Enum.IsDefined(typeof(Stat), i) ? StatEffectIconProvider.GetIconForStat((Stat)i) : null;
+                    bonusRows.AddKeyValueRow(statName, string.Join(" / ", parts), statIconName, Color.Magenta, Color.White);
                 }
             }
 
@@ -307,7 +335,8 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                         parts.Add($"Regen {vitalsRegen[i]}%");
                     }
 
-                    bonusRows.AddKeyValueRow(vitName, string.Join(" / ", parts), Color.Cyan, Color.White);
+                    var vitalIconName = Enum.IsDefined(typeof(Vital), i) ? StatEffectIconProvider.GetIconForVital((Vital)i) : null;
+                    bonusRows.AddKeyValueRow(vitName, string.Join(" / ", parts), vitalIconName, Color.Cyan, Color.White);
                 }
             }
 
@@ -323,7 +352,8 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                     continue;
                 }
 
-                bonusRows.AddKeyValueRow(effectName, $"+{effect.Percentage}%", Color.Yellow, Color.White);
+                var effectIconName = StatEffectIconProvider.GetIconForItemEffect(effect.Type);
+                bonusRows.AddKeyValueRow(effectName, $"+{effect.Percentage}%", effectIconName, Color.Yellow, Color.White);
             }
 
             bonusRows.SizeToChildren(true, true);
@@ -769,31 +799,38 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
         return newValue;
     }
-    private void AddRowWithDifference(RowContainerComponent rows, string key, string value, int diff)
+    private void AddRowWithDifference(RowContainerComponent rows, string key, string value, int diff, string? iconName = null)
     {
         if (diff != 0)
         {
             var diffText = diff > 0 ? $"+{diff}" : diff.ToString();
             var color = diff > 0 ? CustomColors.ItemDesc.Better : CustomColors.ItemDesc.Worse;
-            rows.AddKeyValueRow(key, $"{value} ({diffText})", CustomColors.ItemDesc.Muted, color);
+            rows.AddKeyValueRow(key, $"{value} ({diffText})", iconName, CustomColors.ItemDesc.Muted, color);
         }
         else
         {
-            rows.AddKeyValueRow(key, value, CustomColors.ItemDesc.Muted, CustomColors.ItemDesc.Muted);
+            rows.AddKeyValueRow(key, value, iconName, CustomColors.ItemDesc.Muted, CustomColors.ItemDesc.Muted);
         }
     }
-    private void AddRowWithDifferenceAndPercent(RowContainerComponent rows, string key, string value, int diff, int percentDiff)
+    private void AddRowWithDifferenceAndPercent(
+        RowContainerComponent rows,
+        string key,
+        string value,
+        int diff,
+        int percentDiff,
+        string? iconName = null
+    )
     {
         if (diff != 0 || percentDiff != 0)
         {
             var diffText = diff > 0 ? $"+{diff}" : diff.ToString();
             var percentText = percentDiff > 0 ? $"+{percentDiff}%" : $"{percentDiff}%";
             var color = diff > 0 || percentDiff > 0 ? CustomColors.ItemDesc.Better : CustomColors.ItemDesc.Worse;
-            rows.AddKeyValueRow(key, $"{value} ({diffText}, {percentText})", CustomColors.ItemDesc.Muted, color);
+            rows.AddKeyValueRow(key, $"{value} ({diffText}, {percentText})", iconName, CustomColors.ItemDesc.Muted, color);
         }
         else
         {
-            rows.AddKeyValueRow(key, value, CustomColors.ItemDesc.Muted, CustomColors.ItemDesc.Muted);
+            rows.AddKeyValueRow(key, value, iconName, CustomColors.ItemDesc.Muted, CustomColors.ItemDesc.Muted);
         }
     }
 
@@ -818,17 +855,36 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             // Base Damage
             var baseDamage = _itemDescriptor.Damage + (_itemProperties?.BaseDamageModifier ?? 0);
             var dmgDiff = GetDamageDifference();
-            AddRowWithDifference(rows, Strings.ItemDescription.BaseDamage, baseDamage.ToString(), dmgDiff);
+            AddRowWithDifference(rows, Strings.ItemDescription.BaseDamage, baseDamage.ToString(), dmgDiff, DamageIconName);
 
             // Damage Type
             Strings.ItemDescription.DamageTypes.TryGetValue(_itemDescriptor.DamageType, out var damageType);
-            rows.AddKeyValueRow(Strings.ItemDescription.BaseDamageType, damageType);
+            rows.AddKeyValueRow(
+                Strings.ItemDescription.BaseDamageType,
+                damageType,
+                DamageTypeIconName,
+                CustomColors.ItemDesc.Muted,
+                CustomColors.ItemDesc.Muted
+            );
 
             if (_itemDescriptor.Scaling > 0)
             {
                 Strings.ItemDescription.Stats.TryGetValue(_itemDescriptor.ScalingStat, out var stat);
-                rows.AddKeyValueRow(Strings.ItemDescription.ScalingStat, stat);
-                rows.AddKeyValueRow(Strings.ItemDescription.ScalingPercentage, Strings.ItemDescription.Percentage.ToString(_itemDescriptor.Scaling));
+                var scalingStatIconName = StatEffectIconProvider.GetIconForStat((Stat)_itemDescriptor.ScalingStat);
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.ScalingStat,
+                    stat,
+                    scalingStatIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.ScalingPercentage,
+                    Strings.ItemDescription.Percentage.ToString(_itemDescriptor.Scaling),
+                    scalingStatIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
             }
 
             // Crit Chance
@@ -840,8 +896,20 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
             if (critChance > 0)
             {
-                rows.AddKeyValueRow(Strings.ItemDescription.CritChance, Strings.ItemDescription.Percentage.ToString(critChance));
-                rows.AddKeyValueRow(Strings.ItemDescription.CritMultiplier, Strings.ItemDescription.Multiplier.ToString(_itemDescriptor.CritMultiplier));
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.CritChance,
+                    Strings.ItemDescription.Percentage.ToString(critChance),
+                    CritIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.CritMultiplier,
+                    Strings.ItemDescription.Multiplier.ToString(_itemDescriptor.CritMultiplier),
+                    CritIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
             }
 
             // Attack Speed
@@ -874,16 +942,34 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                     agility += (int)Math.Floor(agility * (_itemDescriptor.PercentageStatsGiven[(int)Stat.Agility] / 100f));
                 }
 
-                rows.AddKeyValueRow(Strings.ItemDescription.AttackSpeed, TimeSpan.FromMilliseconds(player.CalculateAttackTime(agility)).WithSuffix());
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.AttackSpeed,
+                    TimeSpan.FromMilliseconds(player.CalculateAttackTime(agility)).WithSuffix(),
+                    AttackSpeedIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
             }
             else if (_itemDescriptor.AttackSpeedModifier == 1)
             {
                 var diff = GetAttackSpeedDifference();
-                AddRowWithDifference(rows, Strings.ItemDescription.AttackSpeed, TimeSpan.FromMilliseconds(_itemDescriptor.AttackSpeedValue).WithSuffix(), diff);
+                AddRowWithDifference(
+                    rows,
+                    Strings.ItemDescription.AttackSpeed,
+                    TimeSpan.FromMilliseconds(_itemDescriptor.AttackSpeedValue).WithSuffix(),
+                    diff,
+                    AttackSpeedIconName
+                );
             }
             else if (_itemDescriptor.AttackSpeedModifier == 2)
             {
-                rows.AddKeyValueRow(Strings.ItemDescription.AttackSpeed, Strings.ItemDescription.Percentage.ToString(_itemDescriptor.AttackSpeedValue));
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.AttackSpeed,
+                    Strings.ItemDescription.Percentage.ToString(_itemDescriptor.AttackSpeedValue),
+                    AttackSpeedIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
             }
         }
 
@@ -891,11 +977,29 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         if (_itemDescriptor.EquipmentSlot == Options.Instance.Equipment.ShieldSlot)
         {
             if (_itemDescriptor.BlockChance > 0)
-                rows.AddKeyValueRow(Strings.ItemDescription.BlockChance, Strings.ItemDescription.Percentage.ToString(_itemDescriptor.BlockChance));
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.BlockChance,
+                    Strings.ItemDescription.Percentage.ToString(_itemDescriptor.BlockChance),
+                    BlockIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
             if (_itemDescriptor.BlockAmount > 0)
-                rows.AddKeyValueRow(Strings.ItemDescription.BlockAmount, Strings.ItemDescription.Percentage.ToString(_itemDescriptor.BlockAmount));
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.BlockAmount,
+                    Strings.ItemDescription.Percentage.ToString(_itemDescriptor.BlockAmount),
+                    BlockIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
             if (_itemDescriptor.BlockAbsorption > 0)
-                rows.AddKeyValueRow(Strings.ItemDescription.BlockAbsorption, Strings.ItemDescription.Percentage.ToString(_itemDescriptor.BlockAbsorption));
+                rows.AddKeyValueRow(
+                    Strings.ItemDescription.BlockAbsorption,
+                    Strings.ItemDescription.Percentage.ToString(_itemDescriptor.BlockAbsorption),
+                    BlockIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
         }
 
         // ====== Vitals ======
@@ -910,19 +1014,26 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
             var totalFlat = baseValue + enchantBonus;
             var label = Strings.ItemDescription.Vitals[i];
+            var vitalIconName = Enum.IsDefined(typeof(Vital), i) ? StatEffectIconProvider.GetIconForVital((Vital)i) : null;
 
             var diff = GetVitalDifference(i);
             if (totalFlat != 0 && percentValue != 0)
             {
-                AddRowWithDifferenceAndPercent(rows, label, totalFlat.ToString(), diff, percentValue);
+                AddRowWithDifferenceAndPercent(rows, label, totalFlat.ToString(), diff, percentValue, vitalIconName);
             }
             else if (totalFlat != 0)
             {
-                AddRowWithDifference(rows, label, totalFlat.ToString(), diff);
+                AddRowWithDifference(rows, label, totalFlat.ToString(), diff, vitalIconName);
             }
             else if (percentValue != 0)
             {
-                rows.AddKeyValueRow(label, Strings.ItemDescription.Percentage.ToString(percentValue), CustomColors.ItemDesc.Muted, CustomColors.ItemDesc.Muted);
+                rows.AddKeyValueRow(
+                    label,
+                    Strings.ItemDescription.Percentage.ToString(percentValue),
+                    vitalIconName,
+                    CustomColors.ItemDesc.Muted,
+                    CustomColors.ItemDesc.Muted
+                );
             }
         }
 
@@ -932,7 +1043,14 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             if (_itemDescriptor.VitalsRegen.Length > i && _itemDescriptor.VitalsRegen[i] != 0)
             {
                 var diff = GetVitalRegenDifference(i);
-                AddRowWithDifference(rows, Strings.ItemDescription.VitalsRegen[i], Strings.ItemDescription.Percentage.ToString(_itemDescriptor.VitalsRegen[i]), diff);
+                var vitalIconName = Enum.IsDefined(typeof(Vital), i) ? StatEffectIconProvider.GetIconForVital((Vital)i) : null;
+                AddRowWithDifference(
+                    rows,
+                    Strings.ItemDescription.VitalsRegen[i],
+                    Strings.ItemDescription.Percentage.ToString(_itemDescriptor.VitalsRegen[i]),
+                    diff,
+                    vitalIconName
+                );
             }
         }
 
@@ -943,6 +1061,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             var statLabel = Strings.ItemDescription.StatCounts[statIndex];
             ItemRange? rangeForStat = default;
             var percentageGivenForStat = _itemDescriptor.PercentageStatsGiven[statIndex];
+            var statIconName = Enum.IsDefined(typeof(Stat), statIndex) ? StatEffectIconProvider.GetIconForStat((Stat)statIndex) : null;
 
             var statModifiers = _itemProperties?.StatModifiers;
             if (statModifiers != default || !_itemDescriptor.TryGetRangeFor((Stat)statIndex, out rangeForStat) || rangeForStat?.LowRange == rangeForStat?.HighRange)
@@ -956,15 +1075,28 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                 var diff = GetStatDifference(statIndex);
                 if (flatValueGivenForStat != 0 && percentageGivenForStat != 0)
                 {
-                    AddRowWithDifferenceAndPercent(rows, statLabel, flatValueGivenForStat.ToString(), diff, percentageGivenForStat);
+                    AddRowWithDifferenceAndPercent(
+                        rows,
+                        statLabel,
+                        flatValueGivenForStat.ToString(),
+                        diff,
+                        percentageGivenForStat,
+                        statIconName
+                    );
                 }
                 else if (flatValueGivenForStat != 0)
                 {
-                    AddRowWithDifference(rows, statLabel, flatValueGivenForStat.ToString(), diff);
+                    AddRowWithDifference(rows, statLabel, flatValueGivenForStat.ToString(), diff, statIconName);
                 }
                 else if (percentageGivenForStat != 0)
                 {
-                    rows.AddKeyValueRow(statLabel, Strings.ItemDescription.Percentage.ToString(percentageGivenForStat), CustomColors.ItemDesc.Muted, CustomColors.ItemDesc.Muted);
+                    rows.AddKeyValueRow(
+                        statLabel,
+                        Strings.ItemDescription.Percentage.ToString(percentageGivenForStat),
+                        statIconName,
+                        CustomColors.ItemDesc.Muted,
+                        CustomColors.ItemDesc.Muted
+                    );
                 }
             }
             else if (_itemDescriptor.TryGetRangeFor((Stat)statIndex, out var range))
@@ -978,7 +1110,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
                     statMessage = Strings.ItemDescription.RegularAndPercentage.ToString(statMessage, percentageGivenForStat);
                 }
 
-                rows.AddKeyValueRow(statLabel, statMessage);
+                rows.AddKeyValueRow(statLabel, statMessage, statIconName, CustomColors.ItemDesc.Muted, CustomColors.ItemDesc.Muted);
 
                 rows.SizeToChildren(true, true);
             }
@@ -1012,7 +1144,8 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             }
 
             var diff = GetEffectDifference(effectType);
-            AddRowWithDifference(rows, effectName, string.Join(" / ", parts), diff);
+            var effectIconName = StatEffectIconProvider.GetIconForItemEffect(effectType);
+            AddRowWithDifference(rows, effectName, string.Join(" / ", parts), diff, effectIconName);
         }
         rows.SizeToChildren(true, true);
     }
