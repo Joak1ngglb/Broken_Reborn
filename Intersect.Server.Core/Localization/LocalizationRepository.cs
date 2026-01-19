@@ -240,6 +240,31 @@ public sealed class LocalizationRepository
         command.ExecuteNonQuery();
     }
 
+    public string? GetCurrentSourceHash(string entityType, string entityId, string field)
+    {
+        entityType = RequireNotBlank(entityType, nameof(entityType));
+        entityId = RequireNotBlank(entityId, nameof(entityId));
+        field = RequireNotBlank(field, nameof(field));
+
+        using var connection = OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText =
+            """
+            SELECT source_hash
+            FROM localization_source
+            WHERE entity_type = $entityType
+              AND entity_id = $entityId
+              AND field = $field
+            LIMIT 1;
+            """;
+        command.Parameters.AddWithValue("$entityType", entityType);
+        command.Parameters.AddWithValue("$entityId", entityId);
+        command.Parameters.AddWithValue("$field", field);
+
+        var scalar = command.ExecuteScalar();
+        return scalar == DBNull.Value ? null : scalar as string;
+    }
+
     /// <summary>
     /// Obtiene el texto para el idioma elegido:
     /// - Busca el source actual
