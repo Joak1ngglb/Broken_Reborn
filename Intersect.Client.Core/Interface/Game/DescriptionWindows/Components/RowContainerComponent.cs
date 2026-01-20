@@ -3,8 +3,8 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Core;
 using Microsoft.Extensions.Logging;
 using Intersect.Client.Core;
-using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Interface.Game.DescriptionWindows;
 
 namespace Intersect.Client.Interface.Game.DescriptionWindows.Components;
 
@@ -74,7 +74,7 @@ public partial class RowContainerComponent : ComponentBase
         var row = AddKeyValueRow(key, value, keyColor, valueColor);
         if (!string.IsNullOrWhiteSpace(iconName))
         {
-            row.SetIcon(GameContentManager.Current.GetTexture(TextureType.Misc, iconName));
+            row.SetIcon(StatEffectIconProvider.GetIconTexture(iconName));
         }
         else
         {
