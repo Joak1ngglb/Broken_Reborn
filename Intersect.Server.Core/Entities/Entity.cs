@@ -206,7 +206,22 @@ public abstract partial class Entity : IEntity
     }
 
     [NotMapped]
-    public bool IsDead { get; set; }
+    public bool IsDead
+    {
+        get => GetVital(Vital.Health) <= 0;
+        set
+        {
+            if (value)
+            {
+                SetVital(Vital.Health, 0);
+            }
+            else if (GetVital(Vital.Health) <= 0)
+            {
+                var reviveHealth = Math.Max(1, GetMaxVital(Vital.Health));
+                SetVital(Vital.Health, reviveHealth);
+            }
+        }
+    }
 
     //Combat
     [NotMapped, JsonIgnore]
@@ -2569,7 +2584,8 @@ public abstract partial class Entity : IEntity
         }
 
         // Check for target validity
-        var singleTargetSpell = (spell.SpellType == SpellType.CombatSpell && spell.Combat.TargetType == SpellTargetType.Single) || spell.SpellType == SpellType.WarpTo;
+        var singleTargetSpell = ((spell.SpellType == SpellType.CombatSpell || spell.SpellType == SpellType.Resurrection) &&
+            spell.Combat.TargetType == SpellTargetType.Single) || spell.SpellType == SpellType.WarpTo;
         if (target == null && singleTargetSpell)
         {
             reason = SpellCastFailureReason.InvalidTarget;
@@ -2585,6 +2601,12 @@ public abstract partial class Entity : IEntity
         if (target != null && singleTargetSpell)
         {
             if (spell.Combat.Friendly != IsAllyOf(target) || !CanAttack(target, spell))
+            {
+                reason = SpellCastFailureReason.InvalidTarget;
+                return false;
+            }
+
+            if (spell.SpellType == SpellType.Resurrection && !target.IsDead)
             {
                 reason = SpellCastFailureReason.InvalidTarget;
                 return false;
@@ -2816,6 +2838,27 @@ public abstract partial class Entity : IEntity
                                     // Optional: track NPC summons here.
                                 }
                             }
+                        }
+                    }
+
+                    break;
+                case SpellType.Resurrection:
+                    if (CastTarget is Player resurrectTarget && resurrectTarget.IsDead)
+                    {
+                        resurrectTarget.RespawnFromResurrection();
+                        PacketSender.SendActionMsg(
+                            resurrectTarget,
+                            Strings.Combat.Resurrected,
+                            CustomColors.Combat.Heal
+                        );
+
+                        if (resurrectTarget != this)
+                        {
+                            PacketSender.SendActionMsg(
+                                this,
+                                Strings.Combat.Resurrected,
+                                CustomColors.Combat.Heal
+                            );
                         }
                     }
 

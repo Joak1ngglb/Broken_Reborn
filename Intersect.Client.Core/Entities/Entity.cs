@@ -230,6 +230,8 @@ public partial class Entity : IEntity
     IReadOnlyDictionary<Vital, long> IEntity.Vitals =>
         Enum.GetValues<Vital>().ToDictionary(vital => vital, vital => Vital[(int)vital]);
 
+    public virtual bool IsDead { get; protected set; }
+
     public int WalkFrame { get; set; }
 
     public FloatRect WorldPos { get; set; } = new FloatRect();
@@ -394,6 +396,7 @@ public partial class Entity : IEntity
                 SpriteAnimations.Shoot => Options.Instance.Sprites.ShootFrames,
                 SpriteAnimations.Cast => Options.Instance.Sprites.CastFrames,
                 SpriteAnimations.Weapon => Options.Instance.Sprites.WeaponFrames,
+                SpriteAnimations.Death => 1,
                 _ => Options.Instance.Sprites.NormalFrames,
             };
         }
@@ -472,6 +475,13 @@ public partial class Entity : IEntity
 
         Vital = packet.Vital;
         MaxVital = packet.MaxVital;
+        var wasDead = IsDead;
+        IsDead = Vital[(int)Enums.Vital.Health] <= 0;
+        if (!wasDead && IsDead)
+        {
+            ClearAnimations();
+            EquipmentAnimations.Clear();
+        }
 
         //Update status effects
         Status.Clear();
@@ -1079,6 +1089,11 @@ public partial class Entity : IEntity
     public virtual bool ShouldDraw => !IsHidden && (!IsStealthed || this == Globals.Me || Globals.Me?.IsInMyParty(Id) == true);
 
     /// <summary>
+    /// Returns whether this entity should render paperdoll equipment layers.
+    /// </summary>
+    public virtual bool ShouldRenderEquipment => true;
+
+    /// <summary>
     /// Returns whether the name of this entity should be drawn.
     /// </summary>
     public virtual bool ShouldDrawName
@@ -1370,7 +1385,7 @@ public partial class Entity : IEntity
             {
                 Graphics.DrawGameTexture(texture, srcRectangle, destRectangle, renderColor);
             }
-            else if (equipSlot > -1)
+            else if (equipSlot > -1 && ShouldRenderEquipment)
             {
                 if (sprite == Sprite && Equipment.Count == Options.Instance.Equipment.Slots.Count)
                 {
@@ -1926,7 +1941,7 @@ public partial class Entity : IEntity
     {
         get
         {
-            return LatestMap == default || !ShouldDraw || Vital[(int)Enums.Vital.Health] < 1;
+            return LatestMap == default || !ShouldDraw || IsDead;
         }
     }
 

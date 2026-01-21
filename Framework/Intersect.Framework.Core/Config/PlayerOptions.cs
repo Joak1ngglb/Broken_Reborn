@@ -48,6 +48,11 @@ public partial class PlayerOptions
     public int ExpLossOnDeathPercent { get; set; } = 0;
 
     /// <summary>
+    /// Time in seconds before a player can respawn after death.
+    /// </summary>
+    public int DeathSeconds { get; set; } = 0;
+
+    /// <summary>
     /// Percentage between 0 and 100 applied weekly to move player honor toward zero.
     /// </summary>
     public int HonorDecayPercent { get; set; } = 0;
@@ -86,6 +91,11 @@ public partial class PlayerOptions
     /// Number of spell slots a player has.
     /// </summary>
     public int MaxSpells { get; set; } = 35;
+
+    /// <summary>
+    /// Time in milliseconds before a player can respawn after death.
+    /// </summary>
+    public int RespawnTime { get; set; } = 0;
 
     /// <summary>
     /// The highest value a single stat can be for a player.

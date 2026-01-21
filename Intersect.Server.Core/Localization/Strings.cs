@@ -339,6 +339,9 @@ public static partial class Strings
         public readonly LocalizedString ResourceRequirements = @"You do not meet the requirements to harvest this resource!";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString Resurrected = @"RESURRECTED!";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString Silenced = @"You cannot cast this ability while silenced.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
