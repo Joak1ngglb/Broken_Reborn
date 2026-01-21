@@ -83,4 +83,10 @@ public partial class RowContainerComponent : ComponentBase
 
         return row;
     }
+
+    public void ClearRows()
+    {
+        DeleteAllChildren();
+        _componentY = 0;
+    }
 }
