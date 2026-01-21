@@ -3,6 +3,7 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
+using Intersect.Framework.Core;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -13,6 +14,7 @@ public class DeathWindow : Window
     private readonly Label _messageLabel;
     private readonly Button _respawnButton;
     private bool _respawnRequested;
+    private long _respawnAvailableAt;
 
     public DeathWindow(Canvas canvas) : base(canvas, Strings.DeathWindow.Title, false, nameof(DeathWindow))
     {
@@ -82,13 +84,29 @@ public class DeathWindow : Window
         if (eventArgs.IsVisibleInTree)
         {
             _respawnRequested = false;
-            _respawnButton.IsDisabled = false;
+            _respawnAvailableAt = Options.Instance.Player.RespawnTime > 0
+                ? Timing.Global.Milliseconds + Options.Instance.Player.RespawnTime
+                : 0;
+            _respawnButton.IsDisabled = _respawnAvailableAt > Timing.Global.Milliseconds;
             MakeModal(dim: true);
             BringToFront();
         }
         else
         {
             RemoveModal();
+        }
+    }
+
+    public void Update()
+    {
+        if (IsHidden || _respawnRequested)
+        {
+            return;
+        }
+
+        if (_respawnAvailableAt <= Timing.Global.Milliseconds)
+        {
+            _respawnButton.IsDisabled = false;
         }
     }
 

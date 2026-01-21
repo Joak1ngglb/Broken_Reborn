@@ -559,6 +559,7 @@ public partial class GameInterface : MutableInterface
         mMapItemWindow.Update();
         AnnouncementWindow?.Update();
         mPictureWindow?.Update();
+        _deathWindow?.Update();
         mCreateGuildWindow?.Update();
         mBreakItemWindow?.Update();
         mEnchantItemWindow?.Update();

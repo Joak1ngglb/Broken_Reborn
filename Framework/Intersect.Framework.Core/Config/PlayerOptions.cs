@@ -88,6 +88,11 @@ public partial class PlayerOptions
     public int MaxSpells { get; set; } = 35;
 
     /// <summary>
+    /// Time in milliseconds before a player can respawn after death.
+    /// </summary>
+    public int RespawnTime { get; set; } = 0;
+
+    /// <summary>
     /// The highest value a single stat can be for a player.
     /// </summary>
     public int MaxStat { get; set; } = 255;
