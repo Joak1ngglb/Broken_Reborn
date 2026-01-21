@@ -2284,7 +2284,9 @@ internal sealed partial class PacketHandler
 
         if (Globals.TryGetEntity(EntityType.Player, packet.PlayerId, out var entity) && entity is Player player)
         {
-            var respawnTime = Options.Instance.Player.RespawnTime;
+            var respawnTime = Options.Instance.Player.DeathSeconds > 0
+                ? (long)Options.Instance.Player.DeathSeconds * 1000
+                : 0;
             var despawnTime = respawnTime > 0 ? Timing.Global.Milliseconds + respawnTime : 0;
             Globals.AddCorpse(new Corpse(player, despawnTime));
         }

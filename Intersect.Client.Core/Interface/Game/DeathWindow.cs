@@ -84,8 +84,11 @@ public class DeathWindow : Window
         if (eventArgs.IsVisibleInTree)
         {
             _respawnRequested = false;
-            _respawnAvailableAt = Options.Instance.Player.RespawnTime > 0
-                ? Timing.Global.Milliseconds + Options.Instance.Player.RespawnTime
+            var respawnTime = Options.Instance.Player.DeathSeconds > 0
+                ? (long)Options.Instance.Player.DeathSeconds * 1000
+                : 0;
+            _respawnAvailableAt = respawnTime > 0
+                ? Timing.Global.Milliseconds + respawnTime
                 : 0;
             _respawnButton.IsDisabled = _respawnAvailableAt > Timing.Global.Milliseconds;
             MakeModal(dim: true);
