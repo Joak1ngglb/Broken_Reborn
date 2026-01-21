@@ -1509,15 +1509,27 @@ internal sealed partial class PacketHandler
     public void HandlePacket(Client client, RespawnPacket packet)
     {
         var player = client?.Entity;
-        if (player == null || !player.IsDead)
+        if (player == null || !player.IsDead || player.GetVital(Vital.Health) > 0)
         {
             return;
         }
 
+        var deathSeconds = Options.Instance.Player.DeathSeconds;
+        if (deathSeconds > 0)
+        {
+            var respawnAvailableAt = player.DeathTimeMs + (deathSeconds * 1000L);
+            if (Timing.Global.Milliseconds < respawnAvailableAt)
+            {
+                return;
+            }
+        }
+
         player.WarpToSpawn();
         player.Reset();
+        player.DeathTimeMs = 0;
         PacketSender.SendEntityDataToProximity(player);
         PacketSender.SendPlayerRespawn(player);
+        player.StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);
     }
 
     //ActivateEventPacket

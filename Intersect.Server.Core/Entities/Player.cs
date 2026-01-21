@@ -79,6 +79,9 @@ public partial class Player : Entity
     [JsonIgnore, NotMapped]
     public long[] MaxVitals => GetMaxVitals();
 
+    [JsonIgnore, NotMapped]
+    public long DeathTimeMs { get; set; }
+
     //Name, X, Y, Dir, Etc all in the base Entity Class
     public Guid ClassId { get; set; }
 
@@ -1233,6 +1236,7 @@ public partial class Player : Entity
         }
 
         Reset();
+        DeathTimeMs = 0;
 
         PacketSender.SendEntityDataToProximity(this);
         PacketSender.SendPlayerRespawn(this);
@@ -1245,6 +1249,7 @@ public partial class Player : Entity
     {
         CastTime = 0;
         CastTarget = null;
+        DeathTimeMs = Timing.Global.Milliseconds;
 
         //Flag death to the client
         PlayDeathAnimation();
