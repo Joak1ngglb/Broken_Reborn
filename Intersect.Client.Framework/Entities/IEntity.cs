@@ -47,6 +47,7 @@ public interface IEntity : IDisposable
     IReadOnlyList<IItem> Items { get; }
     IReadOnlyDictionary<int, List<int>> EquipmentSlots { get; }
 
+    bool IsDead { get; }
 
     IReadOnlyList<Guid> Spells { get; }
     IReadOnlyList<IStatus> Status { get; }

@@ -4,6 +4,7 @@ using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
+using Intersect.Client.General;
 using Intersect.Client.Interface;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
@@ -309,6 +310,11 @@ namespace Intersect.Client.Interface.Game.Shops
 
         internal void RequestPurchase(PlayerShopBrowseItemRow row)
         {
+            if (Globals.Me?.IsDead == true)
+            {
+                return;
+            }
+
             var quantity = row.RequestedQuantity;
             if (quantity <= 0)
             {

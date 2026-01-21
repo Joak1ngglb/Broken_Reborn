@@ -507,7 +507,7 @@ namespace Intersect.Server.Admin.Actions
                 return;
             }
 
-            if (player.Power.CompareTo(target.Power) < 1)
+            if (player != target && player.Power.CompareTo(target.Power) < 0)
             {
                 PacketSender.SendChatMsg(
                     player, Strings.Account.NotAllowed.ToString(target.Name), ChatMessageType.Admin, Color.Red
@@ -732,7 +732,7 @@ namespace Intersect.Server.Admin.Actions
                 return;
             }
 
-            if (player.Power.CompareTo(target.Power) < 1)
+            if (player != target && player.Power.CompareTo(target.Power) < 0)
             {
                 PacketSender.SendChatMsg(
                     player, Strings.Account.NotAllowed.ToString(target.Name), ChatMessageType.Admin, Color.Red

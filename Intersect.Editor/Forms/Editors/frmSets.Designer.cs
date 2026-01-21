@@ -35,91 +35,78 @@ partial class frmSets
     {
         components = new System.ComponentModel.Container();
         var resources = new System.ComponentModel.ComponentResourceManager(typeof(frmSets));
-        grpSets = new DarkUI.Controls.DarkGroupBox();
-        btnClearSearch = new DarkUI.Controls.DarkButton();
-        txtSearch = new DarkUI.Controls.DarkTextBox();
+        grpSets = new DarkGroupBox();
+        btnClearSearch = new DarkButton();
+        txtSearch = new DarkTextBox();
         lstGameObjects = new Intersect.Editor.Forms.Controls.GameObjectList();
-        grpStats = new DarkUI.Controls.DarkGroupBox();
+        grpStats = new DarkGroupBox();
         lblPercentage8 = new Label();
         lblPercentage7 = new Label();
         lblPercentage6 = new Label();
         lblPercentage5 = new Label();
-        lblPercentage4 = new Label();
         lblPercentage3 = new Label();
-        lblPercentage2 = new Label();
         lblPercentage1 = new Label();
-        nudSpdPercentage = new DarkUI.Controls.DarkNumericUpDown();
-        nudCurPercentage = new DarkUI.Controls.DarkNumericUpDown();
-        nudDefPercentage = new DarkUI.Controls.DarkNumericUpDown();
-        nudDmgPercentage = new DarkUI.Controls.DarkNumericUpDown();
-        nudStrPercentage = new DarkUI.Controls.DarkNumericUpDown();
-        nudIntPercentage = new DarkUI.Controls.DarkNumericUpDown();
-        nudVitPercentage = new DarkUI.Controls.DarkNumericUpDown();
-        nudAgiPercentage = new DarkUI.Controls.DarkNumericUpDown();
+        nudSpdPercentage = new DarkNumericUpDown();
+        nudDefPercentage = new DarkNumericUpDown();
+        nudStrPercentage = new DarkNumericUpDown();
+        nudIntPercentage = new DarkNumericUpDown();
+        nudVitPercentage = new DarkNumericUpDown();
+        nudAgiPercentage = new DarkNumericUpDown();
         lblPlus8 = new Label();
         lblPlus7 = new Label();
         lblPlus6 = new Label();
         lblPlus5 = new Label();
-        lblPlus4 = new Label();
         lblPlus3 = new Label();
-        lblPlus2 = new Label();
         lblPlus1 = new Label();
-        lblEffectFlat = new Label();
-        nudEffectFlat = new DarkNumericUpDown();
-        nudSpd = new DarkUI.Controls.DarkNumericUpDown();
-        nudCur = new DarkUI.Controls.DarkNumericUpDown();
-        nudDef = new DarkUI.Controls.DarkNumericUpDown();
-        nudDmg = new DarkUI.Controls.DarkNumericUpDown();
-        nudStr = new DarkUI.Controls.DarkNumericUpDown();
-        nudInt = new DarkUI.Controls.DarkNumericUpDown();
-        nudVit = new DarkUI.Controls.DarkNumericUpDown();
-        nudAgi = new DarkUI.Controls.DarkNumericUpDown();
+        nudSpd = new DarkNumericUpDown();
+        nudDef = new DarkNumericUpDown();
+        nudStr = new DarkNumericUpDown();
+        nudInt = new DarkNumericUpDown();
+        nudVit = new DarkNumericUpDown();
+        nudAgi = new DarkNumericUpDown();
         lblSpd = new Label();
-        lblMR = new Label();
         lblDef = new Label();
-        lblMag = new Label();
         lblStr = new Label();
         lblARP = new Label();
         lblVit = new Label();
         lblWis = new Label();
         lblTierCount = new Label();
-        grpItemsSets = new DarkUI.Controls.DarkGroupBox();
-        cmbItems = new DarkUI.Controls.DarkComboBox();
-        btnRemove = new DarkUI.Controls.DarkButton();
-        btnAdd = new DarkUI.Controls.DarkButton();
+        grpItemsSets = new DarkGroupBox();
+        cmbItems = new DarkComboBox();
+        btnRemove = new DarkButton();
+        btnAdd = new DarkButton();
         lblItemSet = new Label();
         lstItems = new ListBox();
-        grpGeneral = new DarkUI.Controls.DarkGroupBox();
-        btnAddFolder = new DarkUI.Controls.DarkButton();
+        grpGeneral = new DarkGroupBox();
+        btnAddFolder = new DarkButton();
         lblFolder = new Label();
-        cmbFolder = new DarkUI.Controls.DarkComboBox();
+        cmbFolder = new DarkComboBox();
         lblName = new Label();
-        txtName = new DarkUI.Controls.DarkTextBox();
-        grpVitalBonuses = new DarkUI.Controls.DarkGroupBox();
+        txtName = new DarkTextBox();
+        grpVitalBonuses = new DarkGroupBox();
         label1 = new Label();
         label2 = new Label();
-        nudMPPercentage = new DarkUI.Controls.DarkNumericUpDown();
-        nudHPPercentage = new DarkUI.Controls.DarkNumericUpDown();
+        nudMPPercentage = new DarkNumericUpDown();
+        nudHPPercentage = new DarkNumericUpDown();
         label3 = new Label();
         label4 = new Label();
-        nudManaBonus = new DarkUI.Controls.DarkNumericUpDown();
-        nudHealthBonus = new DarkUI.Controls.DarkNumericUpDown();
+        nudManaBonus = new DarkNumericUpDown();
+        nudHealthBonus = new DarkNumericUpDown();
         lblManaBonus = new Label();
         lblHealthBonus = new Label();
-        btnCancel = new DarkUI.Controls.DarkButton();
-        btnSave = new DarkUI.Controls.DarkButton();
-        grpEffects = new DarkUI.Controls.DarkGroupBox();
-        chkEffectIsFlat = new DarkUI.Controls.DarkCheckBox();
+        btnCancel = new DarkButton();
+        btnSave = new DarkButton();
+        grpEffects = new DarkGroupBox();
         lstBonusEffects = new ListBox();
         lblEffectPercent = new Label();
-        nudEffectPercent = new DarkUI.Controls.DarkNumericUpDown();
-        grpRegen = new DarkUI.Controls.DarkGroupBox();
-        nudMpRegen = new DarkUI.Controls.DarkNumericUpDown();
-        nudHPRegen = new DarkUI.Controls.DarkNumericUpDown();
+        nudEffectPercent = new DarkNumericUpDown();
+        grpRegen = new DarkGroupBox();
+        nudMpRegen = new DarkNumericUpDown();
+        nudHPRegen = new DarkNumericUpDown();
         lblHpRegen = new Label();
         lblManaRegen = new Label();
         lblRegenHint = new Label();
-        toolStrip = new DarkUI.Controls.DarkToolStrip();
+        toolStrip = new DarkToolStrip();
         toolStripItemNew = new ToolStripButton();
         toolStripSeparator1 = new ToolStripSeparator();
         toolStripItemDelete = new ToolStripButton();
@@ -133,17 +120,13 @@ partial class frmSets
         grpSets.SuspendLayout();
         grpStats.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)nudSpdPercentage).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)nudCurPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)nudDefPercentage).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)nudDmgPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)nudStrPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)nudIntPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)nudVitPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)nudAgiPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)nudSpd).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)nudCur).BeginInit();
         ((System.ComponentModel.ISupportInitialize)nudDef).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)nudDmg).BeginInit();
         ((System.ComponentModel.ISupportInitialize)nudStr).BeginInit();
         ((System.ComponentModel.ISupportInitialize)nudInt).BeginInit();
         ((System.ComponentModel.ISupportInitialize)nudVit).BeginInit();
@@ -231,14 +214,10 @@ partial class frmSets
         grpStats.Controls.Add(lblPercentage7);
         grpStats.Controls.Add(lblPercentage6);
         grpStats.Controls.Add(lblPercentage5);
-        grpStats.Controls.Add(lblPercentage4);
         grpStats.Controls.Add(lblPercentage3);
-        grpStats.Controls.Add(lblPercentage2);
         grpStats.Controls.Add(lblPercentage1);
         grpStats.Controls.Add(nudSpdPercentage);
-        grpStats.Controls.Add(nudCurPercentage);
         grpStats.Controls.Add(nudDefPercentage);
-        grpStats.Controls.Add(nudDmgPercentage);
         grpStats.Controls.Add(nudStrPercentage);
         grpStats.Controls.Add(nudIntPercentage);
         grpStats.Controls.Add(nudVitPercentage);
@@ -247,22 +226,16 @@ partial class frmSets
         grpStats.Controls.Add(lblPlus7);
         grpStats.Controls.Add(lblPlus6);
         grpStats.Controls.Add(lblPlus5);
-        grpStats.Controls.Add(lblPlus4);
         grpStats.Controls.Add(lblPlus3);
-        grpStats.Controls.Add(lblPlus2);
         grpStats.Controls.Add(lblPlus1);
         grpStats.Controls.Add(nudSpd);
-        grpStats.Controls.Add(nudCur);
         grpStats.Controls.Add(nudDef);
-        grpStats.Controls.Add(nudDmg);
         grpStats.Controls.Add(nudStr);
         grpStats.Controls.Add(nudInt);
         grpStats.Controls.Add(nudVit);
         grpStats.Controls.Add(nudAgi);
         grpStats.Controls.Add(lblSpd);
-        grpStats.Controls.Add(lblMR);
         grpStats.Controls.Add(lblDef);
-        grpStats.Controls.Add(lblMag);
         grpStats.Controls.Add(lblStr);
         grpStats.Controls.Add(lblARP);
         grpStats.Controls.Add(lblVit);
@@ -272,7 +245,7 @@ partial class frmSets
         grpStats.Margin = new Padding(4, 3, 4, 3);
         grpStats.Name = "grpStats";
         grpStats.Padding = new Padding(4, 3, 4, 3);
-        grpStats.Size = new Size(276, 281);
+        grpStats.Size = new Size(276, 225);
         grpStats.TabIndex = 51;
         grpStats.TabStop = false;
         grpStats.Text = "Stat Modifiers";
@@ -280,7 +253,7 @@ partial class frmSets
         // lblPercentage8
         // 
         lblPercentage8.AutoSize = true;
-        lblPercentage8.Location = new System.Drawing.Point(248, 255);
+        lblPercentage8.Location = new System.Drawing.Point(248, 189);
         lblPercentage8.Margin = new Padding(2, 0, 2, 0);
         lblPercentage8.Name = "lblPercentage8";
         lblPercentage8.Size = new Size(17, 15);
@@ -290,7 +263,7 @@ partial class frmSets
         // lblPercentage7
         // 
         lblPercentage7.AutoSize = true;
-        lblPercentage7.Location = new System.Drawing.Point(248, 224);
+        lblPercentage7.Location = new System.Drawing.Point(248, 158);
         lblPercentage7.Margin = new Padding(2, 0, 2, 0);
         lblPercentage7.Name = "lblPercentage7";
         lblPercentage7.Size = new Size(17, 15);
@@ -300,7 +273,7 @@ partial class frmSets
         // lblPercentage6
         // 
         lblPercentage6.AutoSize = true;
-        lblPercentage6.Location = new System.Drawing.Point(248, 189);
+        lblPercentage6.Location = new System.Drawing.Point(248, 123);
         lblPercentage6.Margin = new Padding(2, 0, 2, 0);
         lblPercentage6.Name = "lblPercentage6";
         lblPercentage6.Size = new Size(17, 15);
@@ -310,42 +283,22 @@ partial class frmSets
         // lblPercentage5
         // 
         lblPercentage5.AutoSize = true;
-        lblPercentage5.Location = new System.Drawing.Point(248, 154);
+        lblPercentage5.Location = new System.Drawing.Point(248, 88);
         lblPercentage5.Margin = new Padding(2, 0, 2, 0);
         lblPercentage5.Name = "lblPercentage5";
         lblPercentage5.Size = new Size(17, 15);
         lblPercentage5.TabIndex = 67;
         lblPercentage5.Text = "%";
         // 
-        // lblPercentage4
-        // 
-        lblPercentage4.AutoSize = true;
-        lblPercentage4.Location = new System.Drawing.Point(248, 120);
-        lblPercentage4.Margin = new Padding(2, 0, 2, 0);
-        lblPercentage4.Name = "lblPercentage4";
-        lblPercentage4.Size = new Size(17, 15);
-        lblPercentage4.TabIndex = 66;
-        lblPercentage4.Text = "%";
-        // 
         // lblPercentage3
         // 
         lblPercentage3.AutoSize = true;
-        lblPercentage3.Location = new System.Drawing.Point(248, 88);
+        lblPercentage3.Location = new System.Drawing.Point(248, 56);
         lblPercentage3.Margin = new Padding(2, 0, 2, 0);
         lblPercentage3.Name = "lblPercentage3";
         lblPercentage3.Size = new Size(17, 15);
         lblPercentage3.TabIndex = 65;
         lblPercentage3.Text = "%";
-        // 
-        // lblPercentage2
-        // 
-        lblPercentage2.AutoSize = true;
-        lblPercentage2.Location = new System.Drawing.Point(248, 55);
-        lblPercentage2.Margin = new Padding(2, 0, 2, 0);
-        lblPercentage2.Name = "lblPercentage2";
-        lblPercentage2.Size = new Size(17, 15);
-        lblPercentage2.TabIndex = 64;
-        lblPercentage2.Text = "%";
         // 
         // lblPercentage1
         // 
@@ -361,7 +314,7 @@ partial class frmSets
         // 
         nudSpdPercentage.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
         nudSpdPercentage.ForeColor = System.Drawing.Color.Gainsboro;
-        nudSpdPercentage.Location = new System.Drawing.Point(192, 152);
+        nudSpdPercentage.Location = new System.Drawing.Point(192, 86);
         nudSpdPercentage.Margin = new Padding(4, 3, 4, 3);
         nudSpdPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
         nudSpdPercentage.Minimum = new decimal(new int[] { 100, 0, 0, int.MinValue });
@@ -371,25 +324,11 @@ partial class frmSets
         nudSpdPercentage.Value = new decimal(new int[] { 0, 0, 0, 0 });
         nudSpdPercentage.ValueChanged += nudSpdPercentage_ValueChanged;
         // 
-        // nudCurPercentage
-        // 
-        nudCurPercentage.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-        nudCurPercentage.ForeColor = System.Drawing.Color.Gainsboro;
-        nudCurPercentage.Location = new System.Drawing.Point(192, 118);
-        nudCurPercentage.Margin = new Padding(4, 3, 4, 3);
-        nudCurPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-        nudCurPercentage.Minimum = new decimal(new int[] { 100, 0, 0, int.MinValue });
-        nudCurPercentage.Name = "nudCurPercentage";
-        nudCurPercentage.Size = new Size(50, 23);
-        nudCurPercentage.TabIndex = 61;
-        nudCurPercentage.Value = new decimal(new int[] { 0, 0, 0, 0 });
-        nudCurPercentage.ValueChanged += nudMRPercentage_ValueChanged;
-        // 
         // nudDefPercentage
         // 
         nudDefPercentage.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
         nudDefPercentage.ForeColor = System.Drawing.Color.Gainsboro;
-        nudDefPercentage.Location = new System.Drawing.Point(192, 87);
+        nudDefPercentage.Location = new System.Drawing.Point(192, 55);
         nudDefPercentage.Margin = new Padding(4, 3, 4, 3);
         nudDefPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
         nudDefPercentage.Minimum = new decimal(new int[] { 100, 0, 0, int.MinValue });
@@ -398,20 +337,6 @@ partial class frmSets
         nudDefPercentage.TabIndex = 60;
         nudDefPercentage.Value = new decimal(new int[] { 0, 0, 0, 0 });
         nudDefPercentage.ValueChanged += nudDefPercentage_ValueChanged;
-        // 
-        // nudDmgPercentage
-        // 
-        nudDmgPercentage.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-        nudDmgPercentage.ForeColor = System.Drawing.Color.Gainsboro;
-        nudDmgPercentage.Location = new System.Drawing.Point(192, 54);
-        nudDmgPercentage.Margin = new Padding(4, 3, 4, 3);
-        nudDmgPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-        nudDmgPercentage.Minimum = new decimal(new int[] { 100, 0, 0, int.MinValue });
-        nudDmgPercentage.Name = "nudDmgPercentage";
-        nudDmgPercentage.Size = new Size(50, 23);
-        nudDmgPercentage.TabIndex = 59;
-        nudDmgPercentage.Value = new decimal(new int[] { 0, 0, 0, 0 });
-        nudDmgPercentage.ValueChanged += nudMagPercentage_ValueChanged;
         // 
         // nudStrPercentage
         // 
@@ -431,7 +356,7 @@ partial class frmSets
         // 
         nudIntPercentage.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
         nudIntPercentage.ForeColor = System.Drawing.Color.Gainsboro;
-        nudIntPercentage.Location = new System.Drawing.Point(191, 187);
+        nudIntPercentage.Location = new System.Drawing.Point(191, 121);
         nudIntPercentage.Margin = new Padding(4, 3, 4, 3);
         nudIntPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
         nudIntPercentage.Minimum = new decimal(new int[] { 100, 0, 0, int.MinValue });
@@ -445,7 +370,7 @@ partial class frmSets
         // 
         nudVitPercentage.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
         nudVitPercentage.ForeColor = System.Drawing.Color.Gainsboro;
-        nudVitPercentage.Location = new System.Drawing.Point(192, 219);
+        nudVitPercentage.Location = new System.Drawing.Point(192, 153);
         nudVitPercentage.Margin = new Padding(4, 3, 4, 3);
         nudVitPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
         nudVitPercentage.Minimum = new decimal(new int[] { 100, 0, 0, int.MinValue });
@@ -459,7 +384,7 @@ partial class frmSets
         // 
         nudAgiPercentage.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
         nudAgiPercentage.ForeColor = System.Drawing.Color.Gainsboro;
-        nudAgiPercentage.Location = new System.Drawing.Point(192, 253);
+        nudAgiPercentage.Location = new System.Drawing.Point(192, 187);
         nudAgiPercentage.Margin = new Padding(4, 3, 4, 3);
         nudAgiPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
         nudAgiPercentage.Minimum = new decimal(new int[] { 100, 0, 0, int.MinValue });
@@ -472,7 +397,7 @@ partial class frmSets
         // lblPlus8
         // 
         lblPlus8.AutoSize = true;
-        lblPlus8.Location = new System.Drawing.Point(173, 156);
+        lblPlus8.Location = new System.Drawing.Point(173, 90);
         lblPlus8.Margin = new Padding(2, 0, 2, 0);
         lblPlus8.Name = "lblPlus8";
         lblPlus8.Size = new Size(15, 15);
@@ -482,7 +407,7 @@ partial class frmSets
         // lblPlus7
         // 
         lblPlus7.AutoSize = true;
-        lblPlus7.Location = new System.Drawing.Point(173, 188);
+        lblPlus7.Location = new System.Drawing.Point(173, 122);
         lblPlus7.Margin = new Padding(2, 0, 2, 0);
         lblPlus7.Name = "lblPlus7";
         lblPlus7.Size = new Size(15, 15);
@@ -492,7 +417,7 @@ partial class frmSets
         // lblPlus6
         // 
         lblPlus6.AutoSize = true;
-        lblPlus6.Location = new System.Drawing.Point(173, 221);
+        lblPlus6.Location = new System.Drawing.Point(173, 155);
         lblPlus6.Margin = new Padding(2, 0, 2, 0);
         lblPlus6.Name = "lblPlus6";
         lblPlus6.Size = new Size(15, 15);
@@ -502,42 +427,22 @@ partial class frmSets
         // lblPlus5
         // 
         lblPlus5.AutoSize = true;
-        lblPlus5.Location = new System.Drawing.Point(173, 255);
+        lblPlus5.Location = new System.Drawing.Point(173, 189);
         lblPlus5.Margin = new Padding(2, 0, 2, 0);
         lblPlus5.Name = "lblPlus5";
         lblPlus5.Size = new Size(15, 15);
         lblPlus5.TabIndex = 57;
         lblPlus5.Text = "+";
         // 
-        // lblPlus4
-        // 
-        lblPlus4.AutoSize = true;
-        lblPlus4.Location = new System.Drawing.Point(173, 120);
-        lblPlus4.Margin = new Padding(2, 0, 2, 0);
-        lblPlus4.Name = "lblPlus4";
-        lblPlus4.Size = new Size(15, 15);
-        lblPlus4.TabIndex = 56;
-        lblPlus4.Text = "+";
-        // 
         // lblPlus3
         // 
         lblPlus3.AutoSize = true;
-        lblPlus3.Location = new System.Drawing.Point(173, 88);
+        lblPlus3.Location = new System.Drawing.Point(173, 56);
         lblPlus3.Margin = new Padding(2, 0, 2, 0);
         lblPlus3.Name = "lblPlus3";
         lblPlus3.Size = new Size(15, 15);
         lblPlus3.TabIndex = 55;
         lblPlus3.Text = "+";
-        // 
-        // lblPlus2
-        // 
-        lblPlus2.AutoSize = true;
-        lblPlus2.Location = new System.Drawing.Point(173, 55);
-        lblPlus2.Margin = new Padding(2, 0, 2, 0);
-        lblPlus2.Name = "lblPlus2";
-        lblPlus2.Size = new Size(15, 15);
-        lblPlus2.TabIndex = 54;
-        lblPlus2.Text = "+";
         // 
         // lblPlus1
         // 
@@ -553,7 +458,7 @@ partial class frmSets
         // 
         nudSpd.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
         nudSpd.ForeColor = System.Drawing.Color.Gainsboro;
-        nudSpd.Location = new System.Drawing.Point(96, 153);
+        nudSpd.Location = new System.Drawing.Point(96, 87);
         nudSpd.Margin = new Padding(4, 3, 4, 3);
         nudSpd.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
         nudSpd.Minimum = new decimal(new int[] { 255, 0, 0, int.MinValue });
@@ -563,25 +468,11 @@ partial class frmSets
         nudSpd.Value = new decimal(new int[] { 0, 0, 0, 0 });
         nudSpd.ValueChanged += nudSpd_ValueChanged;
         // 
-        // nudCur
-        // 
-        nudCur.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-        nudCur.ForeColor = System.Drawing.Color.Gainsboro;
-        nudCur.Location = new System.Drawing.Point(96, 118);
-        nudCur.Margin = new Padding(4, 3, 4, 3);
-        nudCur.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
-        nudCur.Minimum = new decimal(new int[] { 255, 0, 0, int.MinValue });
-        nudCur.Name = "nudCur";
-        nudCur.Size = new Size(70, 23);
-        nudCur.TabIndex = 51;
-        nudCur.Value = new decimal(new int[] { 0, 0, 0, 0 });
-        nudCur.ValueChanged += nudMR_ValueChanged;
-        // 
         // nudDef
         // 
         nudDef.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
         nudDef.ForeColor = System.Drawing.Color.Gainsboro;
-        nudDef.Location = new System.Drawing.Point(96, 87);
+        nudDef.Location = new System.Drawing.Point(96, 55);
         nudDef.Margin = new Padding(4, 3, 4, 3);
         nudDef.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
         nudDef.Minimum = new decimal(new int[] { 255, 0, 0, int.MinValue });
@@ -590,20 +481,6 @@ partial class frmSets
         nudDef.TabIndex = 50;
         nudDef.Value = new decimal(new int[] { 0, 0, 0, 0 });
         nudDef.ValueChanged += nudDef_ValueChanged;
-        // 
-        // nudDmg
-        // 
-        nudDmg.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-        nudDmg.ForeColor = System.Drawing.Color.Gainsboro;
-        nudDmg.Location = new System.Drawing.Point(96, 54);
-        nudDmg.Margin = new Padding(4, 3, 4, 3);
-        nudDmg.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
-        nudDmg.Minimum = new decimal(new int[] { 255, 0, 0, int.MinValue });
-        nudDmg.Name = "nudDmg";
-        nudDmg.Size = new Size(70, 23);
-        nudDmg.TabIndex = 49;
-        nudDmg.Value = new decimal(new int[] { 0, 0, 0, 0 });
-        nudDmg.ValueChanged += nudMag_ValueChanged;
         // 
         // nudStr
         // 
@@ -623,7 +500,7 @@ partial class frmSets
         // 
         nudInt.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
         nudInt.ForeColor = System.Drawing.Color.Gainsboro;
-        nudInt.Location = new System.Drawing.Point(96, 187);
+        nudInt.Location = new System.Drawing.Point(96, 121);
         nudInt.Margin = new Padding(4, 3, 4, 3);
         nudInt.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
         nudInt.Minimum = new decimal(new int[] { 255, 0, 0, int.MinValue });
@@ -637,7 +514,7 @@ partial class frmSets
         // 
         nudVit.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
         nudVit.ForeColor = System.Drawing.Color.Gainsboro;
-        nudVit.Location = new System.Drawing.Point(96, 219);
+        nudVit.Location = new System.Drawing.Point(96, 153);
         nudVit.Margin = new Padding(4, 3, 4, 3);
         nudVit.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
         nudVit.Minimum = new decimal(new int[] { 255, 0, 0, int.MinValue });
@@ -651,7 +528,7 @@ partial class frmSets
         // 
         nudAgi.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
         nudAgi.ForeColor = System.Drawing.Color.Gainsboro;
-        nudAgi.Location = new System.Drawing.Point(96, 251);
+        nudAgi.Location = new System.Drawing.Point(96, 185);
         nudAgi.Margin = new Padding(4, 3, 4, 3);
         nudAgi.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
         nudAgi.Minimum = new decimal(new int[] { 255, 0, 0, int.MinValue });
@@ -664,42 +541,22 @@ partial class frmSets
         // lblSpd
         // 
         lblSpd.AutoSize = true;
-        lblSpd.Location = new System.Drawing.Point(7, 157);
+        lblSpd.Location = new System.Drawing.Point(7, 91);
         lblSpd.Margin = new Padding(2, 0, 2, 0);
         lblSpd.Name = "lblSpd";
         lblSpd.Size = new Size(75, 15);
         lblSpd.TabIndex = 47;
         lblSpd.Text = "Move Speed:";
         // 
-        // lblMR
-        // 
-        lblMR.AutoSize = true;
-        lblMR.Location = new System.Drawing.Point(8, 123);
-        lblMR.Margin = new Padding(2, 0, 2, 0);
-        lblMR.Name = "lblMR";
-        lblMR.Size = new Size(40, 15);
-        lblMR.TabIndex = 46;
-        lblMR.Text = "Cures:";
-        // 
         // lblDef
         // 
         lblDef.AutoSize = true;
-        lblDef.Location = new System.Drawing.Point(7, 91);
+        lblDef.Location = new System.Drawing.Point(7, 59);
         lblDef.Margin = new Padding(2, 0, 2, 0);
         lblDef.Name = "lblDef";
         lblDef.Size = new Size(44, 15);
         lblDef.TabIndex = 45;
         lblDef.Text = "Armor:";
-        // 
-        // lblMag
-        // 
-        lblMag.AutoSize = true;
-        lblMag.Location = new System.Drawing.Point(8, 59);
-        lblMag.Margin = new Padding(2, 0, 2, 0);
-        lblMag.Name = "lblMag";
-        lblMag.Size = new Size(59, 15);
-        lblMag.TabIndex = 44;
-        lblMag.Text = "Damages:";
         // 
         // lblStr
         // 
@@ -714,7 +571,7 @@ partial class frmSets
         // lblARP
         // 
         lblARP.AutoSize = true;
-        lblARP.Location = new System.Drawing.Point(8, 191);
+        lblARP.Location = new System.Drawing.Point(8, 125);
         lblARP.Margin = new Padding(2, 0, 2, 0);
         lblARP.Name = "lblARP";
         lblARP.Size = new Size(74, 15);
@@ -724,7 +581,7 @@ partial class frmSets
         // lblVit
         // 
         lblVit.AutoSize = true;
-        lblVit.Location = new System.Drawing.Point(8, 224);
+        lblVit.Location = new System.Drawing.Point(8, 158);
         lblVit.Margin = new Padding(2, 0, 2, 0);
         lblVit.Name = "lblVit";
         lblVit.Size = new Size(46, 15);
@@ -734,12 +591,22 @@ partial class frmSets
         // lblWis
         // 
         lblWis.AutoSize = true;
-        lblWis.Location = new System.Drawing.Point(9, 257);
+        lblWis.Location = new System.Drawing.Point(9, 191);
         lblWis.Margin = new Padding(2, 0, 2, 0);
         lblWis.Name = "lblWis";
         lblWis.Size = new Size(44, 15);
         lblWis.TabIndex = 82;
         lblWis.Text = "Agility:";
+        // 
+        // lblTierCount
+        // 
+        lblTierCount.AutoSize = true;
+        lblTierCount.Location = new System.Drawing.Point(243, 446);
+        lblTierCount.Margin = new Padding(4, 0, 4, 0);
+        lblTierCount.Name = "lblTierCount";
+        lblTierCount.Size = new Size(126, 15);
+        lblTierCount.TabIndex = 50;
+        lblTierCount.Text = "Defined/Equipped: 0/0";
         // 
         // grpItemsSets
         // 
@@ -828,17 +695,6 @@ partial class frmSets
         lstItems.Size = new Size(231, 197);
         lstItems.TabIndex = 29;
         lstItems.SelectedIndexChanged += lstItems_SelectedIndexChanged;
-     
-        // 
-        // lblTierCount
-        // 
-        lblTierCount.AutoSize = true;
-        lblTierCount.Location = new System.Drawing.Point(243, 446);
-        lblTierCount.Margin = new Padding(4, 0, 4, 0);
-        lblTierCount.Name = "lblTierCount";
-        lblTierCount.Size = new Size(126, 15);
-        lblTierCount.TabIndex = 50;
-        lblTierCount.Text = "Defined/Equipped: 0/0";
         // 
         // grpGeneral
         // 
@@ -939,7 +795,7 @@ partial class frmSets
         grpVitalBonuses.Controls.Add(lblManaBonus);
         grpVitalBonuses.Controls.Add(lblHealthBonus);
         grpVitalBonuses.ForeColor = System.Drawing.Color.Gainsboro;
-        grpVitalBonuses.Location = new System.Drawing.Point(504, 316);
+        grpVitalBonuses.Location = new System.Drawing.Point(504, 263);
         grpVitalBonuses.Margin = new Padding(4, 3, 4, 3);
         grpVitalBonuses.Name = "grpVitalBonuses";
         grpVitalBonuses.Padding = new Padding(4, 3, 4, 3);
@@ -1091,9 +947,6 @@ partial class frmSets
         // 
         grpEffects.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
         grpEffects.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-        grpEffects.Controls.Add(chkEffectIsFlat);
-        grpEffects.Controls.Add(lblEffectFlat);
-        grpEffects.Controls.Add(nudEffectFlat);
         grpEffects.Controls.Add(lstBonusEffects);
         grpEffects.Controls.Add(lblEffectPercent);
         grpEffects.Controls.Add(nudEffectPercent);
@@ -1102,49 +955,13 @@ partial class frmSets
         grpEffects.Margin = new Padding(4, 3, 4, 3);
         grpEffects.Name = "grpEffects";
         grpEffects.Padding = new Padding(4, 3, 4, 3);
-        grpEffects.Size = new Size(307, 190);
+        grpEffects.Size = new Size(307, 200);
         grpEffects.TabIndex = 60;
         grpEffects.TabStop = false;
         grpEffects.Text = "Bonus Effects";
-        //
-        // chkEffectIsFlat
-        //
-        chkEffectIsFlat.AutoSize = true;
-        chkEffectIsFlat.Location = new System.Drawing.Point(15, 228);
-        chkEffectIsFlat.Margin = new Padding(4, 3, 4, 3);
-        chkEffectIsFlat.Name = "chkEffectIsFlat";
-        chkEffectIsFlat.Size = new System.Drawing.Size(95, 19);
-        chkEffectIsFlat.TabIndex = 61;
-        chkEffectIsFlat.Text = "Use flat value";
-        chkEffectIsFlat.Visible = false;
-        chkEffectIsFlat.CheckedChanged += chkEffectIsFlat_CheckedChanged;
-        //
-        // lblEffectFlat
-        //
-        lblEffectFlat.AutoSize = true;
-        lblEffectFlat.Location = new System.Drawing.Point(12, 184);
-        lblEffectFlat.Margin = new Padding(4, 0, 4, 0);
-        lblEffectFlat.Name = "lblEffectFlat";
-        lblEffectFlat.Size = new Size(105, 15);
-        lblEffectFlat.TabIndex = 63;
-        lblEffectFlat.Text = "Effect Amount (#):";
-        lblEffectFlat.Visible = false;
-        //
-        // nudEffectFlat
-        //
-        nudEffectFlat.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-        nudEffectFlat.ForeColor = System.Drawing.Color.Gainsboro;
-        nudEffectFlat.Location = new System.Drawing.Point(15, 206);
-        nudEffectFlat.Margin = new Padding(4, 3, 4, 3);
-        nudEffectFlat.Name = "nudEffectFlat";
-        nudEffectFlat.Size = new Size(282, 23);
-        nudEffectFlat.TabIndex = 62;
-        nudEffectFlat.Value = new decimal(new int[] { 0, 0, 0, 0 });
-        nudEffectFlat.Visible = false;
-        nudEffectFlat.ValueChanged += nudEffectFlat_ValueChanged;
-        //
+        // 
         // lstBonusEffects
-        //
+        // 
         lstBonusEffects.BackColor = System.Drawing.Color.FromArgb(60, 63, 65);
         lstBonusEffects.BorderStyle = BorderStyle.FixedSingle;
         lstBonusEffects.ForeColor = System.Drawing.Color.Gainsboro;
@@ -1153,12 +970,12 @@ partial class frmSets
         lstBonusEffects.Location = new System.Drawing.Point(15, 22);
         lstBonusEffects.Margin = new Padding(4, 3, 4, 3);
         lstBonusEffects.Name = "lstBonusEffects";
-        lstBonusEffects.Size = new Size(284, 100);
+        lstBonusEffects.Size = new Size(284, 92);
         lstBonusEffects.TabIndex = 58;
         lstBonusEffects.SelectedIndexChanged += lstBonusEffects_SelectedIndexChanged;
-        //
+        // 
         // lblEffectPercent
-        //
+        // 
         lblEffectPercent.AutoSize = true;
         lblEffectPercent.Location = new System.Drawing.Point(13, 131);
         lblEffectPercent.Margin = new Padding(4, 0, 4, 0);
@@ -1168,7 +985,7 @@ partial class frmSets
         lblEffectPercent.Text = "Effect Amount (%):";
         // 
         // nudEffectPercent
-        //
+        // 
         nudEffectPercent.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
         nudEffectPercent.ForeColor = System.Drawing.Color.Gainsboro;
         nudEffectPercent.Location = new System.Drawing.Point(15, 153);
@@ -1392,17 +1209,13 @@ partial class frmSets
         grpStats.ResumeLayout(false);
         grpStats.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)nudSpdPercentage).EndInit();
-        ((System.ComponentModel.ISupportInitialize)nudCurPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudDefPercentage).EndInit();
-        ((System.ComponentModel.ISupportInitialize)nudDmgPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudStrPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudIntPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudVitPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudAgiPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudSpd).EndInit();
-        ((System.ComponentModel.ISupportInitialize)nudCur).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudDef).EndInit();
-        ((System.ComponentModel.ISupportInitialize)nudDmg).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudStr).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudInt).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudVit).EndInit();
@@ -1455,14 +1268,10 @@ partial class frmSets
     private Label lblPercentage7;
     private Label lblPercentage6;
     private Label lblPercentage5;
-    private Label lblPercentage4;
     private Label lblPercentage3;
-    private Label lblPercentage2;
     private Label lblPercentage1;
     private DarkUI.Controls.DarkNumericUpDown nudSpdPercentage;
-    private DarkUI.Controls.DarkNumericUpDown nudCurPercentage;
     private DarkUI.Controls.DarkNumericUpDown nudDefPercentage;
-    private DarkUI.Controls.DarkNumericUpDown nudDmgPercentage;
     private DarkUI.Controls.DarkNumericUpDown nudStrPercentage;
     private DarkUI.Controls.DarkNumericUpDown nudIntPercentage;
     private DarkUI.Controls.DarkNumericUpDown nudVitPercentage;
@@ -1471,30 +1280,21 @@ partial class frmSets
     private Label lblPlus7;
     private Label lblPlus6;
     private Label lblPlus5;
-    private Label lblPlus4;
     private Label lblPlus3;
-    private Label lblPlus2;
     private Label lblPlus1;
     private DarkUI.Controls.DarkNumericUpDown nudSpd;
-    private DarkUI.Controls.DarkNumericUpDown nudCur;
     private DarkUI.Controls.DarkNumericUpDown nudDef;
-    private DarkUI.Controls.DarkNumericUpDown nudDmg;
     private DarkUI.Controls.DarkNumericUpDown nudStr;
     private DarkUI.Controls.DarkNumericUpDown nudInt;
     private DarkUI.Controls.DarkNumericUpDown nudVit;
     private DarkUI.Controls.DarkNumericUpDown nudAgi;
     private Label lblSpd;
-    private Label lblMR;
     private Label lblDef;
-    private Label lblMag;
     private Label lblStr;
     private Label lblARP;
     private Label lblVit;
     private Label lblWis;
         private DarkUI.Controls.DarkGroupBox grpEffects;
-        private DarkUI.Controls.DarkCheckBox chkEffectIsFlat;
-    private Label lblEffectFlat;
-    private DarkUI.Controls.DarkNumericUpDown nudEffectFlat;
     private ListBox lstBonusEffects;
     private Label lblEffectPercent;
     private DarkUI.Controls.DarkNumericUpDown nudEffectPercent;

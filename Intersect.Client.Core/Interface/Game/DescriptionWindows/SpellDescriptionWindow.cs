@@ -93,6 +93,7 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         {
             case SpellType.CombatSpell:
             case SpellType.WarpTo:
+            case SpellType.Resurrection:
                 SetupCombatInfo();
                 break;
             case SpellType.Dash:
@@ -132,7 +133,8 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         header.SetSubtitle(spellType, Color.White);
 
         // Set up the spelldescription based on what kind of spell it is.
-        if (_spellDescriptor.SpellType == (int)SpellType.CombatSpell)
+        if (_spellDescriptor.SpellType == SpellType.CombatSpell ||
+            _spellDescriptor.SpellType == SpellType.Resurrection)
         {
             if (_spellDescriptor.Combat.TargetType == SpellTargetType.Projectile)
             {
@@ -176,7 +178,9 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         var rows = AddRowContainer();
 
         // Friendly / Non Friendly for combat spells.
-        if (_spellDescriptor.SpellType == SpellType.CombatSpell || _spellDescriptor.SpellType == SpellType.WarpTo)
+        if (_spellDescriptor.SpellType == SpellType.CombatSpell ||
+            _spellDescriptor.SpellType == SpellType.WarpTo ||
+            _spellDescriptor.SpellType == SpellType.Resurrection)
         {
             if (_spellDescriptor.Combat.Friendly)
             {

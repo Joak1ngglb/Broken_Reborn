@@ -1352,7 +1352,9 @@ public partial class MapInstance : IMapInstance
         for (var i = 0; i < spawns.Count; i++)
         {
             var spawn = spawns[i];
-            if (!NpcSpawnInstances.TryGetValue(spawn, out var spawnInstance) || spawnInstance?.Entity?.Descriptor == default || !spawnInstance.Entity.IsDead)
+            if (!NpcSpawnInstances.TryGetValue(spawn, out var spawnInstance) ||
+                spawnInstance?.Entity?.Descriptor == default ||
+                spawnInstance.Entity.GetVital(Vital.Health) > 0)
             {
                 continue;
             }
@@ -1373,7 +1375,9 @@ public partial class MapInstance : IMapInstance
     {
         foreach (var spawn in ResourceSpawns)
         {
-            if (!ResourceSpawnInstances.TryGetValue(spawn.Value, out var spawnInstance) || spawnInstance?.Entity?.Descriptor == default || !spawnInstance.Entity.IsDead)
+            if (!ResourceSpawnInstances.TryGetValue(spawn.Value, out var spawnInstance) ||
+                spawnInstance?.Entity?.Descriptor == default ||
+                spawnInstance.Entity.GetVital(Vital.Health) > 0)
             {
                 continue;
             }

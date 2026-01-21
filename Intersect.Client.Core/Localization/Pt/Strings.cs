@@ -1343,6 +1343,7 @@ internal static partial class ClientLocalizationOverrides
                     ["3"] = "Traço",
                     ["4"] = "Especial",
                     ["5"] = "Convocar NPC",
+                    ["6"] = "Ressurreição",
                 },
                 ["StatBuff"] = "Buff de estatísticas",
                 ["StatCounts"] = new JObject

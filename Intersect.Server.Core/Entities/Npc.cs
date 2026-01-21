@@ -292,6 +292,11 @@ public partial class Npc : Entity
         return target == null || target.CachedStatuses.Any(s => s.Type == SpellEffect.Stealth);
     }
 
+    private static bool IsDownedPlayer(Entity entity)
+    {
+        return entity is Player player && player.GetVital(Vital.Health) <= 0;
+    }
+
     //Targeting
     public void AssignTarget(Entity? entity)
     {
@@ -381,6 +386,11 @@ public partial class Npc : Entity
 
     public override bool CanTarget(Entity entity)
     {
+        if (IsDownedPlayer(entity))
+        {
+            return false;
+        }
+
         // ReSharper disable once InvertIf
         if (entity is Npc npc)
         {
@@ -1575,7 +1585,7 @@ public partial class Npc : Entity
                 }
 
                 // Is this entry dead?, if so skip it.
-                if (en.Key.IsDead)
+                if (en.Key.IsDead || IsDownedPlayer(en.Key))
                 {
                     continue;
                 }
@@ -1607,7 +1617,7 @@ public partial class Npc : Entity
         {
             foreach (var entity in instance.GetCachedEntities())
             {
-                if (entity != null && !entity.IsDead && entity != this && entity.Id != avoidId)
+                if (entity != null && !entity.IsDead && !IsDownedPlayer(entity) && entity != this && entity.Id != avoidId)
                 {
                     //TODO Check if NPC is allowed to attack player with new conditions
                     if (entity is Player player)

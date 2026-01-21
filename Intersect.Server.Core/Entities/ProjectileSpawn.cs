@@ -66,14 +66,28 @@ public partial class ProjectileSpawn
 
     public bool HitEntity(Entity targetEntity)
     {
+        if (targetEntity == null)
+        {
+            return false;
+        }
+
         if (targetEntity is EventPageInstance)
         {
             return false;
         }
 
-        Player targetPlayer = targetEntity as Player;
+        if (targetEntity.IsDead)
+        {
+            return false;
+        }
 
-        if (targetEntity != null && targetEntity != Parent.Owner)
+        Player targetPlayer = targetEntity as Player;
+        if (targetPlayer != null && targetPlayer.GetVital(Vital.Health) <= 0)
+        {
+            return false;
+        }
+
+        if (targetEntity != Parent.Owner)
         {
             // Have we collided with this entity before? If so, cancel out.
             if (_entitiesCollided.Contains(targetEntity.Id))
