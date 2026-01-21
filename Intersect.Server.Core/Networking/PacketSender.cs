@@ -2335,7 +2335,17 @@ public static partial class PacketSender
     //PlayerRespawnPacket
     public static void SendPlayerRespawn(Player en)
     {
-        SendDataToProximityOnMapInstance(en.MapId, en.MapInstanceId, new PlayerRespawnPacket(en.Id));
+        var packet = new PlayerRespawnPacket(
+            en.Id,
+            en.MapId,
+            en.X,
+            en.Y,
+            en.GetVital(Vital.Health),
+            en.GetVital(Vital.Mana),
+            en.Dir
+        );
+
+        SendDataToProximityOnMapInstance(en.MapId, en.MapInstanceId, packet);
     }
 
     //EntityZDimensionPacket

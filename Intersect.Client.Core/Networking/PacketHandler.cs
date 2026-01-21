@@ -2309,6 +2309,20 @@ internal sealed partial class PacketHandler
 
         Globals.RemoveCorpse(packet.PlayerId);
 
+        if (Globals.TryGetEntity(EntityType.Player, packet.PlayerId, out var entity) && entity is Player player)
+        {
+            player.MapId = packet.MapId;
+            player.X = (byte)packet.X;
+            player.Y = (byte)packet.Y;
+            player.Vital[(int)Vital.Health] = packet.Hp;
+            player.Vital[(int)Vital.Mana] = packet.Mp;
+
+            if (packet.Direction.HasValue)
+            {
+                player.DirectionFacing = packet.Direction.Value;
+            }
+        }
+
         if (packet.PlayerId == Globals.Me?.Id)
         {
             Interface.Interface.EnqueueInGame(gameInterface => gameInterface.HideDeathWindow());
