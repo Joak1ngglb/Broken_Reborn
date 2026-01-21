@@ -186,7 +186,7 @@ public partial class CharacterWindow : Window
 
         if (!string.IsNullOrWhiteSpace(iconName))
         {
-            panel.Texture = GameContentManager.Current.GetTexture(TextureType.Misc, iconName);
+            panel.Texture = StatEffectIconProvider.GetIconTexture(iconName);
         }
 
         return panel;

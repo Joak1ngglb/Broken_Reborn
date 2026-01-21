@@ -1,3 +1,6 @@
+using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.Graphics;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 
@@ -5,6 +8,18 @@ namespace Intersect.Client.Interface.Game.DescriptionWindows;
 
 public static class StatEffectIconProvider
 {
+    public static IGameTexture? GetIconTexture(string? iconName)
+    {
+        if (string.IsNullOrWhiteSpace(iconName))
+        {
+            return null;
+        }
+
+        var contentManager = GameContentManager.Current;
+        return contentManager.GetTexture(TextureType.Misc, iconName)
+               ?? contentManager.GetTexture(TextureType.Gui, iconName);
+    }
+
     public static string? GetIconForStat(Stat stat)
     {
         return stat switch
