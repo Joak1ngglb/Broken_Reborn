@@ -230,6 +230,8 @@ public partial class Entity : IEntity
     IReadOnlyDictionary<Vital, long> IEntity.Vitals =>
         Enum.GetValues<Vital>().ToDictionary(vital => vital, vital => Vital[(int)vital]);
 
+    public virtual bool IsDead { get; protected set; }
+
     public int WalkFrame { get; set; }
 
     public FloatRect WorldPos { get; set; } = new FloatRect();
@@ -472,6 +474,7 @@ public partial class Entity : IEntity
 
         Vital = packet.Vital;
         MaxVital = packet.MaxVital;
+        IsDead = Vital[(int)Enums.Vital.Health] <= 0;
 
         //Update status effects
         Status.Clear();
@@ -1926,7 +1929,7 @@ public partial class Entity : IEntity
     {
         get
         {
-            return LatestMap == default || !ShouldDraw || Vital[(int)Enums.Vital.Health] < 1;
+            return LatestMap == default || !ShouldDraw || IsDead;
         }
     }
 

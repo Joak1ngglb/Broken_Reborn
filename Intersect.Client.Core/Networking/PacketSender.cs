@@ -432,6 +432,11 @@ public static partial class PacketSender
     {
         if (sender is InputBox inputBox && inputBox.UserData is Guid tradeId)
         {
+            if (Globals.Me?.IsDead == true)
+            {
+                return;
+            }
+
             Network.SendPacket(new TradeRequestResponsePacket(tradeId, true));
         }
     }
