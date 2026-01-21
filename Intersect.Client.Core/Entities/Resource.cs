@@ -59,10 +59,10 @@ public partial class Resource : Entity, IResource
         }
     }
 
-    public bool IsDead
+    public override bool IsDead
     {
         get => _isDead;
-        set
+        protected set
         {
             if (value == _isDead)
             {

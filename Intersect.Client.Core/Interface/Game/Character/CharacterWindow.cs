@@ -15,6 +15,7 @@ using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.GameObjects;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Client.Framework.Content;
 
@@ -66,10 +67,7 @@ public partial class CharacterWindow : Window
     private Label mAbilityPwrLabel;
     private Label mDefenseLabel;
     private Label mMagicRstLabel;
-    private Label mSpeedLabel;
     private Label mAgilityLabel;
-    private Label mDamageLabel;
-    private Label mCureLabel;
     private Label mCritChanceLabel;
     private Label mBasicAttackDamageLabel;
     private Label mPointsLabel;
@@ -83,6 +81,8 @@ public partial class CharacterWindow : Window
     // Extra Buffs UI
     private Label mHpRegen;
     private Label mManaRegen;
+    private Label mHpBonus;
+    private Label mManaBonus;
     private Label mLifeSteal;
     private Label mAttackSpeed;
     private Label mExtraExp;
@@ -101,8 +101,6 @@ public partial class CharacterWindow : Window
     private Label mArmorPenetration;
     private Label mDamageReduction;
     private Label mDamageReflect;
-    private Label mFlatDamage;
-    private Label mFlatCures;
 
     //Location
     public int X;
@@ -217,6 +215,18 @@ public partial class CharacterWindow : Window
     private string FormatEffectValue(int value)
     {
         return value == 0 ? "0" : $"{value}%";
+    }
+
+    private static int ApplySetStatBonus(int baseValue, int flatBonus, int percentBonus)
+    {
+        var percentValue = (int)Math.Round(baseValue * (percentBonus / 100f));
+        return baseValue + flatBonus + percentValue;
+    }
+
+    private static long ApplySetVitalBonus(long baseValue, long flatBonus, int percentBonus)
+    {
+        var percentValue = (long)Math.Round(baseValue * (percentBonus / 100f));
+        return baseValue + flatBonus + percentValue;
     }
 
     // -------------------------
@@ -409,12 +419,6 @@ public partial class CharacterWindow : Window
         y += StatRowHeight;
 
         // Read-only stats
-        CreateIconPanel(mStatsContainer, "SpeedIcon", iconX, y, StatRowHeight, StatEffectIconProvider.GetIconForStat(Stat.Speed));
-        mSpeedLabel = CreateBodyLabel(mStatsContainer, "SpeedLabel", labelX, y, labelWidth); y += StatRowHeight;
-        CreateIconPanel(mStatsContainer, "DamageIcon", iconX, y, StatRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Damages));
-        mDamageLabel = CreateBodyLabel(mStatsContainer, "DamageLabel", labelX, y, labelWidth); y += StatRowHeight;
-        CreateIconPanel(mStatsContainer, "CureIcon", iconX, y, StatRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Cures));
-        mCureLabel = CreateBodyLabel(mStatsContainer, "CureLabel", labelX, y, labelWidth); y += StatRowHeight;
         CreateIconPanel(mStatsContainer, "CritIcon", iconX, y, StatRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.CriticalChance));
         mCritChanceLabel = CreateBodyLabel(mStatsContainer, "CritLabel", labelX, y, labelWidth); y += StatRowHeight;
         CreateIconPanel(mStatsContainer, "PointsIcon", iconX, y, StatRowHeight, null);
@@ -449,21 +453,32 @@ public partial class CharacterWindow : Window
         var labelWidth = EffectLabelWidth - labelX;
 
         // Apilado 1 por 1 (una sola columna)
+        CreateIconPanel(mExtraBuffsList, "HpBonusIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForVital(Vital.Health));
+        mHpBonus = CreateBodyLabel(mExtraBuffsList, "HpBonus", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
+        CreateIconPanel(mExtraBuffsList, "ManaBonusIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForVital(Vital.Mana));
+        mManaBonus = CreateBodyLabel(mExtraBuffsList, "ManaBonus", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
         CreateIconPanel(mExtraBuffsList, "HpRegenIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForVital(Vital.Health));
         mHpRegen = CreateBodyLabel(mExtraBuffsList, "HpRegen", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
         CreateIconPanel(mExtraBuffsList, "ManaRegenIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForVital(Vital.Mana));
         mManaRegen = CreateBodyLabel(mExtraBuffsList, "ManaRegen", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
-        CreateIconPanel(mExtraBuffsList, "LifestealIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Lifesteal));
+         CreateIconPanel(mExtraBuffsList, "LifestealIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Lifesteal));
         mLifeSteal = CreateBodyLabel(mExtraBuffsList, "Lifesteal", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
-        CreateIconPanel(mExtraBuffsList, "AttackSpeedIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForStat(Stat.Speed));
-        mAttackSpeed = CreateBodyLabel(mExtraBuffsList, "AttackSpeed", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
-
-        CreateIconPanel(mExtraBuffsList, "SpeedBuffIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForStat(Stat.Speed));
-        mSpeedBuff = CreateBodyLabel(mExtraBuffsList, "SpeedBuff", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
-        CreateIconPanel(mExtraBuffsList, "DamageBuffIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Damages));
-        mDamageBuff = CreateBodyLabel(mExtraBuffsList, "DamageBuff", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
+        CreateIconPanel(mExtraBuffsList, "ManaStealIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Manasteal));
+        mManaSteal = CreateBodyLabel(mExtraBuffsList, "Manasteal", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
         CreateIconPanel(mExtraBuffsList, "CureBuffIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Cures));
         mCureBuff = CreateBodyLabel(mExtraBuffsList, "CureBuff", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
+        CreateIconPanel(mExtraBuffsList, "SpeedBuffIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForStat(Stat.Speed));
+        mSpeedBuff = CreateBodyLabel(mExtraBuffsList, "SpeedBuff", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
+        CreateIconPanel(mExtraBuffsList, "AttackSpeedIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForStat(Stat.Speed));
+        mAttackSpeed = CreateBodyLabel(mExtraBuffsList, "AttackSpeed", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
+        CreateIconPanel(mExtraBuffsList, "AccuracyIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Accuracy));
+        mAccuracy = CreateBodyLabel(mExtraBuffsList, "Accuracy", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
+        CreateIconPanel(mExtraBuffsList, "EvasionIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Evasion));
+        mEvasion = CreateBodyLabel(mExtraBuffsList, "Evasion", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
+        CreateIconPanel(mExtraBuffsList, "CriticalBonusIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.CriticalChance));
+        mCritBonus = CreateBodyLabel(mExtraBuffsList, "CriticalBonus", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
+        CreateIconPanel(mExtraBuffsList, "AntiCriticalIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.AntiCritChance));
+        mAntiCrit = CreateBodyLabel(mExtraBuffsList, "AntiCritical", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
 
         CreateIconPanel(mExtraBuffsList, "ExtraExpIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.EXP));
         mExtraExp = CreateBodyLabel(mExtraBuffsList, "ExtraExp", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
@@ -473,28 +488,17 @@ public partial class CharacterWindow : Window
         mTenacity = CreateBodyLabel(mExtraBuffsList, "Tenacity", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
         CreateIconPanel(mExtraBuffsList, "CooldownReductionIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.CooldownReduction));
         mCooldownReduction = CreateBodyLabel(mExtraBuffsList, "CooldownReduction", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
-        CreateIconPanel(mExtraBuffsList, "ManaStealIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Manasteal));
-        mManaSteal = CreateBodyLabel(mExtraBuffsList, "Manasteal", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
 
-        CreateIconPanel(mExtraBuffsList, "AccuracyIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Accuracy));
-        mAccuracy = CreateBodyLabel(mExtraBuffsList, "Accuracy", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
-        CreateIconPanel(mExtraBuffsList, "EvasionIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Evasion));
-        mEvasion = CreateBodyLabel(mExtraBuffsList, "Evasion", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
-        CreateIconPanel(mExtraBuffsList, "CriticalBonusIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.CriticalChance));
-        mCritBonus = CreateBodyLabel(mExtraBuffsList, "CriticalBonus", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
-        CreateIconPanel(mExtraBuffsList, "AntiCriticalIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.AntiCritChance));
-        mAntiCrit = CreateBodyLabel(mExtraBuffsList, "AntiCritical", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
+        CreateIconPanel(mExtraBuffsList, "DamageBuffIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Damages));
+        mDamageBuff = CreateBodyLabel(mExtraBuffsList, "DamageBuff", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
+   
+
         CreateIconPanel(mExtraBuffsList, "ArmorPenetrationIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.ArmorPenetration));
         mArmorPenetration = CreateBodyLabel(mExtraBuffsList, "ArmorPenetration", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
         CreateIconPanel(mExtraBuffsList, "DamageReductionIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.DamageReduction));
         mDamageReduction = CreateBodyLabel(mExtraBuffsList, "DamageReduction", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
         CreateIconPanel(mExtraBuffsList, "DamageReflectIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.DamageReflect));
         mDamageReflect = CreateBodyLabel(mExtraBuffsList, "DamageReflect", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
-
-        CreateIconPanel(mExtraBuffsList, "FlatDamageIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Damages));
-        mFlatDamage = CreateBodyLabel(mExtraBuffsList, "FlatDamage", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
-        CreateIconPanel(mExtraBuffsList, "FlatCuresIcon", iconX, y, EffectRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Cures));
-        mFlatCures = CreateBodyLabel(mExtraBuffsList, "FlatCures", labelX, y, labelWidth, EffectRowHeight); y += EffectRowHeight;
 
         // Ajusta el alto del list para que el scroll funcione bien
         mExtraBuffsList.SetSize(mExtraBuffsList.Width, y + 4);
@@ -568,6 +572,11 @@ public partial class CharacterWindow : Window
         scalingStat = Stat.Attack;
         scalingPercent = 0;
 
+        if (player is null)
+        {
+            return false;
+        }
+
         var weaponSlotIndex = Options.Instance.Equipment.Slots.IndexOf("Weapon");
         if (weaponSlotIndex < 0)
         {
@@ -588,7 +597,13 @@ public partial class CharacterWindow : Window
                 var invIndex = list[0];
                 if (invIndex >= 0 && invIndex < Options.Instance.Player.MaxInventory)
                 {
-                    weaponId = player.Inventory[invIndex].ItemId;
+                    var inventoryItem = player.Inventory[invIndex];
+                    if (inventoryItem is null)
+                    {
+                        return false;
+                    }
+
+                    weaponId = inventoryItem.ItemId;
                 }
             }
         }
@@ -708,7 +723,6 @@ public partial class CharacterWindow : Window
         mAbilityPwrLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Intelligence], player.Stat[(int)Stat.Intelligence]));
         mDefenseLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Defense], player.Stat[(int)Stat.Defense]));
         mMagicRstLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Vitality], player.Stat[(int)Stat.Vitality]));
-        mSpeedLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Speed], player.Stat[(int)Stat.Speed]));
         mAgilityLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Agility], player.Stat[(int)Stat.Agility]));
 
         var critChance = player.CalculateCriticalChance(player.GetBaseCriticalChance());
@@ -725,8 +739,6 @@ public partial class CharacterWindow : Window
 
         // Effects
         UpdateExtraBuffs();
-        mDamageLabel.SetText(Strings.Character.FlatDamage.ToString(FormatEffectValue(_flatDamage)));
-        mCureLabel.SetText(Strings.Character.FlatCures.ToString(FormatEffectValue(_flatCures)));
 
         UpdateEquippedItems(true);
     }
@@ -813,7 +825,13 @@ public partial class CharacterWindow : Window
 
         if (player != null)
         {
-            foreach (var descriptor in GetEquippedDescriptors(player))
+            var equippedDescriptors = GetEquippedDescriptors(player).ToList();
+            var setStatBonuses = new int[Enum.GetValues<Stat>().Length];
+            var setPercentStatBonuses = new int[Enum.GetValues<Stat>().Length];
+            var setVitalBonuses = new long[Enum.GetValues<Vital>().Length];
+            var setPercentVitalBonuses = new int[Enum.GetValues<Vital>().Length];
+
+            foreach (var descriptor in equippedDescriptors)
             {
                 HpRegenAmount += descriptor.VitalsRegen[(int)Vital.Health];
                 ManaRegenAmount += descriptor.VitalsRegen[(int)Vital.Mana];
@@ -848,11 +866,100 @@ public partial class CharacterWindow : Window
                 }
             }
 
+            var setsById = equippedDescriptors
+                .Where(descriptor => descriptor.SetId != Guid.Empty)
+                .GroupBy(descriptor => descriptor.SetId);
+
+            foreach (var setGroup in setsById)
+            {
+                var set = SetDescriptor.Get(setGroup.Key);
+                if (set == null)
+                {
+                    continue;
+                }
+
+                var setBonuses = set.GetBonuses(setGroup.Count());
+                for (var i = 0; i < setBonuses.stats.Length; i++)
+                {
+                    setStatBonuses[i] += setBonuses.stats[i];
+                    setPercentStatBonuses[i] += setBonuses.percentStats[i];
+                }
+
+                for (var i = 0; i < setBonuses.vitals.Length; i++)
+                {
+                    setVitalBonuses[i] += setBonuses.vitals[i];
+                    setPercentVitalBonuses[i] += setBonuses.percentVitals[i];
+                }
+
+                HpRegenAmount += setBonuses.vitalsRegen[(int)Vital.Health];
+                ManaRegenAmount += setBonuses.vitalsRegen[(int)Vital.Mana];
+
+                foreach (var effect in setBonuses.effects)
+                {
+                    var effectValue = effect.Percentage;
+                    if (effectValue == 0)
+                    {
+                        continue;
+                    }
+
+                    switch (effect.Type)
+                    {
+                        case ItemEffect.CooldownReduction: CooldownAmount += effectValue; break;
+                        case ItemEffect.Lifesteal: LifeStealAmount += effectValue; break;
+                        case ItemEffect.Tenacity: TenacityAmount += effectValue; break;
+                        case ItemEffect.Luck: LuckAmount += effectValue; break;
+                        case ItemEffect.EXP: ExtraExpAmount += effectValue; break;
+                        case ItemEffect.Manasteal: ManaStealAmount += effectValue; break;
+
+                        case ItemEffect.Accuracy: _accuracy += effectValue; break;
+                        case ItemEffect.Evasion: _evasion += effectValue; break;
+                        case ItemEffect.CriticalChance: _critBonus += effectValue; break;
+                        case ItemEffect.AntiCritChance: _antiCrit += effectValue; break;
+                        case ItemEffect.ArmorPenetration: _armorPenetration += effectValue; break;
+                        case ItemEffect.DamageReduction: _damageReduction += effectValue; break;
+                        case ItemEffect.DamageReflect: _damageReflect += effectValue; break;
+                        case ItemEffect.Damages: _flatDamage += effectValue; break;
+                        case ItemEffect.Cures: _flatCures += effectValue; break;
+                    }
+                }
+            }
+
+            var attackStat = ApplySetStatBonus(player.Stat[(int)Stat.Attack], setStatBonuses[(int)Stat.Attack], setPercentStatBonuses[(int)Stat.Attack]);
+            var abilityStat = ApplySetStatBonus(player.Stat[(int)Stat.Intelligence], setStatBonuses[(int)Stat.Intelligence], setPercentStatBonuses[(int)Stat.Intelligence]);
+            var defenseStat = ApplySetStatBonus(player.Stat[(int)Stat.Defense], setStatBonuses[(int)Stat.Defense], setPercentStatBonuses[(int)Stat.Defense]);
+            var magicResistStat = ApplySetStatBonus(player.Stat[(int)Stat.Vitality], setStatBonuses[(int)Stat.Vitality], setPercentStatBonuses[(int)Stat.Vitality]);
+            var agilityStat = ApplySetStatBonus(player.Stat[(int)Stat.Agility], setStatBonuses[(int)Stat.Agility], setPercentStatBonuses[(int)Stat.Agility]);
+
+            mAttackLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Attack], attackStat));
+            mAbilityPwrLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Intelligence], abilityStat));
+            mDefenseLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Defense], defenseStat));
+            mMagicRstLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Vitality], magicResistStat));
+            mAgilityLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Agility], agilityStat));
+            var healthVital = ApplySetVitalBonus(
+                player.MaxVital[(int)Vital.Health],
+                setVitalBonuses[(int)Vital.Health],
+                setPercentVitalBonuses[(int)Vital.Health]
+            );
+            var manaVital = ApplySetVitalBonus(
+                player.MaxVital[(int)Vital.Mana],
+                setVitalBonuses[(int)Vital.Mana],
+                setPercentVitalBonuses[(int)Vital.Mana]
+            );
+
+            mHpBonus.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Vitals[(int)Vital.Health], healthVital));
+            mManaBonus.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Vitals[Vital.Mana], manaVital));
+
             mAttackSpeed.SetText(Strings.Character.AttackSpeed.ToString(player.CalculateAttackTime() / 1000f));
+
+            var speedStat = ApplySetStatBonus(
+                player.Stat[(int)Stat.Speed],
+                setStatBonuses[(int)Stat.Speed],
+                setPercentStatBonuses[(int)Stat.Speed]
+            );
 
             mSpeedBuff.SetText(Strings.Character.StatLabelValue.ToString(
                 Strings.Combat.Stats[Stat.Speed],
-                player.Stat[(int)Stat.Speed]
+                speedStat
             ));
 
             int sourceBaseDamage;
@@ -901,10 +1008,6 @@ public partial class CharacterWindow : Window
         mArmorPenetration.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.ArmorPenetration]} {FormatEffectValue(_armorPenetration)}");
         mDamageReduction.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.DamageReduction]} {FormatEffectValue(_damageReduction)}");
         mDamageReflect.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.DamageReflect]} {FormatEffectValue(_damageReflect)}");
-
-        // Estos dos son “flat” pero los estás mostrando también acá
-        mFlatDamage.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.Damages]} {FormatEffectValue(_flatDamage)}");
-        mFlatCures.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.Cures]} {FormatEffectValue(_flatCures)}");
 
         // Reajusta alto del listado por si cambiaste fuentes/escala
         if (mExtraBuffsList != null)
