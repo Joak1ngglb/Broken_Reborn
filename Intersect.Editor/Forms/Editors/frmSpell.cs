@@ -612,7 +612,10 @@ public partial class FrmSpell : EditorForm
         // Reset our combat data location, since event type spells can move it.
         grpCombat.Location = new System.Drawing.Point(grpEvent.Location.X, grpEvent.Location.Y);
 
-        if (cmbType.SelectedIndex == (int)SpellType.CombatSpell ||
+        var isCombatLikeSpell = cmbType.SelectedIndex == (int)SpellType.CombatSpell ||
+            cmbType.SelectedIndex == (int)SpellType.Resurrection;
+
+        if (isCombatLikeSpell ||
             cmbType.SelectedIndex == (int)SpellType.WarpTo ||
             cmbType.SelectedIndex == (int)SpellType.Event)
         {
@@ -715,12 +718,14 @@ public partial class FrmSpell : EditorForm
         nudDuration.Hide();
         lblTrapAnimation.Hide();
         cmbTrapAnimation.Hide();
+        var isCombatLikeSpell = cmbType.SelectedIndex == (int)SpellType.CombatSpell ||
+            cmbType.SelectedIndex == (int)SpellType.Resurrection;
         if (cmbTargetType.SelectedIndex == (int)SpellTargetType.Single)
         {
             lblCastRange.Show();
             nudCastRange.Show();
             nudCastRange.Value = mEditorItem.Combat.CastRange;
-            if (cmbType.SelectedIndex == (int)SpellType.CombatSpell)
+            if (isCombatLikeSpell)
             {
                 lblHitRadius.Show();
                 nudHitRadius.Show();
@@ -729,7 +734,7 @@ public partial class FrmSpell : EditorForm
         }
 
         if (cmbTargetType.SelectedIndex == (int)SpellTargetType.AoE &&
-            cmbType.SelectedIndex == (int)SpellType.CombatSpell)
+            isCombatLikeSpell)
         {
             lblHitRadius.Show();
             nudHitRadius.Show();

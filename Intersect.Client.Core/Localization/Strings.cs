@@ -3598,6 +3598,7 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {3, @"Dash"},
             {4, @"Special"},
             {5, @"Summon NPC"},
+            {6, @"Resurrection"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
