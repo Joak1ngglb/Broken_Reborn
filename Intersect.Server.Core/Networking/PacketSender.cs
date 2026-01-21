@@ -2332,6 +2332,12 @@ public static partial class PacketSender
         SendDataToProximityOnMapInstance(en.MapId, en.MapInstanceId, new PlayerDeathPacket(en.Id));
     }
 
+    //PlayerRespawnPacket
+    public static void SendPlayerRespawn(Player en)
+    {
+        SendDataToProximityOnMapInstance(en.MapId, en.MapInstanceId, new PlayerRespawnPacket(en.Id));
+    }
+
     //EntityZDimensionPacket
     public static void UpdateEntityZDimension(Entity en, byte z)
     {

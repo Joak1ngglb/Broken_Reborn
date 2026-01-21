@@ -161,6 +161,11 @@ public static partial class PacketSender
         Network.SendPacket(new SetAlignmentRequestPacket(alignment));
     }
 
+    public static void SendRespawn()
+    {
+        Network.SendPacket(new RespawnPacket());
+    }
+
 
     public static void SendActivateEvent(Guid eventId)
     {

@@ -2283,6 +2283,17 @@ internal sealed partial class PacketHandler
         }
     }
 
+    //PlayerRespawnPacket
+    public void HandlePacket(IPacketSender packetSender, PlayerRespawnPacket packet)
+    {
+        if (Globals.Entities.ContainsKey(packet.PlayerId))
+        {
+            Globals.Entities[packet.PlayerId].DashQueue.Clear();
+            Globals.Entities[packet.PlayerId].Dashing = null;
+            Globals.Entities[packet.PlayerId].DashTimer = 0;
+        }
+    }
+
     //EntityZDimensionPacket
     public void HandlePacket(IPacketSender packetSender, EntityZDimensionPacket packet)
     {

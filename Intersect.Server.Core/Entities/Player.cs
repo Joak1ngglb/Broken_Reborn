@@ -1235,6 +1235,7 @@ public partial class Player : Entity
         Reset();
 
         PacketSender.SendEntityDataToProximity(this);
+        PacketSender.SendPlayerRespawn(this);
 
         //Search death common event trigger
         StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);

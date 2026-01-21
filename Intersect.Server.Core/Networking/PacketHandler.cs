@@ -6,6 +6,7 @@ using Intersect.Network;
 using Intersect.Network.Packets;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Localization;
+using Intersect.Network.Packets.Server;
 using Intersect.Server.Database;
 using Intersect.Server.Database.Logging.Entities;
 using Intersect.Server.Database.PlayerData;
@@ -28,7 +29,6 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.Security;
-using Intersect.Network.Packets.Server;
 using Intersect.Server.Core;
 using Intersect.Server.Services;
 using Microsoft.Extensions.Logging;
@@ -1503,6 +1503,21 @@ internal sealed partial class PacketHandler
     //EnterGamePacket
     public void HandlePacket(Client client, EnterGamePacket packet)
     {
+    }
+
+    //RespawnPacket
+    public void HandlePacket(Client client, RespawnPacket packet)
+    {
+        var player = client?.Entity;
+        if (player == null || !player.IsDead)
+        {
+            return;
+        }
+
+        player.WarpToSpawn();
+        player.Reset();
+        PacketSender.SendEntityDataToProximity(player);
+        PacketSender.SendPlayerRespawn(player);
     }
 
     //ActivateEventPacket
