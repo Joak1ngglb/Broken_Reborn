@@ -2325,7 +2325,32 @@ internal sealed partial class PacketHandler
 
         if (packet.PlayerId == Globals.Me?.Id)
         {
-            Interface.Interface.EnqueueInGame(gameInterface => gameInterface.HideDeathWindow());
+            if (Globals.Me != null)
+            {
+                Globals.Me.IsMoving = false;
+                Globals.Me.DirectionMoving = Direction.None;
+                Globals.Me.MoveTimer = 0;
+                Globals.Me.OffsetX = 0;
+                Globals.Me.OffsetY = 0;
+                Globals.Me.AttackTimer = 0;
+                Globals.Me.AttackTime = -1;
+                Globals.Me.CastTime = 0;
+                Globals.Me.IsBlocking = false;
+                Globals.Me.SpellCast = Guid.Empty;
+                Globals.Me.CombatTimer = 0;
+            }
+
+            Interface.Interface.EnqueueInGame(gameInterface =>
+            {
+                gameInterface.HideDeathWindow();
+                if (gameInterface.PlayerStatusWindow != null)
+                {
+                    gameInterface.PlayerStatusWindow.ShouldUpdateStatuses = true;
+                    gameInterface.PlayerStatusWindow.Update();
+                }
+
+                gameInterface.PlayerBox?.Update();
+            });
         }
     }
 
