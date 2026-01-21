@@ -2281,6 +2281,11 @@ internal sealed partial class PacketHandler
             Globals.Entities[packet.PlayerId].Dashing = null;
             Globals.Entities[packet.PlayerId].DashTimer = 0;
         }
+
+        if (packet.PlayerId == Globals.Me?.Id)
+        {
+            Interface.Interface.EnqueueInGame(gameInterface => gameInterface.ShowDeathWindow());
+        }
     }
 
     //PlayerRespawnPacket
@@ -2291,6 +2296,11 @@ internal sealed partial class PacketHandler
             Globals.Entities[packet.PlayerId].DashQueue.Clear();
             Globals.Entities[packet.PlayerId].Dashing = null;
             Globals.Entities[packet.PlayerId].DashTimer = 0;
+        }
+
+        if (packet.PlayerId == Globals.Me?.Id)
+        {
+            Interface.Interface.EnqueueInGame(gameInterface => gameInterface.HideDeathWindow());
         }
     }
 

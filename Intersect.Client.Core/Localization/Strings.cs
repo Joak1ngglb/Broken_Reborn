@@ -3797,6 +3797,18 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         public static LocalizedString Updating = @"Downloading updates, please wait.";
     }
 
+    public partial struct DeathWindow
+    {
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Title = @"You Died";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Message = @"You have fallen in battle.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Respawn = @"Respawn";
+    }
+
     public partial struct GameWindow
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
