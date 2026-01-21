@@ -871,8 +871,11 @@ public partial class Player : Entity
                     mStaleCooldownTimer = Timing.Global.Milliseconds + Options.Instance.Processing.StaleCooldownRemovalTimer;
                 }
 
-
-                base.Update(timeMs);
+                var isDowned = GetVital(Vital.Health) <= 0;
+                if (!isDowned)
+                {
+                    base.Update(timeMs);
+                }
 
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
                 {
@@ -902,7 +905,7 @@ public partial class Player : Entity
                 }
 
                 //If we have a move route then let's process it....
-                if (MoveRoute != null && MoveTimer < timeMs)
+                if (!isDowned && MoveRoute != null && MoveTimer < timeMs)
                 {
                     //Check to see if the event instance is still active for us... if not then let's remove this route
                     var foundEvent = false;
@@ -1325,6 +1328,11 @@ public partial class Player : Entity
     public override void ProcessRegen()
     {
         Debug.Assert(ClassDescriptor.Lookup != null, "ClassBase.Lookup != null");
+
+        if (GetVital(Vital.Health) <= 0)
+        {
+            return;
+        }
 
         var playerClass = ClassDescriptor.Get(ClassId);
         if (playerClass?.VitalRegen == null)
