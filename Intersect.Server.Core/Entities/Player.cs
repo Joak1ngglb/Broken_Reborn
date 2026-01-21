@@ -79,6 +79,21 @@ public partial class Player : Entity
     [JsonIgnore, NotMapped]
     public long[] MaxVitals => GetMaxVitals();
 
+    [JsonIgnore, NotMapped]
+    public long DeathTimeMs { get; set; }
+
+    [JsonIgnore, NotMapped]
+    private bool mHasPendingJailRespawn;
+
+    [JsonIgnore, NotMapped]
+    private Guid mPendingJailMapId = Guid.Empty;
+
+    [JsonIgnore, NotMapped]
+    private byte mPendingJailX;
+
+    [JsonIgnore, NotMapped]
+    private byte mPendingJailY;
+
     //Name, X, Y, Dir, Etc all in the base Entity Class
     public Guid ClassId { get; set; }
 
@@ -868,8 +883,11 @@ public partial class Player : Entity
                     mStaleCooldownTimer = Timing.Global.Milliseconds + Options.Instance.Processing.StaleCooldownRemovalTimer;
                 }
 
-
-                base.Update(timeMs);
+                var isDowned = GetVital(Vital.Health) <= 0;
+                if (!isDowned)
+                {
+                    base.Update(timeMs);
+                }
 
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
                 {
@@ -899,7 +917,7 @@ public partial class Player : Entity
                 }
 
                 //If we have a move route then let's process it....
-                if (MoveRoute != null && MoveTimer < timeMs)
+                if (!isDowned && MoveRoute != null && MoveTimer < timeMs)
                 {
                     //Check to see if the event instance is still active for us... if not then let's remove this route
                     var foundEvent = false;
@@ -1223,7 +1241,12 @@ public partial class Player : Entity
     //Spawning/Dying
     private void Respawn()
     {
-        if (ClassDescriptor.TryGet(ClassId, out _))
+        if (mHasPendingJailRespawn && mPendingJailMapId != Guid.Empty)
+        {
+            Warp(mPendingJailMapId, mPendingJailX, mPendingJailY);
+            ClearPendingJailRespawn();
+        }
+        else if (ClassDescriptor.TryGet(ClassId, out _))
         {
             WarpToSpawn();
         }
@@ -1233,17 +1256,50 @@ public partial class Player : Entity
         }
 
         Reset();
+        DeathTimeMs = 0;
 
         PacketSender.SendEntityDataToProximity(this);
+        PacketSender.SendPlayerRespawn(this);
 
         //Search death common event trigger
         StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);
+    }
+
+    private void SetPendingJailRespawn(Guid jailMapId, byte jailX, byte jailY)
+    {
+        mHasPendingJailRespawn = true;
+        mPendingJailMapId = jailMapId;
+        mPendingJailX = jailX;
+        mPendingJailY = jailY;
+    }
+
+    private void ClearPendingJailRespawn()
+    {
+        mHasPendingJailRespawn = false;
+        mPendingJailMapId = Guid.Empty;
+        mPendingJailX = 0;
+        mPendingJailY = 0;
+    }
+
+    internal void RespawnFromResurrection()
+    {
+        Respawn();
+    }
+
+    internal void RespawnFromPacket()
+    {
+        Respawn();
     }
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
         CastTime = 0;
         CastTarget = null;
+        AttackTimer = 0;
+        CombatTimer = 0;
+        Target = null;
+        IsBlocking = false;
+        DeathTimeMs = Timing.Global.Milliseconds;
 
         //Flag death to the client
         PlayDeathAnimation();
@@ -1306,10 +1362,9 @@ public partial class Player : Entity
             }
         }
         PacketSender.SendEntityDie(this);
-        Respawn();
         if (sendToJail)
         {
-            Warp(jailMapId, jailX, jailY);
+            SetPendingJailRespawn(jailMapId, jailX, jailY);
         }
         PacketSender.SendInventory(this);
         PacketSender.SendPlayerSpells(this);
@@ -1319,6 +1374,11 @@ public partial class Player : Entity
     public override void ProcessRegen()
     {
         Debug.Assert(ClassDescriptor.Lookup != null, "ClassBase.Lookup != null");
+
+        if (GetVital(Vital.Health) <= 0)
+        {
+            return;
+        }
 
         var playerClass = ClassDescriptor.Get(ClassId);
         if (playerClass?.VitalRegen == null)

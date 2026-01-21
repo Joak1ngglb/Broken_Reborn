@@ -161,6 +161,11 @@ public static partial class PacketSender
         Network.SendPacket(new SetAlignmentRequestPacket(alignment));
     }
 
+    public static void SendRespawn()
+    {
+        Network.SendPacket(new RespawnPacket());
+    }
+
 
     public static void SendActivateEvent(Guid eventId)
     {
@@ -427,6 +432,11 @@ public static partial class PacketSender
     {
         if (sender is InputBox inputBox && inputBox.UserData is Guid tradeId)
         {
+            if (Globals.Me?.IsDead == true)
+            {
+                return;
+            }
+
             Network.SendPacket(new TradeRequestResponsePacket(tradeId, true));
         }
     }

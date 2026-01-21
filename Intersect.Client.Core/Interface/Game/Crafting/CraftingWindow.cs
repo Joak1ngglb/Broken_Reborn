@@ -491,6 +491,11 @@ public partial class CraftingWindow : Window
             return;
         }
 
+        if (Globals.Me?.IsDead == true)
+        {
+            return;
+        }
+
         if (CanCraft())
         {
             mRemainingCrafts = count;

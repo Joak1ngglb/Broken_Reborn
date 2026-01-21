@@ -125,6 +125,7 @@ public partial class Resource : Entity
         }
 
         IsDead = false;
+        ResetDeathProcessed();
         PacketSender.SendEntityDataToProximity(this);
         PacketSender.SendEntityPositionToAll(this);
     }

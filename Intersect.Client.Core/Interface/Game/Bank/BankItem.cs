@@ -223,6 +223,11 @@ public partial class BankItem : SlotItem
             switch (targetNode)
             {
                 case BankItem bankItem:
+                    if (player.IsDead)
+                    {
+                        return false;
+                    }
+
                     PacketSender.SendMoveBankItems(SlotIndex, bankItem.SlotIndex);
                     return true;
 
