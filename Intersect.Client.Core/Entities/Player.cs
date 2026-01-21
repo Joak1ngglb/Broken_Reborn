@@ -322,36 +322,39 @@ public partial class Player : Entity, IPlayer
 
         if (!IsBusy)
         {
-            if (this == Globals.Me && IsMoving == false)
+            if (!IsDead)
             {
-                ProcessDirectionalInput();
-            }
-
-            if (Controls.IsControlPressed(Control.AttackInteract))
-            {
-                if (IsCasting)
+                if (this == Globals.Me && IsMoving == false)
                 {
-                    if (IsCastingCheckTimer < Timing.Global.Milliseconds &&
-                        Options.Instance.Combat.EnableCombatChatMessages)
+                    ProcessDirectionalInput();
+                }
+
+                if (Controls.IsControlPressed(Control.AttackInteract))
+                {
+                    if (IsCasting)
                     {
-                        ChatboxMsg.AddMessage(new ChatboxMsg(Strings.Combat.AttackWhileCastingDeny,
-                            CustomColors.Alerts.Declined, ChatMessageType.Combat));
-                        IsCastingCheckTimer = Timing.Global.Milliseconds + 350;
+                        if (IsCastingCheckTimer < Timing.Global.Milliseconds &&
+                            Options.Instance.Combat.EnableCombatChatMessages)
+                        {
+                            ChatboxMsg.AddMessage(new ChatboxMsg(Strings.Combat.AttackWhileCastingDeny,
+                                CustomColors.Alerts.Declined, ChatMessageType.Combat));
+                            IsCastingCheckTimer = Timing.Global.Milliseconds + 350;
+                        }
+                    }
+                    else if (Globals.Me?.TryAttack() == false)
+                    {
+                        if (!Globals.Me.IsAttacking && (!IsMoving || Options.Instance.Player.AllowCombatMovement))
+                        {
+                            Globals.Me.AttackTimer = Timing.Global.Milliseconds + Globals.Me.CalculateAttackTime();
+                        }
                     }
                 }
-                else if (Globals.Me?.TryAttack() == false)
-                {
-                    if (!Globals.Me.IsAttacking && (!IsMoving || Options.Instance.Player.AllowCombatMovement))
-                    {
-                        Globals.Me.AttackTimer = Timing.Global.Milliseconds + Globals.Me.CalculateAttackTime();
-                    }
-                }
-            }
 
-            //Holding block button for "auto blocking"
-            if (Controls.IsControlPressed(Control.Block))
-            {
-                _ = TryBlock();
+                //Holding block button for "auto blocking"
+                if (Controls.IsControlPressed(Control.Block))
+                {
+                    _ = TryBlock();
+                }
             }
         }
 
@@ -861,6 +864,11 @@ public partial class Player : Entity, IPlayer
 
     public void TrySellItem(int inventorySlotIndex)
     {
+        if (IsDead)
+        {
+            return;
+        }
+
         var inventorySlot = Inventory[inventorySlotIndex];
         if (inventorySlot == null || inventorySlot.ItemId == Guid.Empty)
         {
@@ -946,6 +954,11 @@ public partial class Player : Entity, IPlayer
 
     public void TryBuyItem(int shopSlotIndex)
     {
+        if (IsDead)
+        {
+            return;
+        }
+
         //Confirm the purchase
         var shopSlot = Globals.GameShop?.SellingItems[shopSlotIndex];
         if (shopSlot == default || !ItemDescriptor.TryGet(shopSlot.ItemId, out var itemDescriptor))
@@ -1024,6 +1037,11 @@ public partial class Player : Entity, IPlayer
         bool skipPrompt = false
     )
     {
+        if (IsDead)
+        {
+            return false;
+        }
+
         // Permission Check for Guild Bank
         if (Globals.IsGuildBank && !IsGuildBankDepositAllowed())
         {
@@ -1157,6 +1175,11 @@ public partial class Player : Entity, IPlayer
         bool skipPrompt = false
     )
     {
+        if (IsDead)
+        {
+            return false;
+        }
+
         // Permission Check for Guild Bank
         if (Globals.IsGuildBank && !IsGuildBankWithdrawAllowed())
         {
@@ -1382,6 +1405,11 @@ public partial class Player : Entity, IPlayer
     //Trade
     public void TryOfferItemToTrade(int index)
     {
+        if (IsDead)
+        {
+            return;
+        }
+
         var slot = Inventory[index];
         if (slot == null || slot.ItemId == Guid.Empty)
         {
@@ -1435,6 +1463,11 @@ public partial class Player : Entity, IPlayer
 
     public void TryCancelOfferToTradeItem(int index)
     {
+        if (IsDead)
+        {
+            return;
+        }
+
         var slot = Globals.Trade[0, index];
         var quantity = slot.Quantity;
         var revokedItem = ItemDescriptor.Get(slot.ItemId);
@@ -1513,6 +1546,11 @@ public partial class Player : Entity, IPlayer
 
     public void TryUseSpell(int index)
     {
+        if (IsDead)
+        {
+            return;
+        }
+
         if (index < 0 || Spells.Length <= index)
         {
             return;
@@ -1562,6 +1600,11 @@ public partial class Player : Entity, IPlayer
 
     public void TryUseSpell(Guid spellId)
     {
+        if (IsDead)
+        {
+            return;
+        }
+
         if (spellId == Guid.Empty)
         {
             return;
@@ -1772,6 +1815,12 @@ public partial class Player : Entity, IPlayer
 
         if (Interface.Interface.HasInputFocus())
         {
+            return;
+        }
+
+        if (IsDead)
+        {
+            DirectionMoving = Direction.None;
             return;
         }
 
@@ -2136,6 +2185,11 @@ public partial class Player : Entity, IPlayer
 
     public bool TryBlock()
     {
+        if (IsDead)
+        {
+            return false;
+        }
+
         var shieldIndex = Options.Instance.Equipment.ShieldSlot;
         var myShieldIndex = MyEquipment?.GetValueOrDefault(shieldIndex)?.FirstOrDefault(-1) ?? -1;
 
@@ -2166,6 +2220,11 @@ public partial class Player : Entity, IPlayer
 
     public bool TryAttack()
     {
+        if (IsDead)
+        {
+            return false;
+        }
+
         if (IsAttacking || IsBlocking || (IsMoving && !Options.Instance.Player.AllowCombatMovement) || Globals.Me == default)
         {
             return false;
@@ -2536,6 +2595,11 @@ public partial class Player : Entity, IPlayer
     /// <returns> Whether the action was successful or not </returns>
     public static bool TryPickupItem(Guid mapId, int tileIndex, Guid uniqueId = new(), bool firstOnly = false)
     {
+        if (Globals.Me?.IsDead == true)
+        {
+            return false;
+        }
+
         var map = Maps.MapInstance.Get(mapId);
         if (map == null || tileIndex < 0 || tileIndex >= Options.Instance.Map.MapWidth * Options.Instance.Map.MapHeight)
         {
@@ -2739,6 +2803,11 @@ public partial class Player : Entity, IPlayer
     private void ProcessDirectionalInput()
     {
         if (Globals.Me == default || Globals.MapGrid == default)
+        {
+            return;
+        }
+
+        if (IsDead)
         {
             return;
         }

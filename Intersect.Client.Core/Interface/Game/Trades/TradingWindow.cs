@@ -196,6 +196,11 @@ public partial class TradingWindow
     //Trade the item
     void trade_Clicked(Base sender, MouseButtonState arguments)
     {
+        if (Globals.Me?.IsDead == true)
+        {
+            return;
+        }
+
         mTrade.Text = Strings.Trading.Pending;
         mTrade.IsDisabled = true;
         PacketSender.SendAcceptTrade();

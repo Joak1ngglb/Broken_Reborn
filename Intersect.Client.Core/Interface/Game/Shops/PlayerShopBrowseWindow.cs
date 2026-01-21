@@ -309,6 +309,11 @@ namespace Intersect.Client.Interface.Game.Shops
 
         internal void RequestPurchase(PlayerShopBrowseItemRow row)
         {
+            if (Globals.Me?.IsDead == true)
+            {
+                return;
+            }
+
             var quantity = row.RequestedQuantity;
             if (quantity <= 0)
             {

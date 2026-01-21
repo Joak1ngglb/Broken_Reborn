@@ -415,7 +415,7 @@ public partial class EntityBox
 
         if (MyEntity.Type == EntityType.Player && MyEntity != Globals.Me)
         {
-            if (MyEntity.Vitals[Vital.Health] <= 0)
+            if (MyEntity.IsDead)
             {
                 _contextMenuButton.Hide();
             }
