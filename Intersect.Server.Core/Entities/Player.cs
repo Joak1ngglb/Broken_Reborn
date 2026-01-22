@@ -82,6 +82,18 @@ public partial class Player : Entity
     [JsonIgnore, NotMapped]
     public long DeathTimeMs { get; set; }
 
+    [JsonIgnore, NotMapped]
+    private bool mHasPendingJailRespawn;
+
+    [JsonIgnore, NotMapped]
+    private Guid mPendingJailMapId = Guid.Empty;
+
+    [JsonIgnore, NotMapped]
+    private byte mPendingJailX;
+
+    [JsonIgnore, NotMapped]
+    private byte mPendingJailY;
+
     //Name, X, Y, Dir, Etc all in the base Entity Class
     public Guid ClassId { get; set; }
 
@@ -1229,7 +1241,12 @@ public partial class Player : Entity
     //Spawning/Dying
     private void Respawn()
     {
-        if (ClassDescriptor.TryGet(ClassId, out _))
+        if (mHasPendingJailRespawn && mPendingJailMapId != Guid.Empty)
+        {
+            Warp(mPendingJailMapId, mPendingJailX, mPendingJailY);
+            ClearPendingJailRespawn();
+        }
+        else if (ClassDescriptor.TryGet(ClassId, out _))
         {
             WarpToSpawn();
         }
@@ -1248,7 +1265,28 @@ public partial class Player : Entity
         StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);
     }
 
+    private void SetPendingJailRespawn(Guid jailMapId, byte jailX, byte jailY)
+    {
+        mHasPendingJailRespawn = true;
+        mPendingJailMapId = jailMapId;
+        mPendingJailX = jailX;
+        mPendingJailY = jailY;
+    }
+
+    private void ClearPendingJailRespawn()
+    {
+        mHasPendingJailRespawn = false;
+        mPendingJailMapId = Guid.Empty;
+        mPendingJailX = 0;
+        mPendingJailY = 0;
+    }
+
     internal void RespawnFromResurrection()
+    {
+        Respawn();
+    }
+
+    internal void RespawnFromPacket()
     {
         Respawn();
     }
@@ -1257,6 +1295,10 @@ public partial class Player : Entity
     {
         CastTime = 0;
         CastTarget = null;
+        AttackTimer = 0;
+        CombatTimer = 0;
+        Target = null;
+        IsBlocking = false;
         DeathTimeMs = Timing.Global.Milliseconds;
 
         //Flag death to the client
@@ -1320,10 +1362,9 @@ public partial class Player : Entity
             }
         }
         PacketSender.SendEntityDie(this);
-        Respawn();
         if (sendToJail)
         {
-            Warp(jailMapId, jailX, jailY);
+            SetPendingJailRespawn(jailMapId, jailX, jailY);
         }
         PacketSender.SendInventory(this);
         PacketSender.SendPlayerSpells(this);

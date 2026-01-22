@@ -1524,12 +1524,7 @@ internal sealed partial class PacketHandler
             }
         }
 
-        player.WarpToSpawn();
-        player.Reset();
-        player.DeathTimeMs = 0;
-        PacketSender.SendEntityDataToProximity(player);
-        PacketSender.SendPlayerRespawn(player);
-        player.StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);
+        player.RespawnFromPacket();
     }
 
     //ActivateEventPacket
