@@ -902,8 +902,15 @@ internal sealed partial class PacketHandler
                 return;
             }
 
+            var wasAlive = entity.Vital[(int)Vital.Health] > 0;
             entity.Vital = en.Vitals;
             entity.MaxVital = en.MaxVitals;
+            var isDead = entity.Vital[(int)Vital.Health] <= 0;
+
+            if (wasAlive && isDead && entity == Globals.Me)
+            {
+                Interface.Interface.EnqueueInGame(gameInterface => gameInterface.ShowDeathWindow());
+            }
 
             if (entity == Globals.Me)
             {
@@ -1033,8 +1040,15 @@ internal sealed partial class PacketHandler
             return;
         }
 
+        var wasAlive = en.Vital[(int)Vital.Health] > 0;
         en.Vital = packet.Vitals;
         en.MaxVital = packet.MaxVitals;
+        var isDead = en.Vital[(int)Vital.Health] <= 0;
+
+        if (wasAlive && isDead && en == Globals.Me)
+        {
+            Interface.Interface.EnqueueInGame(gameInterface => gameInterface.ShowDeathWindow());
+        }
 
         if (en == Globals.Me)
         {

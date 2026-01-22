@@ -216,6 +216,11 @@ public partial class GameInterface : MutableInterface
 
     public void ShowDeathWindow()
     {
+        if (!DeathWindow.IsHidden)
+        {
+            return;
+        }
+
         DeathWindow.Show();
         DeathWindow.BringToFront();
     }
