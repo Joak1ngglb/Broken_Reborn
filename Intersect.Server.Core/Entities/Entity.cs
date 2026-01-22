@@ -206,7 +206,22 @@ public abstract partial class Entity : IEntity
     }
 
     [NotMapped]
-    public bool IsDead { get; set; }
+    public bool IsDead
+    {
+        get => GetVital(Vital.Health) <= 0;
+        set
+        {
+            if (value)
+            {
+                SetVital(Vital.Health, 0);
+            }
+            else if (GetVital(Vital.Health) <= 0)
+            {
+                var reviveHealth = Math.Max(1, GetMaxVital(Vital.Health));
+                SetVital(Vital.Health, reviveHealth);
+            }
+        }
+    }
 
     //Combat
     [NotMapped, JsonIgnore]
