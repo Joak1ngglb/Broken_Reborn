@@ -1248,6 +1248,11 @@ public partial class Player : Entity
         StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);
     }
 
+    internal void RespawnFromResurrection()
+    {
+        Respawn();
+    }
+
     public override void Die(bool dropItems = true, Entity killer = null)
     {
         CastTime = 0;
