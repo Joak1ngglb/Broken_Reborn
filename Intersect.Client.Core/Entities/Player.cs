@@ -41,6 +41,7 @@ namespace Intersect.Client.Entities;
 
 public partial class Player : Entity, IPlayer
 {
+    private const string TombSpriteName = "tomb.png";
     public delegate void InventoryUpdatedEventHandler(Player player, int slotIndex);
 
     private Guid _class;
@@ -392,6 +393,7 @@ public partial class Player : Entity, IPlayer
         }
 
         var returnval = base.Update();
+        SyncDeathAnimation();
 
         return returnval;
     }
@@ -3020,6 +3022,40 @@ public partial class Player : Entity, IPlayer
         {
             DrawEquipment(GetWingTexture(), Color.White);
         }
+    }
+
+    private void SyncDeathAnimation()
+    {
+        if (IsDead)
+        {
+            if (EnsureDeathAnimationTexture() && SpriteAnimation != SpriteAnimations.Death)
+            {
+                SpriteAnimation = SpriteAnimations.Death;
+                ResetSpriteFrame();
+            }
+        }
+        else if (SpriteAnimation == SpriteAnimations.Death)
+        {
+            SpriteAnimation = SpriteAnimations.Normal;
+            ResetSpriteFrame();
+        }
+    }
+
+    private bool EnsureDeathAnimationTexture()
+    {
+        if (AnimatedTextures.TryGetValue(SpriteAnimations.Death, out var cachedTexture) && cachedTexture != default)
+        {
+            return true;
+        }
+
+        var tombTexture = Globals.ContentManager.GetTexture(TextureType.Entity, TombSpriteName);
+        if (tombTexture == default)
+        {
+            return false;
+        }
+
+        AnimatedTextures[SpriteAnimations.Death] = tombTexture;
+        return true;
     }
 
     private string GetWingTexture() =>

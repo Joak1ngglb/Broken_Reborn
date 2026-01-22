@@ -396,6 +396,7 @@ public partial class Entity : IEntity
                 SpriteAnimations.Shoot => Options.Instance.Sprites.ShootFrames,
                 SpriteAnimations.Cast => Options.Instance.Sprites.CastFrames,
                 SpriteAnimations.Weapon => Options.Instance.Sprites.WeaponFrames,
+                SpriteAnimations.Death => 1,
                 _ => Options.Instance.Sprites.NormalFrames,
             };
         }
