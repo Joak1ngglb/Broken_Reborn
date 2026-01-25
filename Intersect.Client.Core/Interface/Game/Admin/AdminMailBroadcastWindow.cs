@@ -42,23 +42,13 @@ public sealed class AdminMailBroadcastWindow : Window
         _defaultFont = Skin?.DefaultFont ?? Current.GetFont(TitleLabel.FontName);
 
         IsResizable = false;
-        MinimumSize = new Point(520, 520);
-        InnerPanelPadding = new Padding(8);
-        InnerPanel.DockChildSpacing = new Padding(0, 8, 0, 0);
-
         _attachmentDropdowns = new LabeledComboBox[MailAttachmentSlotCount];
         _attachmentQuantityInputs = new TextBoxNumeric[MailAttachmentSlotCount];
 
-        var contentPanel = new Panel(this, "ContentPanel")
-        {
-            Dock = Pos.Fill,
-            ShouldDrawBackground = false,
-            DockChildSpacing = new Padding(0, 8, 0, 0),
-        };
+        var contentPanel = new Panel(this, "ContentPanel");
 
         _ = new Label(contentPanel, "SubjectLabel")
         {
-            Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
             Text = Strings.AdminWindow.MailSubject,
@@ -66,7 +56,6 @@ public sealed class AdminMailBroadcastWindow : Window
 
         _subjectInput = new TextBox(contentPanel, nameof(_subjectInput))
         {
-            Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
         };
@@ -75,7 +64,6 @@ public sealed class AdminMailBroadcastWindow : Window
 
         _ = new Label(contentPanel, "MessageLabel")
         {
-            Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
             Text = Strings.AdminWindow.MailMessage,
@@ -83,33 +71,23 @@ public sealed class AdminMailBroadcastWindow : Window
 
         _messageInput = new MultilineTextBox(contentPanel)
         {
-            Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
-            Height = 200,
         };
         _messageInput.Name = nameof(_messageInput);
         Interface.FocusComponents.Add(_messageInput);
         _messageInput.TextChanged += (_, _) => UpdateActionControls();
 
-        var attachmentsContainer = new Panel(contentPanel, "AttachmentsContainer")
-        {
-            Dock = Pos.Top,
-            ShouldDrawBackground = false,
-            DockChildSpacing = new Padding(0, 8, 0, 0),
-        };
+        var attachmentsContainer = new Panel(contentPanel, "AttachmentsContainer");
 
         for (var index = 0; index < MailAttachmentSlotCount; index++)
         {
             var attachmentPanel = new Panel(attachmentsContainer, $"Attachment{index}")
             {
-                Dock = Pos.Top,
-                ShouldDrawBackground = false,
             };
 
             var dropdown = new LabeledComboBox(attachmentPanel, $"AttachmentDropdown{index}")
             {
-                Dock = Pos.Top,
                 Font = _defaultFont,
                 FontSize = 12,
                 Label = Strings.AdminWindow.MailAttachmentItem.ToString(index + 1),
@@ -118,26 +96,18 @@ public sealed class AdminMailBroadcastWindow : Window
             PopulateItemDropdown(dropdown);
             dropdown.ItemSelected += (_, _) => UpdateActionControls();
 
-            var quantityPanel = new Panel(attachmentPanel, $"AttachmentQuantityPanel{index}")
-            {
-                Dock = Pos.Top,
-                ShouldDrawBackground = false,
-                Margin = new Margin(0, 4, 0, 0),
-            };
+            var quantityPanel = new Panel(attachmentPanel, $"AttachmentQuantityPanel{index}");
 
             _ = new Label(quantityPanel, $"AttachmentQuantityLabel{index}")
             {
-                Dock = Pos.Left,
                 Font = _defaultFont,
                 FontSize = 12,
-                Margin = new Margin(0, 0, 4, 0),
                 Text = Strings.AdminWindow.MailAttachmentQuantity.ToString(index + 1),
                 TextAlign = Pos.Left | Pos.CenterV,
             };
 
             var quantityInput = new TextBoxNumeric(quantityPanel, $"AttachmentQuantityInput{index}")
             {
-                Dock = Pos.Fill,
                 Font = _defaultFont,
                 FontSize = 12,
                 Padding = new Padding(8, 4),
@@ -153,21 +123,15 @@ public sealed class AdminMailBroadcastWindow : Window
 
         _onlineOnlyCheckbox = new LabeledCheckBox(contentPanel, nameof(_onlineOnlyCheckbox))
         {
-            Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
             Text = Strings.AdminWindow.MailOnlineOnly,
         };
 
-        var buttonsPanel = new Panel(contentPanel, "ButtonsPanel")
-        {
-            Dock = Pos.Top,
-            ShouldDrawBackground = false,
-        };
+        var buttonsPanel = new Panel(contentPanel, "ButtonsPanel");
 
         _sendButton = new Button(buttonsPanel, nameof(_sendButton))
         {
-            Dock = Pos.Left,
             Text = Strings.AdminWindow.MailSend,
         };
         StyleButton(_sendButton);
@@ -183,7 +147,6 @@ public sealed class AdminMailBroadcastWindow : Window
     {
         button.MinimumSize = new Point(140, 32);
         button.Padding = StdPad();
-        button.Margin = new Margin(0, 0, 8, 0);
         button.Font = _defaultFont;
         button.FontSize = 12;
     }
