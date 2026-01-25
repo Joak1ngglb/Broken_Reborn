@@ -66,10 +66,7 @@ public partial class CharacterWindow : Window
     private Label mAbilityPwrLabel;
     private Label mDefenseLabel;
     private Label mMagicRstLabel;
-    private Label mSpeedLabel;
     private Label mAgilityLabel;
-    private Label mDamageLabel;
-    private Label mCureLabel;
     private Label mCritChanceLabel;
     private Label mBasicAttackDamageLabel;
     private Label mPointsLabel;
@@ -409,12 +406,6 @@ public partial class CharacterWindow : Window
         y += StatRowHeight;
 
         // Read-only stats
-        CreateIconPanel(mStatsContainer, "SpeedIcon", iconX, y, StatRowHeight, StatEffectIconProvider.GetIconForStat(Stat.Speed));
-        mSpeedLabel = CreateBodyLabel(mStatsContainer, "SpeedLabel", labelX, y, labelWidth); y += StatRowHeight;
-        CreateIconPanel(mStatsContainer, "DamageIcon", iconX, y, StatRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Damages));
-        mDamageLabel = CreateBodyLabel(mStatsContainer, "DamageLabel", labelX, y, labelWidth); y += StatRowHeight;
-        CreateIconPanel(mStatsContainer, "CureIcon", iconX, y, StatRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Cures));
-        mCureLabel = CreateBodyLabel(mStatsContainer, "CureLabel", labelX, y, labelWidth); y += StatRowHeight;
         CreateIconPanel(mStatsContainer, "CritIcon", iconX, y, StatRowHeight, StatEffectIconProvider.GetIconForItemEffect(ItemEffect.CriticalChance));
         mCritChanceLabel = CreateBodyLabel(mStatsContainer, "CritLabel", labelX, y, labelWidth); y += StatRowHeight;
         CreateIconPanel(mStatsContainer, "PointsIcon", iconX, y, StatRowHeight, null);
@@ -708,7 +699,6 @@ public partial class CharacterWindow : Window
         mAbilityPwrLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Intelligence], player.Stat[(int)Stat.Intelligence]));
         mDefenseLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Defense], player.Stat[(int)Stat.Defense]));
         mMagicRstLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Vitality], player.Stat[(int)Stat.Vitality]));
-        mSpeedLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Speed], player.Stat[(int)Stat.Speed]));
         mAgilityLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Agility], player.Stat[(int)Stat.Agility]));
 
         var critChance = player.CalculateCriticalChance(player.GetBaseCriticalChance());
@@ -725,8 +715,6 @@ public partial class CharacterWindow : Window
 
         // Effects
         UpdateExtraBuffs();
-        mDamageLabel.SetText(Strings.Character.FlatDamage.ToString(FormatEffectValue(_flatDamage)));
-        mCureLabel.SetText(Strings.Character.FlatCures.ToString(FormatEffectValue(_flatCures)));
 
         UpdateEquippedItems(true);
     }
