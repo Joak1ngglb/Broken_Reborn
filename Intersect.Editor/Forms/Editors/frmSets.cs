@@ -30,8 +30,6 @@ public partial class frmSets : EditorForm
         InitializeComponent();
         Icon = Program.Icon;
 
-        chkEffectIsFlat.Text = Strings.ItemEditor.bonusflatvalue;
-
         lstGameObjects.LostFocus += itemList_FocusChanged;
         lstGameObjects.GotFocus += itemList_FocusChanged;
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem,
@@ -506,9 +504,7 @@ public partial class frmSets : EditorForm
         }
 
         EffectValueUpdating = true;
-        chkEffectIsFlat.Checked = false;
         nudEffectPercent.Enabled = true;
-        nudEffectFlat.Enabled = false;
         EffectValueUpdating = false;
     }
 
@@ -611,13 +607,8 @@ public partial class frmSets : EditorForm
         EffectValueUpdating = true;
         var percentage = mEditorSet.GetEffectPercentage(selected);
 
-        chkEffectIsFlat.Enabled = false;
-        chkEffectIsFlat.Checked = false;
-
         nudEffectPercent.Value = percentage;
-        nudEffectFlat.Value = 0;
         nudEffectPercent.Enabled = true;
-        nudEffectFlat.Enabled = false;
         EffectValueUpdating = false;
     }
     private void lstItems_SelectedIndexChanged(object sender, EventArgs e)

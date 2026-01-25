@@ -1656,6 +1656,13 @@ public static partial class Strings
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString WarningTitle = @"Combat Warning!";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static Dictionary<Vital, LocalizedString> Vitals = new()
+        {
+              { Vital.Health, @"HP:" },
+        { Vital.Mana, @"MP:" },
+        };
     }
 
     public partial struct Content
