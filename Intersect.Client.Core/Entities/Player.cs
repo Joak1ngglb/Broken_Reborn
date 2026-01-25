@@ -2313,7 +2313,7 @@ public partial class Player : Entity, IPlayer
             }
         }
 
-        foreach (MapInstance eventMap in Maps.MapInstance.Lookup.Values.Cast<MapInstance>())
+        foreach (MapInstance eventMap in Maps.MapInstance.Lookup.Values.OfType<MapInstance>())
         {
             foreach (var en in eventMap.LocalEntities)
             {
@@ -2416,7 +2416,7 @@ public partial class Player : Entity, IPlayer
         IEntity? bestMatch = null;
         var bestAreaMatch = 0f;
 
-        foreach (MapInstance map in Maps.MapInstance.Lookup.Values.Cast<MapInstance>())
+        foreach (MapInstance map in Maps.MapInstance.Lookup.Values.OfType<MapInstance>())
         {
             if (x >= map.X && x <= map.X + MapWidth * TileWidth)
             {
@@ -2452,7 +2452,7 @@ public partial class Player : Entity, IPlayer
                             }
                         }
 
-                        foreach (MapInstance eventMap in Maps.MapInstance.Lookup.Values.Cast<MapInstance>())
+                        foreach (MapInstance eventMap in Maps.MapInstance.Lookup.Values.OfType<MapInstance>())
                         {
                             foreach (var en in eventMap.LocalEntities)
                             {
@@ -3366,7 +3366,7 @@ public partial class Player : Entity, IPlayer
             ToggleTargetContextMenu(en.Value);
         }
 
-        foreach (MapInstance eventMap in Maps.MapInstance.Lookup.Values.Cast<MapInstance>())
+        foreach (MapInstance eventMap in Maps.MapInstance.Lookup.Values.OfType<MapInstance>())
         {
             foreach (var en in eventMap.LocalEntities)
             {
@@ -3409,7 +3409,7 @@ public partial class Player : Entity, IPlayer
         if (!Interface.Interface.DoesMouseHitInterface())
         {
             var mouseInWorld = Graphics.ConvertToWorldPoint(Globals.InputManager.GetMousePosition());
-            foreach (MapInstance map in Maps.MapInstance.Lookup.Values.Cast<MapInstance>())
+            foreach (MapInstance map in Maps.MapInstance.Lookup.Values.OfType<MapInstance>())
             {
                 if (mouseInWorld.X >= map.X && mouseInWorld.X <= map.X + MapWidth * TileWidth)
                 {
@@ -3442,7 +3442,7 @@ public partial class Player : Entity, IPlayer
                             }
                         }
 
-                        foreach (MapInstance eventMap in Maps.MapInstance.Lookup.Values.Cast<MapInstance>())
+                        foreach (MapInstance eventMap in Maps.MapInstance.Lookup.Values.OfType<MapInstance>())
                         {
                             foreach (var en in eventMap.LocalEntities)
                             {
