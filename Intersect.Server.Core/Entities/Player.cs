@@ -507,6 +507,11 @@ public partial class Player : Entity
             User.LoginTime = DateTime.UtcNow;
         }
 
+        if (IsDead && DeathTimeMs <= 0)
+        {
+            DeathTimeMs = Timing.Global.Milliseconds;
+        }
+
         LoadFriends();
         LoadGuild();
 
