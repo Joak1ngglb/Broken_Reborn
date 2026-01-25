@@ -1832,6 +1832,11 @@ public abstract partial class Entity : IEntity
             return;
         }
 
+        if (target.IsDead && spellDescriptor.SpellType != SpellType.Resurrection)
+        {
+            return;
+        }
+
         var deadAnimations = new List<KeyValuePair<Guid, Direction>>();
         var aliveAnimations = new List<KeyValuePair<Guid, Direction>>();
 
@@ -2934,7 +2939,10 @@ public abstract partial class Entity : IEntity
                                     }
                                 }
 
-                                TryAttack(entity, spellBase, spellProperties); //Handle damage
+                                if (!entity.IsDead || spellBase.SpellType == SpellType.Resurrection)
+                                {
+                                    TryAttack(entity, spellBase, spellProperties); //Handle damage
+                                }
                             }
                         }
                     }
