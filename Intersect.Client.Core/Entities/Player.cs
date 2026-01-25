@@ -3451,8 +3451,13 @@ public partial class Player : Entity, IPlayer
                                     continue;
                                 }
 
+                                if (en.Value is not Event eventEntity)
+                                {
+                                    continue;
+                                }
+
                                 if (en.Value.MapId == mapId &&
-                                    !((Event)en.Value).DisablePreview &&
+                                    !eventEntity.DisablePreview &&
                                     !en.Value.IsHidden &&
                                     (!en.Value.IsStealthed ||
                                      en.Value is Player player && Globals.Me?.IsInMyParty(player) == true) &&
