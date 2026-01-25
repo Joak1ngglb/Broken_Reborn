@@ -1247,23 +1247,27 @@ public abstract partial class Entity : IEntity
                     //Check if moving into a projectile.. if so this npc needs to be hit
                     if (currentMap != null)
                     {
-                        foreach (var instance in MapController.GetSurroundingMapInstances(currentMap.Id, MapInstanceId, true))
+                        var isDownedPlayer = this is Player movingPlayer && movingPlayer.GetVital(Vital.Health) <= 0;
+                        if (!IsDead && !isDownedPlayer)
                         {
-                            var projectiles = instance.MapProjectilesCached;
-                            foreach (var projectile in projectiles)
+                            foreach (var instance in MapController.GetSurroundingMapInstances(currentMap.Id, MapInstanceId, true))
                             {
-                                var spawns = projectile?.Spawns?.ToArray() ?? Array.Empty<ProjectileSpawn>();
-                                foreach (var spawn in spawns)
+                                var projectiles = instance.MapProjectilesCached;
+                                foreach (var projectile in projectiles)
                                 {
-                                    // TODO: Filter in Spawns variable, there should be no nulls. See #78 for evidence it is null.
-                                    if (spawn == null)
+                                    var spawns = projectile?.Spawns?.ToArray() ?? Array.Empty<ProjectileSpawn>();
+                                    foreach (var spawn in spawns)
                                     {
-                                        continue;
-                                    }
+                                        // TODO: Filter in Spawns variable, there should be no nulls. See #78 for evidence it is null.
+                                        if (spawn == null)
+                                        {
+                                            continue;
+                                        }
 
-                                    if (spawn.IsAtLocation(MapId, X, Y, Z) && spawn.HitEntity(this))
-                                    {
-                                        spawn.Dead = true;
+                                        if (spawn.IsAtLocation(MapId, X, Y, Z) && spawn.HitEntity(this))
+                                        {
+                                            spawn.Dead = true;
+                                        }
                                     }
                                 }
                             }
