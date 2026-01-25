@@ -2097,6 +2097,11 @@ public partial class Player : Entity
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
     {
+        if (IsDead)
+        {
+            return false;
+        }
+
         var npc = entity as Npc;
         if (npc != default && !npc.CanPlayerAttack(this))
         {
@@ -3688,6 +3693,11 @@ public partial class Player : Entity
 
     public void UseItem(int slot, Entity target = null)
     {
+        if (IsDead)
+        {
+            return;
+        }
+
         var equipped = false;
         var Item = Items[slot];
         var itemBase = ItemDescriptor.Get(Item.ItemId);
@@ -6095,6 +6105,11 @@ public partial class Player : Entity
 
     public void UseSpell(int spellSlot, Entity target, bool softRetargetOnSelfCast)
     {
+        if (IsDead)
+        {
+            return;
+        }
+
         var slot = Spells[spellSlot];
         var pspell = slot;
         if (pspell == null)
