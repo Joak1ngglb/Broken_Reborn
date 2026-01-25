@@ -3814,6 +3814,9 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         public static LocalizedString Message = @"You have fallen in battle.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString MessageWithCountdown = @"You have fallen in battle. Respawn in {00}s.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Respawn = @"Respawn";
     }
 

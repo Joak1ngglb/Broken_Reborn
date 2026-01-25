@@ -1,3 +1,4 @@
+using System;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
@@ -15,6 +16,7 @@ public class DeathWindow : Window
     private readonly Button _respawnButton;
     private bool _respawnRequested;
     private long _respawnAvailableAt;
+    private int _lastCountdownSeconds = -1;
 
     public DeathWindow(Canvas canvas) : base(canvas, Strings.DeathWindow.Title, false, nameof(DeathWindow))
     {
@@ -84,6 +86,7 @@ public class DeathWindow : Window
         if (eventArgs.IsVisibleInTree)
         {
             _respawnRequested = false;
+            _lastCountdownSeconds = -1;
             var respawnTime = Options.Instance.Player.DeathSeconds > 0
                 ? (long)Options.Instance.Player.DeathSeconds * 1000
                 : 0;
@@ -91,6 +94,7 @@ public class DeathWindow : Window
                 ? Timing.Global.Milliseconds + respawnTime
                 : 0;
             _respawnButton.IsDisabled = _respawnAvailableAt > Timing.Global.Milliseconds;
+            UpdateCountdownLabel();
             MakeModal(dim: true);
             BringToFront();
         }
@@ -111,6 +115,8 @@ public class DeathWindow : Window
         {
             _respawnButton.IsDisabled = false;
         }
+
+        UpdateCountdownLabel();
     }
 
     private void RespawnButtonOnClicked(Base sender, MouseButtonState arguments)
@@ -123,5 +129,23 @@ public class DeathWindow : Window
         _respawnRequested = true;
         _respawnButton.IsDisabled = true;
         PacketSender.SendRespawn();
+    }
+
+    private void UpdateCountdownLabel()
+    {
+        if (_respawnAvailableAt <= 0)
+        {
+            _messageLabel.Text = Strings.DeathWindow.Message;
+            _lastCountdownSeconds = -1;
+            return;
+        }
+
+        var remainingMs = Math.Max(_respawnAvailableAt - Timing.Global.Milliseconds, 0);
+        var remainingSeconds = (int)Math.Ceiling(remainingMs / 1000d);
+        if (remainingSeconds != _lastCountdownSeconds)
+        {
+            _lastCountdownSeconds = remainingSeconds;
+            _messageLabel.Text = Strings.DeathWindow.MessageWithCountdown.ToString(remainingSeconds);
+        }
     }
 }

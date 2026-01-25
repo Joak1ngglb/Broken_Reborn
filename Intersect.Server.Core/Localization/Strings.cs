@@ -761,6 +761,9 @@ public static partial class Strings
         public readonly LocalizedString NoticeError = @"Error Notice";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString RespawnIn = @"Respawn in {00}s";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString UnknownErrorPleaseTryAgain = @"An unknown error occurred, please try again.";
     }
 

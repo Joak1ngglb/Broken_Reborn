@@ -83,6 +83,9 @@ public partial class Player : Entity
     public long DeathTimeMs { get; set; }
 
     [JsonIgnore, NotMapped]
+    private int mLastDeathCountdownSeconds = -1;
+
+    [JsonIgnore, NotMapped]
     private bool mHasPendingJailRespawn;
 
     [JsonIgnore, NotMapped]
@@ -883,6 +886,11 @@ public partial class Player : Entity
                     mStaleCooldownTimer = Timing.Global.Milliseconds + Options.Instance.Processing.StaleCooldownRemovalTimer;
                 }
 
+                if (HandleDeathCountdown(timeMs))
+                {
+                    return;
+                }
+
                 var isDowned = GetVital(Vital.Health) <= 0;
                 if (!isDowned)
                 {
@@ -1105,6 +1113,42 @@ public partial class Player : Entity
                 Monitor.Exit(EntityLock);
             }
         }
+    }
+
+    private bool HandleDeathCountdown(long timeMs)
+    {
+        if (!IsDead)
+        {
+            mLastDeathCountdownSeconds = -1;
+            return false;
+        }
+
+        var deathSeconds = Options.Instance.Player.DeathSeconds;
+        if (deathSeconds <= 0 || DeathTimeMs <= 0)
+        {
+            return false;
+        }
+
+        var respawnAt = DeathTimeMs + (deathSeconds * 1000L);
+        if (timeMs >= respawnAt)
+        {
+            mLastDeathCountdownSeconds = -1;
+            RespawnFromPacket();
+            return true;
+        }
+
+        var remainingSeconds = (int)Math.Ceiling((respawnAt - timeMs) / 1000d);
+        if (remainingSeconds != mLastDeathCountdownSeconds)
+        {
+            mLastDeathCountdownSeconds = remainingSeconds;
+            PacketSender.SendActionMsg(
+                this,
+                Strings.General.RespawnIn.ToString(remainingSeconds),
+                CustomColors.Combat.Status
+            );
+        }
+
+        return false;
     }
 
     /// <summary>
