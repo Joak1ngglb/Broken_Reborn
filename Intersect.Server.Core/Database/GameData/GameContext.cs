@@ -1,4 +1,5 @@
 using Intersect.Extensions;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -9,6 +10,7 @@ using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.GameObjects.Titles;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.GameObjects;
 using Intersect.Server.Database.GameData.Migrations;
@@ -60,6 +62,12 @@ public abstract partial class GameContext : IntersectDbContext<GameContext>, IGa
 
     //Quests
     public DbSet<QuestDescriptor> Quests { get; set; }
+
+    //Achievements
+    public DbSet<AchievementDescriptor> Achievements { get; set; }
+
+    //Titles
+    public DbSet<TitleDescriptor> Titles { get; set; }
 
     //Resources
     public DbSet<ResourceDescriptor> Resources { get; set; }

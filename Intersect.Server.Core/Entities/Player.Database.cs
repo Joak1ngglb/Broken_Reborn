@@ -201,6 +201,7 @@ public partial class Player
         entityEntry.Collection(p => p.Spells).Load();
         entityEntry.Collection(p => p.Variables).Load();
         entityEntry.Collection(p => p.BestiaryUnlocks).Load();
+        entityEntry.Collection(p => p.Achievements).Load();
 
         if (loadBags)
         {

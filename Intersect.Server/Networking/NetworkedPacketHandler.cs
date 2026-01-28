@@ -2,6 +2,7 @@ using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -12,6 +13,7 @@ using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.GameObjects.Titles;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.Security;
 using Intersect.GameObjects;
@@ -919,6 +921,14 @@ internal sealed partial class NetworkedPacketHandler
                     obj = QuestDescriptor.Get(id);
 
                     break;
+                case GameObjectType.Achievement:
+                    obj = AchievementDescriptor.Get(id);
+
+                    break;
+                case GameObjectType.Title:
+                    obj = TitleDescriptor.Get(id);
+
+                    break;
 
                 case GameObjectType.Resource:
                     obj = ResourceDescriptor.Get(id);
@@ -1069,6 +1079,14 @@ internal sealed partial class NetworkedPacketHandler
 
                 case GameObjectType.Quest:
                     obj = QuestDescriptor.Get(id);
+
+                    break;
+                case GameObjectType.Achievement:
+                    obj = AchievementDescriptor.Get(id);
+
+                    break;
+                case GameObjectType.Title:
+                    obj = TitleDescriptor.Get(id);
 
                     break;
 
