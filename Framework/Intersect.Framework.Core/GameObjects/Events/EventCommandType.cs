@@ -149,4 +149,6 @@ public enum EventCommandType
     OpenMarketSell = 208,
     GiveGuildExperience = 209,
     GiveFactionHonor = 210,
+    CompleteAchievement = 211,
+    CompleteAchievementTask = 212,
 }

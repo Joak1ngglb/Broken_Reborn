@@ -6,6 +6,7 @@ using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -15,6 +16,7 @@ using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.GameObjects.Titles;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.Network.Packets.Security;
 using Intersect.Framework.Core.Security;
@@ -445,6 +447,7 @@ public static partial class PacketSender
             SendPointsTo(player);
             SendHotbarSlots(player);
             SendQuestsProgress(player);
+            SendAchievementProgress(player);
             SendItemCooldowns(player);
             SendSpellCooldowns(player);
             SendUnlockedBestiaryEntries(player);
@@ -1896,6 +1899,20 @@ public static partial class PacketSender
                 }
 
                 break;
+            case GameObjectType.Achievement:
+                foreach (var obj in AchievementDescriptor.Lookup)
+                {
+                    SendGameObject(client, obj.Value, false, false, packetList);
+                }
+
+                break;
+            case GameObjectType.Title:
+                foreach (var obj in TitleDescriptor.Lookup)
+                {
+                    SendGameObject(client, obj.Value, false, false, packetList);
+                }
+
+                break;
             case GameObjectType.Resource:
                 foreach (var obj in ResourceDescriptor.Lookup)
                 {
@@ -2285,6 +2302,41 @@ public static partial class PacketSender
 
         player.SendPacket(new QuestProgressPacket(dict, hiddenQuests.ToArray(), rewardItems, rewardExperience,
             rewardJobExperience, rewardGuildExperience, rewardFactionHonor));
+    }
+
+    //AchievementProgressPacket
+    public static void SendAchievementProgress(Player player)
+    {
+        var achievements = new Dictionary<Guid, AchievementProgressDto>();
+
+        foreach (var achievement in player.Achievements)
+        {
+            achievements[achievement.AchievementId] = new AchievementProgressDto
+            {
+                Progress = achievement.Progress,
+                Completed = achievement.Completed,
+                CompletedAtTicks = achievement.CompletedAt?.Ticks,
+                SchemaVersion = AchievementProgressDto.CurrentSchemaVersion,
+                Objectives = achievement.Objectives
+            };
+        }
+
+        player.SendPacket(new AchievementProgressPacket(achievements));
+    }
+
+    //AchievementCompletedPacket
+    public static void SendAchievementCompleted(Player player, AchievementDescriptor achievement)
+    {
+        var rewards = achievement.Rewards;
+        player.SendPacket(
+            new AchievementCompletedPacket(
+                achievement.Id,
+                rewards.Experience,
+                rewards.Currency,
+                rewards.Items,
+                rewards.TitleIds
+            )
+        );
     }
 
   

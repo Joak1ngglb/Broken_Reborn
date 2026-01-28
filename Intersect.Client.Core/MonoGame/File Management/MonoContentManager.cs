@@ -154,6 +154,11 @@ public partial class MonoContentManager : GameContentManager
         LoadTextureGroup("items", mItemDict);
     }
 
+    public override void LoadAchievements()
+    {
+        LoadTextureGroup("achievements", mAchievementDict);
+    }
+
     public override void LoadEntities()
     {
         LoadTextureGroup("entities", mEntityDict);

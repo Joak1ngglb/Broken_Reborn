@@ -34,6 +34,8 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
 
     public DbSet<Quest> Player_Quests { get; set; }
 
+    public DbSet<AchievementProgress> Player_Achievements { get; set; }
+
     public DbSet<PlayerSpell> Player_Spells { get; set; }
 
     public DbSet<PlayerVariable> Player_Variables { get; set; }
@@ -109,6 +111,7 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
         modelBuilder.Entity<Player>().HasMany(b => b.Items).WithOne(p => p.Player);
 
         modelBuilder.Entity<Player>().HasMany(b => b.Variables).WithOne(p => p.Player);
+
         modelBuilder.Entity<Player>().HasMany(b => b.BestiaryUnlocks).WithOne(p => p.Player);
         modelBuilder.Entity<BestiaryUnlockInstance>().HasIndex(p => new { p.PlayerId, p.NpcId, p.UnlockType }).IsUnique();
         modelBuilder.Entity<PlayerVariable>().HasIndex(p => new { p.VariableId, p.PlayerId }).IsUnique();
@@ -117,6 +120,8 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
 
         modelBuilder.Entity<Player>().HasMany(b => b.Quests).WithOne(p => p.Player);
         modelBuilder.Entity<Quest>().HasIndex(p => new { p.QuestId, p.PlayerId }).IsUnique();
+
+        modelBuilder.Entity<AchievementProgress>().HasIndex(p => new { p.AchievementId, p.PlayerId }).IsUnique();
 
         modelBuilder.Entity<Player>().HasMany(b => b.Bank).WithOne(p => p.Player);
 

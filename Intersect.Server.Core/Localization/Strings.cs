@@ -15,6 +15,30 @@ public static partial class Strings
     private const string DefaultLanguage = "en";
     private const string StringsFileName = "server_strings.json";
 
+    public sealed partial class AchievementsNamespace : LocaleNamespace
+    {
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString CategoryLabel = @"Category: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString CompletedNotification = @"Achievement completed: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString DifficultyLabel = @"Difficulty: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString FilterCompleted = @"Completed";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString FilterInProgress = @"In Progress";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString FilterPending = @"Pending";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString Title = @"Achievements";
+    }
+
     public sealed partial class AccountNamespace : LocaleNamespace
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1747,6 +1771,8 @@ public static partial class Strings
 
         public readonly AccountNamespace Account = new AccountNamespace();
 
+        public readonly AchievementsNamespace Achievements = new AchievementsNamespace();
+
         public readonly AlignmentNamespace Alignment = new AlignmentNamespace();
 
         public readonly BagNamespace Bags = new BagNamespace();
@@ -1828,6 +1854,8 @@ public static partial class Strings
     #region Namespace Exposure
 
     public static AccountNamespace Account => Root.Account;
+
+    public static AchievementsNamespace Achievements => Root.Achievements;
 
     public static AlignmentNamespace Alignment => Root.Alignment;
 

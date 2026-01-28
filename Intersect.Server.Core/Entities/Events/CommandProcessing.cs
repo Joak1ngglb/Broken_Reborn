@@ -22,6 +22,7 @@ using Intersect.Server.Maps;
 using Intersect.Server.Networking;
 using Intersect.Utilities;
 using Intersect.Server.Services;
+using Intersect.Server.Services.Achievements;
 using Intersect.Server.Core.Services;
 
 namespace Intersect.Server.Entities.Events;
@@ -1432,6 +1433,30 @@ public static partial class CommandProcessing
     )
     {
         player.CompleteQuestTask(command.QuestId, command.TaskId);
+    }
+
+    //Complete Achievement Command
+    private static void ProcessCommand(
+        CompleteAchievementCommand command,
+        Player player,
+        Event instance,
+        CommandInstance stackInfo,
+        Stack<CommandInstance> callStack
+    )
+    {
+        AchievementService.CompleteAchievement(player, command.AchievementId);
+    }
+
+    //Complete Achievement Task Command
+    private static void ProcessCommand(
+        CompleteAchievementTaskCommand command,
+        Player player,
+        Event instance,
+        CommandInstance stackInfo,
+        Stack<CommandInstance> callStack
+    )
+    {
+        AchievementService.CompleteAchievementObjective(player, command.AchievementId, command.ObjectiveIndex);
     }
 
     //End Quest Command

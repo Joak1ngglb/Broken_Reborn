@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
@@ -1255,6 +1257,52 @@ public static partial class CommandPrinter
         return Strings.EventCommandList.completetask.ToString(
             QuestDescriptor.GetName(command.QuestId), Strings.EventCommandList.taskundefined
         );
+    }
+
+    private static string GetCommandText(CompleteAchievementCommand command, MapInstance map)
+    {
+        var achievement = AchievementDescriptor.Get(command.AchievementId);
+        var achievementName = achievement?.Name ?? Strings.EventCommandList.achievementundefined.ToString();
+        return Strings.EventCommandList.completeachievement.ToString(achievementName);
+    }
+
+    private static string GetCommandText(CompleteAchievementTaskCommand command, MapInstance map)
+    {
+        var achievement = AchievementDescriptor.Get(command.AchievementId);
+        var achievementName = achievement?.Name ?? Strings.EventCommandList.achievementundefined.ToString();
+        var objectiveText = achievement == null
+            ? Strings.EventCommandList.taskundefined.ToString()
+            : GetAchievementObjectiveDescription(achievement, command.ObjectiveIndex);
+
+        return Strings.EventCommandList.completeachievementtask.ToString(achievementName, objectiveText);
+    }
+
+    private static string GetAchievementObjectiveDescription(AchievementDescriptor achievement, int objectiveIndex)
+    {
+        if (objectiveIndex < 0)
+        {
+            return Strings.EventCommandList.taskundefined;
+        }
+
+        if (achievement.MetaAchievementIds.Count > 0)
+        {
+            if (objectiveIndex >= achievement.MetaAchievementIds.Count)
+            {
+                return Strings.EventCommandList.taskundefined;
+            }
+
+            var metaAchievement = AchievementDescriptor.Get(achievement.MetaAchievementIds[objectiveIndex]);
+            var metaName = metaAchievement?.Name ?? Strings.EventCommandList.achievementundefined.ToString();
+            return Strings.EventCommandList.metaachievementtask.ToString(metaName);
+        }
+
+        var conditions = achievement.Requirements.Lists.SelectMany(list => list.Conditions).ToList();
+        if (objectiveIndex >= conditions.Count)
+        {
+            return Strings.EventCommandList.taskundefined;
+        }
+
+        return Strings.GetEventConditionalDesc((dynamic)conditions[objectiveIndex]);
     }
 
     private static string GetCommandText(EndQuestCommand command, MapInstance map)

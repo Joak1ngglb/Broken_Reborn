@@ -5,6 +5,7 @@ using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -15,6 +16,7 @@ using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.GameObjects.Titles;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.GameObjects;
 using Intersect.Network;
@@ -560,6 +562,34 @@ internal sealed partial class PacketHandler
                     }
 
                     QuestDescriptor.Lookup.Set(id, qst);
+                }
+
+                break;
+            case GameObjectType.Achievement:
+                if (deleted)
+                {
+                    var achievement = AchievementDescriptor.Get(id);
+                    achievement.Delete();
+                }
+                else
+                {
+                    var achievement = new AchievementDescriptor(id);
+                    achievement.Load(json);
+                    AchievementDescriptor.Lookup.Set(id, achievement);
+                }
+
+                break;
+            case GameObjectType.Title:
+                if (deleted)
+                {
+                    var title = TitleDescriptor.Get(id);
+                    title.Delete();
+                }
+                else
+                {
+                    var title = new TitleDescriptor(id);
+                    title.Load(json);
+                    TitleDescriptor.Lookup.Set(id, title);
                 }
 
                 break;

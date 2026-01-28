@@ -152,6 +152,37 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.ToTable("Mutes");
                 });
 
+            modelBuilder.Entity("Intersect.Server.Database.PlayerData.Players.AchievementProgress", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AchievementId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PlayerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Progress")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlayerId");
+
+                    b.HasIndex("AchievementId", "PlayerId")
+                        .IsUnique();
+
+                    b.ToTable("Player_Achievements");
+                });
+
             modelBuilder.Entity("Intersect.Server.Database.PlayerData.Players.Bag", b =>
                 {
                     b.Property<Guid>("Id")
@@ -998,6 +1029,10 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                         .HasColumnType("TEXT")
                         .HasColumnName("BaseStats");
 
+                    b.Property<string>("UnlockedTitlesJson")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("UnlockedTitles");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("TEXT");
 
@@ -1110,6 +1145,17 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Intersect.Server.Database.PlayerData.Players.AchievementProgress", b =>
+                {
+                    b.HasOne("Intersect.Server.Entities.Player", "Player")
+                        .WithMany("Achievements")
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Player");
                 });
 
             modelBuilder.Entity("Intersect.Server.Database.PlayerData.Players.BagSlot", b =>
@@ -1438,6 +1484,8 @@ namespace Intersect.Server.Migrations.Sqlite.Player
 
             modelBuilder.Entity("Intersect.Server.Entities.Player", b =>
                 {
+                    b.Navigation("Achievements");
+
                     b.Navigation("Bank");
 
                     b.Navigation("BestiaryUnlocks");
