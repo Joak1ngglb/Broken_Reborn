@@ -1700,6 +1700,9 @@ Tick timer saved in server config.json.";
         public static LocalizedString instructionsnpccanbeattacked =
             @"Below are condition lists. If there are conditions, and they are not met, then the player will not be able to attack this npc.";
 
+        public static LocalizedString instructionsachievement =
+            @"Below are condition lists. If conditions are met on any of the lists then the achievement can be earned.";
+
         public static LocalizedString instructionsquest =
             @"Below are condition lists. If conditions are met on any of the lists then the player can start the quest.";
 
@@ -4389,6 +4392,8 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString animationeditor = @"Animation Editor";
 
+        public static LocalizedString achievementeditor = @"Achievement Editor";
+
         public static LocalizedString classeditor = @"Class Editor";
 
         public static LocalizedString commoneventeditor = @"Common Event Editor";
@@ -5197,6 +5202,82 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString undoprompt =
             @"Are you sure you want to undo changes made to this projectile? This action cannot be reverted!";
+
+        public static LocalizedString undotitle = @"Undo Changes";
+
+    }
+
+    public partial struct AchievementEditor
+    {
+
+        public static LocalizedString achievements = @"Achievements";
+
+        public static LocalizedString addresource = @"Add Resource";
+
+        public static LocalizedString cancel = @"Cancel";
+
+        public static LocalizedString category = @"Category:";
+
+        public static LocalizedString copy = @"Copy Achievement";
+
+        public static LocalizedString currency = @"Currency:";
+
+        public static LocalizedString delete = @"Delete Achievement";
+
+        public static LocalizedString deleteprompt =
+            @"Are you sure you want to delete this achievement? This action cannot be reverted!";
+
+        public static LocalizedString deletetitle = @"Delete Achievement";
+
+        public static LocalizedString description = @"Description:";
+
+        public static LocalizedString difficulty = @"Difficulty:";
+
+        public static LocalizedString editrequirements = @"Edit Requirements";
+
+        public static LocalizedString experience = @"Experience:";
+
+        public static LocalizedString folderlabel = @"Folder:";
+
+        public static LocalizedString folderprompt = @"Enter a name for the folder you'd like to add:";
+
+        public static LocalizedString foldertitle = @"Add Folder";
+
+        public static LocalizedString general = @"General";
+
+        public static LocalizedString name = @"Name:";
+
+        public static LocalizedString New = @"New Achievement";
+
+        public static LocalizedString ornamentids = @"Ornament IDs:";
+
+        public static LocalizedString paste = @"Paste Achievement";
+
+        public static LocalizedString requirements = @"Requirements";
+
+        public static LocalizedString resource = @"Resource:";
+
+        public static LocalizedString resourceamount = @"Amount:";
+
+        public static LocalizedString removeresource = @"Remove Resource";
+
+        public static LocalizedString rewards = @"Rewards";
+
+        public static LocalizedString save = @"Save";
+
+        public static LocalizedString searchplaceholder = @"Search...";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString sortalphabetically = @"Order Alphabetically";
+
+        public static LocalizedString title = @"Achievement Editor";
+
+        public static LocalizedString titleids = @"Title IDs:";
+
+        public static LocalizedString undo = @"Undo Changes";
+
+        public static LocalizedString undoprompt =
+            @"Are you sure you want to undo changes made to this achievement? This action cannot be reverted!";
 
         public static LocalizedString undotitle = @"Undo Changes";
 

@@ -5,6 +5,7 @@ using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -560,6 +561,20 @@ internal sealed partial class PacketHandler
                     }
 
                     QuestDescriptor.Lookup.Set(id, qst);
+                }
+
+                break;
+            case GameObjectType.Achievement:
+                if (deleted)
+                {
+                    var achievement = AchievementDescriptor.Get(id);
+                    achievement.Delete();
+                }
+                else
+                {
+                    var achievement = new AchievementDescriptor(id);
+                    achievement.Load(json);
+                    AchievementDescriptor.Lookup.Set(id, achievement);
                 }
 
                 break;

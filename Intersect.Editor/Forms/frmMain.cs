@@ -10,6 +10,7 @@ using Intersect.Editor.Content;
 using Intersect.Editor.Core;
 using Intersect.Editor.Forms.DockingElements;
 using Intersect.Editor.Forms.Editors;
+using Intersect.Editor.Forms.Editors.Achievements;
 using Intersect.Editor.Forms.Editors.Quest;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
@@ -44,6 +45,8 @@ public partial class FrmMain : Form
 
     //Editor References
     private FrmAnimation mAnimationEditor;
+
+    private FrmAchievement mAchievementEditor;
 
     private FrmClass mClassEditor;
 
@@ -181,6 +184,7 @@ public partial class FrmMain : Form
     {
         contentEditorsToolStripMenuItem.Text = Strings.MainForm.editors;
         animationEditorToolStripMenuItem.Text = Strings.MainForm.animationeditor;
+        achievementEditorToolStripMenuItem.Text = Strings.MainForm.achievementeditor;
         classEditorToolStripMenuItem.Text = Strings.MainForm.classeditor;
         commonEventEditorToolStripMenuItem.Text = Strings.MainForm.commoneventeditor;
         craftingTableEditorToolStripMenuItem.Text = Strings.MainForm.craftingtableeditor;
@@ -1263,6 +1267,11 @@ public partial class FrmMain : Form
         PacketSender.SendOpenEditor(GameObjectType.Animation);
     }
 
+    private void achievementEditorToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        PacketSender.SendOpenEditor(GameObjectType.Achievement);
+    }
+
     private void resourceEditorToolStripMenuItem_Click(object sender, EventArgs e)
     {
         PacketSender.SendOpenEditor(GameObjectType.Resource);
@@ -1616,6 +1625,15 @@ public partial class FrmMain : Form
                         mAnimationEditor = new FrmAnimation();
                         mAnimationEditor.InitEditor();
                         mAnimationEditor.Show();
+                    }
+
+                    break;
+                case GameObjectType.Achievement:
+                    if (mAchievementEditor == null || mAchievementEditor.Visible == false)
+                    {
+                        mAchievementEditor = new FrmAchievement();
+                        mAchievementEditor.InitEditor();
+                        mAchievementEditor.Show();
                     }
 
                     break;
