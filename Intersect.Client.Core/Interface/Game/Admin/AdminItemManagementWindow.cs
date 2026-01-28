@@ -66,7 +66,7 @@ public sealed class AdminItemManagementWindow : Window
             Label = Strings.AdminWindow.Item,
             TextPadding = new Padding(8, 4, 0, 4),
         };
-        PopulateItemDropdown();
+        PopulateItemDropdown(requestLocalization: true);
         _itemDropdown.ItemSelected += (_, _) => UpdateActionControls();
 
         var quantityPanel = new Panel(contentPanel, "QuantityPanel");
@@ -136,7 +136,7 @@ public sealed class AdminItemManagementWindow : Window
         button.FontSize = 12;
     }
 
-    private void PopulateItemDropdown()
+    private void PopulateItemDropdown(bool requestLocalization)
     {
         var selectedItemId = _itemDropdown.SelectedItem?.UserData as Guid?;
         _itemDropdown.ClearItems();
@@ -170,7 +170,10 @@ public sealed class AdminItemManagementWindow : Window
             _itemDropdown.SelectByUserData(selectedId);
         }
 
-        RequestLocalizationEntries();
+        if (requestLocalization)
+        {
+            RequestLocalizationEntries();
+        }
     }
 
     private static string GetLocalizedItemName(ItemDescriptor descriptor) =>
@@ -231,7 +234,7 @@ public sealed class AdminItemManagementWindow : Window
             return;
         }
 
-        PopulateItemDropdown();
+        PopulateItemDropdown(requestLocalization: false);
     }
 
     private bool TryGetItemActionParameters(out string playerName, out Guid itemId, out int quantity)
