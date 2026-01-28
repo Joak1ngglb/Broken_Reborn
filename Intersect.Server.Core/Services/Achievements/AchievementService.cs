@@ -172,6 +172,7 @@ public static class AchievementService
         if (hasChanges)
         {
             player.Save();
+            PacketSender.SendAchievementProgress(player);
         }
     }
 
@@ -319,6 +320,7 @@ public static class AchievementService
         progress.CompletedAt = DateTime.UtcNow;
 
         GrantRewards(player, achievement);
+        PacketSender.SendAchievementCompleted(player, achievement);
 
         PacketSender.SendChatMsg(
             player,
