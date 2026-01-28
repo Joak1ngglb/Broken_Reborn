@@ -21,6 +21,7 @@ using Intersect.Server.Core.MapInstancing;
 using Intersect.Server.Framework.Items;
 using Intersect.Server.Framework.Maps;
 using Intersect.Server.Plugins.Helpers;
+using Intersect.Server.Services.Achievements;
 using Microsoft.Extensions.Logging;
 
 namespace Intersect.Server.Maps;
@@ -385,6 +386,7 @@ public partial class MapInstance : IMapInstance
 
         AddEntity(player);
         player.LastMapEntered = mMapController.Id;
+        AchievementService.HandleMapEntered(player, mMapController);
 
         // Send the entities/items of this current MapInstance to the player
         SendMapEntitiesTo(player);

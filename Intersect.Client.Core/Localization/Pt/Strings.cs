@@ -499,6 +499,7 @@ internal static partial class ClientLocalizationOverrides
             },
             ["GameMenu"] = new JObject
             {
+                ["Achievements"] = "Conquistas",
                 ["Character"] = "Informações do personagem",
                 ["Friends"] = "Amigos",
                 ["Items"] = "Inventário",
@@ -1079,6 +1080,28 @@ internal static partial class ClientLocalizationOverrides
                 ["Vital1"] = "MP:",
                 ["Vital1Value"] = "{00} / {01}",
             },
+            ["Achievements"] = new JObject
+            {
+                ["CategoryLabel"] = "Categoria: {00}",
+                ["Completed"] = "Conquista concluída",
+                ["CompletedNotification"] = "Conquista concluída: {00}",
+                ["DifficultyLabel"] = "Dificuldade: {00}",
+                ["FilterCompleted"] = "Concluídas",
+                ["FilterInProgress"] = "Em progresso",
+                ["FilterPending"] = "Pendentes",
+                ["InProgress"] = "Conquista em progresso",
+                ["Pending"] = "Conquista pendente",
+                ["Progress"] = "Progresso:",
+                ["ProgressValue"] = "{00}/{01}",
+                ["ProgressValueSimple"] = "{00}",
+                ["RewardCurrency"] = "Moeda: {00}",
+                ["RewardExperience"] = "Experiência: {00}",
+                ["RewardNone"] = "Sem recompensas",
+                ["RewardResource"] = "{00}x {01}",
+                ["RewardTitles"] = "Títulos: {00}",
+                ["RewardsTitle"] = "Recompensas",
+                ["Title"] = "Conquistas",
+            },
             ["PasswordChange"] = new JObject
             {
                 ["AlertTitleError"] = "Erro!",
@@ -1218,6 +1241,7 @@ internal static partial class ClientLocalizationOverrides
                 ["Fps30"] = "30",
                 ["Fps60"] = "60",
                 ["Fps90"] = "90",
+                ["ShowAchievementNotifications"] = "Mostrar notificações de conquistas",
                 ["Fullscreen"] = "Tela cheia",
                 ["GameSettingsTab"] = "Jogo",
                 ["InformationSettings"] = "Informação",
@@ -1231,6 +1255,7 @@ internal static partial class ClientLocalizationOverrides
                 ["SectionVolume"] = "Volume",
                 ["ShowExperienceAsPercentage"] = "Mostrar experiência como porcentagem",
                 ["ShowFPSCounter"] = "Mostrar contador FPS",
+                ["ShowAchievementNotifications"] = "Mostrar notificações de conquistas",
                 ["ShowFriendOverheadHpBar"] = "Mostrar barra HP aos amigos",
                 ["ShowFriendOverheadInformation"] = "Mostrar informações gerais aos amigos",
                 ["ShowGuildOverheadHpBar"] = "Mostrar barra HP de sobrecarga do membro da guilda",
