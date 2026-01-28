@@ -40,6 +40,7 @@ using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
 using Intersect.Server.Core;
+using Intersect.Server.Services.Achievements;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -275,6 +276,9 @@ public partial class Player : Entity
     //Quests
     public virtual List<Quest> Quests { get; set; } = [];
 
+    //Achievements
+    public virtual List<AchievementProgress> Achievements { get; set; } = [];
+
     //Variables
     public virtual List<PlayerVariable> Variables { get; set; } = [];
 
@@ -446,6 +450,30 @@ public partial class Player : Entity
 
     [NotMapped, JsonIgnore]
     public bool IsInParty => Party != null && Party.Count > 1;
+
+    [Column("UnlockedTitles"), JsonIgnore]
+    public string UnlockedTitlesJson
+    {
+        get => JsonConvert.SerializeObject(UnlockedTitles);
+        set => UnlockedTitles = string.IsNullOrWhiteSpace(value)
+            ? []
+            : JsonConvert.DeserializeObject<List<Guid>>(value) ?? [];
+    }
+
+    [NotMapped]
+    public List<Guid> UnlockedTitles { get; set; } = [];
+
+    [Column("UnlockedOrnaments"), JsonIgnore]
+    public string UnlockedOrnamentsJson
+    {
+        get => JsonConvert.SerializeObject(UnlockedOrnaments);
+        set => UnlockedOrnaments = string.IsNullOrWhiteSpace(value)
+            ? []
+            : JsonConvert.DeserializeObject<List<Guid>>(value) ?? [];
+    }
+
+    [NotMapped]
+    public List<Guid> UnlockedOrnaments { get; set; } = [];
 
     public static Player FindOnline(Guid id)
     {
@@ -1564,6 +1592,7 @@ public partial class Player : Entity
 
                 StartCommonEventsWithTrigger(CommonEventTrigger.LevelUp);
                 PacketSender.SendActionMsg(this, Strings.Combat.LevelUp, CustomColors.Combat.LevelUp);
+                AchievementService.HandleLevelUp(this);
                 SpellPoints++;
                 PacketSender.SendSpellPoints(this);
                 SpellPointsChanged = true;
@@ -1755,6 +1784,7 @@ public partial class Player : Entity
                                 ExpModifiedByLevel(descriptor.Level, partyExperience, partyMember.Level)
                             );
                             partyMember.UpdateQuestKillTasks(entity);
+                            AchievementService.HandleNpcKill(partyMember, npc);
                         }
 
                         if (partyEvent != null)
@@ -1772,6 +1802,7 @@ public partial class Player : Entity
                     {
                         GiveExperience(ExpModifiedByLevel(descriptor.Level, descriptor.Experience));
                         UpdateQuestKillTasks(entity);
+                        AchievementService.HandleNpcKill(this, npc);
                     }
 
                     if (playerEvent != null)
@@ -2348,6 +2379,7 @@ public partial class Player : Entity
         bool fromLogin = false,
         bool forceInstanceChange = false)
     {
+        var previousMapId = MapId;
         #region shortcircuit exits
         // First, deny the warp entirely if we CAN'T, for some reason, warp to the requested instance type. ONly do this if we're not forcing a change
         if (!forceInstanceChange && !CanChangeToInstanceType(mapInstanceType, fromLogin, newMapId))
@@ -2386,6 +2418,11 @@ public partial class Player : Entity
         #region Map instance traversal
         // Set up player properties if we have changed instance types
         bool onNewInstance = forceInstanceChange || ProcessMapInstanceChange(mapInstanceType, fromLogin);
+        if (PreviousMapInstanceType != MapInstanceType.Overworld &&
+            InstanceType == MapInstanceType.Overworld)
+        {
+            AchievementService.HandleDungeonCompleted(this, previousMapId);
+        }
 
         // Ensure there exists a map instance with the Player's InstanceId. A player is the sole entity that can create new map instances
         MapInstance newMapInstance;
@@ -3282,6 +3319,7 @@ public partial class Player : Entity
             EnqueueStartCommonEvent(item.Descriptor?.GetEventTrigger(ItemEventTrigger.OnPickup));
             StartCommonEventsWithTrigger(CommonEventTrigger.InventoryChanged);
             UnequipInvalidItems();
+            AchievementService.HandleItemCollected(this, item.Descriptor, item.Quantity);
 
             return true;
         }
@@ -4678,6 +4716,7 @@ public partial class Player : Entity
                         this, Strings.Crafting.Crafted.ToString(craftItem.Name), ChatMessageType.Crafting,
                         CustomColors.Alerts.Success
                     );
+                    AchievementService.HandleItemCrafted(this, craftDescriptor, craftItem, quantity);
 
                     if (craftDescriptor.Event != default)
                     {
@@ -6975,6 +7014,7 @@ public partial class Player : Entity
                                     this, Strings.Quests.Completed.ToString(quest.Name), ChatMessageType.Quest,
                                     CustomColors.QuestAlert.Completed
                                 );
+                                AchievementService.HandleQuestCompleted(this, quest);
                             }
                             else
                             {
@@ -7016,6 +7056,7 @@ public partial class Player : Entity
             if (questProgress != null)
             {
                 //Complete Quest
+                var wasCompleted = questProgress.Completed;
                 questProgress.Completed = true;
                 questProgress.TaskId = Guid.Empty;
                 questProgress.TaskProgress = -1;
@@ -7026,6 +7067,10 @@ public partial class Player : Entity
                         this, Strings.Quests.Completed.ToString(quest.Name), ChatMessageType.Quest,
                         CustomColors.QuestAlert.Completed
                     );
+                }
+                if (!wasCompleted)
+                {
+                    AchievementService.HandleQuestCompleted(this, quest);
                 }
                 PacketSender.SendQuestsProgress(this);
             }

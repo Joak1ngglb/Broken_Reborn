@@ -1,4 +1,5 @@
 using Intersect.Extensions;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -33,6 +34,9 @@ public enum GameObjectType
 
     [GameObjectInfo(typeof(QuestDescriptor), "quests")]
     Quest,
+
+    [GameObjectInfo(typeof(AchievementDescriptor), "achievements")]
+    Achievement,
 
     [GameObjectInfo(typeof(ResourceDescriptor), "resources")]
     Resource,

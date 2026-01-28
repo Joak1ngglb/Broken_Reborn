@@ -11,6 +11,7 @@ using Intersect.Collections;
 using Intersect.Config;
 using Intersect.Core;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -742,6 +743,10 @@ public static partial class DbInterface
                 QuestDescriptor.Lookup.Clear();
 
                 break;
+            case GameObjectType.Achievement:
+                AchievementDescriptor.Lookup.Clear();
+
+                break;
             case GameObjectType.Resource:
                 ResourceDescriptor.Lookup.Clear();
 
@@ -850,6 +855,13 @@ public static partial class DbInterface
                         foreach (var qst in context.Quests)
                         {
                             QuestDescriptor.Lookup.Set(qst.Id, qst);
+                        }
+
+                        break;
+                    case GameObjectType.Achievement:
+                        foreach (var achievement in context.Achievements)
+                        {
+                            AchievementDescriptor.Lookup.Set(achievement.Id, achievement);
                         }
 
                         break;
@@ -1190,6 +1202,10 @@ public static partial class DbInterface
                 ((QuestDescriptor)dbObj).EndEvent.CommonEvent = false;
 
                 break;
+            case GameObjectType.Achievement:
+                dbObj = new AchievementDescriptor(predefinedid);
+
+                break;
 
             case GameObjectType.GuildVariable:
                 dbObj = new GuildVariableDescriptor(predefinedid);
@@ -1252,6 +1268,11 @@ public static partial class DbInterface
                     case GameObjectType.Quest:
                         context.Quests.Add((QuestDescriptor)dbObj);
                         QuestDescriptor.Lookup.Set(dbObj.Id, dbObj);
+
+                        break;
+                    case GameObjectType.Achievement:
+                        context.Achievements.Add((AchievementDescriptor)dbObj);
+                        AchievementDescriptor.Lookup.Set(dbObj.Id, dbObj);
 
                         break;
 
@@ -1412,6 +1433,10 @@ public static partial class DbInterface
                         }
 
                         context.Quests.Remove((QuestDescriptor)gameObject);
+
+                        break;
+                    case GameObjectType.Achievement:
+                        context.Achievements.Remove((AchievementDescriptor)gameObject);
 
                         break;
                     case GameObjectType.Resource:
@@ -1587,6 +1612,10 @@ public static partial class DbInterface
                         }
 
                         context.Quests.Update((QuestDescriptor)gameObject);
+
+                        break;
+                    case GameObjectType.Achievement:
+                        context.Achievements.Update((AchievementDescriptor)gameObject);
 
                         break;
                     case GameObjectType.Resource:

@@ -482,6 +482,7 @@ internal static partial class ClientLocalizationOverrides
             },
             ["GameMenu"] = new JObject
             {
+                ["Achievements"] = @"Logros",
                 ["Character"] = @"Información del personaje",
                 ["Friends"] = @"Amigos",
                 ["Items"] = @"inventario",
@@ -729,6 +730,7 @@ internal static partial class ClientLocalizationOverrides
                 ["Fps60"] = @"60",
                 ["Fps90"] = @"90",
                 ["ShowFPSCounter"] = @"Mostrar contador de FPS",
+                ["ShowAchievementNotifications"] = @"Mostrar notificaciones de logros",
                 ["ShowPingCounter"] = @"Mostrar contador de ping",
                 ["Fullscreen"] = @"Pantalla completa",
                 ["GameSettingsTab"] = @"Juego",
@@ -792,6 +794,29 @@ internal static partial class ClientLocalizationOverrides
                 ["Vital0Value"] = @"{00} / {01}",
                 ["Vital1"] = @"diputado:",
                 ["Vital1Value"] = @"{00} / {01}",
+            },
+            ["Achievements"] = new JObject
+            {
+                ["CategoryLabel"] = @"Categoría: {00}",
+                ["Completed"] = @"Logro completado",
+                ["CompletedNotification"] = @"Logro completado: {00}",
+                ["DifficultyLabel"] = @"Dificultad: {00}",
+                ["FilterCompleted"] = @"Completados",
+                ["FilterInProgress"] = @"En progreso",
+                ["FilterPending"] = @"Pendientes",
+                ["InProgress"] = @"Logro en progreso",
+                ["Pending"] = @"Logro pendiente",
+                ["Progress"] = @"Progreso:",
+                ["ProgressValue"] = @"{00}/{01}",
+                ["ProgressValueSimple"] = @"{00}",
+                ["RewardCurrency"] = @"Moneda: {00}",
+                ["RewardExperience"] = @"Experiencia: {00}",
+                ["RewardNone"] = @"Sin recompensas",
+                ["RewardOrnaments"] = @"Ornamentos: {00}",
+                ["RewardResource"] = @"{00}x {01}",
+                ["RewardTitles"] = @"Títulos: {00}",
+                ["RewardsTitle"] = @"Recompensas",
+                ["Title"] = @"Logros",
             },
             ["QuestLog"] = new JObject
             {

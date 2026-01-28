@@ -6,6 +6,7 @@ using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -445,6 +446,7 @@ public static partial class PacketSender
             SendPointsTo(player);
             SendHotbarSlots(player);
             SendQuestsProgress(player);
+            SendAchievementProgress(player);
             SendItemCooldowns(player);
             SendSpellCooldowns(player);
             SendUnlockedBestiaryEntries(player);
@@ -2285,6 +2287,35 @@ public static partial class PacketSender
 
         player.SendPacket(new QuestProgressPacket(dict, hiddenQuests.ToArray(), rewardItems, rewardExperience,
             rewardJobExperience, rewardGuildExperience, rewardFactionHonor));
+    }
+
+    //AchievementProgressPacket
+    public static void SendAchievementProgress(Player player)
+    {
+        var achievements = new Dictionary<Guid, string?>();
+
+        foreach (var achievement in player.Achievements)
+        {
+            achievements[achievement.AchievementId] = achievement.Data();
+        }
+
+        player.SendPacket(new AchievementProgressPacket(achievements));
+    }
+
+    //AchievementCompletedPacket
+    public static void SendAchievementCompleted(Player player, AchievementDescriptor achievement)
+    {
+        var rewards = achievement.Rewards;
+        player.SendPacket(
+            new AchievementCompletedPacket(
+                achievement.Id,
+                rewards.Experience,
+                rewards.Currency,
+                rewards.Resources,
+                rewards.TitleIds,
+                rewards.OrnamentIds
+            )
+        );
     }
 
   
