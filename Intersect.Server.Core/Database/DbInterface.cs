@@ -11,6 +11,7 @@ using Intersect.Collections;
 using Intersect.Config;
 using Intersect.Core;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -21,6 +22,7 @@ using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.GameObjects.Titles;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.GameObjects;
 using Intersect.Framework.Reflection;
@@ -742,6 +744,14 @@ public static partial class DbInterface
                 QuestDescriptor.Lookup.Clear();
 
                 break;
+            case GameObjectType.Achievement:
+                AchievementDescriptor.Lookup.Clear();
+
+                break;
+            case GameObjectType.Title:
+                TitleDescriptor.Lookup.Clear();
+
+                break;
             case GameObjectType.Resource:
                 ResourceDescriptor.Lookup.Clear();
 
@@ -850,6 +860,20 @@ public static partial class DbInterface
                         foreach (var qst in context.Quests)
                         {
                             QuestDescriptor.Lookup.Set(qst.Id, qst);
+                        }
+
+                        break;
+                    case GameObjectType.Achievement:
+                        foreach (var achievement in context.Achievements)
+                        {
+                            AchievementDescriptor.Lookup.Set(achievement.Id, achievement);
+                        }
+
+                        break;
+                    case GameObjectType.Title:
+                        foreach (var title in context.Titles)
+                        {
+                            TitleDescriptor.Lookup.Set(title.Id, title);
                         }
 
                         break;
@@ -1190,6 +1214,14 @@ public static partial class DbInterface
                 ((QuestDescriptor)dbObj).EndEvent.CommonEvent = false;
 
                 break;
+            case GameObjectType.Achievement:
+                dbObj = new AchievementDescriptor(predefinedid);
+
+                break;
+            case GameObjectType.Title:
+                dbObj = new TitleDescriptor(predefinedid);
+
+                break;
 
             case GameObjectType.GuildVariable:
                 dbObj = new GuildVariableDescriptor(predefinedid);
@@ -1252,6 +1284,16 @@ public static partial class DbInterface
                     case GameObjectType.Quest:
                         context.Quests.Add((QuestDescriptor)dbObj);
                         QuestDescriptor.Lookup.Set(dbObj.Id, dbObj);
+
+                        break;
+                    case GameObjectType.Achievement:
+                        context.Achievements.Add((AchievementDescriptor)dbObj);
+                        AchievementDescriptor.Lookup.Set(dbObj.Id, dbObj);
+
+                        break;
+                    case GameObjectType.Title:
+                        context.Titles.Add((TitleDescriptor)dbObj);
+                        TitleDescriptor.Lookup.Set(dbObj.Id, dbObj);
 
                         break;
 
@@ -1412,6 +1454,14 @@ public static partial class DbInterface
                         }
 
                         context.Quests.Remove((QuestDescriptor)gameObject);
+
+                        break;
+                    case GameObjectType.Achievement:
+                        context.Achievements.Remove((AchievementDescriptor)gameObject);
+
+                        break;
+                    case GameObjectType.Title:
+                        context.Titles.Remove((TitleDescriptor)gameObject);
 
                         break;
                     case GameObjectType.Resource:
@@ -1587,6 +1637,14 @@ public static partial class DbInterface
                         }
 
                         context.Quests.Update((QuestDescriptor)gameObject);
+
+                        break;
+                    case GameObjectType.Achievement:
+                        context.Achievements.Update((AchievementDescriptor)gameObject);
+
+                        break;
+                    case GameObjectType.Title:
+                        context.Titles.Update((TitleDescriptor)gameObject);
 
                         break;
                     case GameObjectType.Resource:

@@ -24,6 +24,7 @@ using Intersect.Models;
 using Intersect.Client.Interface.Shared;
 using Intersect.Client.Interface;
 using Intersect.Framework.Core;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -2215,6 +2216,50 @@ internal sealed partial class PacketHandler
                 }
             );
         }
+    }
+
+    //AchievementProgressPacket
+    public void HandlePacket(IPacketSender packetSender, AchievementProgressPacket packet)
+    {
+        foreach (var achievement in packet.Achievements)
+        {
+            if (achievement.Value == null)
+            {
+                Globals.AchievementProgress.Remove(achievement.Key);
+                Globals.AchievementCompletedRewards.Remove(achievement.Key);
+                continue;
+            }
+
+            Globals.AchievementProgress[achievement.Key] = new AchievementProgress(achievement.Value);
+        }
+
+        Globals.AchievementDirty = true;
+
+        Interface.Interface.EnqueueInGame(
+            gameInterface => gameInterface.NotifyAchievementsUpdated()
+        );
+    }
+
+    //AchievementCompletedPacket
+    public void HandlePacket(IPacketSender packetSender, AchievementCompletedPacket packet)
+    {
+        Globals.AchievementCompletedRewards[packet.AchievementId] = new AchievementRewards
+        {
+            Experience = packet.Experience,
+            Currency = packet.Currency,
+            Resources = packet.Resources,
+            TitleIds = packet.TitleIds
+        };
+
+        Globals.AchievementDirty = true;
+
+        Interface.Interface.EnqueueInGame(
+            gameInterface =>
+            {
+                gameInterface.NotifyAchievementsUpdated();
+                gameInterface.NotifyAchievementCompleted(packet.AchievementId);
+            }
+        );
     }
 
     //TradePacket

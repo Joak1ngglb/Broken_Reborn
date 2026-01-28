@@ -484,6 +484,7 @@ internal static partial class ClientLocalizationOverrides
             },
             ["GameMenu"] = new JObject
             {
+                ["Achievements"] = @"Succès",
                 ["Character"] = @"Informations du personnage",
                 ["Friends"] = @"Amis",
                 ["Items"] = @"Inventaire",
@@ -732,6 +733,7 @@ internal static partial class ClientLocalizationOverrides
                 ["Fps60"] = @"60",
                 ["Fps90"] = @"90",
                 ["ShowFPSCounter"] = @"Afficher le compteur de FPS",
+                ["ShowAchievementNotifications"] = @"Afficher les notifications de succès",
                 ["ShowPingCounter"] = @"Afficher le compteur de ping",
                 ["Fullscreen"] = @"Plein écran",
                 ["GameSettingsTab"] = @"Jeu",
@@ -797,6 +799,28 @@ internal static partial class ClientLocalizationOverrides
                 ["Vital0Value"] = @"{00} / {01}",
                 ["Vital1"] = @"PM :",
                 ["Vital1Value"] = @"{00} / {01}",
+            },
+            ["Achievements"] = new JObject
+            {
+                ["CategoryLabel"] = @"Catégorie : {00}",
+                ["Completed"] = @"Succès terminé",
+                ["CompletedNotification"] = @"Succès terminé : {00}",
+                ["DifficultyLabel"] = @"Difficulté : {00}",
+                ["FilterCompleted"] = @"Terminés",
+                ["FilterInProgress"] = @"En cours",
+                ["FilterPending"] = @"En attente",
+                ["InProgress"] = @"Succès en cours",
+                ["Pending"] = @"Succès en attente",
+                ["Progress"] = @"Progression :",
+                ["ProgressValue"] = @"{00}/{01}",
+                ["ProgressValueSimple"] = @"{00}",
+                ["RewardCurrency"] = @"Monnaie : {00}",
+                ["RewardExperience"] = @"Expérience : {00}",
+                ["RewardNone"] = @"Aucune récompense",
+                ["RewardResource"] = @"{00}x {01}",
+                ["RewardTitles"] = @"Titres : {00}",
+                ["RewardsTitle"] = @"Récompenses",
+                ["Title"] = @"Succès",
             },
             ["QuestLog"] = new JObject
             {
