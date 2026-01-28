@@ -15,8 +15,10 @@ using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Entities;
 using Intersect.Server.Entities.Events;
+using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.GameObjects;
 
 namespace Intersect.Server.Services.Achievements;
 
@@ -324,7 +326,7 @@ public static class AchievementService
 
         PacketSender.SendChatMsg(
             player,
-            $"Logro completado: {achievement.Name}",
+            Strings.Achievements.CompletedNotification.ToString(achievement.Name),
             ChatMessageType.Notice,
             CustomColors.Alerts.Success
         );
