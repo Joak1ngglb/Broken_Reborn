@@ -2086,6 +2086,9 @@ public static partial class Strings
     public partial struct GameMenu
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Achievements = @"Achievements";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Character = @"Character Information";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -3031,6 +3034,9 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         public static LocalizedString ShowFPSCounter = @"Show FPS Counter";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ShowAchievementNotifications = @"Show achievement notifications";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString ShowPingCounter = @"Show Ping Counter";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -3220,6 +3226,69 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Vital1Value = @"{00} / {01}";
+    }
+
+    public partial struct Achievements
+    {
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString CategoryLabel = @"Category: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Completed = @"Achievement Completed";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString CompletedNotification = @"Achievement completed: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString DifficultyLabel = @"Difficulty: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString FilterCompleted = @"Completed";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString FilterInProgress = @"In Progress";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString FilterPending = @"Pending";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString InProgress = @"Achievement In Progress";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Pending = @"Achievement Pending";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Progress = @"Progress:";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ProgressValue = @"{00}/{01}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString ProgressValueSimple = @"{00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString RewardCurrency = @"Currency: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString RewardExperience = @"Experience: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString RewardNone = @"No rewards";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString RewardOrnaments = @"Ornaments: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString RewardResource = @"{00}x {01}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString RewardTitles = @"Titles: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString RewardsTitle = @"Rewards";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Title = @"Achievements";
     }
 
     public partial struct QuestLog

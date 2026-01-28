@@ -46,6 +46,7 @@ public partial class SettingsWindow : Window
     private readonly LabeledCheckBox _showManaAsPercentageCheckbox;
     private readonly LabeledCheckBox _simplifiedEscapeMenu;
     private readonly LabeledComboBox _languageList;
+    private readonly LabeledCheckBox _showAchievementNotificationsCheckbox;
 
     // Game Settings - Information
     private readonly TabButton _gameSettingsTabInformation;
@@ -253,6 +254,14 @@ public partial class SettingsWindow : Window
             Font = _defaultFont,
             FontSize = 12,
             Text = Strings.Settings.TypewriterText,
+        };
+
+        _showAchievementNotificationsCheckbox = new LabeledCheckBox(parent: _interfaceSettings, name: nameof(_showAchievementNotificationsCheckbox))
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Text = Strings.Settings.ShowAchievementNotifications,
         };
 
         // Game > Information
@@ -990,6 +999,7 @@ public partial class SettingsWindow : Window
         _showHealthAsPercentageCheckbox.IsChecked = Globals.Database.ShowHealthAsPercentage;
         _showManaAsPercentageCheckbox.IsChecked = Globals.Database.ShowManaAsPercentage;
         _showExperienceAsPercentageCheckbox.IsChecked = Globals.Database.ShowExperienceAsPercentage;
+        _showAchievementNotificationsCheckbox.IsChecked = Globals.Database.ShowAchievementNotifications;
         _simplifiedEscapeMenu.IsChecked = Globals.Database.SimplifiedEscapeMenu;
         _friendOverheadInfoCheckbox.IsChecked = Globals.Database.FriendOverheadInfo;
         _guildMemberOverheadInfoCheckbox.IsChecked = Globals.Database.GuildMemberOverheadInfo;
@@ -1176,6 +1186,7 @@ public partial class SettingsWindow : Window
         Globals.Database.ShowExperienceAsPercentage = _showExperienceAsPercentageCheckbox.IsChecked;
         Globals.Database.ShowHealthAsPercentage = _showHealthAsPercentageCheckbox.IsChecked;
         Globals.Database.ShowManaAsPercentage = _showManaAsPercentageCheckbox.IsChecked;
+        Globals.Database.ShowAchievementNotifications = _showAchievementNotificationsCheckbox.IsChecked;
         Globals.Database.SimplifiedEscapeMenu = _simplifiedEscapeMenu.IsChecked;
         Globals.Database.FriendOverheadInfo = _friendOverheadInfoCheckbox.IsChecked;
         Globals.Database.GuildMemberOverheadInfo = _guildMemberOverheadInfoCheckbox.IsChecked;

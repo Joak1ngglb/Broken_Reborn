@@ -2234,6 +2234,10 @@ internal sealed partial class PacketHandler
         }
 
         Globals.AchievementDirty = true;
+
+        Interface.Interface.EnqueueInGame(
+            gameInterface => gameInterface.NotifyAchievementsUpdated()
+        );
     }
 
     //AchievementCompletedPacket
@@ -2249,6 +2253,14 @@ internal sealed partial class PacketHandler
         };
 
         Globals.AchievementDirty = true;
+
+        Interface.Interface.EnqueueInGame(
+            gameInterface =>
+            {
+                gameInterface.NotifyAchievementsUpdated();
+                gameInterface.NotifyAchievementCompleted(packet.AchievementId);
+            }
+        );
     }
 
     //TradePacket
