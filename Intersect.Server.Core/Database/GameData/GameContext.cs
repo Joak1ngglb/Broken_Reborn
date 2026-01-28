@@ -1,4 +1,5 @@
 using Intersect.Extensions;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -60,6 +61,9 @@ public abstract partial class GameContext : IntersectDbContext<GameContext>, IGa
 
     //Quests
     public DbSet<QuestDescriptor> Quests { get; set; }
+
+    //Achievements
+    public DbSet<AchievementDescriptor> Achievements { get; set; }
 
     //Resources
     public DbSet<ResourceDescriptor> Resources { get; set; }

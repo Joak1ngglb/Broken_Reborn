@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -42,6 +43,8 @@ public interface IGameContext : IDbContext
     DbSet<ProjectileDescriptor> Projectiles { get; set; }
 
     DbSet<QuestDescriptor> Quests { get; set; }
+
+    DbSet<AchievementDescriptor> Achievements { get; set; }
 
     DbSet<ResourceDescriptor> Resources { get; set; }
 

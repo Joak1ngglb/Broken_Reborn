@@ -28,6 +28,8 @@ public interface IPlayerContext : IDbContext
 
     DbSet<Quest> Player_Quests { get; set; }
 
+    DbSet<AchievementProgress> Player_Achievements { get; set; }
+
     DbSet<PlayerSpell> Player_Spells { get; set; }
 
     DbSet<PlayerVariable> Player_Variables { get; set; }
