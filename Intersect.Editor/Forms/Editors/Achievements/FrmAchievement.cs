@@ -1,3 +1,4 @@
+using System.Linq;
 using DarkUI.Forms;
 using Intersect.Editor.Core;
 using Intersect.Editor.Forms.Editors;
@@ -7,6 +8,7 @@ using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.GameObjects.Titles;
 
 namespace Intersect.Editor.Forms.Editors.Achievements;
 
@@ -349,7 +351,9 @@ public partial class FrmAchievement : EditorForm
             return;
         }
 
-        _editorItem.Rewards.TitleIds = ParseGuidList(txtTitleIds.Text);
+        _editorItem.Rewards.TitleIds = ParseGuidList(txtTitleIds.Text)
+            .Where(id => TitleDescriptor.Lookup.ContainsKey(id))
+            .ToList();
     }
 
     private static List<Guid> ParseGuidList(string text)

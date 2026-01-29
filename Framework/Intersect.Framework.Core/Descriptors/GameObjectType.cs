@@ -10,6 +10,7 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.GameObjects.Titles;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.GameObjects;
 
@@ -37,6 +38,9 @@ public enum GameObjectType
 
     [GameObjectInfo(typeof(AchievementDescriptor), "achievements")]
     Achievement,
+
+    [GameObjectInfo(typeof(TitleDescriptor), "titles")]
+    Title,
 
     [GameObjectInfo(typeof(ResourceDescriptor), "resources")]
     Resource,

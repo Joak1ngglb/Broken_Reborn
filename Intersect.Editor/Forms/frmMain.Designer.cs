@@ -104,6 +104,7 @@ namespace Intersect.Editor.Forms
             this.contentEditorsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.animationEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.achievementEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.titleEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.classEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.commonEventEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.craftsEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -808,6 +809,7 @@ namespace Intersect.Editor.Forms
             this.contentEditorsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.animationEditorToolStripMenuItem,
             this.achievementEditorToolStripMenuItem,
+            this.titleEditorToolStripMenuItem,
             this.classEditorToolStripMenuItem,
             this.commonEventEditorToolStripMenuItem,
             this.craftsEditorToolStripMenuItem,
@@ -842,6 +844,14 @@ namespace Intersect.Editor.Forms
             this.achievementEditorToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
             this.achievementEditorToolStripMenuItem.Text = "Achievement Editor";
             this.achievementEditorToolStripMenuItem.Click += new System.EventHandler(this.achievementEditorToolStripMenuItem_Click);
+            // 
+            // titleEditorToolStripMenuItem
+            // 
+            this.titleEditorToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(220)))));
+            this.titleEditorToolStripMenuItem.Name = "titleEditorToolStripMenuItem";
+            this.titleEditorToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
+            this.titleEditorToolStripMenuItem.Text = "Title Editor";
+            this.titleEditorToolStripMenuItem.Click += new System.EventHandler(this.titleEditorToolStripMenuItem_Click);
             // 
             // classEditorToolStripMenuItem
             // 
@@ -1119,6 +1129,7 @@ namespace Intersect.Editor.Forms
 		private ToolStripMenuItem contentEditorsToolStripMenuItem;
 		private ToolStripMenuItem animationEditorToolStripMenuItem;
 		private ToolStripMenuItem achievementEditorToolStripMenuItem;
+		private ToolStripMenuItem titleEditorToolStripMenuItem;
 		private ToolStripMenuItem classEditorToolStripMenuItem;
 		private ToolStripMenuItem commonEventEditorToolStripMenuItem;
 		private ToolStripMenuItem craftingTableEditorToolStripMenuItem;
