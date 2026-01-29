@@ -90,7 +90,7 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
 
     public ICommand NextCommand => _nextCommand;
 
-    public void ApplyFilter(string? entityType, string? entityId)
+    public void ApplyFilter(string? entityType, string? entityId, string? searchText = null)
     {
         _suppressRefresh = true;
         try
@@ -108,6 +108,12 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
                     _selectedEntityType = match;
                     OnPropertyChanged(nameof(SelectedEntityType));
                 }
+            }
+
+            if (searchText != null)
+            {
+                _searchText = searchText;
+                OnPropertyChanged(nameof(SearchText));
             }
         }
         finally
@@ -298,8 +304,9 @@ public sealed class TranslationQueueEntryViewModel
         EntityType = entry.EntityType;
         EntityId = entry.EntityId;
         EntityNameDisplay = string.IsNullOrWhiteSpace(entry.EntityName) ? string.Empty : $" - {entry.EntityName}";
-        Field = entry.Field;
-        SubPath = string.Empty;
+        var (field, subPath) = SplitField(entry.Field);
+        Field = field;
+        SubPath = subPath;
         Status = entry.Status.ToString();
 
         var updatedUtc = DateTime.TryParse(
@@ -357,6 +364,35 @@ public sealed class TranslationQueueEntryViewModel
     public ICommand QuickPasteCommand => _quickPasteCommand;
 
     private TranslationEntryViewModel? GetActiveTranslation() => TranslationEntries.FirstOrDefault();
+
+    private static (string Field, string SubPath) SplitField(string field)
+    {
+        if (string.IsNullOrWhiteSpace(field))
+        {
+            return (string.Empty, string.Empty);
+        }
+
+        var tokens = field.Split(':');
+        if (tokens.Length >= 3 &&
+            string.Equals(tokens[0], "Page", StringComparison.OrdinalIgnoreCase) &&
+            int.TryParse(tokens[1], out _))
+        {
+            if (tokens.Length >= 6 &&
+                string.Equals(tokens[2], "List", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(tokens[4], "Command", StringComparison.OrdinalIgnoreCase))
+            {
+                var subPath = string.Join(":", tokens.Take(6));
+                var remainder = string.Join(":", tokens.Skip(6));
+                return (string.IsNullOrWhiteSpace(remainder) ? field : remainder, subPath);
+            }
+
+            var pageSubPath = string.Join(":", tokens.Take(2));
+            var pageRemainder = string.Join(":", tokens.Skip(2));
+            return (string.IsNullOrWhiteSpace(pageRemainder) ? field : pageRemainder, pageSubPath);
+        }
+
+        return (field, string.Empty);
+    }
 
     private void Save()
     {

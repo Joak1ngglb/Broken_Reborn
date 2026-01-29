@@ -1816,13 +1816,13 @@ public partial class FrmMain : Form
         OpenTranslationWorkbench();
     }
 
-    public void OpenTranslationWorkbench(string? entityType = null, Guid? entityId = null)
+    public void OpenTranslationWorkbench(string? entityType = null, Guid? entityId = null, string? searchText = null)
     {
         var entityIdValue = entityId?.ToString();
 
         if (_translationWorkbench == null || _translationWorkbench.IsDisposed)
         {
-            _translationWorkbench = new FrmTranslationWorkbench(entityType, entityIdValue)
+            _translationWorkbench = new FrmTranslationWorkbench(entityType, entityIdValue, searchText)
             {
                 Owner = this,
             };
@@ -1831,7 +1831,7 @@ public partial class FrmMain : Form
         }
         else
         {
-            _translationWorkbench.SetFilter(entityType, entityIdValue);
+            _translationWorkbench.SetFilter(entityType, entityIdValue, searchText);
 
             if (_translationWorkbench.WindowState == FormWindowState.Minimized)
             {
