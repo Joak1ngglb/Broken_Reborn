@@ -34,6 +34,7 @@ namespace Intersect.Editor.Forms.Editors
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmCraftingTables));
             this.btnCancel = new DarkUI.Controls.DarkButton();
             this.btnSave = new DarkUI.Controls.DarkButton();
+            this.btnTranslate = new DarkUI.Controls.DarkButton();
             this.grpTables = new DarkUI.Controls.DarkGroupBox();
             this.btnClearSearch = new DarkUI.Controls.DarkButton();
             this.txtSearch = new DarkUI.Controls.DarkTextBox();
@@ -91,6 +92,16 @@ namespace Intersect.Editor.Forms.Editors
             this.btnSave.TabIndex = 23;
             this.btnSave.Text = "Save";
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
+            // btnTranslate
+            // 
+            this.btnTranslate.Location = new System.Drawing.Point(132, 435);
+            this.btnTranslate.Name = "btnTranslate";
+            this.btnTranslate.Padding = new System.Windows.Forms.Padding(5);
+            this.btnTranslate.Size = new System.Drawing.Size(169, 27);
+            this.btnTranslate.TabIndex = 25;
+            this.btnTranslate.Text = "Translate";
+            this.btnTranslate.Click += new System.EventHandler(this.btnTranslate_Click);
             // 
             // grpTables
             // 
@@ -466,6 +477,7 @@ namespace Intersect.Editor.Forms.Editors
             this.Controls.Add(this.pnlContainer);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.btnTranslate);
             this.Controls.Add(this.grpTables);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.KeyPreview = true;
@@ -494,6 +506,7 @@ namespace Intersect.Editor.Forms.Editors
 
         private DarkButton btnCancel;
         private DarkButton btnSave;
+        private DarkButton btnTranslate;
         private DarkGroupBox grpTables;
         private System.Windows.Forms.Panel pnlContainer;
         private DarkGroupBox grpCrafts;

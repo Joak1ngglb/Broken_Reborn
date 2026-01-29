@@ -5,6 +5,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.Localization;
 using Intersect.Localization;
 using Intersect.Network.Packets.Localization;
@@ -874,16 +876,20 @@ public sealed class LocalizationRepository
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
+                    var entityType = reader.GetString(0);
+                    var entityId = reader.GetString(1);
+                    var entityName = ResolveEntityName(entityType, entityId);
                     entries.Add(new TranslationPendingEntry(
-                        reader.GetString(0),
-                        reader.GetString(1),
+                        entityType,
+                        entityId,
                         reader.GetString(2),
                         reader.GetString(3),
                         reader.GetString(4),
                         reader.GetString(5),
                         reader.GetString(6),
                         (TranslationStatus)reader.GetInt32(7),
-                        reader.GetString(8)
+                        reader.GetString(8),
+                        entityName
                     ));
                 }
             }
@@ -932,6 +938,31 @@ public sealed class LocalizationRepository
 
             return (entries, totalCount);
         });
+    }
+
+    private static string? ResolveEntityName(string? entityType, string? entityId)
+    {
+        if (string.IsNullOrWhiteSpace(entityType) || string.IsNullOrWhiteSpace(entityId))
+        {
+            return null;
+        }
+
+        if (!Guid.TryParse(entityId, out var parsedId))
+        {
+            return null;
+        }
+
+        if (entityType.Equals(GameObjectType.Crafts.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return CraftingRecipeDescriptor.GetName(parsedId);
+        }
+
+        if (entityType.Equals(GameObjectType.CraftTables.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return CraftingTableDescriptor.GetName(parsedId);
+        }
+
+        return null;
     }
 }
 

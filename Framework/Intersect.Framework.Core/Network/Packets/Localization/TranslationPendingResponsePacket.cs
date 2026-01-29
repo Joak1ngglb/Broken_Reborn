@@ -44,7 +44,8 @@ public sealed class TranslationPendingEntry
         string sourceHash,
         string translatedText,
         TranslationStatus status,
-        string updatedUtc
+        string updatedUtc,
+        string? entityName = null
     )
     {
         EntityType = entityType;
@@ -56,6 +57,7 @@ public sealed class TranslationPendingEntry
         TranslatedText = translatedText;
         Status = status;
         UpdatedUtc = updatedUtc;
+        EntityName = entityName;
     }
 
     [Key(0)]
@@ -84,4 +86,7 @@ public sealed class TranslationPendingEntry
 
     [Key(8)]
     public string UpdatedUtc { get; set; }
+
+    [Key(9)]
+    public string? EntityName { get; set; }
 }

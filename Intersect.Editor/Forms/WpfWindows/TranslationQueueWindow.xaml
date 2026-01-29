@@ -76,6 +76,7 @@
                                 <Run Text="{Binding EntityType}" />
                                 <Run Text=" #" />
                                 <Run Text="{Binding EntityId}" />
+                                <Run Text="{Binding EntityNameDisplay}" />
                             </TextBlock>
                             <TextBlock Foreground="Gray">
                                 <Run Text="{Binding Field}" />

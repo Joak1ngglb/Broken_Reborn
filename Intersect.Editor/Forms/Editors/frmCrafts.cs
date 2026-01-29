@@ -35,6 +35,7 @@ public partial class FrmCrafts : EditorForm
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
+        _btnTranslate = btnTranslate;
         lstGameObjects.LostFocus += itemList_FocusChanged;
         lstGameObjects.GotFocus += itemList_FocusChanged;
         cmbResult.Items.Clear();
@@ -238,6 +239,16 @@ public partial class FrmCrafts : EditorForm
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();
+    }
+
+    private void btnTranslate_Click(object sender, EventArgs e)
+    {
+        if (mEditorItem == null)
+        {
+            return;
+        }
+
+        OpenTranslationWorkbench(mEditorItem.Type.ToString(), mEditorItem.Id);
     }
 
     private void toolStripItemNew_Click(object sender, EventArgs e)
