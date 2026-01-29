@@ -76,6 +76,7 @@ public partial class FrmMain : Form
 
     private FrmTime mTimeEditor;
     private frmSets mSetEditor;
+    private FrmTranslationWorkbench? _translationWorkbench;
 
     //General Editting Variables
     bool mTMouseDown;
@@ -207,6 +208,7 @@ public partial class FrmMain : Form
     {
         toolsToolStripMenuItem.Text = Strings.MainForm.tools;
         packageUpdateToolStripMenuItem.Text = Strings.MainForm.MenuToolsPackageUpdate;
+        translationWorkbenchToolStripMenuItem.Text = Strings.MainForm.MenuToolsTranslationWorkbench;
     }
 
     private void InitLocalizationMenuHelp()
@@ -1806,6 +1808,50 @@ public partial class FrmMain : Form
         }
 
         Globals.ClosingEditor = true;
+        CloseTranslationWorkbench();
+    }
+
+    private void translationWorkbenchToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        if (_translationWorkbench == null || _translationWorkbench.IsDisposed)
+        {
+            _translationWorkbench = new FrmTranslationWorkbench
+            {
+                Owner = this,
+            };
+            _translationWorkbench.FormClosed += TranslationWorkbench_FormClosed;
+            _translationWorkbench.Show(this);
+        }
+        else
+        {
+            if (_translationWorkbench.WindowState == FormWindowState.Minimized)
+            {
+                _translationWorkbench.WindowState = FormWindowState.Normal;
+            }
+
+            _translationWorkbench.Focus();
+        }
+    }
+
+    private void TranslationWorkbench_FormClosed(object? sender, FormClosedEventArgs e)
+    {
+        if (_translationWorkbench != null)
+        {
+            _translationWorkbench.FormClosed -= TranslationWorkbench_FormClosed;
+            _translationWorkbench = null;
+        }
+    }
+
+    private void CloseTranslationWorkbench()
+    {
+        if (_translationWorkbench == null || _translationWorkbench.IsDisposed)
+        {
+            return;
+        }
+
+        _translationWorkbench.FormClosed -= TranslationWorkbench_FormClosed;
+        _translationWorkbench.Close();
+        _translationWorkbench = null;
     }
 
     private void toolStripBtnFlipVertical_Click(object sender, EventArgs e)

@@ -126,6 +126,7 @@ namespace Intersect.Editor.Forms
             this.menuStrip = new DarkUI.Controls.DarkMenuStrip();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.packageUpdateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.translationWorkbenchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.menuStrip.SuspendLayout();
@@ -1021,7 +1022,8 @@ namespace Intersect.Editor.Forms
             // toolsToolStripMenuItem
             //
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.packageUpdateToolStripMenuItem});
+            this.packageUpdateToolStripMenuItem,
+            this.translationWorkbenchToolStripMenuItem});
             this.toolsToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(220)))));
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
@@ -1034,6 +1036,14 @@ namespace Intersect.Editor.Forms
             this.packageUpdateToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
             this.packageUpdateToolStripMenuItem.Text = "Package Update";
             this.packageUpdateToolStripMenuItem.Click += new System.EventHandler(this.packageUpdateToolStripMenuItem_Click);
+            // 
+            // translationWorkbenchToolStripMenuItem
+            // 
+            this.translationWorkbenchToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(220)))));
+            this.translationWorkbenchToolStripMenuItem.Name = "translationWorkbenchToolStripMenuItem";
+            this.translationWorkbenchToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
+            this.translationWorkbenchToolStripMenuItem.Text = "Translation Workbench";
+            this.translationWorkbenchToolStripMenuItem.Click += new System.EventHandler(this.translationWorkbenchToolStripMenuItem_Click);
             //
             // FrmMain
             //
@@ -1154,6 +1164,7 @@ namespace Intersect.Editor.Forms
 		private ToolStripSeparator toolStripSeparator13;
         private ToolStripMenuItem craftsEditorToolStripMenuItem;
         private ToolStripMenuItem packageUpdateToolStripMenuItem;
+        private ToolStripMenuItem translationWorkbenchToolStripMenuItem;
         private ToolStripMenuItem layersToolStripMenuItem;
         private ToolStripMenuItem hideEventsToolStripMenuItem;
     }
