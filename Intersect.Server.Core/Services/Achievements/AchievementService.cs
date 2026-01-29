@@ -11,7 +11,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Quests;
-using Intersect.Server.Database.PlayerData.Players;
+using ServerAchievementProgress = Intersect.Server.Database.PlayerData.Players.AchievementProgress;
 using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Entities;
 using Intersect.Server.Entities.Events;
@@ -73,7 +73,7 @@ public static class AchievementService
 
     public static void HandleMapEntered(Player player, MapController mapController)
     {
-        if (mapController?.MapDescriptor == null)
+        if (mapController == null)
         {
             return;
         }
@@ -81,7 +81,7 @@ public static class AchievementService
         UpdateAchievements(
             player,
             AchievementTrigger.MapEntered,
-            new AchievementContext(1, mapController.MapDescriptor.Id, mapController.MapDescriptor.ZoneType)
+            new AchievementContext(1, mapController.Id, mapController.ZoneType)
         );
     }
 
@@ -203,7 +203,7 @@ public static class AchievementService
         };
     }
 
-    private static AchievementProgress GetOrCreateProgress(
+    private static ServerAchievementProgress GetOrCreateProgress(
         Player player,
         AchievementDescriptor achievement,
         ref bool hasChanges
@@ -215,7 +215,7 @@ public static class AchievementService
             return progress;
         }
 
-        progress = new AchievementProgress(achievement.Id);
+        progress = new ServerAchievementProgress(achievement.Id);
         player.Achievements.Add(progress);
         hasChanges = true;
         return progress;
@@ -224,7 +224,7 @@ public static class AchievementService
     private static bool UpdateProgressFromConditions(
         Player player,
         AchievementDescriptor achievement,
-        AchievementProgress progress
+        ServerAchievementProgress progress
     )
     {
         var progressValues = new List<int>();
@@ -288,7 +288,7 @@ public static class AchievementService
     private static bool IsAchievementCompleted(
         Player player,
         AchievementDescriptor achievement,
-        AchievementProgress progress
+        ServerAchievementProgress progress
     )
     {
         if (achievement.MetaAchievementIds.Count > 0)
@@ -314,7 +314,7 @@ public static class AchievementService
     private static void CompleteAchievement(
         Player player,
         AchievementDescriptor achievement,
-        AchievementProgress progress
+        ServerAchievementProgress progress
     )
     {
         progress.Completed = true;
