@@ -1,0 +1,87 @@
+<UserControl x:Class="Intersect.Editor.Forms.WpfControls.TranslationPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:localization="clr-namespace:Intersect.Editor.Localization"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance localization:TranslationEntryViewModel}">
+    <UserControl.InputBindings>
+        <KeyBinding Key="Enter" Command="{Binding SaveAndNextCommand}" />
+        <KeyBinding Key="Enter" Modifiers="Control" Command="{Binding SaveCommand}" />
+    </UserControl.InputBindings>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock FontWeight="SemiBold" Text="Source" />
+        <TextBox Grid.Row="1"
+                 Margin="0,6,0,12"
+                 IsReadOnly="True"
+                 Text="{Binding ElementName=LanguageTabs, Path=SelectedItem.SourceText}"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto" />
+
+        <TabControl x:Name="LanguageTabs"
+                    Grid.Row="2"
+                    ItemsSource="{Binding TranslationEntries}">
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding LanguageName}" />
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+            <TabControl.ContentTemplate>
+                <DataTemplate>
+                    <Grid Margin="0,8,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock>
+                            <Run Text="Status: " />
+                            <Run Text="{Binding Status}" />
+                        </TextBlock>
+
+                        <TextBox Grid.Row="1"
+                                 Margin="0,6,0,0"
+                                 MinHeight="160"
+                                 Text="{Binding TranslationText, UpdateSourceTrigger=PropertyChanged}"
+                                 TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto" />
+
+                        <TextBlock Grid.Row="2"
+                                   Margin="0,6,0,0"
+                                   Foreground="Gray"
+                                   Text="{Binding FallbackText}" />
+                    </Grid>
+                </DataTemplate>
+            </TabControl.ContentTemplate>
+        </TabControl>
+
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock VerticalAlignment="Center">
+                <Run Text="Status: " />
+                <Run Text="{Binding ElementName=LanguageTabs, Path=SelectedItem.Status}" />
+            </TextBlock>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Margin="0,0,8,0" Padding="12,6" Command="{Binding CopySourceCommand}" Content="Copy Source" />
+                <Button Margin="0,0,8,0" Padding="12,6" Command="{Binding QuickPasteCommand}" Content="QuickPaste" />
+                <Button Margin="0,0,8,0" Padding="12,6" Command="{Binding SaveCommand}" Content="Save" />
+                <Button Padding="12,6" Command="{Binding SaveAndNextCommand}" Content="Next" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

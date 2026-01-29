@@ -10,7 +10,9 @@ public sealed class TranslationEntryViewModel
         string sourceHash,
         TranslationStatus status,
         DateTime lastUpdated,
-        string fallbackText
+        string fallbackText,
+        string languageName = "",
+        string translationText = ""
     )
     {
         SourceText = sourceText;
@@ -18,6 +20,8 @@ public sealed class TranslationEntryViewModel
         Status = status;
         LastUpdated = lastUpdated;
         FallbackText = fallbackText;
+        LanguageName = languageName;
+        TranslationText = translationText;
     }
 
     public string SourceText { get; set; }
@@ -29,4 +33,8 @@ public sealed class TranslationEntryViewModel
     public DateTime LastUpdated { get; set; }
 
     public string FallbackText { get; set; }
+
+    public string LanguageName { get; set; }
+
+    public string TranslationText { get; set; }
 }
