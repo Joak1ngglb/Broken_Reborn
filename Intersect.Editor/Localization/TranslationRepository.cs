@@ -123,6 +123,7 @@ public sealed class TranslationRepository
 
     public void RequestPending(
         string? entityType,
+        string? entityId,
         TranslationStatus? status,
         string? search,
         string? language,
@@ -130,7 +131,7 @@ public sealed class TranslationRepository
         int offset
     )
     {
-        PacketSender.SendTranslationPendingRequest(entityType, status, search, language, limit, offset);
+        PacketSender.SendTranslationPendingRequest(entityType, entityId, status, search, language, limit, offset);
     }
 
     public void ApplyPendingResponse(IReadOnlyList<TranslationPendingEntry> entries, long totalCount)

@@ -1136,6 +1136,7 @@ internal sealed partial class PacketHandler
 
         var (entries, totalCount) = LocalizationRepository.Default.QueryPending(
             packet.EntityType,
+            packet.EntityId,
             packet.Status,
             packet.Search,
             packet.Language,

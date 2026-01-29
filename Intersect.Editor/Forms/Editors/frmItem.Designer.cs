@@ -40,6 +40,7 @@ namespace Intersect.Editor.Forms.Editors
             lstGameObjects = new Intersect.Editor.Forms.Controls.GameObjectList();
             btnCancel = new DarkButton();
             btnSave = new DarkButton();
+            btnTranslate = new DarkButton();
             grpGeneral = new DarkGroupBox();
             grpEnchanting = new DarkGroupBox();
             cmbRuneEffect = new DarkComboBox();
@@ -423,6 +424,17 @@ namespace Intersect.Editor.Forms.Editors
             btnSave.TabIndex = 2;
             btnSave.Text = "Save";
             btnSave.Click += btnSave_Click;
+            // 
+            // btnTranslate
+            // 
+            btnTranslate.Location = new System.Drawing.Point(550, 683);
+            btnTranslate.Margin = new Padding(4, 3, 4, 3);
+            btnTranslate.Name = "btnTranslate";
+            btnTranslate.Padding = new Padding(6);
+            btnTranslate.Size = new Size(222, 32);
+            btnTranslate.TabIndex = 1;
+            btnTranslate.Text = "Translate";
+            btnTranslate.Click += btnTranslate_Click;
             // 
             // grpGeneral
             // 
@@ -3453,6 +3465,7 @@ namespace Intersect.Editor.Forms.Editors
             Controls.Add(toolStrip);
             Controls.Add(btnCancel);
             Controls.Add(btnSave);
+            Controls.Add(btnTranslate);
             Controls.Add(grpItems);
             Controls.Add(pnlContainer);
             FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -3609,6 +3622,7 @@ namespace Intersect.Editor.Forms.Editors
         private Label lblScalingStat;
         private DarkGroupBox grpItems;
         private DarkButton btnSave;
+        private DarkButton btnTranslate;
         private DarkGroupBox grpGeneral;
         private DarkTextBox txtName;
         private DarkComboBox cmbType;

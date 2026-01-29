@@ -56,6 +56,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             txtName = new DarkTextBox();
             btnSave = new DarkButton();
             btnCancel = new DarkButton();
+            btnTranslate = new DarkButton();
             toolStrip = new DarkToolStrip();
             toolStripItemNew = new ToolStripButton();
             toolStripSeparator1 = new ToolStripSeparator();
@@ -144,6 +145,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             pnlContainer.Controls.Add(grpRequirements);
             pnlContainer.Controls.Add(grpGeneral);
             pnlContainer.Controls.Add(btnSave);
+            pnlContainer.Controls.Add(btnTranslate);
             pnlContainer.Controls.Add(btnCancel);
             pnlContainer.Location = new System.Drawing.Point(278, 39);
             pnlContainer.Margin = new Padding(4, 3, 4, 3);
@@ -549,6 +551,17 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             btnSave.Text = "Save";
             btnSave.Click += btnSave_Click;
             // 
+            // btnTranslate
+            // 
+            btnTranslate.Location = new System.Drawing.Point(595, 651);
+            btnTranslate.Margin = new Padding(4, 3, 4, 3);
+            btnTranslate.Name = "btnTranslate";
+            btnTranslate.Padding = new Padding(6, 6, 6, 6);
+            btnTranslate.Size = new Size(112, 35);
+            btnTranslate.TabIndex = 2;
+            btnTranslate.Text = "Translate";
+            btnTranslate.Click += btnTranslate_Click;
+            // 
             // btnCancel
             // 
             btnCancel.Location = new System.Drawing.Point(833, 651);
@@ -735,6 +748,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
         private System.Windows.Forms.Label lblName;
         private DarkTextBox txtName;
         private DarkButton btnSave;
+        private DarkButton btnTranslate;
         private DarkButton btnCancel;
         private DarkToolStrip toolStrip;
         private ToolStripButton toolStripItemNew;

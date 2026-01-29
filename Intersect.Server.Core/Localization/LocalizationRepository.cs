@@ -771,6 +771,7 @@ public sealed class LocalizationRepository
 
     public (IReadOnlyList<TranslationPendingEntry> Entries, long TotalCount) QueryPending(
         string? entityType,
+        string? entityId,
         TranslationStatus? status,
         string? search,
         string? language,
@@ -779,6 +780,7 @@ public sealed class LocalizationRepository
     )
     {
         var normalizedEntityType = string.IsNullOrWhiteSpace(entityType) ? null : entityType.Trim();
+        var normalizedEntityId = string.IsNullOrWhiteSpace(entityId) ? null : entityId.Trim();
         var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
         var normalizedLanguage = string.IsNullOrWhiteSpace(language) ? null : NormalizeLanguage(language);
         var normalizedLimit = limit <= 0 ? 200 : limit;
@@ -792,6 +794,11 @@ public sealed class LocalizationRepository
             if (!string.IsNullOrWhiteSpace(normalizedEntityType))
             {
                 whereClause.Append(" AND lt.entity_type = $entityType");
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalizedEntityId))
+            {
+                whereClause.Append(" AND lt.entity_id = $entityId");
             }
 
             if (status.HasValue)
@@ -839,6 +846,11 @@ public sealed class LocalizationRepository
                 if (!string.IsNullOrWhiteSpace(normalizedEntityType))
                 {
                     command.Parameters.AddWithValue("$entityType", normalizedEntityType);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedEntityId))
+                {
+                    command.Parameters.AddWithValue("$entityId", normalizedEntityId);
                 }
 
                 if (status.HasValue)
@@ -893,6 +905,11 @@ public sealed class LocalizationRepository
                 if (!string.IsNullOrWhiteSpace(normalizedEntityType))
                 {
                     countCommand.Parameters.AddWithValue("$entityType", normalizedEntityType);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedEntityId))
+                {
+                    countCommand.Parameters.AddWithValue("$entityId", normalizedEntityId);
                 }
 
                 if (status.HasValue)
