@@ -36,9 +36,14 @@ public partial class LocalizedString(string value) : Localized
 
     public static int CountArguments(string formatString)
     {
+        return GetArgumentIndices(formatString).Count;
+    }
+
+    public static IReadOnlySet<int> GetArgumentIndices(string formatString)
+    {
         HashSet<int> argumentIndices = [];
 
-        var matches = PatternArgument.Matches(formatString);
+        var matches = PatternArgument.Matches(formatString ?? string.Empty);
         foreach (Match match in matches)
         {
             if (!match.Success)
@@ -55,6 +60,6 @@ public partial class LocalizedString(string value) : Localized
             _ = argumentIndices.Add(argumentIndex);
         }
 
-        return argumentIndices.Count;
+        return argumentIndices;
     }
 }

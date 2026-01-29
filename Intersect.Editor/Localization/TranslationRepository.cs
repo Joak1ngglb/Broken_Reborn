@@ -178,7 +178,7 @@ public static class TranslationSourceUpdater
     private const string DefaultLanguage = "en";
     private const int DefaultBatchSize = 200;
 
-    // Status: 0 OK, 1 NEEDS_REVIEW, 2 MISSING, 3 MACHINE
+    // Status: 0 OK, 1 NEEDS_REVIEW, 2 MISSING, 3 MACHINE, 4 BROKEN
 
     public static TranslationUpsertEntry CreateSourceEntry(
         string entityType,

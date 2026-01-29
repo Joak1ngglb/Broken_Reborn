@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using Intersect.Framework.Core.Localization;
+using Intersect.Localization;
 using Intersect.Network.Packets.Localization;
 using Intersect.Server.Core;
 using Microsoft.Data.Sqlite;
@@ -278,6 +279,51 @@ public sealed class LocalizationRepository
         return scalar == DBNull.Value ? null : scalar as string;
     }
 
+    public string? GetCurrentSourceText(string entityType, string entityId, string field)
+    {
+        entityType = RequireNotBlank(entityType, nameof(entityType));
+        entityId = RequireNotBlank(entityId, nameof(entityId));
+        field = RequireNotBlank(field, nameof(field));
+
+        using var connection = OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText =
+            """
+            SELECT source_text
+            FROM localization_source
+            WHERE entity_type = $entityType
+              AND entity_id = $entityId
+              AND field = $field
+            LIMIT 1;
+            """;
+        command.Parameters.AddWithValue("$entityType", entityType);
+        command.Parameters.AddWithValue("$entityId", entityId);
+        command.Parameters.AddWithValue("$field", field);
+
+        var scalar = command.ExecuteScalar();
+        return scalar == DBNull.Value ? null : scalar as string;
+    }
+
+    public static IReadOnlyList<int> GetMissingArgumentIndices(string sourceText, string translatedText)
+    {
+        var sourceArguments = LocalizedString.GetArgumentIndices(sourceText ?? string.Empty);
+        if (sourceArguments.Count == 0)
+        {
+            return Array.Empty<int>();
+        }
+
+        var translatedArguments = LocalizedString.GetArgumentIndices(translatedText ?? string.Empty);
+        if (translatedArguments.Count == 0)
+        {
+            return sourceArguments.OrderBy(argument => argument).ToArray();
+        }
+
+        return sourceArguments
+            .Where(argument => !translatedArguments.Contains(argument))
+            .OrderBy(argument => argument)
+            .ToArray();
+    }
+
     /// <summary>
     /// Obtiene el texto para el idioma elegido:
     /// - Busca el source actual
@@ -328,7 +374,7 @@ public sealed class LocalizationRepository
                   AND entity_id = $entityId
                   AND field = $field
                   AND source_hash = $sourceHash
-                  AND status <> $missing
+                  AND status NOT IN ($missing, $broken)
                   AND lang = $language
                 LIMIT 1;
                 """;
@@ -338,6 +384,7 @@ public sealed class LocalizationRepository
             tr.Parameters.AddWithValue("$field", field);
             tr.Parameters.AddWithValue("$sourceHash", sourceHash);
             tr.Parameters.AddWithValue("$missing", (int)TranslationStatus.Missing);
+            tr.Parameters.AddWithValue("$broken", (int)TranslationStatus.Broken);
             tr.Parameters.AddWithValue("$language", lang);
 
             var result = tr.ExecuteScalar();
@@ -354,7 +401,7 @@ public sealed class LocalizationRepository
                 WHERE entity_type = $entityType
                   AND entity_id = $entityId
                   AND field = $field
-                  AND status <> $missing
+                  AND status NOT IN ($missing, $broken)
                   AND lang = $language
                 ORDER BY updated_utc DESC
                 LIMIT 1;
@@ -364,6 +411,7 @@ public sealed class LocalizationRepository
             tr.Parameters.AddWithValue("$entityId", entityId);
             tr.Parameters.AddWithValue("$field", field);
             tr.Parameters.AddWithValue("$missing", (int)TranslationStatus.Missing);
+            tr.Parameters.AddWithValue("$broken", (int)TranslationStatus.Broken);
             tr.Parameters.AddWithValue("$language", lang);
 
             var result = tr.ExecuteScalar();
@@ -424,11 +472,12 @@ public sealed class LocalizationRepository
             """
             SELECT lang, entity_type, field, COUNT(*)
             FROM localization_translation
-            WHERE status IN ($missing, $needsReview)
+            WHERE status IN ($missing, $needsReview, $broken)
             GROUP BY lang, entity_type, field;
             """;
         command.Parameters.AddWithValue("$missing", (int)TranslationStatus.Missing);
         command.Parameters.AddWithValue("$needsReview", (int)TranslationStatus.NeedsReview);
+        command.Parameters.AddWithValue("$broken", (int)TranslationStatus.Broken);
 
         var results = new List<LocalizationTranslationStatusCount>();
         using var reader = command.ExecuteReader();

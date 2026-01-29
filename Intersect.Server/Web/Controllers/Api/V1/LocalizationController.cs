@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using Intersect.Framework.Core.Localization;
 using Intersect.Server.Database.PlayerData.Security;
@@ -44,17 +45,28 @@ namespace Intersect.Server.Web.Controllers.Api.V1
                 return NotFound("No localization source found for the provided key.");
             }
 
+            var sourceText = LocalizationRepository.Default.GetCurrentSourceText(
+                request.EntityType,
+                request.EntityId,
+                request.Field
+            );
+            var translatedText = request.TranslatedText ?? string.Empty;
+            var missingArguments = string.IsNullOrWhiteSpace(translatedText)
+                ? Array.Empty<int>()
+                : LocalizationRepository.GetMissingArgumentIndices(sourceText ?? string.Empty, translatedText);
+            var status = missingArguments.Count > 0 ? TranslationStatus.Broken : TranslationStatus.Ok;
+
             LocalizationRepository.Default.UpsertTranslation(
                 request.EntityType,
                 request.EntityId,
                 request.Field,
                 request.Lang,
-                request.TranslatedText ?? string.Empty,
-                TranslationStatus.Ok,
+                translatedText,
+                status,
                 currentHash
             );
 
-            return Ok(new TranslationUpsertResponseBody(currentHash));
+            return Ok(new TranslationUpsertResponseBody(currentHash, status, missingArguments));
         }
     }
 }

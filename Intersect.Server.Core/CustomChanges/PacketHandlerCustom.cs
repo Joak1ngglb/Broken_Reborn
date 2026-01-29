@@ -16,6 +16,7 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Spells;
+using Intersect.Framework.Core.Localization;
 using Intersect.Framework.Core.Security;
 using Intersect.GameObjects;
 using Intersect.Network;
@@ -1098,13 +1099,16 @@ internal sealed partial class PacketHandler
                 // 2) Upsert traducción (si hay texto)
                 if (!string.IsNullOrWhiteSpace(translatedText))
                 {
+                    var missingArguments = LocalizationRepository.GetMissingArgumentIndices(sourceText, translatedText);
+                    var status = missingArguments.Count > 0 ? TranslationStatus.Broken : entry.Status;
+
                     LocalizationRepository.Default.UpsertTranslation(
                         entityType,
                         entityId,
                         field,
                         language,
                         translatedText,
-                        entry.Status,
+                        status,
                         sourceHash
                     );
                 }
