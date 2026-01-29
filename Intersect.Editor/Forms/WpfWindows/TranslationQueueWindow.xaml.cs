@@ -12,11 +12,11 @@ public sealed partial class TranslationQueueWindow : Window
         Closed += OnClosed;
     }
 
-    public void ApplyFilter(string? entityType, string? entityId)
+    public void ApplyFilter(string? entityType, string? entityId, string? searchText = null)
     {
         if (DataContext is TranslationQueueViewModel viewModel)
         {
-            viewModel.ApplyFilter(entityType, entityId);
+            viewModel.ApplyFilter(entityType, entityId, searchText);
         }
     }
 

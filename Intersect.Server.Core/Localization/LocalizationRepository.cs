@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Crafting;
+using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.Localization;
 using Intersect.Localization;
 using Intersect.Network.Packets.Localization;
@@ -492,7 +494,7 @@ public sealed class LocalizationRepository
             }
         }
 
-        return null;
+        return GetFallbackSourceText(entityType, entityId, field);
     }
 
     public Dictionary<LocalizationKey, string> GetBatch(IEnumerable<LocalizationKey> keys, string language)
@@ -509,6 +511,179 @@ public sealed class LocalizationRepository
         }
 
         return results;
+    }
+
+    private static string? GetFallbackSourceText(string entityType, string entityId, string field)
+    {
+        if (!string.Equals(entityType, LocalizationEntityTypes.Event, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return TryGetEventTextFallback(entityId, field, out var fallback)
+            ? fallback
+            : null;
+    }
+
+    private static bool TryGetEventTextFallback(string entityId, string field, out string? fallback)
+    {
+        fallback = null;
+        if (!Guid.TryParse(entityId, out var eventId))
+        {
+            return false;
+        }
+
+        var eventDescriptor = EventDescriptor.Get(eventId);
+        if (eventDescriptor?.Pages == null)
+        {
+            return false;
+        }
+
+        if (!TryParseEventField(field, out var pageIndex, out var listId, out var commandIndex, out var fieldKey))
+        {
+            return false;
+        }
+
+        if (pageIndex < 0 || pageIndex >= eventDescriptor.Pages.Count)
+        {
+            return false;
+        }
+
+        var page = eventDescriptor.Pages[pageIndex];
+        if (string.Equals(fieldKey, "Description", StringComparison.OrdinalIgnoreCase))
+        {
+            fallback = page.Description;
+            return true;
+        }
+
+        if (listId == Guid.Empty || commandIndex < 0)
+        {
+            return false;
+        }
+
+        if (!page.CommandLists.TryGetValue(listId, out var commands) ||
+            commandIndex >= commands.Count)
+        {
+            return false;
+        }
+
+        var command = commands[commandIndex];
+        switch (command)
+        {
+            case ShowTextCommand showText when fieldKey.Equals("ShowText", StringComparison.OrdinalIgnoreCase):
+                fallback = showText.Text;
+                return true;
+            case AddChatboxTextCommand chatboxText when fieldKey.Equals("ChatboxText", StringComparison.OrdinalIgnoreCase):
+                fallback = chatboxText.Text;
+                return true;
+            case ShowOptionsCommand showOptions:
+                if (fieldKey.Equals("OptionsText", StringComparison.OrdinalIgnoreCase))
+                {
+                    fallback = showOptions.Text;
+                    return true;
+                }
+
+                if (TryParseOptionIndex(fieldKey, out var optionIndex) &&
+                    showOptions.Options != null &&
+                    optionIndex >= 0 &&
+                    optionIndex < showOptions.Options.Length)
+                {
+                    fallback = showOptions.Options[optionIndex];
+                    return true;
+                }
+                return false;
+            case InputVariableCommand inputVariable:
+                if (fieldKey.Equals("InputTitle", StringComparison.OrdinalIgnoreCase))
+                {
+                    fallback = inputVariable.Title;
+                    return true;
+                }
+
+                if (fieldKey.Equals("InputText", StringComparison.OrdinalIgnoreCase))
+                {
+                    fallback = inputVariable.Text;
+                    return true;
+                }
+                return false;
+            case ChangePlayerLabelCommand changeLabel when fieldKey.Equals("PlayerLabel", StringComparison.OrdinalIgnoreCase):
+                fallback = changeLabel.Value;
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryParseEventField(
+        string field,
+        out int pageIndex,
+        out Guid listId,
+        out int commandIndex,
+        out string fieldKey)
+    {
+        pageIndex = -1;
+        listId = Guid.Empty;
+        commandIndex = -1;
+        fieldKey = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(field))
+        {
+            return false;
+        }
+
+        var tokens = field.Split(':');
+        if (tokens.Length < 3 || !tokens[0].Equals("Page", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!int.TryParse(tokens[1], out pageIndex))
+        {
+            return false;
+        }
+
+        if (tokens.Length == 3)
+        {
+            fieldKey = tokens[2];
+            return true;
+        }
+
+        if (tokens.Length < 6 ||
+            !tokens[2].Equals("List", StringComparison.OrdinalIgnoreCase) ||
+            !tokens[4].Equals("Command", StringComparison.OrdinalIgnoreCase))
+        {
+            fieldKey = string.Join(":", tokens.Skip(2));
+            return true;
+        }
+
+        if (!Guid.TryParse(tokens[3], out listId))
+        {
+            return false;
+        }
+
+        if (!int.TryParse(tokens[5], out commandIndex))
+        {
+            return false;
+        }
+
+        fieldKey = string.Join(":", tokens.Skip(6));
+        return true;
+    }
+
+    private static bool TryParseOptionIndex(string fieldKey, out int optionIndex)
+    {
+        optionIndex = -1;
+        if (string.IsNullOrWhiteSpace(fieldKey))
+        {
+            return false;
+        }
+
+        var tokens = fieldKey.Split(':');
+        if (tokens.Length != 2 || !tokens[0].Equals("Option", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return int.TryParse(tokens[1], out optionIndex);
     }
 
     public IReadOnlyList<LocalizationTranslationStatusCount> GetMissingAndNeedsReviewCounts()

@@ -165,6 +165,7 @@ namespace Intersect.Editor.Forms.Editors.Events
             lstCommands = new TreeView();
             grpEventCommands = new DarkGroupBox();
             lstEventCommands = new ListBox();
+            btnTranslateCommand = new DarkButton();
             grpCreateCommands = new DarkGroupBox();
             btnSave = new DarkButton();
             btnCancel = new DarkButton();
@@ -1039,6 +1040,7 @@ namespace Intersect.Editor.Forms.Editors.Events
             // 
             grpEventCommands.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpEventCommands.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            grpEventCommands.Controls.Add(btnTranslateCommand);
             grpEventCommands.Controls.Add(lstEventCommands);
             grpEventCommands.ForeColor = System.Drawing.Color.Gainsboro;
             grpEventCommands.Location = new System.Drawing.Point(389, 0);
@@ -1062,13 +1064,24 @@ namespace Intersect.Editor.Forms.Editors.Events
             lstEventCommands.Location = new System.Drawing.Point(7, 22);
             lstEventCommands.Margin = new Padding(4, 3, 4, 3);
             lstEventCommands.Name = "lstEventCommands";
-            lstEventCommands.Size = new Size(500, 530);
+            lstEventCommands.Size = new Size(500, 500);
             lstEventCommands.TabIndex = 0;
             lstEventCommands.DrawItem += lstEventCommands_DrawItem;
             lstEventCommands.SelectedIndexChanged += lstEventCommands_SelectedIndexChanged;
             lstEventCommands.DoubleClick += lstEventCommands_DoubleClick;
             lstEventCommands.KeyDown += lstEventCommands_KeyDown;
             lstEventCommands.MouseDown += lstEventCommands_Click;
+            // 
+            // btnTranslateCommand
+            // 
+            btnTranslateCommand.Location = new System.Drawing.Point(7, 528);
+            btnTranslateCommand.Margin = new Padding(4, 3, 4, 3);
+            btnTranslateCommand.Name = "btnTranslateCommand";
+            btnTranslateCommand.Padding = new Padding(6);
+            btnTranslateCommand.Size = new Size(500, 24);
+            btnTranslateCommand.TabIndex = 1;
+            btnTranslateCommand.Text = "Translate this command";
+            btnTranslateCommand.Click += btnTranslateCommand_Click;
             // 
             // grpCreateCommands
             // 
@@ -1398,6 +1411,7 @@ namespace Intersect.Editor.Forms.Editors.Events
         private DarkTextBox txtEventname;
         private DarkGroupBox grpEventCommands;
         private ListBox lstEventCommands;
+        private DarkButton btnTranslateCommand;
         private DarkGroupBox grpEventConditions;
         private DarkGroupBox grpExtra;
         private DarkGroupBox grpMovement;
