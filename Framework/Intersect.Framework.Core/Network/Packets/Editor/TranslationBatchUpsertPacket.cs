@@ -67,7 +67,7 @@ public sealed class TranslationUpsertEntry
     [Key(5)]
     public string TranslatedText { get; set; }
 
-    // 0=OK, 1=NEEDS_REVIEW, 2=MISSING, 3=MACHINE
+    // 0=OK, 1=NEEDS_REVIEW, 2=MISSING, 3=MACHINE, 4=BROKEN
     [Key(6)]
     public TranslationStatus Status { get; set; }
 }
