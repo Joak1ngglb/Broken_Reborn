@@ -11,6 +11,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.Framework.Core.GameObjects.Titles;
 using ServerAchievementProgress = Intersect.Server.Database.PlayerData.Players.AchievementProgress;
 using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Entities;
@@ -361,6 +362,11 @@ public static class AchievementService
 
         foreach (var titleId in rewards.TitleIds)
         {
+            if (!TitleDescriptor.Lookup.ContainsKey(titleId))
+            {
+                continue;
+            }
+
             if (!player.UnlockedTitles.Contains(titleId))
             {
                 player.UnlockedTitles.Add(titleId);

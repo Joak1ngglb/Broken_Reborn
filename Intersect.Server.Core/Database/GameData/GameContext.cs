@@ -10,6 +10,7 @@ using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.GameObjects.Titles;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.GameObjects;
 using Intersect.Server.Database.GameData.Migrations;
@@ -64,6 +65,9 @@ public abstract partial class GameContext : IntersectDbContext<GameContext>, IGa
 
     //Achievements
     public DbSet<AchievementDescriptor> Achievements { get; set; }
+
+    //Titles
+    public DbSet<TitleDescriptor> Titles { get; set; }
 
     //Resources
     public DbSet<ResourceDescriptor> Resources { get; set; }

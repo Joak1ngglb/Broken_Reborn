@@ -12,6 +12,7 @@ using Intersect.Editor.Forms.DockingElements;
 using Intersect.Editor.Forms.Editors;
 using Intersect.Editor.Forms.Editors.Achievements;
 using Intersect.Editor.Forms.Editors.Quest;
+using Intersect.Editor.Forms.Editors.Titles;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Maps;
@@ -47,6 +48,7 @@ public partial class FrmMain : Form
     private FrmAnimation mAnimationEditor;
 
     private FrmAchievement mAchievementEditor;
+    private FrmTitle mTitleEditor;
 
     private FrmClass mClassEditor;
 
@@ -185,6 +187,7 @@ public partial class FrmMain : Form
         contentEditorsToolStripMenuItem.Text = Strings.MainForm.editors;
         animationEditorToolStripMenuItem.Text = Strings.MainForm.animationeditor;
         achievementEditorToolStripMenuItem.Text = Strings.MainForm.achievementeditor;
+        titleEditorToolStripMenuItem.Text = Strings.MainForm.titleeditor;
         classEditorToolStripMenuItem.Text = Strings.MainForm.classeditor;
         commonEventEditorToolStripMenuItem.Text = Strings.MainForm.commoneventeditor;
         craftingTableEditorToolStripMenuItem.Text = Strings.MainForm.craftingtableeditor;
@@ -1272,6 +1275,11 @@ public partial class FrmMain : Form
         PacketSender.SendOpenEditor(GameObjectType.Achievement);
     }
 
+    private void titleEditorToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        PacketSender.SendOpenEditor(GameObjectType.Title);
+    }
+
     private void resourceEditorToolStripMenuItem_Click(object sender, EventArgs e)
     {
         PacketSender.SendOpenEditor(GameObjectType.Resource);
@@ -1634,6 +1642,15 @@ public partial class FrmMain : Form
                         mAchievementEditor = new FrmAchievement();
                         mAchievementEditor.InitEditor();
                         mAchievementEditor.Show();
+                    }
+
+                    break;
+                case GameObjectType.Title:
+                    if (mTitleEditor == null || mTitleEditor.Visible == false)
+                    {
+                        mTitleEditor = new FrmTitle();
+                        mTitleEditor.InitEditor();
+                        mTitleEditor.Show();
                     }
 
                     break;
