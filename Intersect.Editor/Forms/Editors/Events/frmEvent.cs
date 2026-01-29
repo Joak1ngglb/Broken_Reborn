@@ -12,6 +12,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Variables;
+using Intersect.Framework.Core.Localization;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Editor;
 using Intersect.Utilities;
@@ -58,6 +59,15 @@ public partial class FrmEvent : Form
 
     public int mOldSelectedCommand;
 
+    private static readonly Dictionary<TranslationStatus, int> TranslationStatusPriority = new()
+    {
+        { TranslationStatus.Ok, 0 },
+        { TranslationStatus.Machine, 1 },
+        { TranslationStatus.NeedsReview, 2 },
+        { TranslationStatus.Missing, 3 },
+        { TranslationStatus.Broken, 4 },
+    };
+
     private void txtEventname_TextChanged(object sender, EventArgs e)
     {
         MyEvent.Name = txtEventname.Text;
@@ -68,6 +78,7 @@ public partial class FrmEvent : Form
     {
         mCurrentCommand = lstEventCommands.SelectedIndex;
         mOldSelectedCommand = lstEventCommands.SelectedIndex;
+        UpdateTranslateCommandState();
     }
 
     private void lstEventCommands_KeyDown(object sender, KeyEventArgs e)
@@ -878,6 +889,9 @@ public partial class FrmEvent : Form
         MinimumSize = default;
 
         FrmEvent_Move(sender, e);
+
+        TranslationRepository.Default.PendingTranslationsUpdated += OnPendingTranslationsUpdated;
+        RequestEventTranslationStatuses();
     }
 
     private void FrmEvent_Move(object? sender, EventArgs e)
@@ -940,6 +954,7 @@ public partial class FrmEvent : Form
 
     private void FrmEvent_FormClosed(object sender, FormClosedEventArgs e)
     {
+        TranslationRepository.Default.PendingTranslationsUpdated -= OnPendingTranslationsUpdated;
     }
 
     private void FrmEvent_VisibleChanged(object sender, EventArgs e)
@@ -1018,6 +1033,7 @@ public partial class FrmEvent : Form
         btnCopy.Text = Strings.EventEditor.copycommand;
         btnCut.Text = Strings.EventEditor.cutcommand;
         btnPaste.Text = Strings.EventEditor.pastecommand;
+        btnTranslateCommand.Text = "Translate this command";
         btnSave.Text = Strings.EventEditor.save;
         btnCancel.Text = Strings.EventEditor.cancel;
 
@@ -1246,6 +1262,176 @@ public partial class FrmEvent : Form
         {
             lstEventCommands.SelectedIndex = mOldSelectedCommand;
         }
+
+        UpdateTranslateCommandState();
+    }
+
+    private void RequestEventTranslationStatuses()
+    {
+        if (MyEvent == null || MyEvent.Id == Guid.Empty)
+        {
+            return;
+        }
+
+        TranslationRepository.Default.RequestPending(
+            LocalizationEntityTypes.Event,
+            MyEvent.Id.ToString(),
+            null,
+            null,
+            null,
+            200,
+            0
+        );
+    }
+
+    private void OnPendingTranslationsUpdated(IReadOnlyList<TranslationPendingEntry> entries, long totalCount)
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        lstEventCommands.Invalidate();
+    }
+
+    private void UpdateTranslateCommandState()
+    {
+        if (btnTranslateCommand == null)
+        {
+            return;
+        }
+
+        if (mCurrentCommand < 0 || mCurrentCommand >= mCommandProperties.Count)
+        {
+            btnTranslateCommand.Enabled = false;
+            return;
+        }
+
+        var properties = mCommandProperties[mCurrentCommand];
+        btnTranslateCommand.Enabled = properties.Editable && IsTranslatableCommand(properties.Cmd);
+    }
+
+    private static bool IsTranslatableCommand(EventCommand command)
+    {
+        return command is ShowTextCommand
+            or AddChatboxTextCommand
+            or ShowOptionsCommand
+            or InputVariableCommand
+            or ChangePlayerLabelCommand;
+    }
+
+    private bool TryGetCommandBaseField(CommandListProperties properties, out string baseField)
+    {
+        baseField = string.Empty;
+        if (MyEvent == null || CurrentPage == null)
+        {
+            return false;
+        }
+
+        if (properties?.MyList == null || properties.MyIndex < 0)
+        {
+            return false;
+        }
+
+        var listEntry = CurrentPage.CommandLists.FirstOrDefault(pair => ReferenceEquals(pair.Value, properties.MyList));
+        if (listEntry.Key == Guid.Empty)
+        {
+            return false;
+        }
+
+        baseField = $"Page:{CurrentPageIndex}:List:{listEntry.Key}:Command:{properties.MyIndex}";
+        return true;
+    }
+
+    private bool TryGetCommandTranslationStatus(CommandListProperties properties, out TranslationStatus status)
+    {
+        status = TranslationStatus.Ok;
+        if (MyEvent == null || !IsTranslatableCommand(properties.Cmd))
+        {
+            return false;
+        }
+
+        if (!TryGetCommandBaseField(properties, out var baseField))
+        {
+            return false;
+        }
+
+        var entries = TranslationRepository.Default.LastPendingEntries;
+        if (entries == null || entries.Count == 0)
+        {
+            status = TranslationStatus.Ok;
+            return true;
+        }
+
+        var matching = entries.Where(entry =>
+            string.Equals(entry.EntityType, LocalizationEntityTypes.Event, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(entry.EntityId, MyEvent.Id.ToString(), StringComparison.OrdinalIgnoreCase) &&
+            entry.Field.StartsWith(baseField, StringComparison.OrdinalIgnoreCase)
+        );
+
+        var bestStatus = TranslationStatus.Ok;
+        var bestScore = TranslationStatusPriority[bestStatus];
+        foreach (var entry in matching)
+        {
+            if (!TranslationStatusPriority.TryGetValue(entry.Status, out var score))
+            {
+                continue;
+            }
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestStatus = entry.Status;
+            }
+        }
+
+        status = bestStatus;
+        return true;
+    }
+
+    private static (string Label, System.Drawing.Color Background, System.Drawing.Color Foreground)
+        GetStatusBadge(TranslationStatus status)
+    {
+        return status switch
+        {
+            TranslationStatus.NeedsReview => ("NR", System.Drawing.Color.DarkOrange, System.Drawing.Color.Black),
+            TranslationStatus.Missing => ("MISS", System.Drawing.Color.Firebrick, System.Drawing.Color.White),
+            TranslationStatus.Machine => ("MACH", System.Drawing.Color.SteelBlue, System.Drawing.Color.White),
+            TranslationStatus.Broken => ("BRK", System.Drawing.Color.Maroon, System.Drawing.Color.White),
+            _ => ("OK", System.Drawing.Color.ForestGreen, System.Drawing.Color.White),
+        };
+    }
+
+    private void btnTranslateCommand_Click(object sender, EventArgs e)
+    {
+        if (mCurrentCommand < 0 || mCurrentCommand >= mCommandProperties.Count)
+        {
+            return;
+        }
+
+        var properties = mCommandProperties[mCurrentCommand];
+        if (!TryGetCommandBaseField(properties, out var baseField))
+        {
+            return;
+        }
+
+        if (MyEvent == null || MyEvent.Id == Guid.Empty)
+        {
+            return;
+        }
+
+        var entityType = LocalizationEntityTypes.Event;
+        if (Globals.MainForm != null)
+        {
+            Globals.MainForm.OpenTranslationWorkbench(entityType, MyEvent.Id, baseField);
+            return;
+        }
+
+        var workbench = new FrmTranslationWorkbench(entityType, MyEvent.Id.ToString(), baseField)
+        {
+            Owner = this,
+        };
+        workbench.Show(this);
     }
 
     /// <summary>
@@ -1865,20 +2051,57 @@ public partial class FrmEvent : Form
     private void lstEventCommands_DrawItem(object sender, DrawItemEventArgs e)
     {
         e.DrawBackground();
-        Graphics g = e.Graphics;
+        var g = e.Graphics;
 
         if (e.Index > -1 && e.Index < lstEventCommands.Items.Count && e.Index < mCommandProperties.Count)
         {
-            if (mCommandProperties[e.Index].Type == EventCommandType.Label)
-            {
-                g.DrawString(lstEventCommands.Items[e.Index].ToString(), e.Font, Brushes.SpringGreen, new PointF(e.Bounds.X, e.Bounds.Y));
-            }
-            else
-            {
-                g.DrawString(lstEventCommands.Items[e.Index].ToString(), e.Font, new SolidBrush(e.ForeColor), new PointF(e.Bounds.X, e.Bounds.Y));
-            }
-        }
+            var text = lstEventCommands.Items[e.Index].ToString();
+            var properties = mCommandProperties[e.Index];
+            var textColor = properties.Type == EventCommandType.Label
+                ? System.Drawing.Color.SpringGreen
+                : e.ForeColor;
+            var badgeWidth = 0;
 
+            if (TryGetCommandTranslationStatus(properties, out var status))
+            {
+                var (label, background, foreground) = GetStatusBadge(status);
+                var badgeSize = TextRenderer.MeasureText(label, e.Font);
+                badgeWidth = badgeSize.Width + 12;
+                var badgeBounds = new System.Drawing.Rectangle(
+                    e.Bounds.Right - badgeWidth - 4,
+                    e.Bounds.Top + 2,
+                    badgeWidth,
+                    e.Bounds.Height - 4
+                );
+
+                using var badgeBrush = new SolidBrush(background);
+                using var badgeTextBrush = new SolidBrush(foreground);
+                g.FillRectangle(badgeBrush, badgeBounds);
+                TextRenderer.DrawText(
+                    g,
+                    label,
+                    e.Font,
+                    badgeBounds,
+                    foreground,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding
+                );
+            }
+
+            var textBounds = new System.Drawing.Rectangle(
+                e.Bounds.X + 2,
+                e.Bounds.Y,
+                e.Bounds.Width - badgeWidth - 8,
+                e.Bounds.Height
+            );
+            TextRenderer.DrawText(
+                g,
+                text,
+                e.Font,
+                textBounds,
+                textColor,
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis
+            );
+        }
 
         e.DrawFocusRectangle();
     }

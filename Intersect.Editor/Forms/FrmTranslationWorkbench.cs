@@ -13,8 +13,9 @@ public sealed class FrmTranslationWorkbench : Form
     private TranslationQueueWindow? _translationWindow;
     private string? _pendingEntityType;
     private string? _pendingEntityId;
+    private string? _pendingSearchText;
 
-    public FrmTranslationWorkbench(string? entityType = null, string? entityId = null)
+    public FrmTranslationWorkbench(string? entityType = null, string? entityId = null, string? searchText = null)
     {
         Text = "Translation Workbench";
         Icon = Program.Icon;
@@ -22,6 +23,7 @@ public sealed class FrmTranslationWorkbench : Form
         StartPosition = FormStartPosition.CenterParent;
         _pendingEntityType = entityType;
         _pendingEntityId = entityId;
+        _pendingSearchText = searchText;
 
         _elementHost = new ElementHost
         {
@@ -82,10 +84,11 @@ public sealed class FrmTranslationWorkbench : Form
         }
     }
 
-    public void SetFilter(string? entityType, string? entityId)
+    public void SetFilter(string? entityType, string? entityId, string? searchText = null)
     {
         _pendingEntityType = entityType;
         _pendingEntityId = entityId;
+        _pendingSearchText = searchText;
         ApplyFilter();
     }
 
@@ -96,8 +99,9 @@ public sealed class FrmTranslationWorkbench : Form
             return;
         }
 
-        _translationWindow.ApplyFilter(_pendingEntityType, _pendingEntityId);
+        _translationWindow.ApplyFilter(_pendingEntityType, _pendingEntityId, _pendingSearchText);
         _pendingEntityType = null;
         _pendingEntityId = null;
+        _pendingSearchText = null;
     }
 }
