@@ -817,7 +817,6 @@ internal static partial class ClientLocalizationOverrides
                 ["RewardCurrency"] = @"Monnaie : {00}",
                 ["RewardExperience"] = @"Expérience : {00}",
                 ["RewardNone"] = @"Aucune récompense",
-                ["RewardOrnaments"] = @"Ornements : {00}",
                 ["RewardResource"] = @"{00}x {01}",
                 ["RewardTitles"] = @"Titres : {00}",
                 ["RewardsTitle"] = @"Récompenses",
