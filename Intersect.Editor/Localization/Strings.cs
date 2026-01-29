@@ -5418,6 +5418,8 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString tasks = @"Quest Tasks";
 
+        public static LocalizedString translateselectedtask = @"Translate Selected Task";
+
         public static LocalizedString title = @"Quest Editor";
 
         public static LocalizedString undo = @"Undo Changes";

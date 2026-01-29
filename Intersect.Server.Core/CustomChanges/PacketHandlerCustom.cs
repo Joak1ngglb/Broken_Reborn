@@ -1096,7 +1096,7 @@ internal sealed partial class PacketHandler
             {
                 var sourceHash = LocalizationRepository.Default.UpsertSource(entityType, entityId, field, sourceText);
 
-                // 2) Upsert traducción (si hay texto)
+                // 2) Upsert traducción (si hay texto), o crear pendiente cuando falta.
                 if (!string.IsNullOrWhiteSpace(translatedText))
                 {
                     var missingArguments = LocalizationRepository.GetMissingArgumentIndices(sourceText, translatedText);
@@ -1109,6 +1109,16 @@ internal sealed partial class PacketHandler
                         language,
                         translatedText,
                         status,
+                        sourceHash
+                    );
+                }
+                else if (entry.Status == TranslationStatus.Missing)
+                {
+                    LocalizationRepository.Default.EnsureMissingTranslation(
+                        entityType,
+                        entityId,
+                        field,
+                        language,
                         sourceHash
                     );
                 }

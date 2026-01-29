@@ -1,4 +1,5 @@
 using DarkUI.Forms;
+using System.Drawing;
 using Intersect.Editor.Core;
 using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Editor.General;
@@ -77,6 +78,7 @@ public partial class FrmQuest : EditorForm
         grpQuestTasks.Text = Strings.QuestEditor.tasks;
         btnAddTask.Text = Strings.QuestEditor.addtask;
         btnRemoveTask.Text = Strings.QuestEditor.removetask;
+        btnTranslateTask.Text = Strings.QuestEditor.translateselectedtask;
 
         grpActions.Text = Strings.QuestEditor.actions;
         lblOnStart.Text = Strings.QuestEditor.onstart;
@@ -303,6 +305,7 @@ public partial class FrmQuest : EditorForm
             nudOrderValue.Value = mEditorItem.OrderValue;
 
             ListQuestTasks();
+            UpdateTaskButtons();
 
             if (mChanged.IndexOf(mEditorItem) == -1)
             {
@@ -403,6 +406,8 @@ public partial class FrmQuest : EditorForm
         {
             mEditorItem.Tasks.Add(questTask);
             ListQuestTasks();
+            lstTasks.SelectedIndex = mEditorItem.Tasks.Count - 1;
+            UpdateTaskButtons();
         }
     }
 
@@ -411,7 +416,7 @@ public partial class FrmQuest : EditorForm
         lstTasks.Items.Clear();
         foreach (var task in mEditorItem.Tasks)
         {
-            lstTasks.Items.Add(task.GetTaskString(Strings.TaskEditor.descriptions));
+            lstTasks.Items.Add(task);
         }
     }
 
@@ -451,6 +456,7 @@ public partial class FrmQuest : EditorForm
 
             mEditorItem.Tasks.RemoveAt(lstTasks.SelectedIndex);
             ListQuestTasks();
+            UpdateTaskButtons();
         }
     }
 
@@ -458,10 +464,12 @@ public partial class FrmQuest : EditorForm
     {
         if (lstTasks.SelectedIndex > 0)
         {
+            var currentIndex = lstTasks.SelectedIndex;
             var item = mEditorItem.Tasks[lstTasks.SelectedIndex];
             mEditorItem.Tasks.RemoveAt(lstTasks.SelectedIndex);
             mEditorItem.Tasks.Insert(lstTasks.SelectedIndex - 1, item);
             ListQuestTasks();
+            lstTasks.SelectedIndex = Math.Max(0, currentIndex - 1);
         }
     }
 
@@ -469,10 +477,12 @@ public partial class FrmQuest : EditorForm
     {
         if (lstTasks.SelectedIndex > -1 && lstTasks.SelectedIndex != lstTasks.Items.Count - 1)
         {
+            var currentIndex = lstTasks.SelectedIndex;
             var item = mEditorItem.Tasks[lstTasks.SelectedIndex];
             mEditorItem.Tasks.RemoveAt(lstTasks.SelectedIndex);
             mEditorItem.Tasks.Insert(lstTasks.SelectedIndex + 1, item);
             ListQuestTasks();
+            lstTasks.SelectedIndex = Math.Min(lstTasks.Items.Count - 1, currentIndex + 1);
         }
     }
 
@@ -498,6 +508,7 @@ public partial class FrmQuest : EditorForm
             if (OpenTaskEditor(mEditorItem.Tasks[lstTasks.SelectedIndex]))
             {
                 ListQuestTasks();
+                UpdateTaskButtons();
             }
         }
     }
@@ -762,5 +773,114 @@ public partial class FrmQuest : EditorForm
     private void nudOrderValue_ValueChanged(object sender, EventArgs e)
     {
         mEditorItem.OrderValue = (int)nudOrderValue.Value;
+    }
+
+    private void btnTranslateTask_Click(object sender, EventArgs e)
+    {
+        if (lstTasks.SelectedIndex < 0 || mEditorItem.Tasks.Count <= lstTasks.SelectedIndex)
+        {
+            return;
+        }
+
+        var task = mEditorItem.Tasks[lstTasks.SelectedIndex];
+        OpenTranslationWorkbench("QuestTask", task.Id);
+    }
+
+    private void lstTasks_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        UpdateTaskButtons();
+    }
+
+    private void lstTasks_DrawItem(object sender, DrawItemEventArgs e)
+    {
+        if (e.Index < 0 || e.Index >= lstTasks.Items.Count)
+        {
+            return;
+        }
+
+        e.DrawBackground();
+
+        var task = lstTasks.Items[e.Index] as QuestTaskDescriptor;
+        if (task == null)
+        {
+            return;
+        }
+
+        var (badgeText, badgeColor) = GetTaskBadge(task.Objective);
+        using var badgeFont = new Font(e.Font, FontStyle.Bold);
+        var badgeSize = e.Graphics.MeasureString(badgeText, badgeFont);
+
+        var badgePadding = 6;
+        var badgeRect = new Rectangle(
+            e.Bounds.X + 4,
+            e.Bounds.Y + 2,
+            (int)badgeSize.Width + badgePadding * 2,
+            e.Bounds.Height - 4
+        );
+
+        using (var badgeBrush = new SolidBrush(badgeColor))
+        using (var textBrush = new SolidBrush(e.ForeColor))
+        {
+            e.Graphics.FillRectangle(badgeBrush, badgeRect);
+            var badgeTextPoint = new PointF(
+                badgeRect.X + badgePadding,
+                badgeRect.Y + (badgeRect.Height - badgeSize.Height) / 2
+            );
+            e.Graphics.DrawString(badgeText, badgeFont, textBrush, badgeTextPoint);
+        }
+
+        var details = BuildTaskDetails(task);
+        var textX = badgeRect.Right + 8;
+        var textRect = new RectangleF(
+            textX,
+            e.Bounds.Y + 2,
+            e.Bounds.Right - textX,
+            e.Bounds.Height - 4
+        );
+
+        using (var textBrush = new SolidBrush(e.ForeColor))
+        {
+            e.Graphics.DrawString(details, e.Font, textBrush, textRect);
+        }
+
+        if ((e.State & DrawItemState.Focus) == DrawItemState.Focus)
+        {
+            e.DrawFocusRectangle();
+        }
+    }
+
+    private void UpdateTaskButtons()
+    {
+        btnTranslateTask.Enabled = lstTasks.SelectedIndex > -1;
+    }
+
+    private static (string Text, Color Color) GetTaskBadge(QuestObjective objective)
+    {
+        return objective switch
+        {
+            QuestObjective.EventDriven => (Strings.TaskEditor.types[(int)QuestObjective.EventDriven].ToString(), Color.MediumSlateBlue),
+            QuestObjective.GatherItems => (Strings.TaskEditor.types[(int)QuestObjective.GatherItems].ToString(), Color.SeaGreen),
+            QuestObjective.KillNpcs => (Strings.TaskEditor.types[(int)QuestObjective.KillNpcs].ToString(), Color.IndianRed),
+            _ => (objective.ToString(), Color.DimGray)
+        };
+    }
+
+    private static string BuildTaskDetails(QuestTaskDescriptor task)
+    {
+        var description = task.Description ?? string.Empty;
+        var details = task.Objective switch
+        {
+            QuestObjective.EventDriven => description,
+            QuestObjective.GatherItems => $"{ItemDescriptor.GetName(task.TargetId)} x{task.Quantity}",
+            QuestObjective.KillNpcs => $"{NPCDescriptor.GetName(task.TargetId)} x{task.Quantity}",
+            _ => description
+        };
+
+        if (string.IsNullOrWhiteSpace(description) || details == description)
+        {
+            return details;
+        }
+
+        return $"{details} - {description}";
     }
 }
