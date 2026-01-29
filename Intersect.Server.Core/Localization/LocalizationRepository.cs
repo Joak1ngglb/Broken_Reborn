@@ -376,11 +376,24 @@ public sealed class LocalizationRepository
     /// <summary>
     /// Obtiene el texto para el idioma elegido:
     /// - Busca el source actual
-    /// - Busca traducción SOLO para el source_hash actual (y que no sea NEEDS_REVIEW)
+    /// - Busca traducción SOLO para el source_hash actual (descarta Missing/Broken, conserva NeedsReview)
     /// - Si no hay, fallback a DefaultLanguage
     /// - Si no hay, devuelve null (y tú haces fallback al original donde lo llames)
     /// </summary>
+    private readonly record struct TranslationResult(string Text, TranslationStatus Status);
+
     public string? Get(string entityType, string entityId, string field, string language)
+    {
+        var (text, _) = GetWithStatus(entityType, entityId, field, language);
+        return text;
+    }
+
+    public (string? Text, TranslationStatus Status) GetWithStatus(
+        string entityType,
+        string entityId,
+        string field,
+        string language
+    )
     {
         using var connection = OpenConnection();
 
@@ -407,17 +420,17 @@ public sealed class LocalizationRepository
 
         if (string.IsNullOrWhiteSpace(currentHash))
         {
-            return null;
+            return (null, TranslationStatus.Missing);
         }
 
         var normalizedLanguage = NormalizeLanguage(language);
 
-        string? GetTranslationForHash(string lang, string sourceHash)
+        TranslationResult? GetTranslationForHash(string lang, string sourceHash)
         {
             using var tr = connection.CreateCommand();
             tr.CommandText =
                 """
-                SELECT translated_text
+                SELECT translated_text, status
                 FROM localization_translation
                 WHERE entity_type = $entityType
                   AND entity_id = $entityId
@@ -436,16 +449,23 @@ public sealed class LocalizationRepository
             tr.Parameters.AddWithValue("$broken", (int)TranslationStatus.Broken);
             tr.Parameters.AddWithValue("$language", lang);
 
-            var result = tr.ExecuteScalar();
-            return result == DBNull.Value ? null : result as string;
+            using var reader = tr.ExecuteReader();
+            if (!reader.Read())
+            {
+                return null;
+            }
+
+            var translatedText = reader.IsDBNull(0) ? string.Empty : reader.GetString(0);
+            var status = reader.IsDBNull(1) ? TranslationStatus.Missing : (TranslationStatus)reader.GetInt32(1);
+            return new TranslationResult(translatedText, status);
         }
 
-        string? GetLatestTranslation(string lang)
+        TranslationResult? GetLatestTranslation(string lang)
         {
             using var tr = connection.CreateCommand();
             tr.CommandText =
                 """
-                SELECT translated_text
+                SELECT translated_text, status
                 FROM localization_translation
                 WHERE entity_type = $entityType
                   AND entity_id = $entityId
@@ -463,38 +483,46 @@ public sealed class LocalizationRepository
             tr.Parameters.AddWithValue("$broken", (int)TranslationStatus.Broken);
             tr.Parameters.AddWithValue("$language", lang);
 
-            var result = tr.ExecuteScalar();
-            return result == DBNull.Value ? null : result as string;
+            using var reader = tr.ExecuteReader();
+            if (!reader.Read())
+            {
+                return null;
+            }
+
+            var translatedText = reader.IsDBNull(0) ? string.Empty : reader.GetString(0);
+            var status = reader.IsDBNull(1) ? TranslationStatus.Missing : (TranslationStatus)reader.GetInt32(1);
+            return new TranslationResult(translatedText, status);
         }
 
         var translation = GetTranslationForHash(normalizedLanguage, currentHash);
-        if (!string.IsNullOrWhiteSpace(translation))
+        if (translation.HasValue && !string.IsNullOrWhiteSpace(translation.Value.Text))
         {
-            return translation;
+            return (translation.Value.Text, translation.Value.Status);
         }
 
         translation = GetLatestTranslation(normalizedLanguage);
-        if (!string.IsNullOrWhiteSpace(translation))
+        if (translation.HasValue && !string.IsNullOrWhiteSpace(translation.Value.Text))
         {
-            return translation;
+            return (translation.Value.Text, translation.Value.Status);
         }
 
         if (!string.Equals(normalizedLanguage, DefaultLanguage, StringComparison.OrdinalIgnoreCase))
         {
             translation = GetTranslationForHash(DefaultLanguage, currentHash);
-            if (!string.IsNullOrWhiteSpace(translation))
+            if (translation.HasValue && !string.IsNullOrWhiteSpace(translation.Value.Text))
             {
-                return translation;
+                return (translation.Value.Text, translation.Value.Status);
             }
 
             translation = GetLatestTranslation(DefaultLanguage);
-            if (!string.IsNullOrWhiteSpace(translation))
+            if (translation.HasValue && !string.IsNullOrWhiteSpace(translation.Value.Text))
             {
-                return translation;
+                return (translation.Value.Text, translation.Value.Status);
             }
         }
 
-        return GetFallbackSourceText(entityType, entityId, field);
+        var fallback = GetFallbackSourceText(entityType, entityId, field);
+        return (fallback, TranslationStatus.Missing);
     }
 
     public Dictionary<LocalizationKey, string> GetBatch(IEnumerable<LocalizationKey> keys, string language)
