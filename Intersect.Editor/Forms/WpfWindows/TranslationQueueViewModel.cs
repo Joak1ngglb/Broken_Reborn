@@ -297,6 +297,7 @@ public sealed class TranslationQueueEntryViewModel
 
         EntityType = entry.EntityType;
         EntityId = entry.EntityId;
+        EntityNameDisplay = string.IsNullOrWhiteSpace(entry.EntityName) ? string.Empty : $" - {entry.EntityName}";
         Field = entry.Field;
         SubPath = string.Empty;
         Status = entry.Status.ToString();
@@ -336,6 +337,8 @@ public sealed class TranslationQueueEntryViewModel
     public string EntityType { get; }
 
     public string EntityId { get; }
+
+    public string EntityNameDisplay { get; }
 
     public string Field { get; }
 
