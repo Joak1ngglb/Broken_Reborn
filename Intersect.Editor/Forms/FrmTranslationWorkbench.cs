@@ -11,13 +11,17 @@ public sealed class FrmTranslationWorkbench : Form
 {
     private readonly ElementHost _elementHost;
     private TranslationQueueWindow? _translationWindow;
+    private string? _pendingEntityType;
+    private string? _pendingEntityId;
 
-    public FrmTranslationWorkbench()
+    public FrmTranslationWorkbench(string? entityType = null, string? entityId = null)
     {
         Text = "Translation Workbench";
         Icon = Program.Icon;
         MinimumSize = new Size(960, 600);
         StartPosition = FormStartPosition.CenterParent;
+        _pendingEntityType = entityType;
+        _pendingEntityId = entityId;
 
         _elementHost = new ElementHost
         {
@@ -47,6 +51,7 @@ public sealed class FrmTranslationWorkbench : Form
         _translationWindow.Closed += TranslationWindowOnClosed;
 
         _elementHost.Child = _translationWindow;
+        ApplyFilter();
         _translationWindow.Focus();
     }
 
@@ -75,5 +80,24 @@ public sealed class FrmTranslationWorkbench : Form
         {
             Close();
         }
+    }
+
+    public void SetFilter(string? entityType, string? entityId)
+    {
+        _pendingEntityType = entityType;
+        _pendingEntityId = entityId;
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        if (_translationWindow == null)
+        {
+            return;
+        }
+
+        _translationWindow.ApplyFilter(_pendingEntityType, _pendingEntityId);
+        _pendingEntityType = null;
+        _pendingEntityId = null;
     }
 }

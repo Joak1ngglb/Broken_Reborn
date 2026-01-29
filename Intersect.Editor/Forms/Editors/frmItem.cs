@@ -55,6 +55,7 @@ public partial class FrmItem : EditorForm
         Strings.ItemEditor.LoadDynamicSubtypes();
         _btnSave = btnSave;
         _btnCancel = btnCancel;
+        _btnTranslate = btnTranslate;
 
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
     }
@@ -111,6 +112,16 @@ public partial class FrmItem : EditorForm
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();
+    }
+
+    private void btnTranslate_Click(object sender, EventArgs e)
+    {
+        if (mEditorItem == null)
+        {
+            return;
+        }
+
+        OpenTranslationWorkbench(mEditorItem.Type.ToString(), mEditorItem.Id);
     }
 
     private void frmItem_Load(object sender, EventArgs e)

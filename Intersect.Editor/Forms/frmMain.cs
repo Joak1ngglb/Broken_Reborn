@@ -1813,9 +1813,16 @@ public partial class FrmMain : Form
 
     private void translationWorkbenchToolStripMenuItem_Click(object sender, EventArgs e)
     {
+        OpenTranslationWorkbench();
+    }
+
+    public void OpenTranslationWorkbench(string? entityType = null, Guid? entityId = null)
+    {
+        var entityIdValue = entityId?.ToString();
+
         if (_translationWorkbench == null || _translationWorkbench.IsDisposed)
         {
-            _translationWorkbench = new FrmTranslationWorkbench
+            _translationWorkbench = new FrmTranslationWorkbench(entityType, entityIdValue)
             {
                 Owner = this,
             };
@@ -1824,6 +1831,8 @@ public partial class FrmMain : Form
         }
         else
         {
+            _translationWorkbench.SetFilter(entityType, entityIdValue);
+
             if (_translationWorkbench.WindowState == FormWindowState.Minimized)
             {
                 _translationWorkbench.WindowState = FormWindowState.Normal;

@@ -198,6 +198,7 @@ public static partial class PacketSender
 
     public static void SendTranslationPendingRequest(
         string? entityType,
+        string? entityId,
         TranslationStatus? status,
         string? search,
         string? language,
@@ -205,7 +206,9 @@ public static partial class PacketSender
         int offset
     )
     {
-        Network.SendPacket(new TranslationPendingRequestPacket(entityType, status, search, language, limit, offset));
+        Network.SendPacket(
+            new TranslationPendingRequestPacket(entityType, entityId, status, search, language, limit, offset)
+        );
     }
 
 

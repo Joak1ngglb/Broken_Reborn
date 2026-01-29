@@ -13,6 +13,7 @@ public sealed partial class TranslationPendingRequestPacket : EditorPacket
 
     public TranslationPendingRequestPacket(
         string? entityType,
+        string? entityId,
         TranslationStatus? status,
         string? search,
         string? language,
@@ -21,6 +22,7 @@ public sealed partial class TranslationPendingRequestPacket : EditorPacket
     )
     {
         EntityType = entityType;
+        EntityId = entityId;
         Status = status;
         Search = search;
         Language = language;
@@ -45,4 +47,7 @@ public sealed partial class TranslationPendingRequestPacket : EditorPacket
 
     [Key(5)]
     public int Offset { get; set; }
+
+    [Key(6)]
+    public string? EntityId { get; set; }
 }
