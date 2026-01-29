@@ -1,0 +1,111 @@
+<Window x:Class="Intersect.Editor.Forms.WpfWindows.TranslationQueueWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:wpfControls="clr-namespace:Intersect.Editor.Forms.WpfControls"
+        mc:Ignorable="d"
+        Title="Translation Queue"
+        Height="720"
+        Width="1200"
+        MinHeight="600"
+        MinWidth="960">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Margin="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock FontSize="16" FontWeight="SemiBold" Text="Queue" />
+
+            <Grid Grid.Row="1" Margin="0,10,0,12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock VerticalAlignment="Center" Text="Entity Type" />
+                <ComboBox Grid.Column="1"
+                          Margin="8,0,0,6"
+                          ItemsSource="{Binding EntityTypes}"
+                          SelectedItem="{Binding SelectedEntityType}" />
+
+                <TextBlock Grid.Row="1" VerticalAlignment="Center" Text="Status" />
+                <ComboBox Grid.Row="1"
+                          Grid.Column="1"
+                          Margin="8,0,0,6"
+                          ItemsSource="{Binding Statuses}"
+                          SelectedItem="{Binding SelectedStatus}" />
+
+                <TextBlock Grid.Row="2" VerticalAlignment="Center" Text="Search" />
+                <TextBox Grid.Row="2"
+                         Grid.Column="1"
+                         Margin="8,0,0,6"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="3" VerticalAlignment="Center" Text="Scope" />
+                <ComboBox Grid.Row="3"
+                          Grid.Column="1"
+                          Margin="8,0,0,0"
+                          ItemsSource="{Binding Scopes}"
+                          SelectedItem="{Binding SelectedScope}" />
+            </Grid>
+
+            <ListBox Grid.Row="2"
+                     ItemsSource="{Binding FilteredEntries}"
+                     SelectedItem="{Binding SelectedEntry}"
+                     Margin="0,0,0,12">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,4">
+                            <TextBlock FontWeight="SemiBold">
+                                <Run Text="{Binding EntityType}" />
+                                <Run Text=" #" />
+                                <Run Text="{Binding EntityId}" />
+                            </TextBlock>
+                            <TextBlock Foreground="Gray">
+                                <Run Text="{Binding Field}" />
+                                <Run Text=" " />
+                                <Run Text="{Binding SubPath}" />
+                            </TextBlock>
+                            <TextBlock Foreground="Gray" Text="{Binding Status}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <StackPanel Grid.Row="3"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Button Margin="0,0,8,0"
+                        Padding="12,6"
+                        Command="{Binding PreviousCommand}"
+                        Content="Prev" />
+                <Button Padding="12,6"
+                        Command="{Binding NextCommand}"
+                        Content="Next" />
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Column="1"
+                Margin="0,0,12,0"
+                BorderBrush="#E0E0E0"
+                BorderThickness="1,0,0,0">
+            <wpfControls:TranslationPanel DataContext="{Binding SelectedEntry}" />
+        </Border>
+    </Grid>
+</Window>
