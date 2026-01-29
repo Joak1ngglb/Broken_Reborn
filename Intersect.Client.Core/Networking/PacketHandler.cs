@@ -2248,8 +2248,7 @@ internal sealed partial class PacketHandler
             Experience = packet.Experience,
             Currency = packet.Currency,
             Resources = packet.Resources,
-            TitleIds = packet.TitleIds,
-            OrnamentIds = packet.OrnamentIds
+            TitleIds = packet.TitleIds
         };
 
         Globals.AchievementDirty = true;

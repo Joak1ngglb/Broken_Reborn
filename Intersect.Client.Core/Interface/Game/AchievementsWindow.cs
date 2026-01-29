@@ -530,11 +530,6 @@ public sealed partial class AchievementsWindow : Window
             lines.Add(Strings.Achievements.RewardTitles.ToString(rewards.TitleIds.Count));
         }
 
-        if (rewards.OrnamentIds.Count > 0)
-        {
-            lines.Add(Strings.Achievements.RewardOrnaments.ToString(rewards.OrnamentIds.Count));
-        }
-
         if (lines.Count == 0)
         {
             lines.Add(Strings.Achievements.RewardNone);

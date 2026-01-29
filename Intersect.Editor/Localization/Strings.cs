@@ -5249,8 +5249,6 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString New = @"New Achievement";
 
-        public static LocalizedString ornamentids = @"Ornament IDs:";
-
         public static LocalizedString paste = @"Paste Achievement";
 
         public static LocalizedString requirements = @"Requirements";

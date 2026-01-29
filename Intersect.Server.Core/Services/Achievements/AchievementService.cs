@@ -366,14 +366,6 @@ public static class AchievementService
                 player.UnlockedTitles.Add(titleId);
             }
         }
-
-        foreach (var ornamentId in rewards.OrnamentIds)
-        {
-            if (!player.UnlockedOrnaments.Contains(ornamentId))
-            {
-                player.UnlockedOrnaments.Add(ornamentId);
-            }
-        }
     }
 
     private static void GrantItemStacks(Player player, Guid itemId, long quantity)
