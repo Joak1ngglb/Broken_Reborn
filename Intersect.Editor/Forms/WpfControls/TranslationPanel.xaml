@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:localization="clr-namespace:Intersect.Editor.Localization"
+             xmlns:localizationCore="clr-namespace:Intersect.Framework.Core.Localization;assembly=Intersect.Framework.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance localization:TranslationEntryViewModel}">
     <UserControl.InputBindings>
@@ -47,6 +48,23 @@
                         <TextBlock>
                             <Run Text="Status: " />
                             <Run Text="{Binding Status}" />
+                        </TextBlock>
+
+                        <TextBlock Margin="0,4,0,0"
+                                   FontWeight="SemiBold"
+                                   Foreground="DarkOrange"
+                                   Text="Warning: translation needs review (stale).">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Status}"
+                                                     Value="{x:Static localizationCore:TranslationStatus.NeedsReview}">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
                         </TextBlock>
 
                         <TextBox Grid.Row="1"
