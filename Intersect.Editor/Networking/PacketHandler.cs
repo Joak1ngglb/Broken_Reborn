@@ -21,6 +21,7 @@ using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.Localization;
 using Microsoft.Extensions.Logging;
 using ApplicationContext = Intersect.Core.ApplicationContext;
 
@@ -163,6 +164,17 @@ internal sealed partial class PacketHandler
     {
         Globals.LoginForm.TryRemembering();
         Globals.LoginForm.HideSafe();
+    }
+
+    //TranslationPendingResponsePacket
+    public void HandlePacket(IPacketSender packetSender, TranslationPendingResponsePacket packet)
+    {
+        if (packet == null)
+        {
+            return;
+        }
+
+        TranslationRepository.Default.ApplyPendingResponse(packet.Entries, packet.TotalCount);
     }
 
     //MapPacket

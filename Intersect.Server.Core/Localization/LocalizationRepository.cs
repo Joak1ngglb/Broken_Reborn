@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using Intersect.Framework.Core.Localization;
+using Intersect.Network.Packets.Localization;
 using Intersect.Server.Core;
 using Microsoft.Data.Sqlite;
 
@@ -93,6 +94,9 @@ public sealed class LocalizationRepository
 
             CREATE INDEX IF NOT EXISTS idx_localization_translation_status
                 ON localization_translation (status);
+
+            CREATE INDEX IF NOT EXISTS idx_localization_translation_entity_type
+                ON localization_translation (entity_type);
             """;
 
         command.ExecuteNonQuery();
@@ -597,6 +601,9 @@ public sealed class LocalizationRepository
 
                 CREATE INDEX IF NOT EXISTS idx_localization_translation_status
                     ON localization_translation (status);
+
+                CREATE INDEX IF NOT EXISTS idx_localization_translation_entity_type
+                    ON localization_translation (entity_type);
                 """;
             rebuild.ExecuteNonQuery();
         }
@@ -711,6 +718,154 @@ public sealed class LocalizationRepository
     private static bool IsBusyError(SqliteException ex)
     {
         return ex.SqliteErrorCode == 5;
+    }
+
+    public (IReadOnlyList<TranslationPendingEntry> Entries, long TotalCount) QueryPending(
+        string? entityType,
+        TranslationStatus? status,
+        string? search,
+        string? language,
+        int limit,
+        int offset
+    )
+    {
+        var normalizedEntityType = string.IsNullOrWhiteSpace(entityType) ? null : entityType.Trim();
+        var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+        var normalizedLanguage = string.IsNullOrWhiteSpace(language) ? null : NormalizeLanguage(language);
+        var normalizedLimit = limit <= 0 ? 200 : limit;
+        var normalizedOffset = offset < 0 ? 0 : offset;
+
+        return ExecuteWithRetry(() =>
+        {
+            using var connection = OpenConnection();
+            var whereClause = new StringBuilder("WHERE 1=1");
+
+            if (!string.IsNullOrWhiteSpace(normalizedEntityType))
+            {
+                whereClause.Append(" AND lt.entity_type = $entityType");
+            }
+
+            if (status.HasValue)
+            {
+                whereClause.Append(" AND lt.status = $status");
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalizedLanguage))
+            {
+                whereClause.Append(" AND lt.lang = $lang");
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalizedSearch))
+            {
+                whereClause.Append(
+                    " AND (ls.source_text LIKE $search OR lt.translated_text LIKE $search OR lt.entity_id LIKE $search OR lt.field LIKE $search)"
+                );
+            }
+
+            var entries = new List<TranslationPendingEntry>();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText =
+                    $"""
+                    SELECT
+                        lt.entity_type,
+                        lt.entity_id,
+                        lt.field,
+                        lt.lang,
+                        ls.source_text,
+                        lt.source_hash,
+                        lt.translated_text,
+                        lt.status,
+                        lt.updated_utc
+                    FROM localization_translation lt
+                    JOIN localization_source ls
+                        ON ls.entity_type = lt.entity_type
+                       AND ls.entity_id = lt.entity_id
+                       AND ls.field = lt.field
+                    {whereClause}
+                    ORDER BY lt.updated_utc DESC
+                    LIMIT $limit OFFSET $offset;
+                    """;
+
+                if (!string.IsNullOrWhiteSpace(normalizedEntityType))
+                {
+                    command.Parameters.AddWithValue("$entityType", normalizedEntityType);
+                }
+
+                if (status.HasValue)
+                {
+                    command.Parameters.AddWithValue("$status", (int)status.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedLanguage))
+                {
+                    command.Parameters.AddWithValue("$lang", normalizedLanguage);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedSearch))
+                {
+                    command.Parameters.AddWithValue("$search", $"%{normalizedSearch}%");
+                }
+
+                command.Parameters.AddWithValue("$limit", normalizedLimit);
+                command.Parameters.AddWithValue("$offset", normalizedOffset);
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    entries.Add(new TranslationPendingEntry(
+                        reader.GetString(0),
+                        reader.GetString(1),
+                        reader.GetString(2),
+                        reader.GetString(3),
+                        reader.GetString(4),
+                        reader.GetString(5),
+                        reader.GetString(6),
+                        (TranslationStatus)reader.GetInt32(7),
+                        reader.GetString(8)
+                    ));
+                }
+            }
+
+            long totalCount;
+            using (var countCommand = connection.CreateCommand())
+            {
+                countCommand.CommandText =
+                    $"""
+                    SELECT COUNT(*)
+                    FROM localization_translation lt
+                    JOIN localization_source ls
+                        ON ls.entity_type = lt.entity_type
+                       AND ls.entity_id = lt.entity_id
+                       AND ls.field = lt.field
+                    {whereClause};
+                    """;
+
+                if (!string.IsNullOrWhiteSpace(normalizedEntityType))
+                {
+                    countCommand.Parameters.AddWithValue("$entityType", normalizedEntityType);
+                }
+
+                if (status.HasValue)
+                {
+                    countCommand.Parameters.AddWithValue("$status", (int)status.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedLanguage))
+                {
+                    countCommand.Parameters.AddWithValue("$lang", normalizedLanguage);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedSearch))
+                {
+                    countCommand.Parameters.AddWithValue("$search", $"%{normalizedSearch}%");
+                }
+
+                totalCount = Convert.ToInt64(countCommand.ExecuteScalar());
+            }
+
+            return (entries, totalCount);
+        });
     }
 }
 

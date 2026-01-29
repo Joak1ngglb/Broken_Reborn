@@ -83,6 +83,20 @@ public static partial class PacketSender
         client.Send(new LocalizedTextPacket(language, entries), TransmissionMode.Any);
     }
 
+    public static void SendTranslationPendingResponse(
+        Client client,
+        IReadOnlyList<TranslationPendingEntry> entries,
+        long totalCount
+    )
+    {
+        if (client == null)
+        {
+            return;
+        }
+
+        client.Send(new TranslationPendingResponsePacket(entries, totalCount), TransmissionMode.Any);
+    }
+
     //ConfigPacket
     public static void SendServerConfig(Client client)
     {
