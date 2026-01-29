@@ -256,6 +256,51 @@ public sealed class LocalizationRepository
         });
     }
 
+    public void EnsureMissingTranslation(
+        string entityType,
+        string entityId,
+        string field,
+        string language,
+        string sourceHash
+    )
+    {
+        entityType = RequireNotBlank(entityType, nameof(entityType));
+        entityId = RequireNotBlank(entityId, nameof(entityId));
+        field = RequireNotBlank(field, nameof(field));
+
+        ExecuteWithRetry(() =>
+        {
+            var lang = NormalizeLanguage(language);
+            var now = DateTime.UtcNow.ToString("O");
+
+            using var connection = OpenConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                """
+                INSERT OR IGNORE INTO localization_translation (
+                    entity_type, entity_id, field, lang,
+                    source_hash, translated_text,
+                    status, updated_utc
+                )
+                VALUES (
+                    $entityType, $entityId, $field, $lang,
+                    $sourceHash, '',
+                    $status, $updatedUtc
+                );
+                """;
+
+            command.Parameters.AddWithValue("$entityType", entityType);
+            command.Parameters.AddWithValue("$entityId", entityId);
+            command.Parameters.AddWithValue("$field", field);
+            command.Parameters.AddWithValue("$lang", lang);
+            command.Parameters.AddWithValue("$sourceHash", RequireNotBlank(sourceHash, nameof(sourceHash)));
+            command.Parameters.AddWithValue("$status", (int)TranslationStatus.Missing);
+            command.Parameters.AddWithValue("$updatedUtc", now);
+
+            command.ExecuteNonQuery();
+        });
+    }
+
     public string? GetCurrentSourceHash(string entityType, string entityId, string field)
     {
         entityType = RequireNotBlank(entityType, nameof(entityType));

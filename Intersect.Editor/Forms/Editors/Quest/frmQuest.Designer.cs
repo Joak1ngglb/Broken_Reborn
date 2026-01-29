@@ -69,6 +69,7 @@ namespace Intersect.Editor.Forms.Editors.Quest
             this.btnShiftTaskDown = new DarkUI.Controls.DarkButton();
             this.btnShiftTaskUp = new DarkUI.Controls.DarkButton();
             this.btnRemoveTask = new DarkUI.Controls.DarkButton();
+            this.btnTranslateTask = new DarkUI.Controls.DarkButton();
             this.lstTasks = new System.Windows.Forms.ListBox();
             this.btnAddTask = new DarkUI.Controls.DarkButton();
             this.pnlContainer = new System.Windows.Forms.Panel();
@@ -540,6 +541,7 @@ namespace Intersect.Editor.Forms.Editors.Quest
             this.grpQuestTasks.Controls.Add(this.btnShiftTaskDown);
             this.grpQuestTasks.Controls.Add(this.btnShiftTaskUp);
             this.grpQuestTasks.Controls.Add(this.btnRemoveTask);
+            this.grpQuestTasks.Controls.Add(this.btnTranslateTask);
             this.grpQuestTasks.Controls.Add(this.lstTasks);
             this.grpQuestTasks.Controls.Add(this.btnAddTask);
             this.grpQuestTasks.ForeColor = System.Drawing.Color.Gainsboro;
@@ -582,18 +584,32 @@ namespace Intersect.Editor.Forms.Editors.Quest
             this.btnRemoveTask.Text = "Remove Task";
             this.btnRemoveTask.Click += new System.EventHandler(this.btnRemoveTask_Click);
             // 
+            // btnTranslateTask
+            // 
+            this.btnTranslateTask.Location = new System.Drawing.Point(135, 172);
+            this.btnTranslateTask.Name = "btnTranslateTask";
+            this.btnTranslateTask.Padding = new System.Windows.Forms.Padding(5);
+            this.btnTranslateTask.Size = new System.Drawing.Size(176, 23);
+            this.btnTranslateTask.TabIndex = 8;
+            this.btnTranslateTask.Text = "Translate Selected Task";
+            this.btnTranslateTask.Click += new System.EventHandler(this.btnTranslateTask_Click);
+            // 
             // lstTasks
             // 
             this.lstTasks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(63)))), ((int)(((byte)(65)))));
             this.lstTasks.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lstTasks.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             this.lstTasks.ForeColor = System.Drawing.Color.Gainsboro;
             this.lstTasks.FormattingEnabled = true;
             this.lstTasks.HorizontalScrollbar = true;
+            this.lstTasks.ItemHeight = 18;
             this.lstTasks.Location = new System.Drawing.Point(6, 19);
             this.lstTasks.Name = "lstTasks";
             this.lstTasks.Size = new System.Drawing.Size(434, 132);
             this.lstTasks.TabIndex = 3;
+            this.lstTasks.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.lstTasks_DrawItem);
             this.lstTasks.DoubleClick += new System.EventHandler(this.lstTasks_DoubleClick);
+            this.lstTasks.SelectedIndexChanged += new System.EventHandler(this.lstTasks_SelectedIndexChanged);
             // 
             // btnAddTask
             // 
@@ -904,6 +920,7 @@ namespace Intersect.Editor.Forms.Editors.Quest
         private DarkButton btnShiftTaskDown;
         private DarkButton btnShiftTaskUp;
         private DarkButton btnRemoveTask;
+        private DarkButton btnTranslateTask;
         private System.Windows.Forms.ListBox lstTasks;
         private DarkButton btnAddTask;
         private DarkGroupBox grpActions;
