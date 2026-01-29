@@ -43,7 +43,13 @@ public sealed partial class AchievementDescriptor : DatabaseObject<AchievementDe
     [JsonIgnore]
     public string RewardsJson
     {
-        get => JsonConvert.SerializeObject(Rewards);
+        get => JsonConvert.SerializeObject(new
+        {
+            Rewards.Experience,
+            Rewards.Currency,
+            Rewards.Resources,
+            Rewards.TitleIds,
+        });
         set => Rewards = string.IsNullOrWhiteSpace(value)
             ? new AchievementRewards()
             : JsonConvert.DeserializeObject<AchievementRewards>(value) ?? new AchievementRewards();
@@ -79,6 +85,4 @@ public sealed class AchievementRewards
     public Dictionary<Guid, int> Resources { get; set; } = [];
 
     public List<Guid> TitleIds { get; set; } = [];
-
-    public List<Guid> OrnamentIds { get; set; } = [];
 }

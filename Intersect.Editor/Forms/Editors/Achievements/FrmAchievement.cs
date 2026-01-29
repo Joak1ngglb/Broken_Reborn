@@ -97,7 +97,6 @@ public partial class FrmAchievement : EditorForm
         btnAddResource.Text = Strings.AchievementEditor.addresource;
         btnRemoveResource.Text = Strings.AchievementEditor.removeresource;
         lblTitleIds.Text = Strings.AchievementEditor.titleids;
-        lblOrnamentIds.Text = Strings.AchievementEditor.ornamentids;
 
         btnAlphabetical.ToolTipText = Strings.AchievementEditor.sortalphabetically;
         txtSearch.Text = Strings.AchievementEditor.searchplaceholder;
@@ -171,7 +170,6 @@ public partial class FrmAchievement : EditorForm
             nudCurrency.Value = _editorItem.Rewards.Currency;
 
             txtTitleIds.Text = string.Join(Environment.NewLine, _editorItem.Rewards.TitleIds);
-            txtOrnamentIds.Text = string.Join(Environment.NewLine, _editorItem.Rewards.OrnamentIds);
 
             UpdateResourceRewardsList();
 
@@ -352,16 +350,6 @@ public partial class FrmAchievement : EditorForm
         }
 
         _editorItem.Rewards.TitleIds = ParseGuidList(txtTitleIds.Text);
-    }
-
-    private void txtOrnamentIds_TextChanged(object sender, EventArgs e)
-    {
-        if (_editorItem == null || _updating)
-        {
-            return;
-        }
-
-        _editorItem.Rewards.OrnamentIds = ParseGuidList(txtOrnamentIds.Text);
     }
 
     private static List<Guid> ParseGuidList(string text)

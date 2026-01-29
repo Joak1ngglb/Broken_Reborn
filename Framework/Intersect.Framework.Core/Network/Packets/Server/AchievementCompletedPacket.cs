@@ -15,8 +15,7 @@ public partial class AchievementCompletedPacket : IntersectPacket
         long experience,
         long currency,
         Dictionary<Guid, int> resources,
-        List<Guid> titleIds,
-        List<Guid> ornamentIds
+        List<Guid> titleIds
     )
     {
         AchievementId = achievementId;
@@ -24,7 +23,6 @@ public partial class AchievementCompletedPacket : IntersectPacket
         Currency = currency;
         Resources = resources;
         TitleIds = titleIds;
-        OrnamentIds = ornamentIds;
     }
 
     [Key(0)]
@@ -41,7 +39,4 @@ public partial class AchievementCompletedPacket : IntersectPacket
 
     [Key(4)]
     public List<Guid> TitleIds { get; set; } = new();
-
-    [Key(5)]
-    public List<Guid> OrnamentIds { get; set; } = new();
 }

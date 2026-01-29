@@ -37,8 +37,6 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             this.toolStripItemUndo = new System.Windows.Forms.ToolStripButton();
             this.pnlContainer = new System.Windows.Forms.Panel();
             this.grpRewards = new DarkGroupBox();
-            this.lblOrnamentIds = new System.Windows.Forms.Label();
-            this.txtOrnamentIds = new DarkTextBox();
             this.lblTitleIds = new System.Windows.Forms.Label();
             this.txtTitleIds = new DarkTextBox();
             this.btnRemoveResource = new DarkButton();
@@ -232,8 +230,6 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             // 
             this.grpRewards.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(48)))));
             this.grpRewards.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(90)))), ((int)(((byte)(90)))), ((int)(((byte)(90)))));
-            this.grpRewards.Controls.Add(this.lblOrnamentIds);
-            this.grpRewards.Controls.Add(this.txtOrnamentIds);
             this.grpRewards.Controls.Add(this.lblTitleIds);
             this.grpRewards.Controls.Add(this.txtTitleIds);
             this.grpRewards.Controls.Add(this.btnRemoveResource);
@@ -254,27 +250,6 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             this.grpRewards.TabIndex = 2;
             this.grpRewards.TabStop = false;
             this.grpRewards.Text = "Rewards";
-            // 
-            // lblOrnamentIds
-            // 
-            this.lblOrnamentIds.AutoSize = true;
-            this.lblOrnamentIds.Location = new System.Drawing.Point(417, 140);
-            this.lblOrnamentIds.Name = "lblOrnamentIds";
-            this.lblOrnamentIds.Size = new System.Drawing.Size(72, 13);
-            this.lblOrnamentIds.TabIndex = 14;
-            this.lblOrnamentIds.Text = "Ornament IDs";
-            // 
-            // txtOrnamentIds
-            // 
-            this.txtOrnamentIds.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(69)))), ((int)(((byte)(73)))), ((int)(((byte)(74)))));
-            this.txtOrnamentIds.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtOrnamentIds.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(220)))));
-            this.txtOrnamentIds.Location = new System.Drawing.Point(512, 137);
-            this.txtOrnamentIds.Multiline = true;
-            this.txtOrnamentIds.Name = "txtOrnamentIds";
-            this.txtOrnamentIds.Size = new System.Drawing.Size(287, 83);
-            this.txtOrnamentIds.TabIndex = 13;
-            this.txtOrnamentIds.TextChanged += new System.EventHandler(this.txtOrnamentIds_TextChanged);
             // 
             // lblTitleIds
             // 
@@ -698,8 +673,6 @@ namespace Intersect.Editor.Forms.Editors.Achievements
         private System.Windows.Forms.ToolStripButton toolStripItemUndo;
         private System.Windows.Forms.Panel pnlContainer;
         private DarkGroupBox grpRewards;
-        private System.Windows.Forms.Label lblOrnamentIds;
-        private DarkTextBox txtOrnamentIds;
         private System.Windows.Forms.Label lblTitleIds;
         private DarkTextBox txtTitleIds;
         private DarkButton btnRemoveResource;

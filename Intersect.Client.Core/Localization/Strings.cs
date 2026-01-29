@@ -3276,9 +3276,6 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         public static LocalizedString RewardNone = @"No rewards";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public static LocalizedString RewardOrnaments = @"Ornaments: {00}";
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString RewardResource = @"{00}x {01}";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

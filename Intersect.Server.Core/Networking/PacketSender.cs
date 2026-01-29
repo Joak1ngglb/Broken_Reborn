@@ -2312,8 +2312,7 @@ public static partial class PacketSender
                 rewards.Experience,
                 rewards.Currency,
                 rewards.Resources,
-                rewards.TitleIds,
-                rewards.OrnamentIds
+                rewards.TitleIds
             )
         );
     }
