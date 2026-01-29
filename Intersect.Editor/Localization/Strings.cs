@@ -4520,6 +4520,8 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString MenuToolsPackageUpdate = @"Package Update";
 
+        public static LocalizedString MenuToolsTranslationWorkbench = @"Translation Workbench";
+
         public static LocalizedString toolsdir = @"tools";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
