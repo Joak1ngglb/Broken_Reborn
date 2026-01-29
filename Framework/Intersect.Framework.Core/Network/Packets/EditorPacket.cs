@@ -1,4 +1,5 @@
 ﻿using Intersect.Network.Packets.Editor;
+using Intersect.Network.Packets.Localization;
 using MessagePack;
 
 namespace Intersect.Network.Packets;
@@ -22,6 +23,8 @@ namespace Intersect.Network.Packets;
 [Union(13, typeof(UnlinkMapPacket))]
 [Union(14, typeof(TranslationUpsertPacket))]
 [Union(15, typeof(TranslationBatchUpsertPacket))]
+[Union(16, typeof(TranslationPendingRequestPacket))]
+[Union(17, typeof(TranslationPendingResponsePacket))]
 
 public abstract partial class EditorPacket : IntersectPacket
 {

@@ -22,6 +22,7 @@ using Intersect.Network;
 using Intersect.Network.Packets;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Editor;
+using Intersect.Network.Packets.Localization;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Core;
 using Intersect.Server.Database;
@@ -1119,6 +1120,26 @@ internal sealed partial class PacketHandler
                 // Si ya migraste full al repo nuevo, lo mejor es: NO aceptar legacy para evitar basura.
             }
         }
+    }
+
+    //TranslationPendingRequestPacket
+    public void HandlePacket(Client client, TranslationPendingRequestPacket packet)
+    {
+        if (client == null || packet == null)
+        {
+            return;
+        }
+
+        var (entries, totalCount) = LocalizationRepository.Default.QueryPending(
+            packet.EntityType,
+            packet.Status,
+            packet.Search,
+            packet.Language,
+            packet.Limit,
+            packet.Offset
+        );
+
+        PacketSender.SendTranslationPendingResponse(client, entries, totalCount);
     }
 
 }

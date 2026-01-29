@@ -9,6 +9,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.Localization;
 using Intersect.Network.Packets.Editor;
+using Intersect.Network.Packets.Localization;
 using Mono.Data.Sqlite;
 
 namespace Intersect.Editor.Localization;
@@ -28,6 +29,13 @@ public sealed class TranslationRepository
     {
         _databasePath = databasePath;
     }
+
+    public event Action<IReadOnlyList<TranslationPendingEntry>, long>? PendingTranslationsUpdated;
+
+    public IReadOnlyList<TranslationPendingEntry> LastPendingEntries { get; private set; } =
+        Array.Empty<TranslationPendingEntry>();
+
+    public long LastPendingTotalCount { get; private set; }
 
     public void EnsureSchema()
     {
@@ -111,6 +119,25 @@ public sealed class TranslationRepository
         insert.Parameters.Add(new SqliteParameter("@sourceHash", sourceHash));
         insert.Parameters.Add(new SqliteParameter("@updatedUtc", updatedUtc));
         insert.ExecuteNonQuery();
+    }
+
+    public void RequestPending(
+        string? entityType,
+        TranslationStatus? status,
+        string? search,
+        string? language,
+        int limit,
+        int offset
+    )
+    {
+        PacketSender.SendTranslationPendingRequest(entityType, status, search, language, limit, offset);
+    }
+
+    public void ApplyPendingResponse(IReadOnlyList<TranslationPendingEntry> entries, long totalCount)
+    {
+        LastPendingEntries = entries ?? Array.Empty<TranslationPendingEntry>();
+        LastPendingTotalCount = totalCount;
+        PendingTranslationsUpdated?.Invoke(LastPendingEntries, totalCount);
     }
 
     private SqliteConnection OpenConnection()
