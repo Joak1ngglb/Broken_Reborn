@@ -526,14 +526,14 @@ internal sealed partial class PacketHandler
                 continue;
             }
 
-            var text = LocalizationRepository.Default.Get(
+            var (text, status) = LocalizationRepository.Default.GetWithStatus(
                 request.EntityType ?? string.Empty,
                 request.EntityId ?? string.Empty,
                 request.Field ?? string.Empty,
                 language
-            ) ?? string.Empty;
+            );
 
-            entries.Add(new LocalizedTextEntry(request, text));
+            entries.Add(new LocalizedTextEntry(request, text ?? string.Empty, status));
         }
 
         if (entries.Count > 0)

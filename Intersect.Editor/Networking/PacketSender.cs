@@ -2,9 +2,11 @@ using System.Collections.Generic;
 using Intersect.Editor.General;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
+using Intersect.Framework.Core.Localization;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Models;
 using Intersect.Network.Packets.Editor;
+using Intersect.Network.Packets.Localization;
 
 namespace Intersect.Editor.Networking;
 
@@ -192,6 +194,21 @@ public static partial class PacketSender
         }
 
         Network.SendPacket(new TranslationBatchUpsertPacket(new List<TranslationUpsertEntry>(entries)));
+    }
+
+    public static void SendTranslationPendingRequest(
+        string? entityType,
+        string? entityId,
+        TranslationStatus? status,
+        string? search,
+        string? language,
+        int limit,
+        int offset
+    )
+    {
+        Network.SendPacket(
+            new TranslationPendingRequestPacket(entityType, entityId, status, search, language, limit, offset)
+        );
     }
 
 

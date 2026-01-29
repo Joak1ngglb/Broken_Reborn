@@ -52,6 +52,7 @@ public partial class FrmSpell : EditorForm
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
+        _btnTranslate = btnTranslate;
 
         cmbScalingStat.Items.Clear();
         for (var i = 0; i < Enum.GetValues<Stat>().Length; i++)
@@ -258,6 +259,16 @@ public partial class FrmSpell : EditorForm
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();
+    }
+
+    private void btnTranslate_Click(object sender, EventArgs e)
+    {
+        if (mEditorItem == null)
+        {
+            return;
+        }
+
+        OpenTranslationWorkbench(mEditorItem.Type.ToString(), mEditorItem.Id);
     }
 
     private void frmSpell_Load(object sender, EventArgs e)

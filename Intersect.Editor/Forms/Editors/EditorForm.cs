@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using DarkUI.Controls;
 using Intersect.Editor.Core;
+using Intersect.Editor.General;
 using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Microsoft.Extensions.Logging;
@@ -16,6 +17,7 @@ public partial class EditorForm : Form
 
     protected DarkButton? _btnSave;
     protected DarkButton? _btnCancel;
+    protected DarkButton? _btnTranslate;
 
     protected EditorForm()
     {
@@ -105,5 +107,31 @@ public partial class EditorForm : Form
             _btnCancel.Visible = isItemSelected;
             _btnCancel.Enabled = isItemSelected;
         }
+
+        if (_btnTranslate != null)
+        {
+            _btnTranslate.Visible = isItemSelected;
+            _btnTranslate.Enabled = isItemSelected;
+        }
+    }
+
+    protected void OpenTranslationWorkbench(string? entityType, Guid entityId)
+    {
+        if (string.IsNullOrWhiteSpace(entityType))
+        {
+            return;
+        }
+
+        if (Globals.MainForm != null)
+        {
+            Globals.MainForm.OpenTranslationWorkbench(entityType, entityId);
+            return;
+        }
+
+        var workbench = new FrmTranslationWorkbench(entityType, entityId.ToString())
+        {
+            Owner = this,
+        };
+        workbench.Show(this);
     }
 }

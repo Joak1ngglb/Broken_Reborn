@@ -1,4 +1,5 @@
-﻿using System.Drawing.Imaging;
+using System.Drawing.Imaging;
+using System.IO;
 using Intersect.Compression;
 using Intersect.Editor.Classes.Maps;
 using Intersect.Editor.Core;

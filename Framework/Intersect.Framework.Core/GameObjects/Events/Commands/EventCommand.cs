@@ -5,6 +5,8 @@ namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
 public abstract partial class EventCommand
 {
+    public Guid CommandId { get; set; } = Guid.NewGuid();
+
     public abstract EventCommandType Type { get; }
 
     public virtual string GetCopyData(

@@ -14,6 +14,7 @@ using Intersect.Utilities;
 using Intersect.Config;
 using EventDescriptor = Intersect.Framework.Core.GameObjects.Events.EventDescriptor;
 using Graphics = System.Drawing.Graphics;
+using System.IO;
 
 namespace Intersect.Editor.Forms.Editors;
 
@@ -38,6 +39,7 @@ public partial class FrmResource : EditorForm
 
         _btnSave = btnSave;
         _btnCancel = btnCancel;
+        _btnTranslate = btnTranslate;
         cmbToolType.Items.Clear();
         cmbToolType.Items.Add(Strings.General.None);
         cmbToolType.Items.AddRange(Options.Instance.Equipment.ToolTypes.ToArray());
@@ -181,6 +183,16 @@ public partial class FrmResource : EditorForm
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();
+    }
+
+    private void btnTranslate_Click(object sender, EventArgs e)
+    {
+        if (_editorItem == null)
+        {
+            return;
+        }
+
+        OpenTranslationWorkbench(_editorItem.Type.ToString(), _editorItem.Id);
     }
 
     #endregion

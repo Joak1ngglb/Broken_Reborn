@@ -5,7 +5,13 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Crafting;
+using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.Localization;
+using Intersect.Localization;
+using Intersect.Network.Packets.Localization;
 using Intersect.Server.Core;
 using Microsoft.Data.Sqlite;
 
@@ -93,6 +99,9 @@ public sealed class LocalizationRepository
 
             CREATE INDEX IF NOT EXISTS idx_localization_translation_status
                 ON localization_translation (status);
+
+            CREATE INDEX IF NOT EXISTS idx_localization_translation_entity_type
+                ON localization_translation (entity_type);
             """;
 
         command.ExecuteNonQuery();
@@ -249,6 +258,51 @@ public sealed class LocalizationRepository
         });
     }
 
+    public void EnsureMissingTranslation(
+        string entityType,
+        string entityId,
+        string field,
+        string language,
+        string sourceHash
+    )
+    {
+        entityType = RequireNotBlank(entityType, nameof(entityType));
+        entityId = RequireNotBlank(entityId, nameof(entityId));
+        field = RequireNotBlank(field, nameof(field));
+
+        ExecuteWithRetry(() =>
+        {
+            var lang = NormalizeLanguage(language);
+            var now = DateTime.UtcNow.ToString("O");
+
+            using var connection = OpenConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                """
+                INSERT OR IGNORE INTO localization_translation (
+                    entity_type, entity_id, field, lang,
+                    source_hash, translated_text,
+                    status, updated_utc
+                )
+                VALUES (
+                    $entityType, $entityId, $field, $lang,
+                    $sourceHash, '',
+                    $status, $updatedUtc
+                );
+                """;
+
+            command.Parameters.AddWithValue("$entityType", entityType);
+            command.Parameters.AddWithValue("$entityId", entityId);
+            command.Parameters.AddWithValue("$field", field);
+            command.Parameters.AddWithValue("$lang", lang);
+            command.Parameters.AddWithValue("$sourceHash", RequireNotBlank(sourceHash, nameof(sourceHash)));
+            command.Parameters.AddWithValue("$status", (int)TranslationStatus.Missing);
+            command.Parameters.AddWithValue("$updatedUtc", now);
+
+            command.ExecuteNonQuery();
+        });
+    }
+
     public string? GetCurrentSourceHash(string entityType, string entityId, string field)
     {
         entityType = RequireNotBlank(entityType, nameof(entityType));
@@ -274,14 +328,72 @@ public sealed class LocalizationRepository
         return scalar == DBNull.Value ? null : scalar as string;
     }
 
+    public string? GetCurrentSourceText(string entityType, string entityId, string field)
+    {
+        entityType = RequireNotBlank(entityType, nameof(entityType));
+        entityId = RequireNotBlank(entityId, nameof(entityId));
+        field = RequireNotBlank(field, nameof(field));
+
+        using var connection = OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText =
+            """
+            SELECT source_text
+            FROM localization_source
+            WHERE entity_type = $entityType
+              AND entity_id = $entityId
+              AND field = $field
+            LIMIT 1;
+            """;
+        command.Parameters.AddWithValue("$entityType", entityType);
+        command.Parameters.AddWithValue("$entityId", entityId);
+        command.Parameters.AddWithValue("$field", field);
+
+        var scalar = command.ExecuteScalar();
+        return scalar == DBNull.Value ? null : scalar as string;
+    }
+
+    public static IReadOnlyList<int> GetMissingArgumentIndices(string sourceText, string translatedText)
+    {
+        var sourceArguments = LocalizedString.GetArgumentIndices(sourceText ?? string.Empty);
+        if (sourceArguments.Count == 0)
+        {
+            return Array.Empty<int>();
+        }
+
+        var translatedArguments = LocalizedString.GetArgumentIndices(translatedText ?? string.Empty);
+        if (translatedArguments.Count == 0)
+        {
+            return sourceArguments.OrderBy(argument => argument).ToArray();
+        }
+
+        return sourceArguments
+            .Where(argument => !translatedArguments.Contains(argument))
+            .OrderBy(argument => argument)
+            .ToArray();
+    }
+
     /// <summary>
     /// Obtiene el texto para el idioma elegido:
     /// - Busca el source actual
-    /// - Busca traducción SOLO para el source_hash actual (y que no sea NEEDS_REVIEW)
+    /// - Busca traducción SOLO para el source_hash actual (descarta Missing/Broken, conserva NeedsReview)
     /// - Si no hay, fallback a DefaultLanguage
     /// - Si no hay, devuelve null (y tú haces fallback al original donde lo llames)
     /// </summary>
+    private readonly record struct TranslationResult(string Text, TranslationStatus Status);
+
     public string? Get(string entityType, string entityId, string field, string language)
+    {
+        var (text, _) = GetWithStatus(entityType, entityId, field, language);
+        return text;
+    }
+
+    public (string? Text, TranslationStatus Status) GetWithStatus(
+        string entityType,
+        string entityId,
+        string field,
+        string language
+    )
     {
         using var connection = OpenConnection();
 
@@ -308,23 +420,23 @@ public sealed class LocalizationRepository
 
         if (string.IsNullOrWhiteSpace(currentHash))
         {
-            return null;
+            return (null, TranslationStatus.Missing);
         }
 
         var normalizedLanguage = NormalizeLanguage(language);
 
-        string? GetTranslationForHash(string lang, string sourceHash)
+        TranslationResult? GetTranslationForHash(string lang, string sourceHash)
         {
             using var tr = connection.CreateCommand();
             tr.CommandText =
                 """
-                SELECT translated_text
+                SELECT translated_text, status
                 FROM localization_translation
                 WHERE entity_type = $entityType
                   AND entity_id = $entityId
                   AND field = $field
                   AND source_hash = $sourceHash
-                  AND status <> $missing
+                  AND status NOT IN ($missing, $broken)
                   AND lang = $language
                 LIMIT 1;
                 """;
@@ -334,23 +446,31 @@ public sealed class LocalizationRepository
             tr.Parameters.AddWithValue("$field", field);
             tr.Parameters.AddWithValue("$sourceHash", sourceHash);
             tr.Parameters.AddWithValue("$missing", (int)TranslationStatus.Missing);
+            tr.Parameters.AddWithValue("$broken", (int)TranslationStatus.Broken);
             tr.Parameters.AddWithValue("$language", lang);
 
-            var result = tr.ExecuteScalar();
-            return result == DBNull.Value ? null : result as string;
+            using var reader = tr.ExecuteReader();
+            if (!reader.Read())
+            {
+                return null;
+            }
+
+            var translatedText = reader.IsDBNull(0) ? string.Empty : reader.GetString(0);
+            var status = reader.IsDBNull(1) ? TranslationStatus.Missing : (TranslationStatus)reader.GetInt32(1);
+            return new TranslationResult(translatedText, status);
         }
 
-        string? GetLatestTranslation(string lang)
+        TranslationResult? GetLatestTranslation(string lang)
         {
             using var tr = connection.CreateCommand();
             tr.CommandText =
                 """
-                SELECT translated_text
+                SELECT translated_text, status
                 FROM localization_translation
                 WHERE entity_type = $entityType
                   AND entity_id = $entityId
                   AND field = $field
-                  AND status <> $missing
+                  AND status NOT IN ($missing, $broken)
                   AND lang = $language
                 ORDER BY updated_utc DESC
                 LIMIT 1;
@@ -360,40 +480,49 @@ public sealed class LocalizationRepository
             tr.Parameters.AddWithValue("$entityId", entityId);
             tr.Parameters.AddWithValue("$field", field);
             tr.Parameters.AddWithValue("$missing", (int)TranslationStatus.Missing);
+            tr.Parameters.AddWithValue("$broken", (int)TranslationStatus.Broken);
             tr.Parameters.AddWithValue("$language", lang);
 
-            var result = tr.ExecuteScalar();
-            return result == DBNull.Value ? null : result as string;
+            using var reader = tr.ExecuteReader();
+            if (!reader.Read())
+            {
+                return null;
+            }
+
+            var translatedText = reader.IsDBNull(0) ? string.Empty : reader.GetString(0);
+            var status = reader.IsDBNull(1) ? TranslationStatus.Missing : (TranslationStatus)reader.GetInt32(1);
+            return new TranslationResult(translatedText, status);
         }
 
         var translation = GetTranslationForHash(normalizedLanguage, currentHash);
-        if (!string.IsNullOrWhiteSpace(translation))
+        if (translation.HasValue && !string.IsNullOrWhiteSpace(translation.Value.Text))
         {
-            return translation;
+            return (translation.Value.Text, translation.Value.Status);
         }
 
         translation = GetLatestTranslation(normalizedLanguage);
-        if (!string.IsNullOrWhiteSpace(translation))
+        if (translation.HasValue && !string.IsNullOrWhiteSpace(translation.Value.Text))
         {
-            return translation;
+            return (translation.Value.Text, translation.Value.Status);
         }
 
         if (!string.Equals(normalizedLanguage, DefaultLanguage, StringComparison.OrdinalIgnoreCase))
         {
             translation = GetTranslationForHash(DefaultLanguage, currentHash);
-            if (!string.IsNullOrWhiteSpace(translation))
+            if (translation.HasValue && !string.IsNullOrWhiteSpace(translation.Value.Text))
             {
-                return translation;
+                return (translation.Value.Text, translation.Value.Status);
             }
 
             translation = GetLatestTranslation(DefaultLanguage);
-            if (!string.IsNullOrWhiteSpace(translation))
+            if (translation.HasValue && !string.IsNullOrWhiteSpace(translation.Value.Text))
             {
-                return translation;
+                return (translation.Value.Text, translation.Value.Status);
             }
         }
 
-        return null;
+        var fallback = GetFallbackSourceText(entityType, entityId, field);
+        return (fallback, TranslationStatus.Missing);
     }
 
     public Dictionary<LocalizationKey, string> GetBatch(IEnumerable<LocalizationKey> keys, string language)
@@ -412,6 +541,200 @@ public sealed class LocalizationRepository
         return results;
     }
 
+    private static string? GetFallbackSourceText(string entityType, string entityId, string field)
+    {
+        if (!string.Equals(entityType, LocalizationEntityTypes.Event, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return TryGetEventTextFallback(entityId, field, out var fallback)
+            ? fallback
+            : null;
+    }
+
+    private static bool TryGetEventTextFallback(string entityId, string field, out string? fallback)
+    {
+        fallback = null;
+        if (!Guid.TryParse(entityId, out var eventId))
+        {
+            return false;
+        }
+
+        var eventDescriptor = EventDescriptor.Get(eventId);
+        if (eventDescriptor?.Pages == null)
+        {
+            return false;
+        }
+
+        if (!TryParseEventField(field, out var pageIndex, out var listId, out var commandId, out var commandIndex, out var fieldKey))
+        {
+            return false;
+        }
+
+        if (pageIndex < 0 || pageIndex >= eventDescriptor.Pages.Count)
+        {
+            return false;
+        }
+
+        var page = eventDescriptor.Pages[pageIndex];
+        if (string.Equals(fieldKey, "Description", StringComparison.OrdinalIgnoreCase))
+        {
+            fallback = page.Description;
+            return true;
+        }
+
+        if (listId == Guid.Empty || (commandId == Guid.Empty && commandIndex < 0))
+        {
+            return false;
+        }
+
+        if (!page.CommandLists.TryGetValue(listId, out var commands) ||
+            commands == null)
+        {
+            return false;
+        }
+
+        EventCommand? command = null;
+        if (commandId != Guid.Empty)
+        {
+            command = commands.FirstOrDefault(entry => entry?.CommandId == commandId);
+        }
+        else if (commandIndex >= 0 && commandIndex < commands.Count)
+        {
+            command = commands[commandIndex];
+        }
+
+        if (command == null)
+        {
+            return false;
+        }
+        switch (command)
+        {
+            case ShowTextCommand showText when fieldKey.Equals("ShowText", StringComparison.OrdinalIgnoreCase):
+                fallback = showText.Text;
+                return true;
+            case AddChatboxTextCommand chatboxText when fieldKey.Equals("ChatboxText", StringComparison.OrdinalIgnoreCase):
+                fallback = chatboxText.Text;
+                return true;
+            case ShowOptionsCommand showOptions:
+                if (fieldKey.Equals("OptionsText", StringComparison.OrdinalIgnoreCase))
+                {
+                    fallback = showOptions.Text;
+                    return true;
+                }
+
+                if (TryParseOptionIndex(fieldKey, out var optionIndex) &&
+                    showOptions.Options != null &&
+                    optionIndex >= 0 &&
+                    optionIndex < showOptions.Options.Length)
+                {
+                    fallback = showOptions.Options[optionIndex];
+                    return true;
+                }
+                return false;
+            case InputVariableCommand inputVariable:
+                if (fieldKey.Equals("InputTitle", StringComparison.OrdinalIgnoreCase))
+                {
+                    fallback = inputVariable.Title;
+                    return true;
+                }
+
+                if (fieldKey.Equals("InputText", StringComparison.OrdinalIgnoreCase))
+                {
+                    fallback = inputVariable.Text;
+                    return true;
+                }
+                return false;
+            case ChangePlayerLabelCommand changeLabel when fieldKey.Equals("PlayerLabel", StringComparison.OrdinalIgnoreCase):
+                fallback = changeLabel.Value;
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryParseEventField(
+        string field,
+        out int pageIndex,
+        out Guid listId,
+        out Guid commandId,
+        out int commandIndex,
+        out string fieldKey)
+    {
+        pageIndex = -1;
+        listId = Guid.Empty;
+        commandId = Guid.Empty;
+        commandIndex = -1;
+        fieldKey = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(field))
+        {
+            return false;
+        }
+
+        var tokens = field.Split(':');
+        if (tokens.Length < 3 || !tokens[0].Equals("Page", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!int.TryParse(tokens[1], out pageIndex))
+        {
+            return false;
+        }
+
+        if (tokens.Length == 3)
+        {
+            fieldKey = tokens[2];
+            return true;
+        }
+
+        if (tokens.Length < 6 ||
+            !tokens[2].Equals("List", StringComparison.OrdinalIgnoreCase) ||
+            !tokens[4].Equals("Command", StringComparison.OrdinalIgnoreCase))
+        {
+            fieldKey = string.Join(":", tokens.Skip(2));
+            return true;
+        }
+
+        if (!Guid.TryParse(tokens[3], out listId))
+        {
+            return false;
+        }
+
+        if (Guid.TryParse(tokens[5], out commandId))
+        {
+            fieldKey = string.Join(":", tokens.Skip(6));
+            return true;
+        }
+
+        if (!int.TryParse(tokens[5], out commandIndex))
+        {
+            return false;
+        }
+
+        fieldKey = string.Join(":", tokens.Skip(6));
+        return true;
+    }
+
+    private static bool TryParseOptionIndex(string fieldKey, out int optionIndex)
+    {
+        optionIndex = -1;
+        if (string.IsNullOrWhiteSpace(fieldKey))
+        {
+            return false;
+        }
+
+        var tokens = fieldKey.Split(':');
+        if (tokens.Length != 2 || !tokens[0].Equals("Option", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return int.TryParse(tokens[1], out optionIndex);
+    }
+
     public IReadOnlyList<LocalizationTranslationStatusCount> GetMissingAndNeedsReviewCounts()
     {
         using var connection = OpenConnection();
@@ -420,11 +743,12 @@ public sealed class LocalizationRepository
             """
             SELECT lang, entity_type, field, COUNT(*)
             FROM localization_translation
-            WHERE status IN ($missing, $needsReview)
+            WHERE status IN ($missing, $needsReview, $broken)
             GROUP BY lang, entity_type, field;
             """;
         command.Parameters.AddWithValue("$missing", (int)TranslationStatus.Missing);
         command.Parameters.AddWithValue("$needsReview", (int)TranslationStatus.NeedsReview);
+        command.Parameters.AddWithValue("$broken", (int)TranslationStatus.Broken);
 
         var results = new List<LocalizationTranslationStatusCount>();
         using var reader = command.ExecuteReader();
@@ -597,6 +921,9 @@ public sealed class LocalizationRepository
 
                 CREATE INDEX IF NOT EXISTS idx_localization_translation_status
                     ON localization_translation (status);
+
+                CREATE INDEX IF NOT EXISTS idx_localization_translation_entity_type
+                    ON localization_translation (entity_type);
                 """;
             rebuild.ExecuteNonQuery();
         }
@@ -711,6 +1038,200 @@ public sealed class LocalizationRepository
     private static bool IsBusyError(SqliteException ex)
     {
         return ex.SqliteErrorCode == 5;
+    }
+
+    public (IReadOnlyList<TranslationPendingEntry> Entries, long TotalCount) QueryPending(
+        string? entityType,
+        string? entityId,
+        TranslationStatus? status,
+        string? search,
+        string? language,
+        int limit,
+        int offset
+    )
+    {
+        var normalizedEntityType = string.IsNullOrWhiteSpace(entityType) ? null : entityType.Trim();
+        var normalizedEntityId = string.IsNullOrWhiteSpace(entityId) ? null : entityId.Trim();
+        var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+        var normalizedLanguage = string.IsNullOrWhiteSpace(language) ? null : NormalizeLanguage(language);
+        var normalizedLimit = limit <= 0 ? 200 : limit;
+        var normalizedOffset = offset < 0 ? 0 : offset;
+
+        return ExecuteWithRetry(() =>
+        {
+            using var connection = OpenConnection();
+            var whereClause = new StringBuilder("WHERE 1=1");
+
+            if (!string.IsNullOrWhiteSpace(normalizedEntityType))
+            {
+                whereClause.Append(" AND lt.entity_type = $entityType");
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalizedEntityId))
+            {
+                whereClause.Append(" AND lt.entity_id = $entityId");
+            }
+
+            if (status.HasValue)
+            {
+                whereClause.Append(" AND lt.status = $status");
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalizedLanguage))
+            {
+                whereClause.Append(" AND lt.lang = $lang");
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalizedSearch))
+            {
+                whereClause.Append(
+                    " AND (ls.source_text LIKE $search OR lt.translated_text LIKE $search OR lt.entity_id LIKE $search OR lt.field LIKE $search)"
+                );
+            }
+
+            var entries = new List<TranslationPendingEntry>();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText =
+                    $"""
+                    SELECT
+                        lt.entity_type,
+                        lt.entity_id,
+                        lt.field,
+                        lt.lang,
+                        ls.source_text,
+                        lt.source_hash,
+                        lt.translated_text,
+                        lt.status,
+                        lt.updated_utc
+                    FROM localization_translation lt
+                    JOIN localization_source ls
+                        ON ls.entity_type = lt.entity_type
+                       AND ls.entity_id = lt.entity_id
+                       AND ls.field = lt.field
+                    {whereClause}
+                    ORDER BY lt.updated_utc DESC
+                    LIMIT $limit OFFSET $offset;
+                    """;
+
+                if (!string.IsNullOrWhiteSpace(normalizedEntityType))
+                {
+                    command.Parameters.AddWithValue("$entityType", normalizedEntityType);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedEntityId))
+                {
+                    command.Parameters.AddWithValue("$entityId", normalizedEntityId);
+                }
+
+                if (status.HasValue)
+                {
+                    command.Parameters.AddWithValue("$status", (int)status.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedLanguage))
+                {
+                    command.Parameters.AddWithValue("$lang", normalizedLanguage);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedSearch))
+                {
+                    command.Parameters.AddWithValue("$search", $"%{normalizedSearch}%");
+                }
+
+                command.Parameters.AddWithValue("$limit", normalizedLimit);
+                command.Parameters.AddWithValue("$offset", normalizedOffset);
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var entityType = reader.GetString(0);
+                    var entityId = reader.GetString(1);
+                    var entityName = ResolveEntityName(entityType, entityId);
+                    entries.Add(new TranslationPendingEntry(
+                        entityType,
+                        entityId,
+                        reader.GetString(2),
+                        reader.GetString(3),
+                        reader.GetString(4),
+                        reader.GetString(5),
+                        reader.GetString(6),
+                        (TranslationStatus)reader.GetInt32(7),
+                        reader.GetString(8),
+                        entityName
+                    ));
+                }
+            }
+
+            long totalCount;
+            using (var countCommand = connection.CreateCommand())
+            {
+                countCommand.CommandText =
+                    $"""
+                    SELECT COUNT(*)
+                    FROM localization_translation lt
+                    JOIN localization_source ls
+                        ON ls.entity_type = lt.entity_type
+                       AND ls.entity_id = lt.entity_id
+                       AND ls.field = lt.field
+                    {whereClause};
+                    """;
+
+                if (!string.IsNullOrWhiteSpace(normalizedEntityType))
+                {
+                    countCommand.Parameters.AddWithValue("$entityType", normalizedEntityType);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedEntityId))
+                {
+                    countCommand.Parameters.AddWithValue("$entityId", normalizedEntityId);
+                }
+
+                if (status.HasValue)
+                {
+                    countCommand.Parameters.AddWithValue("$status", (int)status.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedLanguage))
+                {
+                    countCommand.Parameters.AddWithValue("$lang", normalizedLanguage);
+                }
+
+                if (!string.IsNullOrWhiteSpace(normalizedSearch))
+                {
+                    countCommand.Parameters.AddWithValue("$search", $"%{normalizedSearch}%");
+                }
+
+                totalCount = Convert.ToInt64(countCommand.ExecuteScalar());
+            }
+
+            return (entries, totalCount);
+        });
+    }
+
+    private static string? ResolveEntityName(string? entityType, string? entityId)
+    {
+        if (string.IsNullOrWhiteSpace(entityType) || string.IsNullOrWhiteSpace(entityId))
+        {
+            return null;
+        }
+
+        if (!Guid.TryParse(entityId, out var parsedId))
+        {
+            return null;
+        }
+
+        if (entityType.Equals(GameObjectType.Crafts.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return CraftingRecipeDescriptor.GetName(parsedId);
+        }
+
+        if (entityType.Equals(GameObjectType.CraftTables.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return CraftingTableDescriptor.GetName(parsedId);
+        }
+
+        return null;
     }
 }
 

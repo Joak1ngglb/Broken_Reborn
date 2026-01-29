@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.Localization;
 using MessagePack;
 
 namespace Intersect.Network.Packets.Localization;
@@ -13,6 +14,14 @@ public sealed partial class LocalizedTextEntry
     {
         Request = request;
         Text = text;
+        Status = TranslationStatus.Ok;
+    }
+
+    public LocalizedTextEntry(LocalizationRequestEntry request, string text, TranslationStatus status)
+    {
+        Request = request;
+        Text = text;
+        Status = status;
     }
 
     [Key(0)]
@@ -20,4 +29,7 @@ public sealed partial class LocalizedTextEntry
 
     [Key(1)]
     public string Text { get; set; }
+
+    [Key(2)]
+    public TranslationStatus Status { get; set; } = TranslationStatus.Ok;
 }

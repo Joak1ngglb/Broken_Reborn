@@ -27,6 +27,7 @@ public partial class FrmAchievement : EditorForm
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
+        _btnTranslate = btnTranslate;
 
         lstGameObjects.Init(
             UpdateToolStripItems,
@@ -153,6 +154,16 @@ public partial class FrmAchievement : EditorForm
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();
+    }
+
+    private void btnTranslate_Click(object sender, EventArgs e)
+    {
+        if (_editorItem == null)
+        {
+            return;
+        }
+
+        OpenTranslationWorkbench(_editorItem.Type.ToString(), _editorItem.Id);
     }
 
     private void UpdateEditor()
@@ -352,7 +363,7 @@ public partial class FrmAchievement : EditorForm
         }
 
         _editorItem.Rewards.TitleIds = ParseGuidList(txtTitleIds.Text)
-            .Where(id => TitleDescriptor.Lookup.ContainsKey(id))
+            .Where(id => TitleDescriptor.Lookup.Keys.Contains(id))
             .ToList();
     }
 

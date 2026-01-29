@@ -16,12 +16,14 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Spells;
+using Intersect.Framework.Core.Localization;
 using Intersect.Framework.Core.Security;
 using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Editor;
+using Intersect.Network.Packets.Localization;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Core;
 using Intersect.Server.Database;
@@ -1094,16 +1096,29 @@ internal sealed partial class PacketHandler
             {
                 var sourceHash = LocalizationRepository.Default.UpsertSource(entityType, entityId, field, sourceText);
 
-                // 2) Upsert traducción (si hay texto)
+                // 2) Upsert traducción (si hay texto), o crear pendiente cuando falta.
                 if (!string.IsNullOrWhiteSpace(translatedText))
                 {
+                    var missingArguments = LocalizationRepository.GetMissingArgumentIndices(sourceText, translatedText);
+                    var status = missingArguments.Count > 0 ? TranslationStatus.Broken : entry.Status;
+
                     LocalizationRepository.Default.UpsertTranslation(
                         entityType,
                         entityId,
                         field,
                         language,
                         translatedText,
-                        entry.Status,
+                        status,
+                        sourceHash
+                    );
+                }
+                else if (entry.Status == TranslationStatus.Missing)
+                {
+                    LocalizationRepository.Default.EnsureMissingTranslation(
+                        entityType,
+                        entityId,
+                        field,
+                        language,
                         sourceHash
                     );
                 }
@@ -1119,6 +1134,27 @@ internal sealed partial class PacketHandler
                 // Si ya migraste full al repo nuevo, lo mejor es: NO aceptar legacy para evitar basura.
             }
         }
+    }
+
+    //TranslationPendingRequestPacket
+    public void HandlePacket(Client client, TranslationPendingRequestPacket packet)
+    {
+        if (client == null || packet == null)
+        {
+            return;
+        }
+
+        var (entries, totalCount) = LocalizationRepository.Default.QueryPending(
+            packet.EntityType,
+            packet.EntityId,
+            packet.Status,
+            packet.Search,
+            packet.Language,
+            packet.Limit,
+            packet.Offset
+        );
+
+        PacketSender.SendTranslationPendingResponse(client, entries, totalCount);
     }
 
 }

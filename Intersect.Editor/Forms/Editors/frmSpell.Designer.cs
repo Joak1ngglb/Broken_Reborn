@@ -191,6 +191,7 @@ namespace Intersect.Editor.Forms.Editors
             toolStripItemUndo = new ToolStripButton();
             btnCancel = new DarkButton();
             btnSave = new DarkButton();
+            btnTranslate = new DarkButton();
             grpSpells = new DarkGroupBox();
             btnClearSearch = new DarkButton();
             txtSearch = new DarkTextBox();
@@ -2405,6 +2406,17 @@ namespace Intersect.Editor.Forms.Editors
             btnSave.Text = "Save";
             btnSave.Click += btnSave_Click;
             // 
+            // btnTranslate
+            // 
+            btnTranslate.Location = new System.Drawing.Point(730, 665);
+            btnTranslate.Margin = new Padding(4, 3, 4, 3);
+            btnTranslate.Name = "btnTranslate";
+            btnTranslate.Padding = new Padding(6);
+            btnTranslate.Size = new Size(222, 31);
+            btnTranslate.TabIndex = 45;
+            btnTranslate.Text = "Translate";
+            btnTranslate.Click += btnTranslate_Click;
+            // 
             // grpSpells
             // 
             grpSpells.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
@@ -2475,6 +2487,7 @@ namespace Intersect.Editor.Forms.Editors
             Controls.Add(toolStrip);
             Controls.Add(btnCancel);
             Controls.Add(btnSave);
+            Controls.Add(btnTranslate);
             Controls.Add(pnlContainer);
             Controls.Add(grpSpells);
             FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -2606,6 +2619,7 @@ namespace Intersect.Editor.Forms.Editors
         private DarkComboBox cmbNpc;
         private System.Windows.Forms.Panel pnlContainer;
         private DarkButton btnSave;
+        private DarkButton btnTranslate;
         private DarkButton btnCancel;
         private DarkToolStrip toolStrip;
         private System.Windows.Forms.ToolStripButton toolStripItemNew;

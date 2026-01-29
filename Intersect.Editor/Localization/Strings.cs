@@ -1,3 +1,4 @@
+using System.IO;
 using System.Reflection;
 using Intersect.Config;
 using Intersect.Editor.Core;
@@ -4520,6 +4521,8 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString MenuToolsPackageUpdate = @"Package Update";
 
+        public static LocalizedString MenuToolsTranslationWorkbench = @"Translation Workbench";
+
         public static LocalizedString toolsdir = @"tools";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -5415,6 +5418,8 @@ Tick timer saved in server config.json.";
         public static LocalizedString startevent = @"Quest: {00} - Start Event";
 
         public static LocalizedString tasks = @"Quest Tasks";
+
+        public static LocalizedString translateselectedtask = @"Translate Selected Task";
 
         public static LocalizedString title = @"Quest Editor";
 

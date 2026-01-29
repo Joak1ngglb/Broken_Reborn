@@ -1,3 +1,4 @@
+using System.IO;
 using DarkUI.Forms;
 using Hjg.Pngcs;
 using Intersect.Editor.Core;

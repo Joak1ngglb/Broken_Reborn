@@ -463,17 +463,6 @@ public partial class Player : Entity
     [NotMapped]
     public List<Guid> UnlockedTitles { get; set; } = [];
 
-    [Column("UnlockedOrnaments"), JsonIgnore]
-    public string UnlockedOrnamentsJson
-    {
-        get => JsonConvert.SerializeObject(UnlockedOrnaments);
-        set => UnlockedOrnaments = string.IsNullOrWhiteSpace(value)
-            ? []
-            : JsonConvert.DeserializeObject<List<Guid>>(value) ?? [];
-    }
-
-    [NotMapped]
-    public List<Guid> UnlockedOrnaments { get; set; } = [];
 
     public static Player FindOnline(Guid id)
     {

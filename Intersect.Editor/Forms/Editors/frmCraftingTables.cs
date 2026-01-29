@@ -30,6 +30,7 @@ public partial class FrmCraftingTables : EditorForm
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
+        _btnTranslate = btnTranslate;
 
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
     }
@@ -110,6 +111,7 @@ public partial class FrmCraftingTables : EditorForm
         //Send Changed items
         foreach (var item in mChanged)
         {
+            TranslationSourceUpdater.UpdateEnglishSource(item.Type.ToString(), item.Id, "Name", item.Name);
             PacketSender.SendSaveObject(item);
             item.DeleteBackup();
         }
@@ -117,6 +119,16 @@ public partial class FrmCraftingTables : EditorForm
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();
+    }
+
+    private void btnTranslate_Click(object sender, EventArgs e)
+    {
+        if (mEditorItem == null)
+        {
+            return;
+        }
+
+        OpenTranslationWorkbench(mEditorItem.Type.ToString(), mEditorItem.Id);
     }
 
     private void toolStripItemNew_Click(object sender, EventArgs e)

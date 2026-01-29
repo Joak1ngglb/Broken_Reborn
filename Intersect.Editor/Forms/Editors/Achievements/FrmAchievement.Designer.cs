@@ -56,6 +56,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             txtName = new DarkTextBox();
             btnSave = new DarkButton();
             btnCancel = new DarkButton();
+            btnTranslate = new DarkButton();
             toolStrip = new DarkToolStrip();
             toolStripItemNew = new ToolStripButton();
             toolStripSeparator1 = new ToolStripSeparator();
@@ -144,6 +145,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             pnlContainer.Controls.Add(grpRequirements);
             pnlContainer.Controls.Add(grpGeneral);
             pnlContainer.Controls.Add(btnSave);
+            pnlContainer.Controls.Add(btnTranslate);
             pnlContainer.Controls.Add(btnCancel);
             pnlContainer.Location = new System.Drawing.Point(278, 39);
             pnlContainer.Margin = new Padding(4, 3, 4, 3);
@@ -549,6 +551,17 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             btnSave.Text = "Save";
             btnSave.Click += btnSave_Click;
             // 
+            // btnTranslate
+            // 
+            btnTranslate.Location = new System.Drawing.Point(595, 651);
+            btnTranslate.Margin = new Padding(4, 3, 4, 3);
+            btnTranslate.Name = "btnTranslate";
+            btnTranslate.Padding = new Padding(6, 6, 6, 6);
+            btnTranslate.Size = new Size(112, 35);
+            btnTranslate.TabIndex = 2;
+            btnTranslate.Text = "Translate";
+            btnTranslate.Click += btnTranslate_Click;
+            // 
             // btnCancel
             // 
             btnCancel.Location = new System.Drawing.Point(833, 651);
@@ -582,6 +595,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             toolStripItemNew.Name = "toolStripItemNew";
             toolStripItemNew.Size = new Size(23, 26);
             toolStripItemNew.Text = "New";
+            this.toolStripItemNew.Click += new System.EventHandler(this.toolStripItemNew_Click);
             // 
             // toolStripSeparator1
             // 
@@ -600,6 +614,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             toolStripItemDelete.Name = "toolStripItemDelete";
             toolStripItemDelete.Size = new Size(23, 26);
             toolStripItemDelete.Text = "Delete";
+            this.toolStripItemDelete.Click += new System.EventHandler(this.toolStripItemDelete_Click);
             // 
             // toolStripSeparator2
             // 
@@ -617,6 +632,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             btnAlphabetical.Name = "btnAlphabetical";
             btnAlphabetical.Size = new Size(23, 26);
             btnAlphabetical.Text = "Order Chronologically";
+            this.btnAlphabetical.Click += new System.EventHandler(this.btnAlphabetical_Click);
             // 
             // toolStripSeparator4
             // 
@@ -635,6 +651,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             toolStripItemCopy.Name = "toolStripItemCopy";
             toolStripItemCopy.Size = new Size(23, 26);
             toolStripItemCopy.Text = "Copy";
+            this.toolStripItemCopy.Click += new System.EventHandler(this.toolStripItemCopy_Click);
             // 
             // toolStripItemPaste
             // 
@@ -646,6 +663,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             toolStripItemPaste.Name = "toolStripItemPaste";
             toolStripItemPaste.Size = new Size(23, 26);
             toolStripItemPaste.Text = "Paste";
+            this.toolStripItemPaste.Click += new System.EventHandler(this.toolStripItemPaste_Click);
             // 
             // toolStripSeparator3
             // 
@@ -664,6 +682,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             toolStripItemUndo.Name = "toolStripItemUndo";
             toolStripItemUndo.Size = new Size(23, 26);
             toolStripItemUndo.Text = "Undo";
+            toolStripItemUndo.Click += new System.EventHandler(this.toolStripItemUndo_Click);
             // 
             // FrmAchievement
             // 
@@ -735,6 +754,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
         private System.Windows.Forms.Label lblName;
         private DarkTextBox txtName;
         private DarkButton btnSave;
+        private DarkButton btnTranslate;
         private DarkButton btnCancel;
         private DarkToolStrip toolStrip;
         private ToolStripButton toolStripItemNew;

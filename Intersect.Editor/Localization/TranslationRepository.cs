@@ -9,6 +9,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.Localization;
 using Intersect.Network.Packets.Editor;
+using Intersect.Network.Packets.Localization;
 using Mono.Data.Sqlite;
 
 namespace Intersect.Editor.Localization;
@@ -28,6 +29,13 @@ public sealed class TranslationRepository
     {
         _databasePath = databasePath;
     }
+
+    public event Action<IReadOnlyList<TranslationPendingEntry>, long>? PendingTranslationsUpdated;
+
+    public IReadOnlyList<TranslationPendingEntry> LastPendingEntries { get; private set; } =
+        Array.Empty<TranslationPendingEntry>();
+
+    public long LastPendingTotalCount { get; private set; }
 
     public void EnsureSchema()
     {
@@ -113,6 +121,26 @@ public sealed class TranslationRepository
         insert.ExecuteNonQuery();
     }
 
+    public void RequestPending(
+        string? entityType,
+        string? entityId,
+        TranslationStatus? status,
+        string? search,
+        string? language,
+        int limit,
+        int offset
+    )
+    {
+        PacketSender.SendTranslationPendingRequest(entityType, entityId, status, search, language, limit, offset);
+    }
+
+    public void ApplyPendingResponse(IReadOnlyList<TranslationPendingEntry> entries, long totalCount)
+    {
+        LastPendingEntries = entries ?? Array.Empty<TranslationPendingEntry>();
+        LastPendingTotalCount = totalCount;
+        PendingTranslationsUpdated?.Invoke(LastPendingEntries, totalCount);
+    }
+
     private SqliteConnection OpenConnection()
     {
         EnsureDatabaseExists();
@@ -151,7 +179,7 @@ public static class TranslationSourceUpdater
     private const string DefaultLanguage = "en";
     private const int DefaultBatchSize = 200;
 
-    // Status: 0 OK, 1 NEEDS_REVIEW, 2 MISSING, 3 MACHINE
+    // Status: 0 OK, 1 NEEDS_REVIEW, 2 MISSING, 3 MACHINE, 4 BROKEN
 
     public static TranslationUpsertEntry CreateSourceEntry(
         string entityType,
@@ -242,7 +270,12 @@ public static class TranslationSourceUpdater
                     var command = commands[commandIndex];
                     if (command == null) continue;
 
-                    var baseField = $"Page:{pageIndex}:List:{listId}:Command:{commandIndex}";
+                    if (command.CommandId == Guid.Empty)
+                    {
+                        command.CommandId = Guid.NewGuid();
+                    }
+
+                    var baseField = $"Page:{pageIndex}:List:{listId}:Command:{command.CommandId}";
                     switch (command)
                     {
                         case ShowTextCommand showTextCommand:
