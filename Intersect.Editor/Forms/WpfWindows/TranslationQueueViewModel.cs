@@ -13,6 +13,7 @@ using System.Windows.Input;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.Localization;
+using Intersect.Localization;
 using Intersect.Network.Packets.Localization;
 using Intersect.Network.Packets.Editor;
 using Microsoft.VisualBasic.FileIO;
@@ -691,6 +692,7 @@ public sealed class TranslationQueueEntryViewModel
     private readonly RelayCommand _saveAndNextCommand;
     private readonly RelayCommand _copySourceCommand;
     private readonly RelayCommand _quickPasteCommand;
+    private readonly Dictionary<string, string> _originalTranslations;
     private static readonly Regex QuickPasteRegex =
         new(@"^\s*(?<lang>[\w-]+)\)\s*=\s*(?<text>.*)\s*$", RegexOptions.Compiled);
 
@@ -716,18 +718,27 @@ public sealed class TranslationQueueEntryViewModel
             ? parsed
             : DateTime.UtcNow;
 
-        TranslationEntries = new ObservableCollection<TranslationEntryViewModel>
+        _originalTranslations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        TranslationEntries = new ObservableCollection<TranslationEntryViewModel>();
+
+        foreach (var language in SupportedLanguages.All)
         {
-            new(
+            var isEntryLanguage = string.Equals(language.Code, entry.Language, StringComparison.OrdinalIgnoreCase);
+            var translationText = isEntryLanguage ? entry.TranslatedText : string.Empty;
+            var status = isEntryLanguage ? entry.Status : TranslationStatus.Missing;
+            var translation = new TranslationEntryViewModel(
                 entry.SourceText,
                 entry.SourceHash,
-                entry.Status,
+                status,
                 updatedUtc,
-                string.Empty,
-                entry.Language,
-                entry.TranslatedText
-            ),
-        };
+                entry.SourceText,
+                language.Code,
+                translationText
+            );
+
+            TranslationEntries.Add(translation);
+            _originalTranslations[language.Code] = translationText ?? string.Empty;
+        }
 
         _saveCommand = new RelayCommand(_ => Save());
         _saveAndNextCommand = new RelayCommand(_ =>
@@ -794,20 +805,24 @@ public sealed class TranslationQueueEntryViewModel
 
     private void Save()
     {
-        var translation = GetActiveTranslation();
-        if (translation == null)
+        foreach (var translation in TranslationEntries)
         {
-            return;
-        }
+            if (!HasTranslationChanged(translation))
+            {
+                continue;
+            }
 
-        PacketSender.SendTranslationUpsert(
-            _entry.EntityType,
-            _entry.EntityId,
-            _entry.Field,
-            _entry.Language,
-            translation.TranslationText ?? string.Empty,
-            _entry.SourceHash
-        );
+            PacketSender.SendTranslationUpsert(
+                _entry.EntityType,
+                _entry.EntityId,
+                _entry.Field,
+                translation.LanguageName,
+                translation.TranslationText ?? string.Empty,
+                _entry.SourceHash
+            );
+
+            _originalTranslations[translation.LanguageName] = translation.TranslationText ?? string.Empty;
+        }
     }
 
     private void CopySource()
@@ -873,6 +888,17 @@ public sealed class TranslationQueueEntryViewModel
         }
 
         return translations.Count > 0;
+    }
+
+    private bool HasTranslationChanged(TranslationEntryViewModel translation)
+    {
+        var currentText = translation.TranslationText ?? string.Empty;
+        if (_originalTranslations.TryGetValue(translation.LanguageName, out var originalText))
+        {
+            return !string.Equals(originalText, currentText, StringComparison.Ordinal);
+        }
+
+        return !string.IsNullOrEmpty(currentText);
     }
 }
 
