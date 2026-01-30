@@ -270,7 +270,12 @@ public static class TranslationSourceUpdater
                     var command = commands[commandIndex];
                     if (command == null) continue;
 
-                    var baseField = $"Page:{pageIndex}:List:{listId}:Command:{commandIndex}";
+                    if (command.CommandId == Guid.Empty)
+                    {
+                        command.CommandId = Guid.NewGuid();
+                    }
+
+                    var baseField = $"Page:{pageIndex}:List:{listId}:Command:{command.CommandId}";
                     switch (command)
                     {
                         case ShowTextCommand showTextCommand:

@@ -567,7 +567,7 @@ public sealed class LocalizationRepository
             return false;
         }
 
-        if (!TryParseEventField(field, out var pageIndex, out var listId, out var commandIndex, out var fieldKey))
+        if (!TryParseEventField(field, out var pageIndex, out var listId, out var commandId, out var commandIndex, out var fieldKey))
         {
             return false;
         }
@@ -584,18 +584,31 @@ public sealed class LocalizationRepository
             return true;
         }
 
-        if (listId == Guid.Empty || commandIndex < 0)
+        if (listId == Guid.Empty || (commandId == Guid.Empty && commandIndex < 0))
         {
             return false;
         }
 
         if (!page.CommandLists.TryGetValue(listId, out var commands) ||
-            commandIndex >= commands.Count)
+            commands == null)
         {
             return false;
         }
 
-        var command = commands[commandIndex];
+        EventCommand? command = null;
+        if (commandId != Guid.Empty)
+        {
+            command = commands.FirstOrDefault(entry => entry?.CommandId == commandId);
+        }
+        else if (commandIndex >= 0 && commandIndex < commands.Count)
+        {
+            command = commands[commandIndex];
+        }
+
+        if (command == null)
+        {
+            return false;
+        }
         switch (command)
         {
             case ShowTextCommand showText when fieldKey.Equals("ShowText", StringComparison.OrdinalIgnoreCase):
@@ -645,11 +658,13 @@ public sealed class LocalizationRepository
         string field,
         out int pageIndex,
         out Guid listId,
+        out Guid commandId,
         out int commandIndex,
         out string fieldKey)
     {
         pageIndex = -1;
         listId = Guid.Empty;
+        commandId = Guid.Empty;
         commandIndex = -1;
         fieldKey = string.Empty;
 
@@ -686,6 +701,12 @@ public sealed class LocalizationRepository
         if (!Guid.TryParse(tokens[3], out listId))
         {
             return false;
+        }
+
+        if (Guid.TryParse(tokens[5], out commandId))
+        {
+            fieldKey = string.Join(":", tokens.Skip(6));
+            return true;
         }
 
         if (!int.TryParse(tokens[5], out commandIndex))
