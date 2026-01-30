@@ -74,6 +74,10 @@
                             Padding="12,6"
                             Command="{Binding SetBrokenStatusCommand}"
                             Content="Broken" />
+                    <Button Margin="0,0,8,0"
+                            Padding="12,6"
+                            Command="{Binding ImportCsvCommand}"
+                            Content="Import CSV" />
                     <Button Padding="12,6"
                             Command="{Binding ExportCsvCommand}"
                             Content="Export CSV" />
