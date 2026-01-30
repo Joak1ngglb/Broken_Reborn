@@ -6,12 +6,15 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.Localization;
 using Intersect.Network.Packets.Localization;
+using Intersect.Network.Packets.Editor;
+using Microsoft.VisualBasic.FileIO;
 using Microsoft.Win32;
 
 namespace Intersect.Editor.Forms.WpfWindows;
@@ -22,6 +25,7 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
     private readonly RelayCommand _nextCommand;
     private readonly RelayCommand _previousCommand;
     private readonly RelayCommand _exportCsvCommand;
+    private readonly RelayCommand _importCsvCommand;
     private readonly RelayCommand _setBrokenStatusCommand;
     private string? _entityIdFilter;
     private bool _suppressRefresh;
@@ -46,6 +50,7 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
         _previousCommand = new RelayCommand(_ => MovePrevious(), _ => _offset > 0);
         _nextCommand = new RelayCommand(_ => MoveNext(), _ => _offset + DefaultPageSize < _totalCount);
         _exportCsvCommand = new RelayCommand(_ => ExportCsv(), _ => TranslationRepository.Default.LastPendingEntries.Count > 0);
+        _importCsvCommand = new RelayCommand(_ => ImportCsv());
         _setBrokenStatusCommand = new RelayCommand(_ => SetBrokenStatus());
 
         TranslationRepository.Default.PendingTranslationsUpdated += OnPendingTranslationsUpdated;
@@ -97,6 +102,8 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
     public ICommand NextCommand => _nextCommand;
 
     public ICommand ExportCsvCommand => _exportCsvCommand;
+
+    public ICommand ImportCsvCommand => _importCsvCommand;
 
     public ICommand SetBrokenStatusCommand => _setBrokenStatusCommand;
 
@@ -335,6 +342,279 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
         );
     }
 
+    private void ImportCsv()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+            DefaultExt = "csv",
+            Multiselect = false,
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var (entries, message) = ParseCsvTranslations(dialog.FileName);
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                MessageBox.Show(message, "Translation Workbench", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (entries.Count == 0)
+            {
+                MessageBox.Show("No translations to import.", "Translation Workbench", MessageBoxButton.OK);
+                return;
+            }
+
+            SendTranslationBatches(entries);
+
+            MessageBox.Show(
+                $"Imported {entries.Count} translations.",
+                "Translation Workbench",
+                MessageBoxButton.OK
+            );
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Failed to import CSV: {ex.Message}",
+                "Translation Workbench",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
+        }
+    }
+
+    private static void SendTranslationBatches(IReadOnlyList<TranslationUpsertEntry> entries, int batchSize = 200)
+    {
+        if (entries.Count == 0)
+        {
+            return;
+        }
+
+        var batch = new List<TranslationUpsertEntry>(batchSize);
+        foreach (var entry in entries)
+        {
+            batch.Add(entry);
+            if (batch.Count < batchSize)
+            {
+                continue;
+            }
+
+            PacketSender.SendTranslationBatchUpsert(batch);
+            batch = new List<TranslationUpsertEntry>(batchSize);
+        }
+
+        if (batch.Count > 0)
+        {
+            PacketSender.SendTranslationBatchUpsert(batch);
+        }
+    }
+
+    private static (List<TranslationUpsertEntry> Entries, string? Message) ParseCsvTranslations(string fileName)
+    {
+        using var parser = new TextFieldParser(fileName)
+        {
+            HasFieldsEnclosedInQuotes = true,
+        };
+
+        parser.SetDelimiters(",");
+
+        if (parser.EndOfData)
+        {
+            return (new List<TranslationUpsertEntry>(), "The CSV file is empty.");
+        }
+
+        var headers = parser.ReadFields() ?? Array.Empty<string>();
+        if (headers.Length == 0)
+        {
+            return (new List<TranslationUpsertEntry>(), "The CSV file does not contain a header row.");
+        }
+
+        var headerLookup = headers
+            .Select((header, index) => (header: header.Trim(), index))
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.header))
+            .GroupBy(entry => entry.header, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().index, StringComparer.OrdinalIgnoreCase);
+
+        var keyIndex = GetColumnIndex(headerLookup, "TranslationEntryKey", "EntryKey", "Key");
+        var entityTypeIndex = GetColumnIndex(headerLookup, "EntityType");
+        var entityIdIndex = GetColumnIndex(headerLookup, "EntityId", "EntityID", "Id");
+        var fieldIndex = GetColumnIndex(headerLookup, "Field");
+        var subPathIndex = GetColumnIndex(headerLookup, "SubPath", "Subpath");
+        var languageIndex = GetColumnIndex(headerLookup, "Language", "Lang", "Locale");
+        var translatedTextIndex = GetColumnIndex(headerLookup, "TranslatedText", "Translation", "Translated");
+        var sourceTextIndex = GetColumnIndex(headerLookup, "SourceText", "Source");
+        var statusIndex = GetColumnIndex(headerLookup, "Status");
+
+        if (translatedTextIndex < 0)
+        {
+            return (new List<TranslationUpsertEntry>(), "Missing the required TranslatedText column.");
+        }
+
+        if (languageIndex < 0)
+        {
+            return (new List<TranslationUpsertEntry>(), "Missing the required Language column.");
+        }
+
+        if (keyIndex < 0 && (entityTypeIndex < 0 || entityIdIndex < 0 || fieldIndex < 0))
+        {
+            return (new List<TranslationUpsertEntry>(), "Missing TranslationEntryKey or EntityType/EntityId/Field columns.");
+        }
+
+        var entries = new List<TranslationUpsertEntry>();
+        while (!parser.EndOfData)
+        {
+            var fields = parser.ReadFields() ?? Array.Empty<string>();
+            if (fields.Length == 0)
+            {
+                continue;
+            }
+
+            var translationText = GetField(fields, translatedTextIndex);
+            var language = GetField(fields, languageIndex);
+
+            if (string.IsNullOrWhiteSpace(language))
+            {
+                continue;
+            }
+
+            if (!TryGetEntryKey(
+                    fields,
+                    keyIndex,
+                    entityTypeIndex,
+                    entityIdIndex,
+                    fieldIndex,
+                    subPathIndex,
+                    out var entryKey
+                ) ||
+                entryKey == null)
+            {
+                continue;
+            }
+
+            var sourceText = GetField(fields, sourceTextIndex);
+            var status = GetStatus(fields, statusIndex);
+            var field = CombineField(entryKey.Field, entryKey.SubPath);
+
+            entries.Add(new TranslationUpsertEntry(
+                entryKey.EntityType,
+                entryKey.EntityId,
+                field,
+                sourceText,
+                language,
+                translationText,
+                status
+            ));
+        }
+
+        return (entries, null);
+    }
+
+    private static bool TryGetEntryKey(
+        string[] fields,
+        int keyIndex,
+        int entityTypeIndex,
+        int entityIdIndex,
+        int fieldIndex,
+        int subPathIndex,
+        out TranslationEntryKey? entryKey
+    )
+    {
+        entryKey = null;
+        if (keyIndex >= 0)
+        {
+            var serialized = GetField(fields, keyIndex);
+            if (!string.IsNullOrWhiteSpace(serialized) &&
+                TranslationEntryKey.TryParseSerialized(serialized, out entryKey))
+            {
+                return true;
+            }
+        }
+
+        var entityType = GetField(fields, entityTypeIndex);
+        var entityId = GetField(fields, entityIdIndex);
+        var field = GetField(fields, fieldIndex);
+        var subPath = GetField(fields, subPathIndex);
+
+        if (string.IsNullOrWhiteSpace(entityType) ||
+            string.IsNullOrWhiteSpace(entityId) ||
+            string.IsNullOrWhiteSpace(field))
+        {
+            return false;
+        }
+
+        entryKey = new TranslationEntryKey(entityType, entityId, field, subPath);
+        return true;
+    }
+
+    private static string CombineField(string field, string subPath)
+    {
+        if (string.IsNullOrWhiteSpace(subPath))
+        {
+            return field;
+        }
+
+        if (string.IsNullOrWhiteSpace(field))
+        {
+            return subPath;
+        }
+
+        if (field.StartsWith(subPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return field;
+        }
+
+        return $"{subPath}:{field}";
+    }
+
+    private static TranslationStatus GetStatus(string[] fields, int statusIndex)
+    {
+        if (statusIndex < 0)
+        {
+            return TranslationStatus.Ok;
+        }
+
+        var statusValue = GetField(fields, statusIndex);
+        if (Enum.TryParse(statusValue, true, out TranslationStatus status))
+        {
+            return status;
+        }
+
+        return TranslationStatus.Ok;
+    }
+
+    private static string GetField(string[] fields, int index)
+    {
+        if (index < 0 || index >= fields.Length)
+        {
+            return string.Empty;
+        }
+
+        return fields[index] ?? string.Empty;
+    }
+
+    private static int GetColumnIndex(
+        IReadOnlyDictionary<string, int> headerLookup,
+        params string[] candidates
+    )
+    {
+        foreach (var candidate in candidates)
+        {
+            if (headerLookup.TryGetValue(candidate, out var index))
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
     private string BuildExportFileName()
     {
         var statusLabel = SelectedStatus?.Value?.ToString() ?? "All";
@@ -398,6 +678,8 @@ public sealed class TranslationQueueEntryViewModel
     private readonly RelayCommand _saveAndNextCommand;
     private readonly RelayCommand _copySourceCommand;
     private readonly RelayCommand _quickPasteCommand;
+    private static readonly Regex QuickPasteRegex =
+        new(@"^\s*(?<lang>[\w-]+)\)\s*=\s*(?<text>.*)\s*$", RegexOptions.Compiled);
 
     public TranslationQueueEntryViewModel(TranslationPendingEntry entry, Action advanceAction)
     {
@@ -533,8 +815,51 @@ public sealed class TranslationQueueEntryViewModel
         var translation = GetActiveTranslation();
         if (translation != null)
         {
-            translation.TranslationText = Clipboard.GetText();
+            var clipboardText = Clipboard.GetText();
+            if (TryParseQuickPaste(clipboardText, out var translations))
+            {
+                if (translations.TryGetValue(translation.LanguageName, out var matchedText))
+                {
+                    translation.TranslationText = matchedText;
+                }
+                else if (translations.Count == 1)
+                {
+                    translation.TranslationText = translations.Values.First();
+                }
+            }
+            else
+            {
+                translation.TranslationText = clipboardText;
+            }
         }
+    }
+
+    private static bool TryParseQuickPaste(string text, out Dictionary<string, string> translations)
+    {
+        translations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        var lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+        foreach (var line in lines)
+        {
+            var match = QuickPasteRegex.Match(line);
+            if (!match.Success)
+            {
+                continue;
+            }
+
+            var language = match.Groups["lang"].Value.Trim();
+            var translation = match.Groups["text"].Value.Trim();
+            if (!string.IsNullOrWhiteSpace(language))
+            {
+                translations[language] = translation;
+            }
+        }
+
+        return translations.Count > 0;
     }
 }
 
