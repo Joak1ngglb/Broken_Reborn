@@ -362,7 +362,7 @@ public static class AchievementService
 
         foreach (var titleId in rewards.TitleIds)
         {
-            if (!TitleDescriptor.Lookup.ContainsKey(titleId))
+            if (!TitleDescriptor.Lookup.TryGetValue(titleId, out _))
             {
                 continue;
             }

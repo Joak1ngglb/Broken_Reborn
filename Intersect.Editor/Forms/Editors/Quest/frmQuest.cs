@@ -7,6 +7,9 @@ using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Editor;
 using Microsoft.Extensions.Logging;
@@ -854,14 +857,23 @@ public partial class FrmQuest : EditorForm
         btnTranslateTask.Enabled = lstTasks.SelectedIndex > -1;
     }
 
-    private static (string Text, Color Color) GetTaskBadge(QuestObjective objective)
+    private static (string Text, System.Drawing.Color Color) GetTaskBadge(QuestObjective objective)
     {
         return objective switch
         {
-            QuestObjective.EventDriven => (Strings.TaskEditor.types[(int)QuestObjective.EventDriven].ToString(), Color.MediumSlateBlue),
-            QuestObjective.GatherItems => (Strings.TaskEditor.types[(int)QuestObjective.GatherItems].ToString(), Color.SeaGreen),
-            QuestObjective.KillNpcs => (Strings.TaskEditor.types[(int)QuestObjective.KillNpcs].ToString(), Color.IndianRed),
-            _ => (objective.ToString(), Color.DimGray)
+            QuestObjective.EventDriven => (
+                Strings.TaskEditor.types[(int)QuestObjective.EventDriven].ToString(),
+                System.Drawing.Color.MediumSlateBlue
+            ),
+            QuestObjective.GatherItems => (
+                Strings.TaskEditor.types[(int)QuestObjective.GatherItems].ToString(),
+                System.Drawing.Color.SeaGreen
+            ),
+            QuestObjective.KillNpcs => (
+                Strings.TaskEditor.types[(int)QuestObjective.KillNpcs].ToString(),
+                System.Drawing.Color.IndianRed
+            ),
+            _ => (objective.ToString(), System.Drawing.Color.DimGray)
         };
     }
 

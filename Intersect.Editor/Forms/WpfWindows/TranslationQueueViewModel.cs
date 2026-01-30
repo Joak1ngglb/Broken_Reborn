@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Windows;
 using System.Windows.Input;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
@@ -15,7 +14,6 @@ using Intersect.Framework.Core.Localization;
 using Intersect.Network.Packets.Localization;
 using Intersect.Network.Packets.Editor;
 using Microsoft.VisualBasic.FileIO;
-using Microsoft.Win32;
 
 namespace Intersect.Editor.Forms.WpfWindows;
 
@@ -227,7 +225,7 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
             SelectedEntry = FilteredEntries.FirstOrDefault();
         }
 
-        var dispatcher = Application.Current?.Dispatcher;
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
         if (dispatcher != null && !dispatcher.CheckAccess())
         {
             dispatcher.Invoke(UpdateEntries);
@@ -285,11 +283,15 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
         var entries = TranslationRepository.Default.LastPendingEntries;
         if (entries.Count == 0)
         {
-            MessageBox.Show("No pending entries to export.", "Translation Workbench", MessageBoxButton.OK);
+            System.Windows.MessageBox.Show(
+                "No pending entries to export.",
+                "Translation Workbench",
+                System.Windows.MessageBoxButton.OK
+            );
             return;
         }
 
-        var dialog = new SaveFileDialog
+        var dialog = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
             DefaultExt = "csv",
@@ -303,7 +305,7 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
             return;
         }
 
-        using var writer = new StreamWriter(dialog.FileName, false, System.Text.Encoding.UTF8);
+        using var writer = new StreamWriter(dialog.FileName, System.Text.Encoding.UTF8);
         writer.WriteLine(
             string.Join(
                 ",",
@@ -335,16 +337,16 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
             ));
         }
 
-        MessageBox.Show(
+        System.Windows.MessageBox.Show(
             $"Exported {entries.Count} pending entries.",
             "Translation Workbench",
-            MessageBoxButton.OK
+            System.Windows.MessageBoxButton.OK
         );
     }
 
     private void ImportCsv()
     {
-        var dialog = new OpenFileDialog
+        var dialog = new Microsoft.Win32.OpenFileDialog
         {
             Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
             DefaultExt = "csv",
@@ -361,31 +363,40 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
             var (entries, message) = ParseCsvTranslations(dialog.FileName);
             if (!string.IsNullOrWhiteSpace(message))
             {
-                MessageBox.Show(message, "Translation Workbench", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show(
+                    message,
+                    "Translation Workbench",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Warning
+                );
                 return;
             }
 
             if (entries.Count == 0)
             {
-                MessageBox.Show("No translations to import.", "Translation Workbench", MessageBoxButton.OK);
+                System.Windows.MessageBox.Show(
+                    "No translations to import.",
+                    "Translation Workbench",
+                    System.Windows.MessageBoxButton.OK
+                );
                 return;
             }
 
             SendTranslationBatches(entries);
 
-            MessageBox.Show(
+            System.Windows.MessageBox.Show(
                 $"Imported {entries.Count} translations.",
                 "Translation Workbench",
-                MessageBoxButton.OK
+                System.Windows.MessageBoxButton.OK
             );
         }
         catch (Exception ex)
         {
-            MessageBox.Show(
+            System.Windows.MessageBox.Show(
                 $"Failed to import CSV: {ex.Message}",
                 "Translation Workbench",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error
             );
         }
     }
@@ -801,13 +812,13 @@ public sealed class TranslationQueueEntryViewModel
     {
         if (!string.IsNullOrWhiteSpace(_entry.SourceText))
         {
-            Clipboard.SetText(_entry.SourceText);
+            System.Windows.Clipboard.SetText(_entry.SourceText);
         }
     }
 
     private void QuickPaste()
     {
-        if (!Clipboard.ContainsText())
+        if (!System.Windows.Clipboard.ContainsText())
         {
             return;
         }
@@ -815,7 +826,7 @@ public sealed class TranslationQueueEntryViewModel
         var translation = GetActiveTranslation();
         if (translation != null)
         {
-            var clipboardText = Clipboard.GetText();
+            var clipboardText = System.Windows.Clipboard.GetText();
             if (TryParseQuickPaste(clipboardText, out var translations))
             {
                 if (translations.TryGetValue(translation.LanguageName, out var matchedText))
