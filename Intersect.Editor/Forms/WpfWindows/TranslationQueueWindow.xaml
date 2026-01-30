@@ -27,16 +27,17 @@
             <TextBlock FontSize="16" FontWeight="SemiBold" Text="Queue" />
 
             <Grid Grid.Row="1" Margin="0,10,0,12">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
                 <TextBlock VerticalAlignment="Center" Text="Entity Type" />
                 <ComboBox Grid.Column="1"
@@ -63,6 +64,20 @@
                           Margin="8,0,0,0"
                           ItemsSource="{Binding Scopes}"
                           SelectedItem="{Binding SelectedScope}" />
+
+                <StackPanel Grid.Row="4"
+                            Grid.ColumnSpan="2"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Margin="0,8,0,0">
+                    <Button Margin="0,0,8,0"
+                            Padding="12,6"
+                            Command="{Binding SetBrokenStatusCommand}"
+                            Content="Broken" />
+                    <Button Padding="12,6"
+                            Command="{Binding ExportCsvCommand}"
+                            Content="Export CSV" />
+                </StackPanel>
             </Grid>
 
             <ListBox Grid.Row="2"
