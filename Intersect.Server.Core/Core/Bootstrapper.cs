@@ -303,6 +303,8 @@ internal static class Bootstrapper
             return false;
         }
 
+        LocalizationRepository.InitializeDefault();
+
 
         Time.Update();
 
