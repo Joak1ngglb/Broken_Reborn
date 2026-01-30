@@ -15,6 +15,7 @@ using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.Localization;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Editor;
+using Intersect.Network.Packets.Localization;
 using Intersect.Utilities;
 using Newtonsoft.Json;
 using Graphics = System.Drawing.Graphics;
