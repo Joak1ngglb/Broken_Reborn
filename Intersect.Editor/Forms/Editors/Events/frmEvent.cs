@@ -1339,7 +1339,12 @@ public partial class FrmEvent : Form
             return false;
         }
 
-        baseField = $"Page:{CurrentPageIndex}:List:{listEntry.Key}:Command:{properties.MyIndex}";
+        if (properties.Cmd.CommandId == Guid.Empty)
+        {
+            properties.Cmd.CommandId = Guid.NewGuid();
+        }
+
+        baseField = $"Page:{CurrentPageIndex}:List:{listEntry.Key}:Command:{properties.Cmd.CommandId}";
         return true;
     }
 
@@ -2008,6 +2013,11 @@ public partial class FrmEvent : Form
                 }
             );
 
+            if (newCmd != null)
+            {
+                newCmd.CommandId = Guid.NewGuid();
+            }
+
             var newListIds = new Dictionary<Guid, Guid>();
             foreach (var list in lists)
             {
@@ -2025,6 +2035,11 @@ public partial class FrmEvent : Form
 
             foreach (var list in lists)
             {
+                foreach (var cmd in list.Value)
+                {
+                    cmd.CommandId = Guid.NewGuid();
+                }
+
                 CurrentPage.CommandLists.Add(newListIds[list.Key], list.Value);
             }
 
