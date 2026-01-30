@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
@@ -11,6 +12,7 @@ using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.Localization;
 using Intersect.Network.Packets.Localization;
+using Microsoft.Win32;
 
 namespace Intersect.Editor.Forms.WpfWindows;
 
@@ -19,6 +21,8 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
     private const int DefaultPageSize = 200;
     private readonly RelayCommand _nextCommand;
     private readonly RelayCommand _previousCommand;
+    private readonly RelayCommand _exportCsvCommand;
+    private readonly RelayCommand _setBrokenStatusCommand;
     private string? _entityIdFilter;
     private bool _suppressRefresh;
     private int _offset;
@@ -41,6 +45,8 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
 
         _previousCommand = new RelayCommand(_ => MovePrevious(), _ => _offset > 0);
         _nextCommand = new RelayCommand(_ => MoveNext(), _ => _offset + DefaultPageSize < _totalCount);
+        _exportCsvCommand = new RelayCommand(_ => ExportCsv(), _ => TranslationRepository.Default.LastPendingEntries.Count > 0);
+        _setBrokenStatusCommand = new RelayCommand(_ => SetBrokenStatus());
 
         TranslationRepository.Default.PendingTranslationsUpdated += OnPendingTranslationsUpdated;
         RefreshPending();
@@ -89,6 +95,10 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
     public ICommand PreviousCommand => _previousCommand;
 
     public ICommand NextCommand => _nextCommand;
+
+    public ICommand ExportCsvCommand => _exportCsvCommand;
+
+    public ICommand SetBrokenStatusCommand => _setBrokenStatusCommand;
 
     public void ApplyFilter(string? entityType, string? entityId, string? searchText = null)
     {
@@ -199,6 +209,7 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
             _totalCount = totalCount;
             _nextCommand.RaiseCanExecuteChanged();
             _previousCommand.RaiseCanExecuteChanged();
+            _exportCsvCommand.RaiseCanExecuteChanged();
 
             FilteredEntries.Clear();
             foreach (var entry in entries)
@@ -251,6 +262,98 @@ public sealed class TranslationQueueViewModel : INotifyPropertyChanged, IDisposa
     private void OnPropertyChanged(string? propertyName)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private void SetBrokenStatus()
+    {
+        var brokenOption = Statuses.FirstOrDefault(option => option.Value == TranslationStatus.Broken);
+        if (brokenOption != null)
+        {
+            SelectedStatus = brokenOption;
+        }
+    }
+
+    private void ExportCsv()
+    {
+        var entries = TranslationRepository.Default.LastPendingEntries;
+        if (entries.Count == 0)
+        {
+            MessageBox.Show("No pending entries to export.", "Translation Workbench", MessageBoxButton.OK);
+            return;
+        }
+
+        var dialog = new SaveFileDialog
+        {
+            Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+            DefaultExt = "csv",
+            FileName = BuildExportFileName(),
+            AddExtension = true,
+            OverwritePrompt = true,
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        using var writer = new StreamWriter(dialog.FileName, false, System.Text.Encoding.UTF8);
+        writer.WriteLine(
+            string.Join(
+                ",",
+                "EntityType",
+                "EntityId",
+                "EntityName",
+                "Field",
+                "Language",
+                "Status",
+                "SourceText",
+                "TranslatedText",
+                "UpdatedUtc"
+            )
+        );
+
+        foreach (var entry in entries)
+        {
+            writer.WriteLine(string.Join(
+                ",",
+                EscapeCsv(entry.EntityType),
+                EscapeCsv(entry.EntityId),
+                EscapeCsv(entry.EntityName ?? string.Empty),
+                EscapeCsv(entry.Field),
+                EscapeCsv(entry.Language),
+                EscapeCsv(entry.Status.ToString()),
+                EscapeCsv(entry.SourceText),
+                EscapeCsv(entry.TranslatedText),
+                EscapeCsv(entry.UpdatedUtc)
+            ));
+        }
+
+        MessageBox.Show(
+            $"Exported {entries.Count} pending entries.",
+            "Translation Workbench",
+            MessageBoxButton.OK
+        );
+    }
+
+    private string BuildExportFileName()
+    {
+        var statusLabel = SelectedStatus?.Value?.ToString() ?? "All";
+        var scopeLabel = SelectedScope?.Value ?? "All";
+        var entityType = SelectedEntityType?.Value ?? "All";
+        var suffix = $"{entityType}_{statusLabel}_{scopeLabel}".Replace(" ", string.Empty);
+        return $"translation-pending-{suffix}.csv";
+    }
+
+    private static string EscapeCsv(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        var needsQuotes = value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r');
+        var escaped = value.Replace("\"", "\"\"");
+        return needsQuotes ? $"\"{escaped}\"" : escaped;
     }
 
     private static IReadOnlyList<FilterOption<string?>> BuildEntityTypes()
