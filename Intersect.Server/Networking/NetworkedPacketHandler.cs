@@ -15,6 +15,7 @@ using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.GameObjects.Titles;
 using Intersect.Framework.Core.GameObjects.Variables;
+using Intersect.Framework.Core.Localization;
 using Intersect.Framework.Core.Security;
 using Intersect.GameObjects;
 using Intersect.Models;
@@ -1295,6 +1296,119 @@ internal sealed partial class NetworkedPacketHandler
                     PacketSender.SendGameObjectToAll(obj);
                 }
             }
+        }
+
+        //TranslationUpsertPacket
+        public void HandlePacket(Client client, Network.Packets.Editor.TranslationUpsertPacket packet)
+        {
+            if (!client.IsEditor || packet == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(packet.EntityType) ||
+                string.IsNullOrWhiteSpace(packet.EntityId) ||
+                string.IsNullOrWhiteSpace(packet.Field) ||
+                string.IsNullOrWhiteSpace(packet.Language))
+            {
+                return;
+            }
+
+            var repository = LocalizationRepository.Default;
+            var currentHash = repository.GetCurrentSourceHash(packet.EntityType, packet.EntityId, packet.Field);
+            if (string.IsNullOrWhiteSpace(currentHash))
+            {
+                currentHash = packet.SourceHash;
+            }
+
+            if (string.IsNullOrWhiteSpace(currentHash))
+            {
+                return;
+            }
+
+            var translatedText = packet.Text ?? string.Empty;
+            var sourceText = repository.GetCurrentSourceText(packet.EntityType, packet.EntityId, packet.Field);
+            var missingArguments = string.IsNullOrWhiteSpace(translatedText)
+                ? Array.Empty<int>()
+                : LocalizationRepository.GetMissingArgumentIndices(sourceText ?? string.Empty, translatedText);
+            var status = missingArguments.Count > 0 ? TranslationStatus.Broken : TranslationStatus.Ok;
+
+            repository.UpsertTranslation(
+                packet.EntityType,
+                packet.EntityId,
+                packet.Field,
+                packet.Language,
+                translatedText,
+                status,
+                currentHash
+            );
+        }
+
+        //TranslationBatchUpsertPacket
+        public void HandlePacket(Client client, Network.Packets.Editor.TranslationBatchUpsertPacket packet)
+        {
+            if (!client.IsEditor || packet?.Entries == null || packet.Entries.Count == 0)
+            {
+                return;
+            }
+
+            var repository = LocalizationRepository.Default;
+            foreach (var entry in packet.Entries)
+            {
+                if (entry == null ||
+                    string.IsNullOrWhiteSpace(entry.EntityType) ||
+                    string.IsNullOrWhiteSpace(entry.EntityId) ||
+                    string.IsNullOrWhiteSpace(entry.Field))
+                {
+                    continue;
+                }
+
+                var sourceText = entry.SourceText ?? string.Empty;
+                var sourceHash = string.IsNullOrWhiteSpace(sourceText)
+                    ? repository.GetCurrentSourceHash(entry.EntityType, entry.EntityId, entry.Field)
+                    : repository.UpsertSource(entry.EntityType, entry.EntityId, entry.Field, sourceText);
+
+                if (string.IsNullOrWhiteSpace(sourceHash))
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(entry.Language))
+                {
+                    continue;
+                }
+
+                repository.UpsertTranslation(
+                    entry.EntityType,
+                    entry.EntityId,
+                    entry.Field,
+                    entry.Language,
+                    entry.TranslatedText ?? string.Empty,
+                    entry.Status,
+                    sourceHash
+                );
+            }
+        }
+
+        //TranslationPendingRequestPacket
+        public void HandlePacket(Client client, Network.Packets.Localization.TranslationPendingRequestPacket packet)
+        {
+            if (!client.IsEditor || packet == null)
+            {
+                return;
+            }
+
+            var (entries, totalCount) = LocalizationRepository.Default.QueryPending(
+                packet.EntityType,
+                packet.EntityId,
+                packet.Status,
+                packet.Search,
+                packet.Language,
+                packet.Limit,
+                packet.Offset
+            );
+
+            PacketSender.SendTranslationPendingResponse(client, entries, totalCount);
         }
 
         //RequestGridPacket
