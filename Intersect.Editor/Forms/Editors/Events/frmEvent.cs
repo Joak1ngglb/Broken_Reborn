@@ -449,6 +449,33 @@ public partial class FrmEvent : Form
                     ObjectCreationHandling = ObjectCreationHandling.Replace
                 }
             );
+            var pastedPage = MyEvent.Pages[CurrentPageIndex];
+            var newListIds = new Dictionary<Guid, Guid>();
+            foreach (var list in pastedPage.CommandLists)
+            {
+                newListIds.Add(list.Key, Guid.NewGuid());
+            }
+
+            foreach (var list in pastedPage.CommandLists)
+            {
+                foreach (var cmd in list.Value)
+                {
+                    cmd.FixBranchIds(newListIds);
+                }
+            }
+
+            var rebuiltLists = new Dictionary<Guid, List<EventCommand>>();
+            foreach (var list in pastedPage.CommandLists)
+            {
+                foreach (var cmd in list.Value)
+                {
+                    cmd.CommandId = Guid.NewGuid();
+                }
+
+                rebuiltLists.Add(newListIds[list.Key], list.Value);
+            }
+
+            pastedPage.CommandLists = rebuiltLists;
 
             LoadPage(CurrentPageIndex);
         }
