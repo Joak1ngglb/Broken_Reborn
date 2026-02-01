@@ -154,7 +154,7 @@ public static class AchievementService
                 continue;
             }
 
-            var hasConditionProgress = UpdateProgressFromConditions(player, achievement, progress);
+            var hasConditionProgress = UpdateProgressFromConditions(player, achievement, progress, ref hasChanges);
             if (!hasConditionProgress)
             {
                 var updatedProgress = progress.Progress + Math.Max(context.ProgressDelta, 0);
@@ -226,62 +226,166 @@ public static class AchievementService
     private static bool UpdateProgressFromConditions(
         Player player,
         AchievementDescriptor achievement,
-        ServerAchievementProgress progress
+        ServerAchievementProgress progress,
+        ref bool hasChanges
     )
     {
-        var progressValues = new List<int>();
+        var objectives = GetAchievementObjectives(achievement, player);
+        if (objectives.Count == 0)
+        {
+            if (progress.Objectives.Count > 0)
+            {
+                progress.Objectives = [];
+                hasChanges = true;
+            }
+
+            return false;
+        }
+
+        if (!AreObjectivesEqual(progress.Objectives, objectives))
+        {
+            progress.Objectives = objectives;
+            hasChanges = true;
+        }
+
+        var updatedProgress = objectives.Count(objective => objective.Current > 0);
+        if (updatedProgress != progress.Progress)
+        {
+            progress.Progress = updatedProgress;
+            hasChanges = true;
+        }
+
+        return true;
+    }
+
+    public static List<ObjectiveProgress> GetAchievementObjectives(
+        AchievementDescriptor achievement,
+        Player player
+    )
+    {
+        var objectives = new List<ObjectiveProgress>();
+        if (achievement == null || player == null)
+        {
+            return objectives;
+        }
+
+        if (achievement.MetaAchievementIds.Count > 0)
+        {
+            foreach (var metaAchievementId in achievement.MetaAchievementIds)
+            {
+                var isCompleted = player.Achievements.Any(
+                    progress => progress.AchievementId == metaAchievementId && progress.Completed
+                );
+                objectives.Add(new ObjectiveProgress(isCompleted ? 1 : 0, 1, ProgressMode.Binary));
+            }
+
+            return objectives;
+        }
 
         foreach (var condition in achievement.Requirements.Lists.SelectMany(list => list.Conditions))
         {
             switch (condition)
             {
-                case LevelOrStatCondition levelCondition when levelCondition.ComparingLevel:
-                    progressValues.Add(player.Level);
+                case LevelOrStatCondition levelCondition:
+                {
+                    var currentValue = levelCondition.ComparingLevel
+                        ? player.Level
+                        : player.GetStatValue(levelCondition.Stat);
+                    objectives.Add(new ObjectiveProgress(currentValue, levelCondition.Value, ProgressMode.Quantitative));
                     break;
+                }
                 case HasItemCondition hasItemCondition:
-                    progressValues.Add(
-                        player.CountItems(
-                            hasItemCondition.ItemId,
-                            true,
-                            hasItemCondition.CheckBank
-                        )
+                {
+                    var currentValue = player.CountItems(
+                        hasItemCondition.ItemId,
+                        true,
+                        hasItemCondition.CheckBank
                     );
+                    objectives.Add(new ObjectiveProgress(currentValue, hasItemCondition.Quantity, ProgressMode.Quantitative));
                     break;
+                }
                 case QuestCompletedCondition questCompletedCondition:
-                    progressValues.Add(player.QuestCompleted(questCompletedCondition.QuestId) ? 1 : 0);
+                {
+                    var currentValue = player.QuestCompleted(questCompletedCondition.QuestId) ? 1 : 0;
+                    objectives.Add(new ObjectiveProgress(currentValue, 1, ProgressMode.Binary));
                     break;
+                }
                 case QuestInProgressCondition questInProgressCondition:
-                    progressValues.Add(
-                        player.QuestInProgress(
-                            questInProgressCondition.QuestId,
-                            questInProgressCondition.Progress,
-                            questInProgressCondition.TaskId
-                        )
-                            ? 1
-                            : 0
-                    );
+                {
+                    var currentValue = player.QuestInProgress(
+                        questInProgressCondition.QuestId,
+                        questInProgressCondition.Progress,
+                        questInProgressCondition.TaskId
+                    )
+                        ? 1
+                        : 0;
+                    objectives.Add(new ObjectiveProgress(currentValue, 1, ProgressMode.Binary));
                     break;
+                }
                 case MapIsCondition mapCondition:
-                    progressValues.Add(player.MapId == mapCondition.MapId ? 1 : 0);
+                {
+                    var currentValue = player.MapId == mapCondition.MapId ? 1 : 0;
+                    objectives.Add(new ObjectiveProgress(currentValue, 1, ProgressMode.Binary));
                     break;
+                }
                 case MapZoneTypeIs zoneCondition:
-                    progressValues.Add(player.Map?.ZoneType == zoneCondition.ZoneType ? 1 : 0);
+                {
+                    var currentValue = player.Map?.ZoneType == zoneCondition.ZoneType ? 1 : 0;
+                    objectives.Add(new ObjectiveProgress(currentValue, 1, ProgressMode.Binary));
                     break;
+                }
                 case VariableIsCondition variableCondition when variableCondition.VariableType == VariableType.PlayerVariable:
-                    progressValues.Add((int)player.GetVariableValue(variableCondition.VariableId).Integer);
+                {
+                    var currentValue = (int)player.GetVariableValue(variableCondition.VariableId).Integer;
+                    if (variableCondition.Comparison is IntegerVariableComparison intComparison)
+                    {
+                        var targetValue = intComparison.MaxValue > 0
+                            ? (int)Math.Min(intComparison.MaxValue, int.MaxValue)
+                            : (int)Math.Min(intComparison.Value, int.MaxValue);
+
+                        if (targetValue > 0)
+                        {
+                            objectives.Add(new ObjectiveProgress(currentValue, targetValue, ProgressMode.Quantitative));
+                            break;
+                        }
+                    }
+
+                    var meetsCondition = Conditions.MeetsCondition(variableCondition, player, null, null) ? 1 : 0;
+                    objectives.Add(new ObjectiveProgress(meetsCondition, 1, ProgressMode.Binary));
                     break;
+                }
+                default:
+                {
+                    var meetsCondition = Conditions.MeetsCondition(condition, player, null, null) ? 1 : 0;
+                    objectives.Add(new ObjectiveProgress(meetsCondition, 1, ProgressMode.Binary));
+                    break;
+                }
             }
         }
 
-        if (progressValues.Count == 0)
+        return objectives;
+    }
+
+    private static bool AreObjectivesEqual(
+        IReadOnlyList<ObjectiveProgress> left,
+        IReadOnlyList<ObjectiveProgress> right
+    )
+    {
+        if (left.Count != right.Count)
         {
             return false;
         }
 
-        var updatedProgress = progressValues.Max();
-        if (updatedProgress != progress.Progress)
+        for (var index = 0; index < left.Count; index++)
         {
-            progress.Progress = updatedProgress;
+            var leftObjective = left[index];
+            var rightObjective = right[index];
+            if (leftObjective.Current != rightObjective.Current ||
+                leftObjective.Target != rightObjective.Target ||
+                leftObjective.Mode != rightObjective.Mode)
+            {
+                return false;
+            }
         }
 
         return true;

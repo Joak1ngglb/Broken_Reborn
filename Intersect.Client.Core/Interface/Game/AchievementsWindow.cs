@@ -10,8 +10,6 @@ using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Achievements;
-using Intersect.Framework.Core.GameObjects.Conditions;
-using Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Localization;
 
@@ -494,17 +492,11 @@ public sealed partial class AchievementsWindow : Window
 
     private void UpdateProgressDetails(AchievementDescriptor achievement)
     {
-        var (progress, target) = GetAchievementProgress(achievement);
-        if (target is > 0)
-        {
-            _progressValueLabel.Text = Strings.Achievements.ProgressValue.ToString(progress, target);
-            _progressBar.Value = Math.Clamp(progress / (float)target.Value, 0f, 1f);
-        }
-        else
-        {
-            _progressValueLabel.Text = Strings.Achievements.ProgressValueSimple.ToString(progress);
-            _progressBar.Value = 0f;
-        }
+        var (completed, total) = GetAchievementObjectiveCounts(achievement);
+        _progressValueLabel.Text = Strings.Achievements.ProgressValue.ToString(completed, total);
+        _progressBar.Value = total > 0
+            ? Math.Clamp(completed / (float)total, 0f, 1f)
+            : 0f;
     }
 
     private void UpdateRewardDetails(AchievementDescriptor achievement)
@@ -662,22 +654,36 @@ public sealed partial class AchievementsWindow : Window
         return progress.Progress > 0 ? AchievementStatus.InProgress : AchievementStatus.Pending;
     }
 
-    private (int progress, int? target) GetAchievementProgress(AchievementDescriptor achievement)
+    private (int completed, int total) GetAchievementObjectiveCounts(AchievementDescriptor achievement)
     {
-        if (achievement.MetaAchievementIds.Count > 0)
+        var objectives = GetAchievementObjectives(achievement);
+        var total = objectives.Count;
+        var completed = objectives.Count(objective => objective.IsCompleted);
+        return (completed, total);
+    }
+
+    private List<ObjectiveProgress> GetAchievementObjectives(AchievementDescriptor achievement)
+    {
+        if (Globals.AchievementProgress.TryGetValue(achievement.Id, out var progress) &&
+            progress.Objectives.Count > 0)
         {
-            var completedCount = achievement.MetaAchievementIds.Count(
-                id => Globals.AchievementProgress.TryGetValue(id, out var progress) && progress.Completed
-            );
-            return (completedCount, achievement.MetaAchievementIds.Count);
+            return progress.Objectives;
         }
 
-        var progressValue = Globals.AchievementProgress.TryGetValue(achievement.Id, out var progress)
-            ? progress.Progress
-            : 0;
+        if (achievement.MetaAchievementIds.Count > 0)
+        {
+            return achievement.MetaAchievementIds
+                .Select(
+                    id => new ObjectiveProgress(
+                        Globals.AchievementProgress.TryGetValue(id, out var meta) && meta.Completed ? 1 : 0,
+                        1,
+                        ProgressMode.Binary
+                    )
+                )
+                .ToList();
+        }
 
-        var target = GetAchievementTarget(achievement);
-        return (progressValue, target);
+        return [];
     }
     // --- UI Defaults/Styling ----------------------------------------------------
 
@@ -855,55 +861,6 @@ public sealed partial class AchievementsWindow : Window
         }
 
         return false;
-    }
-
-    private static int? GetAchievementTarget(AchievementDescriptor achievement)
-    {
-        var targets = new List<int>();
-
-        foreach (var condition in achievement.Requirements.Lists.SelectMany(list => list.Conditions))
-        {
-            switch (condition)
-            {
-                case LevelOrStatCondition { ComparingLevel: true } levelCondition:
-                    if (levelCondition.Value > 0)
-                    {
-                        targets.Add(levelCondition.Value);
-                    }
-                    break;
-                case HasItemCondition hasItemCondition:
-                    if (hasItemCondition.Quantity > 0)
-                    {
-                        targets.Add(hasItemCondition.Quantity);
-                    }
-                    break;
-                case QuestCompletedCondition:
-                case QuestInProgressCondition:
-                case MapIsCondition:
-                case MapZoneTypeIs:
-                    targets.Add(1);
-                    break;
-                case VariableIsCondition variableIsCondition:
-                    if (variableIsCondition.Comparison is IntegerVariableComparison intComparison)
-                    {
-                        var maxValue = intComparison.MaxValue > 0
-                            ? (int)Math.Min(intComparison.MaxValue, int.MaxValue)
-                            : (int)Math.Min(intComparison.Value, int.MaxValue);
-                        if (maxValue > 0)
-                        {
-                            targets.Add(maxValue);
-                        }
-                    }
-                    break;
-            }
-        }
-
-        if (targets.Count == 0)
-        {
-            return null;
-        }
-
-        return targets.Max();
     }
 
     private enum AchievementStatus

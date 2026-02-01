@@ -11,6 +11,8 @@ public partial class AchievementProgress
 
     public DateTime? CompletedAt;
 
+    public List<ObjectiveProgress> Objectives { get; set; } = [];
+
     public AchievementProgress(string data)
     {
         JsonConvert.PopulateObject(data, this);
