@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.GameObjects.Achievements;
 using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
@@ -10,11 +11,11 @@ public partial class AchievementProgressPacket : IntersectPacket
     {
     }
 
-    public AchievementProgressPacket(Dictionary<Guid, string?> achievements)
+    public AchievementProgressPacket(Dictionary<Guid, AchievementProgressDto> achievements)
     {
         Achievements = achievements;
     }
 
     [Key(0)]
-    public Dictionary<Guid, string?> Achievements { get; set; } = new();
+    public Dictionary<Guid, AchievementProgressDto> Achievements { get; set; } = new();
 }

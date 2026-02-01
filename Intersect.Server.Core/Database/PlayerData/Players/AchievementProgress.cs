@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using FrameworkAchievementProgress = Intersect.Framework.Core.GameObjects.Achievements.AchievementProgress;
 using Intersect.Server.Entities;
 using Newtonsoft.Json;
 
@@ -36,6 +37,14 @@ public partial class AchievementProgress : IPlayerOwned
 
     public string Data()
     {
-        return JsonConvert.SerializeObject(this);
+        var progress = new FrameworkAchievementProgress
+        {
+            Progress = Progress,
+            Completed = Completed,
+            CompletedAt = CompletedAt,
+            Objectives = Objectives
+        };
+
+        return progress.ToJson();
     }
 }
