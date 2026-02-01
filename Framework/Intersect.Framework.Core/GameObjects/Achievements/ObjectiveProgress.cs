@@ -33,5 +33,6 @@ public sealed class ObjectiveProgress
     public ProgressMode? Mode { get; set; }
 
     [JsonIgnore]
+    [Key(3)]
     public bool IsCompleted => Target > 0 ? Current >= Target : Current > 0;
 }

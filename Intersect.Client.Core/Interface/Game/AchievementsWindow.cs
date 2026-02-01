@@ -428,6 +428,7 @@ public sealed partial class AchievementsWindow : Window
                 Width = ListIconSize,
                 Height = ListIconSize,
                 MouseInputEnabled = false,
+                RenderColor = achievement.Color,
             };
 
             icon.SetPosition(2, (ListRowHeight - ListIconSize) / 2);
@@ -611,6 +612,7 @@ public sealed partial class AchievementsWindow : Window
         }
 
         _iconPanel.Texture = iconTexture;
+        _iconPanel.RenderColor = achievement.Color;
         _iconPanel.Show();
     }
 

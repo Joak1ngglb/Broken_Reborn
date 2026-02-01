@@ -833,6 +833,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             nudRgbaA.Size = new Size(70, 23);
             nudRgbaA.TabIndex = 93;
             nudRgbaA.Value = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaA.ValueChanged += nudRgbaA_ValueChanged;
             // 
             // nudRgbaB
             // 
@@ -845,6 +846,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             nudRgbaB.Size = new Size(70, 23);
             nudRgbaB.TabIndex = 92;
             nudRgbaB.Value = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaB.ValueChanged += nudRgbaB_ValueChanged;
             // 
             // nudRgbaG
             // 
@@ -857,6 +859,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             nudRgbaG.Size = new Size(70, 23);
             nudRgbaG.TabIndex = 91;
             nudRgbaG.Value = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaG.ValueChanged += nudRgbaG_ValueChanged;
             // 
             // nudRgbaR
             // 
@@ -869,6 +872,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             nudRgbaR.Size = new Size(70, 23);
             nudRgbaR.TabIndex = 90;
             nudRgbaR.Value = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaR.ValueChanged += nudRgbaR_ValueChanged;
             // 
             // cmbPic
             // 
@@ -891,6 +895,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             cmbPic.TabIndex = 89;
             cmbPic.Text = "None";
             cmbPic.TextPadding = new Padding(2);
+            cmbPic.SelectedIndexChanged += cmbPic_SelectedIndexChanged;
             // 
             // lblPic
             // 

@@ -1,3 +1,5 @@
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
@@ -60,12 +62,12 @@ public partial class FrmAchievement : EditorForm
         cmbCompletionMode.Items.Clear();
         cmbCompletionMode.Items.AddRange(Enum.GetNames(typeof(AchievementCompletionMode)));
 
-        cmbIcon.Items.Clear();
-        cmbIcon.Items.Add(Strings.General.None);
+        cmbPic.Items.Clear();
+        cmbPic.Items.Add(Strings.General.None);
         var iconNames = GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Achievement);
         if (iconNames?.Length > 0)
         {
-            cmbIcon.Items.AddRange(iconNames);
+            cmbPic.Items.AddRange(iconNames);
         }
 
         cmbResource.Items.Clear();
@@ -107,7 +109,7 @@ public partial class FrmAchievement : EditorForm
         lblDifficulty.Text = Strings.AchievementEditor.difficulty;
         lblCompletionMode.Text = Strings.AchievementEditor.completionmode;
         lblFolder.Text = Strings.AchievementEditor.folderlabel;
-        lblIcon.Text = Strings.AchievementEditor.icon;
+        lblPic.Text = Strings.AchievementEditor.icon;
 
         grpRequirements.Text = Strings.AchievementEditor.requirements;
         btnEditRequirements.Text = Strings.AchievementEditor.editrequirements;
@@ -201,11 +203,16 @@ public partial class FrmAchievement : EditorForm
             var iconName = string.IsNullOrWhiteSpace(_editorItem.Icon)
                 ? Strings.General.None.ToString()
                 : _editorItem.Icon;
-            cmbIcon.SelectedIndex = cmbIcon.FindString(iconName);
-            if (cmbIcon.SelectedIndex < 0)
+            cmbPic.SelectedIndex = cmbPic.FindString(iconName);
+            if (cmbPic.SelectedIndex < 0)
             {
-                cmbIcon.SelectedIndex = 0;
+                cmbPic.SelectedIndex = 0;
             }
+            nudRgbaR.Value = _editorItem.Color.R;
+            nudRgbaG.Value = _editorItem.Color.G;
+            nudRgbaB.Value = _editorItem.Color.B;
+            nudRgbaA.Value = _editorItem.Color.A;
+            DrawAchievementIcon();
             nudExperience.Value = _editorItem.Rewards.Experience;
             nudCurrency.Value = _editorItem.Rewards.Currency;
 
@@ -343,14 +350,99 @@ public partial class FrmAchievement : EditorForm
         _editorItem.CompletionMode = (AchievementCompletionMode)cmbCompletionMode.SelectedIndex;
     }
 
-    private void cmbIcon_SelectedIndexChanged(object sender, EventArgs e)
+    private void cmbPic_SelectedIndexChanged(object sender, EventArgs e)
     {
         if (_editorItem == null || _updating)
         {
             return;
         }
 
-        _editorItem.Icon = cmbIcon.SelectedIndex <= 0 ? string.Empty : cmbIcon.Text;
+        _editorItem.Icon = cmbPic.SelectedIndex <= 0 ? string.Empty : cmbPic.Text;
+        DrawAchievementIcon();
+    }
+
+    private void nudRgbaR_ValueChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.Color.R = (byte)nudRgbaR.Value;
+        DrawAchievementIcon();
+    }
+
+    private void nudRgbaG_ValueChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.Color.G = (byte)nudRgbaG.Value;
+        DrawAchievementIcon();
+    }
+
+    private void nudRgbaB_ValueChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.Color.B = (byte)nudRgbaB.Value;
+        DrawAchievementIcon();
+    }
+
+    private void nudRgbaA_ValueChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.Color.A = (byte)nudRgbaA.Value;
+        DrawAchievementIcon();
+    }
+
+    private void DrawAchievementIcon()
+    {
+        picItem.BackgroundImage?.Dispose();
+        picItem.BackgroundImage = null;
+
+        var picItemBmp = new Bitmap(picItem.Width, picItem.Height);
+        var gfx = System.Drawing.Graphics.FromImage(picItemBmp);
+        gfx.FillRectangle(Brushes.Black, new Rectangle(0, 0, picItem.Width, picItem.Height));
+
+        if (cmbPic.SelectedIndex > 0)
+        {
+            var img = Image.FromFile("resources/achievements/" + cmbPic.Text);
+            var imgAttributes = new ImageAttributes();
+
+            imgAttributes.SetColorMatrix(
+                new ColorMatrix(
+                    new float[][]
+                    {
+                        new float[] { (float)nudRgbaR.Value / 255,  0,  0,  0, 0},
+                        new float[] {0, (float)nudRgbaG.Value / 255,  0,  0, 0},
+                        new float[] {0,  0, (float)nudRgbaB.Value / 255,  0, 0},
+                        new float[] {0,  0,  0, (float)nudRgbaA.Value / 255, 0},
+                        new float[] {0, 0, 0, 0, 1}
+                    }
+                )
+            );
+
+            gfx.DrawImage(
+                img, new Rectangle(0, 0, img.Width, img.Height),
+                0, 0, img.Width, img.Height, GraphicsUnit.Pixel, imgAttributes
+            );
+
+            img.Dispose();
+            imgAttributes.Dispose();
+        }
+
+        gfx.Dispose();
+        picItem.BackgroundImage = picItemBmp;
     }
 
     private static string GetCategoryDisplayName(AchievementCategory category) =>
