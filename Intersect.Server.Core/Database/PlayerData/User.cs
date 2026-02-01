@@ -222,6 +222,7 @@ public partial class User
                 using var context = DbInterface.CreatePlayerContext(false);
                 context.Users.Update(this);
 
+                newCharacter.EnsureStats();
                 Players.Add(newCharacter);
 
                 _ = Player.Validate(newCharacter);

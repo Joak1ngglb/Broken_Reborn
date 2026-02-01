@@ -22,6 +22,7 @@ using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.GameObjects.Variables;
+using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets.Server;
@@ -285,6 +286,10 @@ public partial class Player : Entity
     //Bestiary
     public virtual List<BestiaryUnlockInstance> BestiaryUnlocks { get; set; } = [];
 
+    //Player Stats
+    [JsonIgnore]
+    public virtual PlayerStats Stats { get; set; } = new();
+
     [JsonIgnore, NotMapped]
     public bool IsValidPlayer => !IsDisposed && Client?.Entity == this;
 
@@ -483,6 +488,57 @@ public partial class Player : Entity
         changes |= SlotHelper.ValidateSlotList(Hotbar, Options.Instance.Player.HotbarSlotCount);
 
         return changes;
+    }
+
+    public PlayerStats EnsureStats()
+    {
+        Stats ??= new PlayerStats();
+        Stats.EnsureOwner(this);
+        return Stats;
+    }
+
+    public int GetPlayerStatValue(PlayerStatType statType)
+    {
+        var stats = EnsureStats();
+        return statType switch
+        {
+            PlayerStatType.PvPKills => stats.PvPKills,
+            PlayerStatType.Deaths => stats.Deaths,
+            PlayerStatType.JobsLevel => stats.JobsLevel,
+            PlayerStatType.Crafts => stats.Crafts,
+            PlayerStatType.Harvests => stats.Harvests,
+            _ => 0,
+        };
+    }
+
+    public void IncrementPlayerStat(PlayerStatType statType, int amount = 1)
+    {
+        if (amount == 0)
+        {
+            return;
+        }
+
+        var stats = EnsureStats();
+        switch (statType)
+        {
+            case PlayerStatType.PvPKills:
+                stats.PvPKills = Math.Max(0, stats.PvPKills + amount);
+                break;
+            case PlayerStatType.Deaths:
+                stats.Deaths = Math.Max(0, stats.Deaths + amount);
+                break;
+            case PlayerStatType.JobsLevel:
+                stats.JobsLevel = Math.Max(0, stats.JobsLevel + amount);
+                break;
+            case PlayerStatType.Crafts:
+                stats.Crafts = Math.Max(0, stats.Crafts + amount);
+                break;
+            case PlayerStatType.Harvests:
+                stats.Harvests = Math.Max(0, stats.Harvests + amount);
+                break;
+            default:
+                break;
+        }
     }
 
     /// <summary>
@@ -1358,6 +1414,7 @@ public partial class Player : Entity
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
+        IncrementPlayerStat(PlayerStatType.Deaths);
         CastTime = 0;
         CastTarget = null;
         AttackTimer = 0;
@@ -4700,6 +4757,7 @@ public partial class Player : Entity
                
                 if (TryGiveItem(craftItem.Id, quantity))
                 {
+                    IncrementPlayerStat(PlayerStatType.Crafts);
                     PacketSender.SendChatMsg(
                         this, Strings.Crafting.Crafted.ToString(craftItem.Name), ChatMessageType.Crafting,
                         CustomColors.Alerts.Success

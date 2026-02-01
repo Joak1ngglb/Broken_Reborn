@@ -189,6 +189,38 @@ public static partial class Strings
         return EventConditionDesc.levelorstat.ToString(lvlorstat, pLvl);
     }
 
+    public static string GetEventConditionalDesc(PlayerStatCondition condition)
+    {
+        var comparison = string.Empty;
+        switch (condition.Comparator)
+        {
+            case VariableComparator.Equal:
+                comparison = EventConditionDesc.equal.ToString(condition.Value);
+                break;
+            case VariableComparator.GreaterOrEqual:
+                comparison = EventConditionDesc.greaterequal.ToString(condition.Value);
+                break;
+            case VariableComparator.LesserOrEqual:
+                comparison = EventConditionDesc.lessthanequal.ToString(condition.Value);
+                break;
+            case VariableComparator.Greater:
+                comparison = EventConditionDesc.greater.ToString(condition.Value);
+                break;
+            case VariableComparator.Less:
+                comparison = EventConditionDesc.lessthan.ToString(condition.Value);
+                break;
+            case VariableComparator.NotEqual:
+                comparison = EventConditionDesc.notequal.ToString(condition.Value);
+                break;
+        }
+
+        var statName = EventConditional.playerstats.TryGetValue(condition.Stat, out var label)
+            ? label.ToString()
+            : condition.Stat.ToString();
+
+        return EventConditionDesc.playerstat.ToString(statName, comparison);
+    }
+
     public static string GetEventConditionalDesc(SelfSwitchCondition condition)
     {
         var sValue = EventConditionDesc.False;
@@ -2699,6 +2731,12 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString comparator = @"Comparator:";
 
+        public static LocalizedString playerstat = @"Player Stat";
+
+        public static LocalizedString playerstatlabel = @"Stat:";
+
+        public static LocalizedString playerstatvalue = @"Value:";
+
         public static Dictionary<int, LocalizedString> stringcomparators = new Dictionary<int, LocalizedString>
         {
             {0, @"Equal To"},
@@ -2723,6 +2761,7 @@ Tick timer saved in server config.json.";
             {ConditionType.ClassIs, @"Class is..."},
             {ConditionType.KnowsSpell, @"Knows spell..."},
             {ConditionType.LevelOrStat, @"Level or Stat is..."},
+            {ConditionType.PlayerStat, @"Player Stat is..."},
             {ConditionType.SelfSwitch, @"Self Switch is..."},
             {ConditionType.AccessIs, @"Power level is..."},
             {ConditionType.TimeBetween, @"Time is between..."},
@@ -2740,6 +2779,15 @@ Tick timer saved in server config.json.";
             {ConditionType.IsInCombat, @"Is in Combat" },
             {ConditionType.BeastHasUnlock, @"Beast has unlock..." },
             {ConditionType.BeastsCompleted, @"Beasts completed..." },
+        };
+
+        public static Dictionary<PlayerStatType, LocalizedString> playerstats = new()
+        {
+            {PlayerStatType.PvPKills, @"PVP Kills"},
+            {PlayerStatType.Deaths, @"Deaths"},
+            {PlayerStatType.JobsLevel, @"Job Levels"},
+            {PlayerStatType.Crafts, @"Crafts"},
+            {PlayerStatType.Harvests, @"Harvests"},
         };
 
         public static LocalizedString endrange = @"End Range:";
@@ -2963,6 +3011,8 @@ Tick timer saved in server config.json.";
         public static LocalizedString level = @"Level";
 
         public static LocalizedString levelorstat = @"{00} {01}";
+
+        public static LocalizedString playerstat = @"{00} {01}";
 
         public static LocalizedString male = @"Male";
 

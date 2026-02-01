@@ -267,6 +267,35 @@ public static partial class Conditions
     }
 
     public static bool MeetsCondition(
+        PlayerStatCondition condition,
+        Player player,
+        Event eventInstance,
+        QuestDescriptor questDescriptor
+    )
+    {
+        var currentValue = player.GetPlayerStatValue(condition.Stat);
+        var compareAgainst = condition.Value;
+
+        switch (condition.Comparator)
+        {
+            case VariableComparator.Equal:
+                return currentValue == compareAgainst;
+            case VariableComparator.GreaterOrEqual:
+                return currentValue >= compareAgainst;
+            case VariableComparator.LesserOrEqual:
+                return currentValue <= compareAgainst;
+            case VariableComparator.Greater:
+                return currentValue > compareAgainst;
+            case VariableComparator.Less:
+                return currentValue < compareAgainst;
+            case VariableComparator.NotEqual:
+                return currentValue != compareAgainst;
+            default:
+                return false;
+        }
+    }
+
+    public static bool MeetsCondition(
         SelfSwitchCondition condition,
         Player player,
         Event eventInstance,

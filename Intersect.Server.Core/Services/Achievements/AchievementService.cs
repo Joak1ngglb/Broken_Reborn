@@ -295,6 +295,12 @@ public static class AchievementService
                     objectives.Add(new ObjectiveProgress(currentValue, levelCondition.Value, ProgressMode.Quantitative));
                     break;
                 }
+                case PlayerStatCondition playerStatCondition:
+                {
+                    var currentValue = player.GetPlayerStatValue(playerStatCondition.Stat);
+                    objectives.Add(new ObjectiveProgress(currentValue, playerStatCondition.Value, ProgressMode.Quantitative));
+                    break;
+                }
                 case HasItemCondition hasItemCondition:
                 {
                     var currentValue = player.CountItems(

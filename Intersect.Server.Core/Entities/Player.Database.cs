@@ -200,6 +200,7 @@ public partial class Player
         entityEntry.Collection(p => p.Quests).Load();
         entityEntry.Collection(p => p.Spells).Load();
         entityEntry.Collection(p => p.Variables).Load();
+        entityEntry.Reference(p => p.Stats).Load();
         entityEntry.Collection(p => p.BestiaryUnlocks).Load();
         entityEntry.Collection(p => p.Achievements).Load();
 
@@ -255,6 +256,8 @@ public partial class Player
         {
             return false;
         }
+
+        player.EnsureStats();
 
         // player.Bank = player.Bank.OrderBy(bankSlot => bankSlot?.Slot)
         // player.Items = player.Items.OrderBy(inventorySlot => inventorySlot?.Slot).ToList();
@@ -398,7 +401,13 @@ public partial class Player
                 playerContext = createdPlayerContext = DbInterface.CreatePlayerContext(readOnly: false);
             }
 
+            EnsureStats();
             playerContext.Update(this);
+            if (!playerContext.Player_Stats.AsNoTracking().Any(stats => stats.PlayerId == Id))
+            {
+                playerContext.Entry(Stats).State = EntityState.Added;
+            }
+
             playerContext.ChangeTracker.DetectChanges();
             playerContext.SaveChanges();
         }
@@ -544,6 +553,7 @@ public partial class Player
                 .Include(p => p.Quests)
                 .Include(p => p.Spells)
                 .Include(p => p.Variables)
+                .Include(p => p.Stats)
              .Include(p => p.MailBoxs)
                .ThenInclude(m => m.SenderPlayer)
                 .AsSplitQuery()
@@ -564,6 +574,7 @@ public partial class Player
                 .Include(p => p.Quests)
                 .Include(p => p.Spells)
                 .Include(p => p.Variables)
+                .Include(p => p.Stats)
              .Include(p => p.MailBoxs)
                .ThenInclude(m => m.SenderPlayer)
                 .AsSplitQuery()
@@ -590,6 +601,7 @@ public partial class Player
                 .Include(p => p.Variables)
                 .Include(p => p.Items)
                 .Include(p => p.Spells)
+                .Include(p => p.Stats)
              .Include(p => p.MailBoxs)
                .ThenInclude(m => m.SenderPlayer)
                 .AsSplitQuery()
@@ -607,6 +619,7 @@ public partial class Player
                 .Include(p => p.Variables)
                 .Include(p => p.Items)
                 .Include(p => p.Spells)
+                .Include(p => p.Stats)
              .Include(p => p.MailBoxs)
                .ThenInclude(m => m.SenderPlayer)
                 .AsSplitQuery()
@@ -628,6 +641,7 @@ public partial class Player
                 .Include(c => c.Quests)
                 .Include(c => c.Spells)
                 .Include(c => c.Variables)
+                .Include(c => c.Stats)
              .Include(c => c.MailBoxs)
                .ThenInclude(m => m.SenderPlayer)
                 .AsSplitQuery()

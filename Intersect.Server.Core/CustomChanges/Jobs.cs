@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Intersect.Config;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Server.Localization;
 using Intersect.Server.Networking;
 using Newtonsoft.Json;
@@ -142,6 +143,7 @@ namespace Intersect.Server.Entities
         private void LevelUp(Player player)
         {
             JobLevel++;
+            player.IncrementPlayerStat(PlayerStatType.JobsLevel);
 
             var levelUpMessage = Strings.Player.GetJobLevelUpMessage(JobType);
             PacketSender.SendChatMsg(player, string.Format(levelUpMessage, JobLevel), ChatMessageType.Experience);

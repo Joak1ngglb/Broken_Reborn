@@ -619,6 +619,31 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.ToTable("Player_Variables");
                 });
 
+            modelBuilder.Entity("Intersect.Server.Database.PlayerData.Players.PlayerStats", b =>
+                {
+                    b.Property<Guid>("PlayerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Crafts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Deaths")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Harvests")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("JobsLevel")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PvPKills")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("PlayerId");
+
+                    b.ToTable("Player_Stats");
+                });
+
             modelBuilder.Entity("Intersect.Server.Database.PlayerData.Players.Quest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1407,6 +1432,17 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Navigation("ShopItem");
                 });
 
+            modelBuilder.Entity("Intersect.Server.Database.PlayerData.Players.PlayerStats", b =>
+                {
+                    b.HasOne("Intersect.Server.Entities.Player", "Player")
+                        .WithOne("Stats")
+                        .HasForeignKey("Intersect.Server.Database.PlayerData.Players.PlayerStats", "PlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Player");
+                });
+
             modelBuilder.Entity("Intersect.Server.Entities.Player", b =>
                 {
                     b.HasOne("Intersect.Server.Database.PlayerData.Players.Guild", "Guild")
@@ -1503,6 +1539,8 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Navigation("PlayerShops");
 
                     b.Navigation("Quests");
+
+                    b.Navigation("Stats");
 
                     b.Navigation("Spells");
 

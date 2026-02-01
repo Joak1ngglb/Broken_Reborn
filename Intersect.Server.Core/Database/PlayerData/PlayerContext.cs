@@ -40,6 +40,8 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
 
     public DbSet<PlayerVariable> Player_Variables { get; set; }
 
+    public DbSet<PlayerStats> Player_Stats { get; set; }
+
     public DbSet<BestiaryUnlockInstance> Player_BestiaryUnlocks { get; set; }
 
     public DbSet<Bag> Bags { get; set; }
@@ -111,6 +113,13 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
         modelBuilder.Entity<Player>().HasMany(b => b.Items).WithOne(p => p.Player);
 
         modelBuilder.Entity<Player>().HasMany(b => b.Variables).WithOne(p => p.Player);
+        modelBuilder.Entity<PlayerStats>().HasKey(stats => stats.PlayerId);
+        modelBuilder.Entity<Player>()
+            .HasOne(player => player.Stats)
+            .WithOne(stats => stats.Player)
+            .HasForeignKey<PlayerStats>(stats => stats.PlayerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Player>().HasMany(b => b.BestiaryUnlocks).WithOne(p => p.Player);
         modelBuilder.Entity<BestiaryUnlockInstance>().HasIndex(p => new { p.PlayerId, p.NpcId, p.UnlockType }).IsUnique();
         modelBuilder.Entity<PlayerVariable>().HasIndex(p => new { p.VariableId, p.PlayerId }).IsUnique();

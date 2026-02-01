@@ -7,6 +7,7 @@ using Intersect.Collections.Slotting;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
+using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
@@ -2470,6 +2471,7 @@ public abstract partial class Entity : IEntity
                 //PVP Kill common events
                 if (!enemy.IsDead && enemy is Player enemyPlayer && this is Player)
                 {
+                    thisPlayer.IncrementPlayerStat(PlayerStatType.PvPKills);
                     thisPlayer.StartCommonEventsWithTrigger(CommonEventTrigger.PVPKill, "", enemy.Name);
                     enemyPlayer.StartCommonEventsWithTrigger(CommonEventTrigger.PVPDeath, "", this.Name);
                 }

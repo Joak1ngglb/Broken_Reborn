@@ -43,4 +43,5 @@ public enum ConditionType
     IsInCombat,
     BeastHasUnlock,
     BeastsCompleted,
+    PlayerStat,
 }
