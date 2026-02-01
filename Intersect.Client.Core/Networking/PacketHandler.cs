@@ -2230,7 +2230,8 @@ internal sealed partial class PacketHandler
                 Completed = achievement.Value.Completed,
                 CompletedAt = achievement.Value.CompletedAtTicks.HasValue
                     ? new DateTime(achievement.Value.CompletedAtTicks.Value)
-                    : null
+                    : null,
+                Objectives = achievement.Value.Objectives
             };
 
             Globals.AchievementProgress[achievement.Key] = progress;
