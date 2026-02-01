@@ -36,6 +36,7 @@ using Intersect.Framework.Core.Security;
 using Intersect.Framework.Threading;
 using Intersect.Localization;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Intersect.Framework.Core.GameObjects.Spells;
@@ -2209,14 +2210,17 @@ internal sealed partial class PacketHandler
     {
         foreach (var achievement in packet.Achievements)
         {
-            if (achievement.Value == null)
+            var progress = new AchievementProgress
             {
-                Globals.AchievementProgress.Remove(achievement.Key);
-                Globals.AchievementCompletedRewards.Remove(achievement.Key);
-                continue;
-            }
+                Progress = achievement.Value.Progress,
+                Completed = achievement.Value.Completed,
+                CompletedAt = achievement.Value.CompletedAtTicks.HasValue
+                    ? new DateTime(achievement.Value.CompletedAtTicks.Value)
+                    : null,
+                Objectives = achievement.Value.Objectives
+            };
 
-            Globals.AchievementProgress[achievement.Key] = new AchievementProgress(achievement.Value);
+            Globals.AchievementProgress[achievement.Key] = progress;
         }
 
         Globals.AchievementDirty = true;
@@ -2233,7 +2237,7 @@ internal sealed partial class PacketHandler
         {
             Experience = packet.Experience,
             Currency = packet.Currency,
-            Resources = packet.Resources,
+            Items = packet.Items,
             TitleIds = packet.TitleIds
         };
 

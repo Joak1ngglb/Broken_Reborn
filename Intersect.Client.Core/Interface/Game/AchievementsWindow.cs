@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
@@ -10,8 +11,6 @@ using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Achievements;
-using Intersect.Framework.Core.GameObjects.Conditions;
-using Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Localization;
 
@@ -21,6 +20,7 @@ public sealed partial class AchievementsWindow : Window
 {
     private readonly ListBox _achievementList;
     private readonly ScrollControl _detailsArea;
+    private readonly ImagePanel _iconPanel;
     private readonly Label _titleLabel;
     private readonly Label _categoryLabel;
     private readonly Label _difficultyLabel;
@@ -42,10 +42,13 @@ public sealed partial class AchievementsWindow : Window
     private bool _localizationSubscribed;
 
     private const int ListWidth = 250;
+    private const int ListRowHeight = 25;
     private const int Padding = 10;
     private const int FilterSpacing = 4;
     private const int SectionSpacing = 8;
     private const int ProgressBarHeight = 20;
+    private const int DetailIconSize = 32;
+    private const int ListIconSize = 18;
 
     public AchievementsWindow(Canvas gameCanvas)
         : base(gameCanvas, Strings.Achievements.Title, false, nameof(AchievementsWindow))
@@ -84,6 +87,10 @@ public sealed partial class AchievementsWindow : Window
         _detailsArea = new ScrollControl(this, nameof(_detailsArea));
         _detailsArea.EnableScroll(false, true);
 
+        _iconPanel = new ImagePanel(_detailsArea, nameof(_iconPanel))
+        {
+            IsHidden = true,
+        };
         _titleLabel = new Label(_detailsArea, nameof(_titleLabel));
         _categoryLabel = new Label(_detailsArea, nameof(_categoryLabel));
         _difficultyLabel = new Label(_detailsArea, nameof(_difficultyLabel));
@@ -118,10 +125,6 @@ public sealed partial class AchievementsWindow : Window
         _rewardLabel = new RichLabel(_detailsArea) { Name = nameof(_rewardLabel) };
         ApplyUiDefaults();
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
-
-      // <-- AGREGA ESTO
-
-     
 
         if (_detailsArea.InnerPanel != null)
         {
@@ -234,6 +237,14 @@ public sealed partial class AchievementsWindow : Window
         var contentWidth = GetDetailsContentWidth();
         var y = 0;
         const int bottomPadding = 12;
+
+        if (!_iconPanel.IsHidden)
+        {
+            var iconSize = Math.Min(DetailIconSize, contentWidth);
+            _iconPanel.SetSize(iconSize, iconSize);
+            _iconPanel.SetPosition(0, y);
+            y += _iconPanel.Height + 6;
+        }
 
         if (!_titleLabel.IsHidden)
         {
@@ -375,14 +386,14 @@ public sealed partial class AchievementsWindow : Window
                 continue;
             }
 
-            AddCategoryToList(category.ToString(), Color.White);
+            AddCategoryToList(GetCategoryDisplayName(category), Color.White);
 
             foreach (var entry in entries
                          .OrderBy(e => e.Order)
                          .ThenBy(e => e.Achievement.OrderValue))
             {
                 var localizedName = GetLocalizedAchievementField(entry.Achievement, "Name", entry.Achievement.Name);
-                AddAchievementToList(localizedName, entry.Color, entry.Achievement.Id);
+                AddAchievementToList(localizedName, entry.Color, entry.Achievement);
             }
         }
     }
@@ -399,14 +410,40 @@ public sealed partial class AchievementsWindow : Window
         };
     }
 
-    private void AddAchievementToList(string name, Color color, Guid achievementId, bool indented = true)
+    private void AddAchievementToList(string name, Color color, AchievementDescriptor achievement, bool indented = true)
     {
-        var item = _achievementList.AddRow((indented ? "\t\t\t" : "") + name);
-        item.UserData = achievementId;
+        var item = _achievementList.AddRow(string.Empty);
+        item.UserData = achievement.Id;
         item.Clicked -= AchievementListItem_Clicked;
         item.Clicked += AchievementListItem_Clicked;
-        item.SetTextColor(color);
-        item.SetSize(ListWidth - 20, 25);
+        item.SetSize(ListWidth - 20, ListRowHeight);
+
+        var iconTexture = GetAchievementIconTexture(achievement);
+        var iconOffset = 0;
+        if (iconTexture != null)
+        {
+            var icon = new ImagePanel(item)
+            {
+                Texture = iconTexture,
+                Width = ListIconSize,
+                Height = ListIconSize,
+                MouseInputEnabled = false,
+                RenderColor = achievement.Color,
+            };
+
+            icon.SetPosition(2, (ListRowHeight - ListIconSize) / 2);
+            iconOffset = ListIconSize + 6;
+        }
+
+        var label = new Label(item)
+        {
+            Text = name,
+            MouseInputEnabled = false,
+        };
+
+        var indentOffset = indented ? 16 : 0;
+        label.SetPosition(4 + iconOffset + indentOffset, 1);
+        SetTextColorSmart(label, color);
     }
 
     private void AddCategoryToList(string name, Color color)
@@ -414,7 +451,7 @@ public sealed partial class AchievementsWindow : Window
         var item = _achievementList.AddRow(name);
         item.MouseInputEnabled = false;
         item.SetTextColor(color);
-        item.SetSize(ListWidth - 20, 25);
+        item.SetSize(ListWidth - 20, ListRowHeight);
     }
 
     private void AchievementListItem_Clicked(Base sender, MouseButtonState arguments)
@@ -450,6 +487,7 @@ public sealed partial class AchievementsWindow : Window
         RequestAchievementLocalization(_selectedAchievement);
 
         _detailsArea.IsHidden = false;
+        _iconPanel.IsHidden = false;
         _titleLabel.IsHidden = false;
         _statusLabel.IsHidden = false;
         _categoryLabel.IsHidden = false;
@@ -461,8 +499,12 @@ public sealed partial class AchievementsWindow : Window
         _rewardLabel.IsHidden = false;
 
         _titleLabel.Text = GetLocalizedAchievementField(_selectedAchievement, "Name", _selectedAchievement.Name);
-        _categoryLabel.Text = Strings.Achievements.CategoryLabel.ToString(_selectedAchievement.Category.ToString());
-        _difficultyLabel.Text = Strings.Achievements.DifficultyLabel.ToString(_selectedAchievement.Difficulty.ToString());
+        _categoryLabel.Text = Strings.Achievements.CategoryLabel.ToString(
+            GetCategoryDisplayName(_selectedAchievement.Category)
+        );
+        _difficultyLabel.Text = Strings.Achievements.DifficultyLabel.ToString(
+            GetDifficultyDisplayName(_selectedAchievement.Difficulty)
+        );
 
         var status = GetAchievementStatus(_selectedAchievement);
         switch (status)
@@ -486,6 +528,7 @@ public sealed partial class AchievementsWindow : Window
             _descriptionTemplateLabel
         );
 
+        UpdateAchievementIcon(_selectedAchievement);
         UpdateProgressDetails(_selectedAchievement);
         UpdateRewardDetails(_selectedAchievement);
 
@@ -494,17 +537,11 @@ public sealed partial class AchievementsWindow : Window
 
     private void UpdateProgressDetails(AchievementDescriptor achievement)
     {
-        var (progress, target) = GetAchievementProgress(achievement);
-        if (target is > 0)
-        {
-            _progressValueLabel.Text = Strings.Achievements.ProgressValue.ToString(progress, target);
-            _progressBar.Value = Math.Clamp(progress / (float)target.Value, 0f, 1f);
-        }
-        else
-        {
-            _progressValueLabel.Text = Strings.Achievements.ProgressValueSimple.ToString(progress);
-            _progressBar.Value = 0f;
-        }
+        var (completed, total) = GetAchievementObjectiveCounts(achievement);
+        _progressValueLabel.Text = Strings.Achievements.ProgressValue.ToString(completed, total);
+        _progressBar.Value = total > 0
+            ? Math.Clamp(completed / (float)total, 0f, 1f)
+            : 0f;
     }
 
     private void UpdateRewardDetails(AchievementDescriptor achievement)
@@ -523,10 +560,10 @@ public sealed partial class AchievementsWindow : Window
             lines.Add(Strings.Achievements.RewardCurrency.ToString(rewards.Currency));
         }
 
-        foreach (var resource in rewards.Resources.Where(resource => resource.Value > 0))
+        foreach (var item in rewards.Items.Where(item => item.Value > 0))
         {
-            var itemName = GetLocalizedItemName(resource.Key);
-            lines.Add(Strings.Achievements.RewardResource.ToString(resource.Value, itemName));
+            var itemName = GetLocalizedItemName(item.Key);
+            lines.Add(Strings.Achievements.RewardItem.ToString(item.Value, itemName));
         }
 
         if (rewards.TitleIds.Count > 0)
@@ -551,6 +588,7 @@ public sealed partial class AchievementsWindow : Window
 
     private void ClearSelectedAchievement()
     {
+        _iconPanel.Hide();
         _titleLabel.Hide();
         _categoryLabel.Hide();
         _difficultyLabel.Hide();
@@ -562,6 +600,56 @@ public sealed partial class AchievementsWindow : Window
         _rewardLabel.Hide();
         _detailsArea.Hide();
     }
+
+    private void UpdateAchievementIcon(AchievementDescriptor achievement)
+    {
+        var iconTexture = GetAchievementIconTexture(achievement);
+        if (iconTexture == null)
+        {
+            _iconPanel.Texture = null;
+            _iconPanel.Hide();
+            return;
+        }
+
+        _iconPanel.Texture = iconTexture;
+        _iconPanel.RenderColor = achievement.Color;
+        _iconPanel.Show();
+    }
+
+    private static IGameTexture? GetAchievementIconTexture(AchievementDescriptor achievement)
+    {
+        if (string.IsNullOrWhiteSpace(achievement.Icon))
+        {
+            return null;
+        }
+
+        return GameContentManager.Current.GetTexture(
+            Framework.Content.TextureType.Achievement,
+            achievement.Icon
+        );
+    }
+
+    private static string GetCategoryDisplayName(AchievementCategory category) =>
+        category switch
+        {
+            AchievementCategory.Dungeons => Strings.Achievements.CategoryDungeons,
+            AchievementCategory.Exploration => Strings.Achievements.CategoryExploration,
+            AchievementCategory.Monsters => Strings.Achievements.CategoryMonsters,
+            AchievementCategory.Quests => Strings.Achievements.CategoryQuests,
+            AchievementCategory.Professions => Strings.Achievements.CategoryProfessions,
+            AchievementCategory.Events => Strings.Achievements.CategoryEvents,
+            _ => category.ToString()
+        };
+
+    private static string GetDifficultyDisplayName(AchievementDifficulty difficulty) =>
+        difficulty switch
+        {
+            AchievementDifficulty.Discovery => Strings.Achievements.DifficultyDiscovery,
+            AchievementDifficulty.Natural => Strings.Achievements.DifficultyNatural,
+            AchievementDifficulty.Epic => Strings.Achievements.DifficultyEpic,
+            AchievementDifficulty.Meta => Strings.Achievements.DifficultyMeta,
+            _ => difficulty.ToString()
+        };
 
     private void RequestAchievementListLocalization(IEnumerable<AchievementDescriptor> achievements)
     {
@@ -662,22 +750,36 @@ public sealed partial class AchievementsWindow : Window
         return progress.Progress > 0 ? AchievementStatus.InProgress : AchievementStatus.Pending;
     }
 
-    private (int progress, int? target) GetAchievementProgress(AchievementDescriptor achievement)
+    private (int completed, int total) GetAchievementObjectiveCounts(AchievementDescriptor achievement)
     {
-        if (achievement.MetaAchievementIds.Count > 0)
+        var objectives = GetAchievementObjectives(achievement);
+        var total = objectives.Count;
+        var completed = objectives.Count(objective => objective.IsCompleted);
+        return (completed, total);
+    }
+
+    private List<ObjectiveProgress> GetAchievementObjectives(AchievementDescriptor achievement)
+    {
+        if (Globals.AchievementProgress.TryGetValue(achievement.Id, out var progress) &&
+            progress.Objectives.Count > 0)
         {
-            var completedCount = achievement.MetaAchievementIds.Count(
-                id => Globals.AchievementProgress.TryGetValue(id, out var progress) && progress.Completed
-            );
-            return (completedCount, achievement.MetaAchievementIds.Count);
+            return progress.Objectives;
         }
 
-        var progressValue = Globals.AchievementProgress.TryGetValue(achievement.Id, out var progress)
-            ? progress.Progress
-            : 0;
+        if (achievement.MetaAchievementIds.Count > 0)
+        {
+            return achievement.MetaAchievementIds
+                .Select(
+                    id => new ObjectiveProgress(
+                        Globals.AchievementProgress.TryGetValue(id, out var meta) && meta.Completed ? 1 : 0,
+                        1,
+                        ProgressMode.Binary
+                    )
+                )
+                .ToList();
+        }
 
-        var target = GetAchievementTarget(achievement);
-        return (progressValue, target);
+        return [];
     }
     // --- UI Defaults/Styling ----------------------------------------------------
 
@@ -855,55 +957,6 @@ public sealed partial class AchievementsWindow : Window
         }
 
         return false;
-    }
-
-    private static int? GetAchievementTarget(AchievementDescriptor achievement)
-    {
-        var targets = new List<int>();
-
-        foreach (var condition in achievement.Requirements.Lists.SelectMany(list => list.Conditions))
-        {
-            switch (condition)
-            {
-                case LevelOrStatCondition { ComparingLevel: true } levelCondition:
-                    if (levelCondition.Value > 0)
-                    {
-                        targets.Add(levelCondition.Value);
-                    }
-                    break;
-                case HasItemCondition hasItemCondition:
-                    if (hasItemCondition.Quantity > 0)
-                    {
-                        targets.Add(hasItemCondition.Quantity);
-                    }
-                    break;
-                case QuestCompletedCondition:
-                case QuestInProgressCondition:
-                case MapIsCondition:
-                case MapZoneTypeIs:
-                    targets.Add(1);
-                    break;
-                case VariableIsCondition variableIsCondition:
-                    if (variableIsCondition.Comparison is IntegerVariableComparison intComparison)
-                    {
-                        var maxValue = intComparison.MaxValue > 0
-                            ? (int)Math.Min(intComparison.MaxValue, int.MaxValue)
-                            : (int)Math.Min(intComparison.Value, int.MaxValue);
-                        if (maxValue > 0)
-                        {
-                            targets.Add(maxValue);
-                        }
-                    }
-                    break;
-            }
-        }
-
-        if (targets.Count == 0)
-        {
-            return null;
-        }
-
-        return targets.Max();
     }
 
     private enum AchievementStatus

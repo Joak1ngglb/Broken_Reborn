@@ -33,6 +33,8 @@ public abstract partial class GameContentManager : IContentManager
 
     protected readonly Dictionary<string, IAsset> mAnimationDict = [];
 
+    protected readonly Dictionary<string, IAsset> mAchievementDict = [];
+
     protected readonly Dictionary<string, IAsset> mEntityDict = [];
 
     protected readonly Dictionary<string, IAsset> mFaceDict = [];
@@ -73,6 +75,7 @@ public abstract partial class GameContentManager : IContentManager
 
     public Dictionary<ContentType, ICollection<IAsset>> Textures => new()
     {
+        { ContentType.Achievement, mAchievementDict.Values },
         { ContentType.Animation, mAnimationDict.Values },
         { ContentType.Entity, mEntityDict.Values },
         { ContentType.Face, mFaceDict.Values },
@@ -111,6 +114,7 @@ public abstract partial class GameContentManager : IContentManager
     public void LoadAll()
     {
         LoadTexturePacks();
+        LoadAchievements();
         LoadEntities();
         LoadItems();
         LoadAnimations();
@@ -128,6 +132,8 @@ public abstract partial class GameContentManager : IContentManager
     }
 
     public abstract void LoadTexturePacks();
+
+    public abstract void LoadAchievements();
 
     public abstract void LoadTilesets(string[] tilesetnames);
 
@@ -197,6 +203,9 @@ public abstract partial class GameContentManager : IContentManager
 
             case TextureType.Spell:
                 return mSpellDict.Keys.ToArray();
+
+            case TextureType.Achievement:
+                return mAchievementDict.Keys.ToArray();
 
             case TextureType.Animation:
                 return mAnimationDict.Keys.ToArray();
@@ -546,6 +555,9 @@ public abstract partial class GameContentManager : IContentManager
         {
             case ContentType.Animation:
                 return mAnimationDict;
+
+            case ContentType.Achievement:
+                return mAchievementDict;
 
             case ContentType.Entity:
                 return mEntityDict;

@@ -704,6 +704,14 @@ public partial class FrmEvent : Form
                 tmpCommand = new CompleteQuestTaskCommand();
 
                 break;
+            case EventCommandType.CompleteAchievement:
+                tmpCommand = new CompleteAchievementCommand();
+
+                break;
+            case EventCommandType.CompleteAchievementTask:
+                tmpCommand = new CompleteAchievementTaskCommand();
+
+                break;
             case EventCommandType.EndQuest:
                 tmpCommand = new EndQuestCommand();
 
@@ -1450,6 +1458,14 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.CompleteQuestTask:
                 cmdWindow = new EventCommandCompleteQuestTask((CompleteQuestTaskCommand)command, this);
+
+                break;
+            case EventCommandType.CompleteAchievement:
+                cmdWindow = new EventCommandCompleteAchievement((CompleteAchievementCommand)command, this);
+
+                break;
+            case EventCommandType.CompleteAchievementTask:
+                cmdWindow = new EventCommandCompleteAchievementTask((CompleteAchievementTaskCommand)command, this);
 
                 break;
             case EventCommandType.EndQuest:

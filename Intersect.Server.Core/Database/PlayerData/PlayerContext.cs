@@ -111,6 +111,7 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
         modelBuilder.Entity<Player>().HasMany(b => b.Items).WithOne(p => p.Player);
 
         modelBuilder.Entity<Player>().HasMany(b => b.Variables).WithOne(p => p.Player);
+
         modelBuilder.Entity<Player>().HasMany(b => b.BestiaryUnlocks).WithOne(p => p.Player);
         modelBuilder.Entity<BestiaryUnlockInstance>().HasIndex(p => new { p.PlayerId, p.NpcId, p.UnlockType }).IsUnique();
         modelBuilder.Entity<PlayerVariable>().HasIndex(p => new { p.VariableId, p.PlayerId }).IsUnique();

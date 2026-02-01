@@ -246,6 +246,18 @@
     <Compile Update="Forms\Editors\Events\Event Commands\EventCommand_CompleteQuestTask.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Update="Forms\Editors\Events\Event Commands\EventCommand_CompleteAchievement.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Forms\Editors\Events\Event Commands\EventCommand_CompleteAchievement.Designer.cs">
+      <DependentUpon>EventCommand_CompleteAchievement.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Forms\Editors\Events\Event Commands\EventCommand_CompleteAchievementTask.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Forms\Editors\Events\Event Commands\EventCommand_CompleteAchievementTask.Designer.cs">
+      <DependentUpon>EventCommand_CompleteAchievementTask.cs</DependentUpon>
+    </Compile>
     <Compile Update="Forms\Editors\Events\Event Commands\EventCommand_CompleteQuestTask.Designer.cs">
       <DependentUpon>EventCommand_CompleteQuestTask.cs</DependentUpon>
     </Compile>

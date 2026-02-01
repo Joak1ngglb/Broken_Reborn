@@ -22,9 +22,31 @@ public sealed partial class AchievementDescriptor : DatabaseObject<AchievementDe
 
     public string Description { get; set; } = string.Empty;
 
-    public AchievementCategory Category { get; set; } = AchievementCategory.Exploracion;
+    public AchievementCategory Category { get; set; } = AchievementCategory.Exploration;
 
     public AchievementDifficulty Difficulty { get; set; } = AchievementDifficulty.Natural;
+
+    public string Icon { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The database compatible version of <see cref="Color"/>
+    /// </summary>
+    [Column("Color")]
+    [JsonIgnore]
+    public string JsonColor
+    {
+        get => JsonConvert.SerializeObject(Color);
+        set => Color = !string.IsNullOrWhiteSpace(value) ? JsonConvert.DeserializeObject<Color>(value) : Color.White;
+    }
+
+    /// <summary>
+    /// Defines the ARGB color settings for this Achievement.
+    /// </summary>
+    [NotMapped]
+    public Color Color { get; set; } = Color.White;
+
+    [Column("CompletionMode")]
+    public AchievementCompletionMode CompletionMode { get; set; } = AchievementCompletionMode.OrListsAndConditions;
 
     public int OrderValue { get; set; }
 
@@ -43,13 +65,7 @@ public sealed partial class AchievementDescriptor : DatabaseObject<AchievementDe
     [JsonIgnore]
     public string RewardsJson
     {
-        get => JsonConvert.SerializeObject(new
-        {
-            Rewards.Experience,
-            Rewards.Currency,
-            Rewards.Resources,
-            Rewards.TitleIds,
-        });
+        get => JsonConvert.SerializeObject(Rewards);
         set => Rewards = string.IsNullOrWhiteSpace(value)
             ? new AchievementRewards()
             : JsonConvert.DeserializeObject<AchievementRewards>(value) ?? new AchievementRewards();
@@ -82,7 +98,14 @@ public sealed class AchievementRewards
 
     public long Currency { get; set; }
 
-    public Dictionary<Guid, int> Resources { get; set; } = [];
+    [JsonProperty("Items")]
+    public Dictionary<Guid, int> Items { get; set; } = [];
+
+    [JsonProperty("Resources")]
+    private Dictionary<Guid, int>? LegacyResources
+    {
+        set => Items = value ?? [];
+    }
 
     public List<Guid> TitleIds { get; set; } = [];
 }

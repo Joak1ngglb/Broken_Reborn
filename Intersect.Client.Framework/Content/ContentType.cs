@@ -10,6 +10,9 @@ public enum ContentType
     Animation,
 
     [AssetType(typeof(IGameTexture))]
+    Achievement,
+
+    [AssetType(typeof(IGameTexture))]
     Entity,
 
     [AssetType(typeof(IGameTexture))]

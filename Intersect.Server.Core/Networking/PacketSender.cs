@@ -2307,11 +2307,18 @@ public static partial class PacketSender
     //AchievementProgressPacket
     public static void SendAchievementProgress(Player player)
     {
-        var achievements = new Dictionary<Guid, string?>();
+        var achievements = new Dictionary<Guid, AchievementProgressDto>();
 
         foreach (var achievement in player.Achievements)
         {
-            achievements[achievement.AchievementId] = achievement.Data();
+            achievements[achievement.AchievementId] = new AchievementProgressDto
+            {
+                Progress = achievement.Progress,
+                Completed = achievement.Completed,
+                CompletedAtTicks = achievement.CompletedAt?.Ticks,
+                SchemaVersion = AchievementProgressDto.CurrentSchemaVersion,
+                Objectives = achievement.Objectives
+            };
         }
 
         player.SendPacket(new AchievementProgressPacket(achievements));
@@ -2326,7 +2333,7 @@ public static partial class PacketSender
                 achievement.Id,
                 rewards.Experience,
                 rewards.Currency,
-                rewards.Resources,
+                rewards.Items,
                 rewards.TitleIds
             )
         );

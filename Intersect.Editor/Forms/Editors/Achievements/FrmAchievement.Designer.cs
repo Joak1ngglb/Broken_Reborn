@@ -28,7 +28,10 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             pnlContainer = new Panel();
             grpRewards = new DarkGroupBox();
             lblTitleIds = new Label();
-            txtTitleIds = new DarkTextBox();
+            cmbTitle = new DarkComboBox();
+            btnRemoveTitle = new DarkButton();
+            btnAddTitle = new DarkButton();
+            lstTitles = new ListBox();
             btnRemoveResource = new DarkButton();
             btnAddResource = new DarkButton();
             lblResourceAmount = new Label();
@@ -46,6 +49,8 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             btnAddFolder = new DarkButton();
             cmbFolder = new DarkComboBox();
             lblFolder = new Label();
+            cmbCompletionMode = new DarkComboBox();
+            lblCompletionMode = new Label();
             lblDifficulty = new Label();
             cmbDifficulty = new DarkComboBox();
             lblCategory = new Label();
@@ -67,6 +72,17 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             toolStripItemPaste = new ToolStripButton();
             toolStripSeparator3 = new ToolStripSeparator();
             toolStripItemUndo = new ToolStripButton();
+            lblAlpha = new Label();
+            lblBlue = new Label();
+            lblGreen = new Label();
+            lblRed = new Label();
+            nudRgbaA = new DarkNumericUpDown();
+            nudRgbaB = new DarkNumericUpDown();
+            nudRgbaG = new DarkNumericUpDown();
+            nudRgbaR = new DarkNumericUpDown();
+            cmbPic = new DarkComboBox();
+            lblPic = new Label();
+            picItem = new PictureBox();
             grpAchievements.SuspendLayout();
             pnlContainer.SuspendLayout();
             grpRewards.SuspendLayout();
@@ -76,6 +92,11 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             grpRequirements.SuspendLayout();
             grpGeneral.SuspendLayout();
             toolStrip.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudRgbaA).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudRgbaB).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudRgbaG).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudRgbaR).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picItem).BeginInit();
             SuspendLayout();
             // 
             // grpAchievements
@@ -100,7 +121,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             btnClearSearch.Location = new System.Drawing.Point(226, 23);
             btnClearSearch.Margin = new Padding(4, 3, 4, 3);
             btnClearSearch.Name = "btnClearSearch";
-            btnClearSearch.Padding = new Padding(6, 6, 6, 6);
+            btnClearSearch.Padding = new Padding(6);
             btnClearSearch.Size = new Size(21, 23);
             btnClearSearch.TabIndex = 2;
             btnClearSearch.Text = "X";
@@ -156,7 +177,10 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             grpRewards.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpRewards.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
             grpRewards.Controls.Add(lblTitleIds);
-            grpRewards.Controls.Add(txtTitleIds);
+            grpRewards.Controls.Add(cmbTitle);
+            grpRewards.Controls.Add(btnRemoveTitle);
+            grpRewards.Controls.Add(btnAddTitle);
+            grpRewards.Controls.Add(lstTitles);
             grpRewards.Controls.Add(btnRemoveResource);
             grpRewards.Controls.Add(btnAddResource);
             grpRewards.Controls.Add(lblResourceAmount);
@@ -188,25 +212,67 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             lblTitleIds.TabIndex = 12;
             lblTitleIds.Text = "Title IDs";
             // 
-            // txtTitleIds
+            // cmbTitle
             // 
-            txtTitleIds.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            txtTitleIds.BorderStyle = BorderStyle.FixedSingle;
-            txtTitleIds.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
-            txtTitleIds.Location = new System.Drawing.Point(597, 45);
-            txtTitleIds.Margin = new Padding(4, 3, 4, 3);
-            txtTitleIds.Multiline = true;
-            txtTitleIds.Name = "txtTitleIds";
-            txtTitleIds.Size = new Size(334, 95);
-            txtTitleIds.TabIndex = 11;
-            txtTitleIds.TextChanged += txtTitleIds_TextChanged;
+            cmbTitle.AutoCompleteSource = AutoCompleteSource.ListItems;
+            cmbTitle.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbTitle.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbTitle.BorderStyle = ButtonBorderStyle.Solid;
+            cmbTitle.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbTitle.DrawDropdownHoverOutline = false;
+            cmbTitle.DrawFocusRectangle = false;
+            cmbTitle.DrawMode = DrawMode.OwnerDrawFixed;
+            cmbTitle.FlatStyle = FlatStyle.Flat;
+            cmbTitle.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbTitle.FormattingEnabled = true;
+            cmbTitle.Location = new System.Drawing.Point(597, 45);
+            cmbTitle.Margin = new Padding(4, 3, 4, 3);
+            cmbTitle.Name = "cmbTitle";
+            cmbTitle.Size = new Size(334, 24);
+            cmbTitle.TabIndex = 11;
+            cmbTitle.Text = null;
+            cmbTitle.TextPadding = new Padding(2);
+            // 
+            // btnRemoveTitle
+            // 
+            btnRemoveTitle.Location = new System.Drawing.Point(712, 75);
+            btnRemoveTitle.Margin = new Padding(4, 3, 4, 3);
+            btnRemoveTitle.Name = "btnRemoveTitle";
+            btnRemoveTitle.Padding = new Padding(6);
+            btnRemoveTitle.Size = new Size(107, 28);
+            btnRemoveTitle.TabIndex = 15;
+            btnRemoveTitle.Text = "Remove";
+            btnRemoveTitle.Click += btnRemoveTitle_Click;
+            // 
+            // btnAddTitle
+            // 
+            btnAddTitle.Location = new System.Drawing.Point(597, 75);
+            btnAddTitle.Margin = new Padding(4, 3, 4, 3);
+            btnAddTitle.Name = "btnAddTitle";
+            btnAddTitle.Padding = new Padding(6);
+            btnAddTitle.Size = new Size(107, 28);
+            btnAddTitle.TabIndex = 14;
+            btnAddTitle.Text = "Add";
+            btnAddTitle.Click += btnAddTitle_Click;
+            // 
+            // lstTitles
+            // 
+            lstTitles.BackColor = System.Drawing.Color.FromArgb(60, 63, 65);
+            lstTitles.ForeColor = System.Drawing.Color.Gainsboro;
+            lstTitles.FormattingEnabled = true;
+            lstTitles.ItemHeight = 15;
+            lstTitles.Location = new System.Drawing.Point(597, 108);
+            lstTitles.Margin = new Padding(4, 3, 4, 3);
+            lstTitles.Name = "lstTitles";
+            lstTitles.Size = new Size(334, 94);
+            lstTitles.TabIndex = 16;
             // 
             // btnRemoveResource
             // 
             btnRemoveResource.Location = new System.Drawing.Point(352, 88);
             btnRemoveResource.Margin = new Padding(4, 3, 4, 3);
             btnRemoveResource.Name = "btnRemoveResource";
-            btnRemoveResource.Padding = new Padding(6, 6, 6, 6);
+            btnRemoveResource.Padding = new Padding(6);
             btnRemoveResource.Size = new Size(107, 28);
             btnRemoveResource.TabIndex = 10;
             btnRemoveResource.Text = "Remove";
@@ -217,7 +283,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             btnAddResource.Location = new System.Drawing.Point(238, 88);
             btnAddResource.Margin = new Padding(4, 3, 4, 3);
             btnAddResource.Name = "btnAddResource";
-            btnAddResource.Padding = new Padding(6, 6, 6, 6);
+            btnAddResource.Padding = new Padding(6);
             btnAddResource.Size = new Size(107, 28);
             btnAddResource.TabIndex = 9;
             btnAddResource.Text = "Add";
@@ -355,7 +421,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             btnEditRequirements.Location = new System.Drawing.Point(18, 25);
             btnEditRequirements.Margin = new Padding(4, 3, 4, 3);
             btnEditRequirements.Name = "btnEditRequirements";
-            btnEditRequirements.Padding = new Padding(6, 6, 6, 6);
+            btnEditRequirements.Padding = new Padding(6);
             btnEditRequirements.Size = new Size(229, 27);
             btnEditRequirements.TabIndex = 0;
             btnEditRequirements.Text = "Edit Requirements";
@@ -365,9 +431,22 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             // 
             grpGeneral.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpGeneral.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            grpGeneral.Controls.Add(lblAlpha);
+            grpGeneral.Controls.Add(lblBlue);
+            grpGeneral.Controls.Add(lblGreen);
+            grpGeneral.Controls.Add(lblRed);
+            grpGeneral.Controls.Add(nudRgbaA);
+            grpGeneral.Controls.Add(nudRgbaB);
+            grpGeneral.Controls.Add(nudRgbaG);
+            grpGeneral.Controls.Add(nudRgbaR);
+            grpGeneral.Controls.Add(cmbPic);
+            grpGeneral.Controls.Add(lblPic);
+            grpGeneral.Controls.Add(picItem);
             grpGeneral.Controls.Add(btnAddFolder);
             grpGeneral.Controls.Add(cmbFolder);
             grpGeneral.Controls.Add(lblFolder);
+            grpGeneral.Controls.Add(cmbCompletionMode);
+            grpGeneral.Controls.Add(lblCompletionMode);
             grpGeneral.Controls.Add(lblDifficulty);
             grpGeneral.Controls.Add(cmbDifficulty);
             grpGeneral.Controls.Add(lblCategory);
@@ -388,10 +467,10 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             // 
             // btnAddFolder
             // 
-            btnAddFolder.Location = new System.Drawing.Point(830, 89);
+            btnAddFolder.Location = new System.Drawing.Point(830, 192);
             btnAddFolder.Margin = new Padding(4, 3, 4, 3);
             btnAddFolder.Name = "btnAddFolder";
-            btnAddFolder.Padding = new Padding(6, 6, 6, 6);
+            btnAddFolder.Padding = new Padding(6);
             btnAddFolder.Size = new Size(103, 27);
             btnAddFolder.TabIndex = 10;
             btnAddFolder.Text = "Add Folder";
@@ -410,7 +489,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             cmbFolder.FlatStyle = FlatStyle.Flat;
             cmbFolder.ForeColor = System.Drawing.Color.Gainsboro;
             cmbFolder.FormattingEnabled = true;
-            cmbFolder.Location = new System.Drawing.Point(597, 91);
+            cmbFolder.Location = new System.Drawing.Point(597, 194);
             cmbFolder.Margin = new Padding(4, 3, 4, 3);
             cmbFolder.Name = "cmbFolder";
             cmbFolder.Size = new Size(224, 24);
@@ -422,12 +501,44 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             // lblFolder
             // 
             lblFolder.AutoSize = true;
-            lblFolder.Location = new System.Drawing.Point(486, 95);
+            lblFolder.Location = new System.Drawing.Point(486, 198);
             lblFolder.Margin = new Padding(4, 0, 4, 0);
             lblFolder.Name = "lblFolder";
             lblFolder.Size = new Size(40, 15);
             lblFolder.TabIndex = 8;
             lblFolder.Text = "Folder";
+            // 
+            // cmbCompletionMode
+            // 
+            cmbCompletionMode.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbCompletionMode.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbCompletionMode.BorderStyle = ButtonBorderStyle.Solid;
+            cmbCompletionMode.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbCompletionMode.DrawDropdownHoverOutline = false;
+            cmbCompletionMode.DrawFocusRectangle = false;
+            cmbCompletionMode.DrawMode = DrawMode.OwnerDrawFixed;
+            cmbCompletionMode.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbCompletionMode.FlatStyle = FlatStyle.Flat;
+            cmbCompletionMode.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbCompletionMode.FormattingEnabled = true;
+            cmbCompletionMode.Location = new System.Drawing.Point(597, 161);
+            cmbCompletionMode.Margin = new Padding(4, 3, 4, 3);
+            cmbCompletionMode.Name = "cmbCompletionMode";
+            cmbCompletionMode.Size = new Size(224, 24);
+            cmbCompletionMode.TabIndex = 5;
+            cmbCompletionMode.Text = null;
+            cmbCompletionMode.TextPadding = new Padding(2);
+            cmbCompletionMode.SelectedIndexChanged += cmbCompletionMode_SelectedIndexChanged;
+            // 
+            // lblCompletionMode
+            // 
+            lblCompletionMode.AutoSize = true;
+            lblCompletionMode.Location = new System.Drawing.Point(486, 163);
+            lblCompletionMode.Margin = new Padding(4, 0, 4, 0);
+            lblCompletionMode.Name = "lblCompletionMode";
+            lblCompletionMode.Size = new Size(104, 15);
+            lblCompletionMode.TabIndex = 11;
+            lblCompletionMode.Text = "Completion Mode";
             // 
             // lblDifficulty
             // 
@@ -512,7 +623,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             txtDescription.Margin = new Padding(4, 3, 4, 3);
             txtDescription.Multiline = true;
             txtDescription.Name = "txtDescription";
-            txtDescription.Size = new Size(828, 84);
+            txtDescription.Size = new Size(355, 84);
             txtDescription.TabIndex = 2;
             txtDescription.TextChanged += txtDescription_TextChanged;
             // 
@@ -543,7 +654,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             btnSave.Location = new System.Drawing.Point(714, 651);
             btnSave.Margin = new Padding(4, 3, 4, 3);
             btnSave.Name = "btnSave";
-            btnSave.Padding = new Padding(6, 6, 6, 6);
+            btnSave.Padding = new Padding(6);
             btnSave.Size = new Size(112, 35);
             btnSave.TabIndex = 3;
             btnSave.Text = "Save";
@@ -554,7 +665,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             btnCancel.Location = new System.Drawing.Point(833, 651);
             btnCancel.Margin = new Padding(4, 3, 4, 3);
             btnCancel.Name = "btnCancel";
-            btnCancel.Padding = new Padding(6, 6, 6, 6);
+            btnCancel.Padding = new Padding(6);
             btnCancel.Size = new Size(112, 35);
             btnCancel.TabIndex = 4;
             btnCancel.Text = "Cancel";
@@ -582,7 +693,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             toolStripItemNew.Name = "toolStripItemNew";
             toolStripItemNew.Size = new Size(23, 26);
             toolStripItemNew.Text = "New";
-            this.toolStripItemNew.Click += new System.EventHandler(this.toolStripItemNew_Click);
+            toolStripItemNew.Click += toolStripItemNew_Click;
             // 
             // toolStripSeparator1
             // 
@@ -601,7 +712,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             toolStripItemDelete.Name = "toolStripItemDelete";
             toolStripItemDelete.Size = new Size(23, 26);
             toolStripItemDelete.Text = "Delete";
-            this.toolStripItemDelete.Click += new System.EventHandler(this.toolStripItemDelete_Click);
+            toolStripItemDelete.Click += toolStripItemDelete_Click;
             // 
             // toolStripSeparator2
             // 
@@ -619,7 +730,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             btnAlphabetical.Name = "btnAlphabetical";
             btnAlphabetical.Size = new Size(23, 26);
             btnAlphabetical.Text = "Order Chronologically";
-            this.btnAlphabetical.Click += new System.EventHandler(this.btnAlphabetical_Click);
+            btnAlphabetical.Click += btnAlphabetical_Click;
             // 
             // toolStripSeparator4
             // 
@@ -638,7 +749,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             toolStripItemCopy.Name = "toolStripItemCopy";
             toolStripItemCopy.Size = new Size(23, 26);
             toolStripItemCopy.Text = "Copy";
-            this.toolStripItemCopy.Click += new System.EventHandler(this.toolStripItemCopy_Click);
+            toolStripItemCopy.Click += toolStripItemCopy_Click;
             // 
             // toolStripItemPaste
             // 
@@ -650,7 +761,7 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             toolStripItemPaste.Name = "toolStripItemPaste";
             toolStripItemPaste.Size = new Size(23, 26);
             toolStripItemPaste.Text = "Paste";
-            this.toolStripItemPaste.Click += new System.EventHandler(this.toolStripItemPaste_Click);
+            toolStripItemPaste.Click += toolStripItemPaste_Click;
             // 
             // toolStripSeparator3
             // 
@@ -669,7 +780,142 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             toolStripItemUndo.Name = "toolStripItemUndo";
             toolStripItemUndo.Size = new Size(23, 26);
             toolStripItemUndo.Text = "Undo";
-            toolStripItemUndo.Click += new System.EventHandler(this.toolStripItemUndo_Click);
+            toolStripItemUndo.Click += toolStripItemUndo_Click;
+            // 
+            // lblAlpha
+            // 
+            lblAlpha.AutoSize = true;
+            lblAlpha.Location = new System.Drawing.Point(631, 128);
+            lblAlpha.Margin = new Padding(4, 0, 4, 0);
+            lblAlpha.Name = "lblAlpha";
+            lblAlpha.Size = new Size(41, 15);
+            lblAlpha.TabIndex = 97;
+            lblAlpha.Text = "Alpha:";
+            // 
+            // lblBlue
+            // 
+            lblBlue.AutoSize = true;
+            lblBlue.Location = new System.Drawing.Point(499, 134);
+            lblBlue.Margin = new Padding(4, 0, 4, 0);
+            lblBlue.Name = "lblBlue";
+            lblBlue.Size = new Size(33, 15);
+            lblBlue.TabIndex = 96;
+            lblBlue.Text = "Blue:";
+            // 
+            // lblGreen
+            // 
+            lblGreen.AutoSize = true;
+            lblGreen.Location = new System.Drawing.Point(631, 98);
+            lblGreen.Margin = new Padding(4, 0, 4, 0);
+            lblGreen.Name = "lblGreen";
+            lblGreen.Size = new Size(41, 15);
+            lblGreen.TabIndex = 95;
+            lblGreen.Text = "Green:";
+            // 
+            // lblRed
+            // 
+            lblRed.AutoSize = true;
+            lblRed.Location = new System.Drawing.Point(499, 104);
+            lblRed.Margin = new Padding(4, 0, 4, 0);
+            lblRed.Name = "lblRed";
+            lblRed.Size = new Size(30, 15);
+            lblRed.TabIndex = 94;
+            lblRed.Text = "Red:";
+            // 
+            // nudRgbaA
+            // 
+            nudRgbaA.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudRgbaA.ForeColor = System.Drawing.Color.Gainsboro;
+            nudRgbaA.Location = new System.Drawing.Point(680, 126);
+            nudRgbaA.Margin = new Padding(4, 3, 4, 3);
+            nudRgbaA.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaA.Name = "nudRgbaA";
+            nudRgbaA.Size = new Size(70, 23);
+            nudRgbaA.TabIndex = 93;
+            nudRgbaA.Value = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaA.ValueChanged += nudRgbaA_ValueChanged;
+            // 
+            // nudRgbaB
+            // 
+            nudRgbaB.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudRgbaB.ForeColor = System.Drawing.Color.Gainsboro;
+            nudRgbaB.Location = new System.Drawing.Point(536, 126);
+            nudRgbaB.Margin = new Padding(4, 3, 4, 3);
+            nudRgbaB.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaB.Name = "nudRgbaB";
+            nudRgbaB.Size = new Size(70, 23);
+            nudRgbaB.TabIndex = 92;
+            nudRgbaB.Value = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaB.ValueChanged += nudRgbaB_ValueChanged;
+            // 
+            // nudRgbaG
+            // 
+            nudRgbaG.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudRgbaG.ForeColor = System.Drawing.Color.Gainsboro;
+            nudRgbaG.Location = new System.Drawing.Point(680, 96);
+            nudRgbaG.Margin = new Padding(4, 3, 4, 3);
+            nudRgbaG.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaG.Name = "nudRgbaG";
+            nudRgbaG.Size = new Size(70, 23);
+            nudRgbaG.TabIndex = 91;
+            nudRgbaG.Value = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaG.ValueChanged += nudRgbaG_ValueChanged;
+            // 
+            // nudRgbaR
+            // 
+            nudRgbaR.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudRgbaR.ForeColor = System.Drawing.Color.Gainsboro;
+            nudRgbaR.Location = new System.Drawing.Point(536, 96);
+            nudRgbaR.Margin = new Padding(4, 3, 4, 3);
+            nudRgbaR.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaR.Name = "nudRgbaR";
+            nudRgbaR.Size = new Size(70, 23);
+            nudRgbaR.TabIndex = 90;
+            nudRgbaR.Value = new decimal(new int[] { 255, 0, 0, 0 });
+            nudRgbaR.ValueChanged += nudRgbaR_ValueChanged;
+            // 
+            // cmbPic
+            // 
+            cmbPic.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbPic.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbPic.BorderStyle = ButtonBorderStyle.Solid;
+            cmbPic.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbPic.DrawDropdownHoverOutline = false;
+            cmbPic.DrawFocusRectangle = false;
+            cmbPic.DrawMode = DrawMode.OwnerDrawFixed;
+            cmbPic.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbPic.FlatStyle = FlatStyle.Flat;
+            cmbPic.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbPic.FormattingEnabled = true;
+            cmbPic.Items.AddRange(new object[] { "None" });
+            cmbPic.Location = new System.Drawing.Point(503, 58);
+            cmbPic.Margin = new Padding(4, 3, 4, 3);
+            cmbPic.Name = "cmbPic";
+            cmbPic.Size = new Size(247, 24);
+            cmbPic.TabIndex = 89;
+            cmbPic.Text = "None";
+            cmbPic.TextPadding = new Padding(2);
+            cmbPic.SelectedIndexChanged += cmbPic_SelectedIndexChanged;
+            // 
+            // lblPic
+            // 
+            lblPic.AutoSize = true;
+            lblPic.Location = new System.Drawing.Point(499, 38);
+            lblPic.Margin = new Padding(4, 0, 4, 0);
+            lblPic.Name = "lblPic";
+            lblPic.Size = new Size(26, 15);
+            lblPic.TabIndex = 88;
+            lblPic.Text = "Pic:";
+            // 
+            // picItem
+            // 
+            picItem.BackColor = System.Drawing.Color.Black;
+            picItem.Location = new System.Drawing.Point(758, 22);
+            picItem.Margin = new Padding(4, 3, 4, 3);
+            picItem.Name = "picItem";
+            picItem.Size = new Size(138, 127);
+            picItem.TabIndex = 87;
+            picItem.TabStop = false;
             // 
             // FrmAchievement
             // 
@@ -701,6 +947,11 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             grpGeneral.PerformLayout();
             toolStrip.ResumeLayout(false);
             toolStrip.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nudRgbaA).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudRgbaB).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudRgbaG).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudRgbaR).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picItem).EndInit();
             ResumeLayout(false);
 
         }
@@ -714,7 +965,10 @@ namespace Intersect.Editor.Forms.Editors.Achievements
         private System.Windows.Forms.Panel pnlContainer;
         private DarkGroupBox grpRewards;
         private System.Windows.Forms.Label lblTitleIds;
-        private DarkTextBox txtTitleIds;
+        private DarkComboBox cmbTitle;
+        private DarkButton btnRemoveTitle;
+        private DarkButton btnAddTitle;
+        private System.Windows.Forms.ListBox lstTitles;
         private DarkButton btnRemoveResource;
         private DarkButton btnAddResource;
         private System.Windows.Forms.Label lblResourceAmount;
@@ -732,6 +986,8 @@ namespace Intersect.Editor.Forms.Editors.Achievements
         private DarkButton btnAddFolder;
         private DarkComboBox cmbFolder;
         private System.Windows.Forms.Label lblFolder;
+        private System.Windows.Forms.Label lblCompletionMode;
+        private DarkComboBox cmbCompletionMode;
         private System.Windows.Forms.Label lblDifficulty;
         private DarkComboBox cmbDifficulty;
         private System.Windows.Forms.Label lblCategory;
@@ -753,5 +1009,16 @@ namespace Intersect.Editor.Forms.Editors.Achievements
         public ToolStripButton toolStripItemPaste;
         private ToolStripSeparator toolStripSeparator3;
         public ToolStripButton toolStripItemUndo;
+        private Label lblAlpha;
+        private Label lblBlue;
+        private Label lblGreen;
+        private Label lblRed;
+        private DarkNumericUpDown nudRgbaA;
+        private DarkNumericUpDown nudRgbaB;
+        private DarkNumericUpDown nudRgbaG;
+        private DarkNumericUpDown nudRgbaR;
+        private DarkComboBox cmbPic;
+        private Label lblPic;
+        private PictureBox picItem;
     }
 }

@@ -1,5 +1,8 @@
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using DarkUI.Forms;
+using Intersect.Editor.Content;
 using Intersect.Editor.Core;
 using Intersect.Editor.Forms.Editors;
 using Intersect.Editor.General;
@@ -7,7 +10,7 @@ using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Achievements;
-using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Titles;
 
 namespace Intersect.Editor.Forms.Editors.Achievements;
@@ -45,12 +48,30 @@ public partial class FrmAchievement : EditorForm
     private void FrmAchievement_Load(object sender, EventArgs e)
     {
         cmbCategory.Items.Clear();
-        cmbCategory.Items.AddRange(Enum.GetNames(typeof(AchievementCategory)));
+        cmbCategory.Items.AddRange(
+            Enum.GetValues<AchievementCategory>()
+                .Select(GetCategoryDisplayName)
+                .ToArray()
+        );
         cmbDifficulty.Items.Clear();
-        cmbDifficulty.Items.AddRange(Enum.GetNames(typeof(AchievementDifficulty)));
+        cmbDifficulty.Items.AddRange(
+            Enum.GetValues<AchievementDifficulty>()
+                .Select(GetDifficultyDisplayName)
+                .ToArray()
+        );
+        cmbCompletionMode.Items.Clear();
+        cmbCompletionMode.Items.AddRange(Enum.GetNames(typeof(AchievementCompletionMode)));
+
+        cmbPic.Items.Clear();
+        cmbPic.Items.Add(Strings.General.None);
+        var iconNames = GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Achievement);
+        if (iconNames?.Length > 0)
+        {
+            cmbPic.Items.AddRange(iconNames);
+        }
 
         cmbResource.Items.Clear();
-        cmbResource.Items.AddRange(ResourceDescriptor.Names);
+        cmbResource.Items.AddRange(ItemDescriptor.Names);
         if (cmbResource.Items.Count > 0)
         {
             cmbResource.SelectedIndex = 0;
@@ -86,7 +107,9 @@ public partial class FrmAchievement : EditorForm
         lblDescription.Text = Strings.AchievementEditor.description;
         lblCategory.Text = Strings.AchievementEditor.category;
         lblDifficulty.Text = Strings.AchievementEditor.difficulty;
+        lblCompletionMode.Text = Strings.AchievementEditor.completionmode;
         lblFolder.Text = Strings.AchievementEditor.folderlabel;
+        lblPic.Text = Strings.AchievementEditor.icon;
 
         grpRequirements.Text = Strings.AchievementEditor.requirements;
         btnEditRequirements.Text = Strings.AchievementEditor.editrequirements;
@@ -99,6 +122,8 @@ public partial class FrmAchievement : EditorForm
         btnAddResource.Text = Strings.AchievementEditor.addresource;
         btnRemoveResource.Text = Strings.AchievementEditor.removeresource;
         lblTitleIds.Text = Strings.AchievementEditor.titleids;
+        btnAddTitle.Text = Strings.AchievementEditor.addtitle;
+        btnRemoveTitle.Text = Strings.AchievementEditor.removetitle;
 
         btnAlphabetical.ToolTipText = Strings.AchievementEditor.sortalphabetically;
         txtSearch.Text = Strings.AchievementEditor.searchplaceholder;
@@ -117,6 +142,12 @@ public partial class FrmAchievement : EditorForm
                 _editorItem = null;
                 UpdateEditor();
             }
+        }
+
+        if (type == GameObjectType.Title)
+        {
+            UpdateTitleOptions();
+            UpdateTitleRewardsList();
         }
     }
 
@@ -167,13 +198,27 @@ public partial class FrmAchievement : EditorForm
             txtDescription.Text = _editorItem.Description;
             cmbCategory.SelectedIndex = (int)_editorItem.Category;
             cmbDifficulty.SelectedIndex = (int)_editorItem.Difficulty;
+            cmbCompletionMode.SelectedIndex = (int)_editorItem.CompletionMode;
             cmbFolder.Text = _editorItem.Folder ?? string.Empty;
+            var iconName = string.IsNullOrWhiteSpace(_editorItem.Icon)
+                ? Strings.General.None.ToString()
+                : _editorItem.Icon;
+            cmbPic.SelectedIndex = cmbPic.FindString(iconName);
+            if (cmbPic.SelectedIndex < 0)
+            {
+                cmbPic.SelectedIndex = 0;
+            }
+            nudRgbaR.Value = _editorItem.Color.R;
+            nudRgbaG.Value = _editorItem.Color.G;
+            nudRgbaB.Value = _editorItem.Color.B;
+            nudRgbaA.Value = _editorItem.Color.A;
+            DrawAchievementIcon();
             nudExperience.Value = _editorItem.Rewards.Experience;
             nudCurrency.Value = _editorItem.Rewards.Currency;
 
-            txtTitleIds.Text = string.Join(Environment.NewLine, _editorItem.Rewards.TitleIds);
-
+            UpdateTitleOptions();
             UpdateResourceRewardsList();
+            UpdateTitleRewardsList();
 
             if (!_changed.Contains(_editorItem))
             {
@@ -199,10 +244,58 @@ public partial class FrmAchievement : EditorForm
             return;
         }
 
-        foreach (var resource in _editorItem.Rewards.Resources.OrderBy(entry => ResourceDescriptor.GetName(entry.Key)))
+        foreach (var reward in _editorItem.Rewards.Items.OrderBy(entry => ItemDescriptor.GetName(entry.Key)))
         {
-            var display = $"{ResourceDescriptor.GetName(resource.Key)} x{resource.Value}";
-            lstResources.Items.Add(new ResourceRewardEntry(resource.Key, display));
+            var display = $"{ItemDescriptor.GetName(reward.Key)} x{reward.Value}";
+            lstResources.Items.Add(new ItemRewardEntry(reward.Key, display));
+        }
+    }
+
+    private void UpdateTitleOptions()
+    {
+        cmbTitle.Items.Clear();
+        foreach (var title in TitleDescriptor.Lookup.Values.OfType<TitleDescriptor>().OrderBy(entry => entry.Name))
+        {
+            cmbTitle.Items.Add(new TitleRewardEntry(title.Id, title.Name));
+        }
+
+        if (cmbTitle.Items.Count > 0 && cmbTitle.SelectedIndex < 0)
+        {
+            cmbTitle.SelectedIndex = 0;
+        }
+    }
+
+    private void UpdateTitleRewardsList()
+    {
+        lstTitles.Items.Clear();
+        if (_editorItem == null)
+        {
+            return;
+        }
+
+        var validTitleIds = new List<Guid>();
+        var seen = new HashSet<Guid>();
+        foreach (var titleId in _editorItem.Rewards.TitleIds)
+        {
+            if (!seen.Add(titleId))
+            {
+                continue;
+            }
+
+            if (!TitleDescriptor.Lookup.Keys.Contains(titleId))
+            {
+                continue;
+            }
+
+            var title = TitleDescriptor.Get(titleId);
+            var displayName = title?.Name ?? titleId.ToString();
+            lstTitles.Items.Add(new TitleRewardEntry(titleId, displayName));
+            validTitleIds.Add(titleId);
+        }
+
+        if (!validTitleIds.SequenceEqual(_editorItem.Rewards.TitleIds))
+        {
+            _editorItem.Rewards.TitleIds = validTitleIds;
         }
     }
 
@@ -246,6 +339,133 @@ public partial class FrmAchievement : EditorForm
 
         _editorItem.Difficulty = (AchievementDifficulty)cmbDifficulty.SelectedIndex;
     }
+
+    private void cmbCompletionMode_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.CompletionMode = (AchievementCompletionMode)cmbCompletionMode.SelectedIndex;
+    }
+
+    private void cmbPic_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.Icon = cmbPic.SelectedIndex <= 0 ? string.Empty : cmbPic.Text;
+        DrawAchievementIcon();
+    }
+
+    private void nudRgbaR_ValueChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.Color.R = (byte)nudRgbaR.Value;
+        DrawAchievementIcon();
+    }
+
+    private void nudRgbaG_ValueChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.Color.G = (byte)nudRgbaG.Value;
+        DrawAchievementIcon();
+    }
+
+    private void nudRgbaB_ValueChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.Color.B = (byte)nudRgbaB.Value;
+        DrawAchievementIcon();
+    }
+
+    private void nudRgbaA_ValueChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.Color.A = (byte)nudRgbaA.Value;
+        DrawAchievementIcon();
+    }
+
+    private void DrawAchievementIcon()
+    {
+        picItem.BackgroundImage?.Dispose();
+        picItem.BackgroundImage = null;
+
+        var picItemBmp = new Bitmap(picItem.Width, picItem.Height);
+        var gfx = System.Drawing.Graphics.FromImage(picItemBmp);
+        gfx.FillRectangle(Brushes.Black, new Rectangle(0, 0, picItem.Width, picItem.Height));
+
+        if (cmbPic.SelectedIndex > 0)
+        {
+            var img = Image.FromFile("resources/achievements/" + cmbPic.Text);
+            var imgAttributes = new ImageAttributes();
+
+            imgAttributes.SetColorMatrix(
+                new ColorMatrix(
+                    new float[][]
+                    {
+                        new float[] { (float)nudRgbaR.Value / 255,  0,  0,  0, 0},
+                        new float[] {0, (float)nudRgbaG.Value / 255,  0,  0, 0},
+                        new float[] {0,  0, (float)nudRgbaB.Value / 255,  0, 0},
+                        new float[] {0,  0,  0, (float)nudRgbaA.Value / 255, 0},
+                        new float[] {0, 0, 0, 0, 1}
+                    }
+                )
+            );
+
+            gfx.DrawImage(
+                img, new Rectangle(0, 0, img.Width, img.Height),
+                0, 0, img.Width, img.Height, GraphicsUnit.Pixel, imgAttributes
+            );
+
+            img.Dispose();
+            imgAttributes.Dispose();
+        }
+
+        gfx.Dispose();
+        picItem.BackgroundImage = picItemBmp;
+    }
+
+    private static string GetCategoryDisplayName(AchievementCategory category) =>
+        category switch
+        {
+            AchievementCategory.Dungeons => Strings.AchievementEditor.categorydungeons,
+            AchievementCategory.Exploration => Strings.AchievementEditor.categoryexploration,
+            AchievementCategory.Monsters => Strings.AchievementEditor.categorymonsters,
+            AchievementCategory.Quests => Strings.AchievementEditor.categoryquests,
+            AchievementCategory.Professions => Strings.AchievementEditor.categoryprofessions,
+            AchievementCategory.Events => Strings.AchievementEditor.categoryevents,
+            _ => category.ToString()
+        };
+
+    private static string GetDifficultyDisplayName(AchievementDifficulty difficulty) =>
+        difficulty switch
+        {
+            AchievementDifficulty.Discovery => Strings.AchievementEditor.difficultydiscovery,
+            AchievementDifficulty.Natural => Strings.AchievementEditor.difficultynatural,
+            AchievementDifficulty.Epic => Strings.AchievementEditor.difficultyepic,
+            AchievementDifficulty.Meta => Strings.AchievementEditor.difficultymeta,
+            _ => difficulty.ToString()
+        };
 
     private void cmbFolder_SelectedIndexChanged(object sender, EventArgs e)
     {
@@ -323,52 +543,52 @@ public partial class FrmAchievement : EditorForm
             return;
         }
 
-        var resourceId = ResourceDescriptor.IdFromList(cmbResource.SelectedIndex);
-        if (resourceId == Guid.Empty)
+        var itemId = ItemDescriptor.IdFromList(cmbResource.SelectedIndex);
+        if (itemId == Guid.Empty)
         {
             return;
         }
 
-        _editorItem.Rewards.Resources[resourceId] = (int)nudResourceAmount.Value;
+        _editorItem.Rewards.Items[itemId] = (int)nudResourceAmount.Value;
         UpdateResourceRewardsList();
     }
 
     private void btnRemoveResource_Click(object sender, EventArgs e)
     {
-        if (_editorItem == null || lstResources.SelectedItem is not ResourceRewardEntry entry)
+        if (_editorItem == null || lstResources.SelectedItem is not ItemRewardEntry entry)
         {
             return;
         }
 
-        _editorItem.Rewards.Resources.Remove(entry.ResourceId);
+        _editorItem.Rewards.Items.Remove(entry.ItemId);
         UpdateResourceRewardsList();
     }
 
-    private void txtTitleIds_TextChanged(object sender, EventArgs e)
+    private void btnAddTitle_Click(object sender, EventArgs e)
     {
-        if (_editorItem == null || _updating)
+        if (_editorItem == null || cmbTitle.SelectedItem is not TitleRewardEntry entry)
         {
             return;
         }
 
-        _editorItem.Rewards.TitleIds = ParseGuidList(txtTitleIds.Text)
-            .Where(id => TitleDescriptor.Lookup.Keys.Contains(id))
-            .ToList();
-    }
-
-    private static List<Guid> ParseGuidList(string text)
-    {
-        var results = new List<Guid>();
-        var tokens = text.Split(new[] { '\r', '\n', ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
-        foreach (var token in tokens)
+        if (_editorItem.Rewards.TitleIds.Contains(entry.TitleId))
         {
-            if (Guid.TryParse(token.Trim(), out var id))
-            {
-                results.Add(id);
-            }
+            return;
         }
 
-        return results;
+        _editorItem.Rewards.TitleIds.Add(entry.TitleId);
+        UpdateTitleRewardsList();
+    }
+
+    private void btnRemoveTitle_Click(object sender, EventArgs e)
+    {
+        if (_editorItem == null || lstTitles.SelectedItem is not TitleRewardEntry entry)
+        {
+            return;
+        }
+
+        _editorItem.Rewards.TitleIds.Remove(entry.TitleId);
+        UpdateTitleRewardsList();
     }
 
     private void toolStripItemNew_Click(object sender, EventArgs e)
@@ -527,15 +747,29 @@ public partial class FrmAchievement : EditorForm
         }
     }
 
-    private sealed class ResourceRewardEntry
+    private sealed class ItemRewardEntry
     {
-        public ResourceRewardEntry(Guid resourceId, string display)
+        public ItemRewardEntry(Guid itemId, string display)
         {
-            ResourceId = resourceId;
+            ItemId = itemId;
             Display = display;
         }
 
-        public Guid ResourceId { get; }
+        public Guid ItemId { get; }
+        public string Display { get; }
+
+        public override string ToString() => Display;
+    }
+
+    private sealed class TitleRewardEntry
+    {
+        public TitleRewardEntry(Guid titleId, string display)
+        {
+            TitleId = titleId;
+            Display = display;
+        }
+
+        public Guid TitleId { get; }
         public string Display { get; }
 
         public override string ToString() => Display;

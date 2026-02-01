@@ -28,7 +28,6 @@ public partial class EventCommandConditionalBranch : UserControl
     private readonly ConditionControl_PlayerGuild _playerGuildControl;
     private readonly ConditionControl_PlayerPower _playerPowerControl;
     private readonly ConditionControl_PlayerSpell _playerSpellControl;
-    private readonly ConditionControl_PlayerStat _playerStatControl;
     private readonly ConditionControl_QuestCanStart _questCanStartControl;
     private readonly ConditionControl_QuestCompleted _questCompletedControl;
     private readonly ConditionControl_QuestInProgress _questInProgressControl;
@@ -65,7 +64,6 @@ public partial class EventCommandConditionalBranch : UserControl
         _playerGuildControl = new();
         _playerPowerControl = new();
         _playerSpellControl = new();
-        _playerStatControl = new();
         _questCanStartControl = new();
         _questCompletedControl = new();
         _questInProgressControl = new();
@@ -86,7 +84,6 @@ public partial class EventCommandConditionalBranch : UserControl
         pnlConditionControl.Controls.Add(_playerGuildControl);
         pnlConditionControl.Controls.Add(_playerPowerControl);
         pnlConditionControl.Controls.Add(_playerSpellControl);
-        pnlConditionControl.Controls.Add(_playerStatControl);
         pnlConditionControl.Controls.Add(_questCanStartControl);
         pnlConditionControl.Controls.Add(_questCompletedControl);
         pnlConditionControl.Controls.Add(_questInProgressControl);
@@ -148,7 +145,6 @@ public partial class EventCommandConditionalBranch : UserControl
         _playerGuildControl.Hide();
         _playerPowerControl.Hide();
         _playerSpellControl.Hide();
-        _playerStatControl.Hide();
         _questCanStartControl.Hide();
         _questCompletedControl.Hide();
         _questInProgressControl.Hide();
@@ -209,7 +205,6 @@ public partial class EventCommandConditionalBranch : UserControl
                 break;
 
             case ConditionType.LevelOrStat:
-                _playerStatControl.Show();
                 break;
 
             case ConditionType.CanStartQuest:
@@ -305,7 +300,6 @@ public partial class EventCommandConditionalBranch : UserControl
                 break;
 
             case LevelOrStatCondition playerStatCondition:
-                _playerStatControl.SetupFormValues(playerStatCondition);
                 break;
 
             case CanStartQuestCondition questCanStartCondition:
@@ -401,7 +395,6 @@ public partial class EventCommandConditionalBranch : UserControl
                 break;
 
             case LevelOrStatCondition playerStatCondition:
-                _playerStatControl.SaveFormValues(playerStatCondition);
                 break;
 
             case CanStartQuestCondition questCanStartCondition:

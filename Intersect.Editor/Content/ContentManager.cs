@@ -27,6 +27,8 @@ public static partial class GameContentManager
 
         Spell,
 
+        Achievement,
+
         Animation,
 
         Face,
@@ -51,6 +53,8 @@ public static partial class GameContentManager
     public static List<Texture> FogTextures = new List<Texture>();
 
     static IDictionary<string, Texture> sAnimationDict = new Dictionary<string, Texture>();
+
+    static IDictionary<string, Texture> sAchievementDict = new Dictionary<string, Texture>();
 
     //MonoGame Content Manager
     private static ContentManager sContentManger;
@@ -121,6 +125,7 @@ public static partial class GameContentManager
         sContentManger = new ContentManager(container, "");
         LoadEntities();
         LoadSpells();
+        LoadAchievements();
         LoadAnimations();
         LoadImages();
         LoadFogs();
@@ -281,6 +286,11 @@ public static partial class GameContentManager
         LoadTextureGroup("spells", sSpellDict);
     }
 
+    private static void LoadAchievements()
+    {
+        LoadTextureGroup("achievements", sAchievementDict);
+    }
+
     private static void LoadAnimations()
     {
         LoadTextureGroup("animations", sAnimationDict);
@@ -418,6 +428,10 @@ public static partial class GameContentManager
                 break;
             case TextureType.Spell:
                 textureDict = sSpellDict;
+
+                break;
+            case TextureType.Achievement:
+                textureDict = sAchievementDict;
 
                 break;
             case TextureType.Animation:

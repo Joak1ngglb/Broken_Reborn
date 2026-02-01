@@ -46,6 +46,7 @@ public class InventoryWindowTests
         public override IFont? GetFont(string? name) => null;
 
         public override void LoadTexturePacks() { }
+        public override void LoadAchievements() { }
         public override void LoadTilesets(string[] tilesetnames) { }
         public override void LoadItems() { }
         public override void LoadEntities() { }
@@ -138,4 +139,3 @@ public class InventoryWindowTests
         Assert.That(combo.SelectedItem?.UserData, Is.Null);
     }
 }
-
