@@ -2332,7 +2332,7 @@ public static partial class PacketSender
                 achievement.Id,
                 rewards.Experience,
                 rewards.Currency,
-                rewards.Resources,
+                rewards.Items,
                 rewards.TitleIds
             )
         );

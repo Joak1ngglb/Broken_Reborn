@@ -7,7 +7,7 @@ using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Achievements;
-using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Titles;
 
 namespace Intersect.Editor.Forms.Editors.Achievements;
@@ -52,7 +52,7 @@ public partial class FrmAchievement : EditorForm
         cmbCompletionMode.Items.AddRange(Enum.GetNames(typeof(AchievementCompletionMode)));
 
         cmbResource.Items.Clear();
-        cmbResource.Items.AddRange(ResourceDescriptor.Names);
+        cmbResource.Items.AddRange(ItemDescriptor.Names);
         if (cmbResource.Items.Count > 0)
         {
             cmbResource.SelectedIndex = 0;
@@ -203,10 +203,10 @@ public partial class FrmAchievement : EditorForm
             return;
         }
 
-        foreach (var resource in _editorItem.Rewards.Resources.OrderBy(entry => ResourceDescriptor.GetName(entry.Key)))
+        foreach (var reward in _editorItem.Rewards.Items.OrderBy(entry => ItemDescriptor.GetName(entry.Key)))
         {
-            var display = $"{ResourceDescriptor.GetName(resource.Key)} x{resource.Value}";
-            lstResources.Items.Add(new ResourceRewardEntry(resource.Key, display));
+            var display = $"{ItemDescriptor.GetName(reward.Key)} x{reward.Value}";
+            lstResources.Items.Add(new ItemRewardEntry(reward.Key, display));
         }
     }
 
@@ -337,24 +337,24 @@ public partial class FrmAchievement : EditorForm
             return;
         }
 
-        var resourceId = ResourceDescriptor.IdFromList(cmbResource.SelectedIndex);
-        if (resourceId == Guid.Empty)
+        var itemId = ItemDescriptor.IdFromList(cmbResource.SelectedIndex);
+        if (itemId == Guid.Empty)
         {
             return;
         }
 
-        _editorItem.Rewards.Resources[resourceId] = (int)nudResourceAmount.Value;
+        _editorItem.Rewards.Items[itemId] = (int)nudResourceAmount.Value;
         UpdateResourceRewardsList();
     }
 
     private void btnRemoveResource_Click(object sender, EventArgs e)
     {
-        if (_editorItem == null || lstResources.SelectedItem is not ResourceRewardEntry entry)
+        if (_editorItem == null || lstResources.SelectedItem is not ItemRewardEntry entry)
         {
             return;
         }
 
-        _editorItem.Rewards.Resources.Remove(entry.ResourceId);
+        _editorItem.Rewards.Items.Remove(entry.ItemId);
         UpdateResourceRewardsList();
     }
 
@@ -541,15 +541,15 @@ public partial class FrmAchievement : EditorForm
         }
     }
 
-    private sealed class ResourceRewardEntry
+    private sealed class ItemRewardEntry
     {
-        public ResourceRewardEntry(Guid resourceId, string display)
+        public ItemRewardEntry(Guid itemId, string display)
         {
-            ResourceId = resourceId;
+            ItemId = itemId;
             Display = display;
         }
 
-        public Guid ResourceId { get; }
+        public Guid ItemId { get; }
         public string Display { get; }
 
         public override string ToString() => Display;

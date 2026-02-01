@@ -515,10 +515,10 @@ public sealed partial class AchievementsWindow : Window
             lines.Add(Strings.Achievements.RewardCurrency.ToString(rewards.Currency));
         }
 
-        foreach (var resource in rewards.Resources.Where(resource => resource.Value > 0))
+        foreach (var item in rewards.Items.Where(item => item.Value > 0))
         {
-            var itemName = GetLocalizedItemName(resource.Key);
-            lines.Add(Strings.Achievements.RewardResource.ToString(resource.Value, itemName));
+            var itemName = GetLocalizedItemName(item.Key);
+            lines.Add(Strings.Achievements.RewardItem.ToString(item.Value, itemName));
         }
 
         if (rewards.TitleIds.Count > 0)

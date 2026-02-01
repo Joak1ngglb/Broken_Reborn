@@ -16,6 +16,7 @@ using ServerAchievementProgress = Intersect.Server.Database.PlayerData.Players.A
 using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Entities;
 using Intersect.Server.Entities.Events;
+using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
@@ -478,6 +479,7 @@ public static class AchievementService
     private static void GrantRewards(Player player, AchievementDescriptor achievement)
     {
         var rewards = achievement.Rewards;
+        var pendingAttachments = new List<MailAttachment>();
         if (rewards.Experience > 0)
         {
             player.GiveExperience(rewards.Experience);
@@ -488,18 +490,18 @@ public static class AchievementService
             var currency = PlayerShopManager.ResolveGlobalCurrencyDescriptor();
             if (currency != null)
             {
-                GrantItemStacks(player, currency.Id, rewards.Currency);
+                GrantRewardItems(player, currency.Id, rewards.Currency, pendingAttachments);
             }
         }
 
-        foreach (var reward in rewards.Resources)
+        foreach (var reward in rewards.Items)
         {
             if (reward.Value <= 0)
             {
                 continue;
             }
 
-            GrantItemStacks(player, reward.Key, reward.Value);
+            GrantRewardItems(player, reward.Key, reward.Value, pendingAttachments);
         }
 
         foreach (var titleId in rewards.TitleIds)
@@ -514,17 +516,95 @@ public static class AchievementService
                 player.UnlockedTitles.Add(titleId);
             }
         }
+
+        if (pendingAttachments.Count > 0)
+        {
+            SendRewardMail(player, achievement, pendingAttachments);
+        }
     }
 
-    private static void GrantItemStacks(Player player, Guid itemId, long quantity)
+    private static void GrantRewardItems(
+        Player player,
+        Guid itemId,
+        long quantity,
+        ICollection<MailAttachment> pendingAttachments
+    )
     {
+        if (quantity <= 0 || itemId == Guid.Empty || ItemDescriptor.Get(itemId) == null)
+        {
+            return;
+        }
+
         var remaining = quantity;
         while (remaining > 0)
         {
             var stackAmount = (int)Math.Min(remaining, int.MaxValue);
-            player.TryGiveItem(itemId, stackAmount, ItemHandling.Overflow);
+            var deliverable = GetDeliverableQuantity(player, itemId, stackAmount);
+            if (deliverable > 0)
+            {
+                player.TryGiveItem(itemId, deliverable, ItemHandling.Normal);
+            }
+
+            var remainder = stackAmount - deliverable;
+            if (remainder > 0)
+            {
+                pendingAttachments.Add(new MailAttachment
+                {
+                    ItemId = itemId,
+                    Quantity = remainder
+                });
+            }
+
             remaining -= stackAmount;
         }
+    }
+
+    private static int GetDeliverableQuantity(Player player, Guid itemId, int quantity)
+    {
+        if (quantity <= 0 || player == null)
+        {
+            return 0;
+        }
+
+        if (player.CanGiveItem(itemId, quantity))
+        {
+            return quantity;
+        }
+
+        var low = 0;
+        var high = quantity;
+        while (low < high)
+        {
+            var mid = (low + high + 1) / 2;
+            if (player.CanGiveItem(itemId, mid))
+            {
+                low = mid;
+            }
+            else
+            {
+                high = mid - 1;
+            }
+        }
+
+        return low;
+    }
+
+    private static void SendRewardMail(
+        Player player,
+        AchievementDescriptor achievement,
+        List<MailAttachment> attachments
+    )
+    {
+        var mail = new MailBox(
+            sender: player,
+            receiver: player,
+            title: Strings.Achievements.Title,
+            message: Strings.Achievements.CompletedNotification.ToString(achievement.Name),
+            attachments: attachments
+        );
+
+        player.MailBoxs.Add(mail);
+        PacketSender.SendOpenMailBox(player);
     }
 
     private static bool ContainsCondition<TCondition>(ConditionLists requirements) where TCondition : Condition
