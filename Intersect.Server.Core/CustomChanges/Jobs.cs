@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Intersect.Config;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Server.Localization;
 using Intersect.Server.Networking;
 using Newtonsoft.Json;

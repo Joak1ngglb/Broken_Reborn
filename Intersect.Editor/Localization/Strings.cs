@@ -2149,6 +2149,14 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString completetask = @"Complete Quest Task [Quest: {00}, Task: {01}]";
 
+        public static LocalizedString completeachievement = @"Complete Achievement [Achievement: {00}]";
+
+        public static LocalizedString completeachievementtask = @"Complete Achievement Task [Achievement: {00}, Task: {01}]";
+
+        public static LocalizedString achievementundefined = @"Undefined";
+
+        public static LocalizedString metaachievementtask = @"Meta Achievement: {00}";
+
         public static LocalizedString conditionalbranch = @"Conditional Branch: [{00}]";
 
         public static LocalizedString conditionalelse = @"Else";
@@ -2577,6 +2585,8 @@ Tick timer saved in server config.json.";
             {"changespells", @"Change Spells"},
             {"changesprite", @"Change Sprite"},
             {"completequesttask", @"Complete Quest Task"},
+            {"completeachievement", @"Complete Achievement"},
+            {"completeachievementtask", @"Complete Achievement Task"},
             {"conditionalbranch", @"Conditional Branch"},
             {"despawnnpc", @"Despawn NPC"},
             {"dialogue", @"Dialogue"},
@@ -2602,6 +2612,7 @@ Tick timer saved in server config.json.";
             {"playercontrol", @"Player Control"},
             {"playsound", @"Play Sound"},
             {"questcontrol", @"Quest Control"},
+            {"achievementcontrol", @"Achievement Control"},
             {"releaseplayer", @"Release Player"},
             {"restorehp", @"Restore HP"},
             {"restoremp", @"Restore MP"},
@@ -2665,6 +2676,40 @@ Tick timer saved in server config.json.";
         public static LocalizedString task = @"Task:";
 
         public static LocalizedString title = @"Complete Quest Task";
+
+    }
+
+    public partial struct EventCompleteAchievement
+    {
+
+        public static LocalizedString cancel = @"Cancel";
+
+        public static LocalizedString okay = @"Ok";
+
+        public static LocalizedString achievement = @"Achievement:";
+
+        public static LocalizedString title = @"Complete Achievement";
+
+    }
+
+    public partial struct EventCompleteAchievementTask
+    {
+
+        public static LocalizedString cancel = @"Cancel";
+
+        public static LocalizedString okay = @"Ok";
+
+        public static LocalizedString achievement = @"Achievement:";
+
+        public static LocalizedString task = @"Task:";
+
+        public static LocalizedString title = @"Complete Achievement Task";
+
+        public static LocalizedString achievementundefined = @"Undefined";
+
+        public static LocalizedString metaachievement = @"Meta Achievement: {00}";
+
+        public static LocalizedString noobjectives = @"No Objectives";
 
     }
 
@@ -5216,9 +5261,25 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString addresource = @"Add Resource";
 
+        public static LocalizedString addtitle = @"Add Title";
+
         public static LocalizedString cancel = @"Cancel";
 
         public static LocalizedString category = @"Category:";
+
+        public static LocalizedString categorydungeons = @"Dungeons";
+
+        public static LocalizedString categoryexploration = @"Exploration";
+
+        public static LocalizedString categorymonsters = @"Monsters";
+
+        public static LocalizedString categoryquests = @"Quests";
+
+        public static LocalizedString categoryprofessions = @"Professions";
+
+        public static LocalizedString categoryevents = @"Events";
+
+        public static LocalizedString completionmode = @"Completion Mode:";
 
         public static LocalizedString copy = @"Copy Achievement";
 
@@ -5235,6 +5296,14 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString difficulty = @"Difficulty:";
 
+        public static LocalizedString difficultydiscovery = @"Discovery";
+
+        public static LocalizedString difficultynatural = @"Natural";
+
+        public static LocalizedString difficultyepic = @"Epic";
+
+        public static LocalizedString difficultymeta = @"Meta";
+
         public static LocalizedString editrequirements = @"Edit Requirements";
 
         public static LocalizedString experience = @"Experience:";
@@ -5246,6 +5315,8 @@ Tick timer saved in server config.json.";
         public static LocalizedString foldertitle = @"Add Folder";
 
         public static LocalizedString general = @"General";
+
+        public static LocalizedString icon = @"Icon:";
 
         public static LocalizedString name = @"Name:";
 
@@ -5260,6 +5331,8 @@ Tick timer saved in server config.json.";
         public static LocalizedString resourceamount = @"Amount:";
 
         public static LocalizedString removeresource = @"Remove Resource";
+
+        public static LocalizedString removetitle = @"Remove Title";
 
         public static LocalizedString rewards = @"Rewards";
 

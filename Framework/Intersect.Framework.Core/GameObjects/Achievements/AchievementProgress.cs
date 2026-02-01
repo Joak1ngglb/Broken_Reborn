@@ -11,8 +11,33 @@ public partial class AchievementProgress
 
     public DateTime? CompletedAt;
 
-    public AchievementProgress(string data)
+    public List<ObjectiveProgress> Objectives { get; set; } = [];
+
+    public AchievementProgress()
     {
-        JsonConvert.PopulateObject(data, this);
+    }
+
+    public AchievementProgress(string? data)
+    {
+        var progress = FromJson(data);
+        Progress = progress.Progress;
+        Completed = progress.Completed;
+        CompletedAt = progress.CompletedAt;
+        Objectives = progress.Objectives;
+    }
+
+    public static AchievementProgress FromJson(string? data)
+    {
+        if (string.IsNullOrWhiteSpace(data))
+        {
+            return new AchievementProgress();
+        }
+
+        return JsonConvert.DeserializeObject<AchievementProgress>(data) ?? new AchievementProgress();
+    }
+
+    public string ToJson()
+    {
+        return JsonConvert.SerializeObject(this);
     }
 }

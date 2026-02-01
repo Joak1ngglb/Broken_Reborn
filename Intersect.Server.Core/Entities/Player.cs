@@ -22,6 +22,7 @@ using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Spells;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.GameObjects.Variables;
+using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets.Server;
