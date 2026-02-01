@@ -2250,7 +2250,7 @@ internal sealed partial class PacketHandler
         {
             Experience = packet.Experience,
             Currency = packet.Currency,
-            Resources = packet.Resources,
+            Items = packet.Items,
             TitleIds = packet.TitleIds
         };
 
