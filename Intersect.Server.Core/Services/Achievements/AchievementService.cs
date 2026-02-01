@@ -539,17 +539,54 @@ public static class AchievementService
         while (remaining > 0)
         {
             var stackAmount = (int)Math.Min(remaining, int.MaxValue);
-            if (!player.TryGiveItem(itemId, stackAmount, ItemHandling.Normal))
+            var deliverable = GetDeliverableQuantity(player, itemId, stackAmount);
+            if (deliverable > 0)
+            {
+                player.TryGiveItem(itemId, deliverable, ItemHandling.Normal);
+            }
+
+            var remainder = stackAmount - deliverable;
+            if (remainder > 0)
             {
                 pendingAttachments.Add(new MailAttachment
                 {
                     ItemId = itemId,
-                    Quantity = stackAmount
+                    Quantity = remainder
                 });
             }
 
             remaining -= stackAmount;
         }
+    }
+
+    private static int GetDeliverableQuantity(Player player, Guid itemId, int quantity)
+    {
+        if (quantity <= 0 || player == null)
+        {
+            return 0;
+        }
+
+        if (player.CanGiveItem(itemId, quantity))
+        {
+            return quantity;
+        }
+
+        var low = 0;
+        var high = quantity;
+        while (low < high)
+        {
+            var mid = (low + high + 1) / 2;
+            if (player.CanGiveItem(itemId, mid))
+            {
+                low = mid;
+            }
+            else
+            {
+                high = mid - 1;
+            }
+        }
+
+        return low;
     }
 
     private static void SendRewardMail(
