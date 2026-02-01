@@ -28,6 +28,23 @@ public sealed partial class AchievementDescriptor : DatabaseObject<AchievementDe
 
     public string Icon { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The database compatible version of <see cref="Color"/>
+    /// </summary>
+    [Column("Color")]
+    [JsonIgnore]
+    public string JsonColor
+    {
+        get => JsonConvert.SerializeObject(Color);
+        set => Color = !string.IsNullOrWhiteSpace(value) ? JsonConvert.DeserializeObject<Color>(value) : Color.White;
+    }
+
+    /// <summary>
+    /// Defines the ARGB color settings for this Achievement.
+    /// </summary>
+    [NotMapped]
+    public Color Color { get; set; } = Color.White;
+
     [Column("CompletionMode")]
     public AchievementCompletionMode CompletionMode { get; set; } = AchievementCompletionMode.OrListsAndConditions;
 
