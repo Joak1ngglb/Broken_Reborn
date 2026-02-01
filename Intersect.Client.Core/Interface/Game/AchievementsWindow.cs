@@ -373,7 +373,7 @@ public sealed partial class AchievementsWindow : Window
                 continue;
             }
 
-            AddCategoryToList(category.ToString(), Color.White);
+            AddCategoryToList(GetCategoryDisplayName(category), Color.White);
 
             foreach (var entry in entries
                          .OrderBy(e => e.Order)
@@ -459,8 +459,12 @@ public sealed partial class AchievementsWindow : Window
         _rewardLabel.IsHidden = false;
 
         _titleLabel.Text = GetLocalizedAchievementField(_selectedAchievement, "Name", _selectedAchievement.Name);
-        _categoryLabel.Text = Strings.Achievements.CategoryLabel.ToString(_selectedAchievement.Category.ToString());
-        _difficultyLabel.Text = Strings.Achievements.DifficultyLabel.ToString(_selectedAchievement.Difficulty.ToString());
+        _categoryLabel.Text = Strings.Achievements.CategoryLabel.ToString(
+            GetCategoryDisplayName(_selectedAchievement.Category)
+        );
+        _difficultyLabel.Text = Strings.Achievements.DifficultyLabel.ToString(
+            GetDifficultyDisplayName(_selectedAchievement.Difficulty)
+        );
 
         var status = GetAchievementStatus(_selectedAchievement);
         switch (status)
@@ -554,6 +558,28 @@ public sealed partial class AchievementsWindow : Window
         _rewardLabel.Hide();
         _detailsArea.Hide();
     }
+
+    private static string GetCategoryDisplayName(AchievementCategory category) =>
+        category switch
+        {
+            AchievementCategory.Dungeons => Strings.Achievements.CategoryDungeons,
+            AchievementCategory.Exploration => Strings.Achievements.CategoryExploration,
+            AchievementCategory.Monsters => Strings.Achievements.CategoryMonsters,
+            AchievementCategory.Quests => Strings.Achievements.CategoryQuests,
+            AchievementCategory.Professions => Strings.Achievements.CategoryProfessions,
+            AchievementCategory.Events => Strings.Achievements.CategoryEvents,
+            _ => category.ToString()
+        };
+
+    private static string GetDifficultyDisplayName(AchievementDifficulty difficulty) =>
+        difficulty switch
+        {
+            AchievementDifficulty.Discovery => Strings.Achievements.DifficultyDiscovery,
+            AchievementDifficulty.Natural => Strings.Achievements.DifficultyNatural,
+            AchievementDifficulty.Epic => Strings.Achievements.DifficultyEpic,
+            AchievementDifficulty.Meta => Strings.Achievements.DifficultyMeta,
+            _ => difficulty.ToString()
+        };
 
     private void RequestAchievementListLocalization(IEnumerable<AchievementDescriptor> achievements)
     {

@@ -22,7 +22,7 @@ public sealed partial class AchievementDescriptor : DatabaseObject<AchievementDe
 
     public string Description { get; set; } = string.Empty;
 
-    public AchievementCategory Category { get; set; } = AchievementCategory.Exploracion;
+    public AchievementCategory Category { get; set; } = AchievementCategory.Exploration;
 
     public AchievementDifficulty Difficulty { get; set; } = AchievementDifficulty.Natural;
 

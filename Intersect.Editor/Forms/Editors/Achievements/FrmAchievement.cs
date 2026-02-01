@@ -45,9 +45,17 @@ public partial class FrmAchievement : EditorForm
     private void FrmAchievement_Load(object sender, EventArgs e)
     {
         cmbCategory.Items.Clear();
-        cmbCategory.Items.AddRange(Enum.GetNames(typeof(AchievementCategory)));
+        cmbCategory.Items.AddRange(
+            Enum.GetValues<AchievementCategory>()
+                .Select(GetCategoryDisplayName)
+                .ToArray()
+        );
         cmbDifficulty.Items.Clear();
-        cmbDifficulty.Items.AddRange(Enum.GetNames(typeof(AchievementDifficulty)));
+        cmbDifficulty.Items.AddRange(
+            Enum.GetValues<AchievementDifficulty>()
+                .Select(GetDifficultyDisplayName)
+                .ToArray()
+        );
         cmbCompletionMode.Items.Clear();
         cmbCompletionMode.Items.AddRange(Enum.GetNames(typeof(AchievementCompletionMode)));
 
@@ -260,6 +268,28 @@ public partial class FrmAchievement : EditorForm
 
         _editorItem.CompletionMode = (AchievementCompletionMode)cmbCompletionMode.SelectedIndex;
     }
+
+    private static string GetCategoryDisplayName(AchievementCategory category) =>
+        category switch
+        {
+            AchievementCategory.Dungeons => Strings.AchievementEditor.categorydungeons,
+            AchievementCategory.Exploration => Strings.AchievementEditor.categoryexploration,
+            AchievementCategory.Monsters => Strings.AchievementEditor.categorymonsters,
+            AchievementCategory.Quests => Strings.AchievementEditor.categoryquests,
+            AchievementCategory.Professions => Strings.AchievementEditor.categoryprofessions,
+            AchievementCategory.Events => Strings.AchievementEditor.categoryevents,
+            _ => category.ToString()
+        };
+
+    private static string GetDifficultyDisplayName(AchievementDifficulty difficulty) =>
+        difficulty switch
+        {
+            AchievementDifficulty.Discovery => Strings.AchievementEditor.difficultydiscovery,
+            AchievementDifficulty.Natural => Strings.AchievementEditor.difficultynatural,
+            AchievementDifficulty.Epic => Strings.AchievementEditor.difficultyepic,
+            AchievementDifficulty.Meta => Strings.AchievementEditor.difficultymeta,
+            _ => difficulty.ToString()
+        };
 
     private void cmbFolder_SelectedIndexChanged(object sender, EventArgs e)
     {
