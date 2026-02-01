@@ -51,6 +51,8 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             lblFolder = new Label();
             lblCompletionMode = new Label();
             cmbCompletionMode = new DarkComboBox();
+            cmbIcon = new DarkComboBox();
+            lblIcon = new Label();
             lblDifficulty = new Label();
             cmbDifficulty = new DarkComboBox();
             lblCategory = new Label();
@@ -420,6 +422,8 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             grpGeneral.Controls.Add(lblFolder);
             grpGeneral.Controls.Add(cmbCompletionMode);
             grpGeneral.Controls.Add(lblCompletionMode);
+            grpGeneral.Controls.Add(cmbIcon);
+            grpGeneral.Controls.Add(lblIcon);
             grpGeneral.Controls.Add(lblDifficulty);
             grpGeneral.Controls.Add(cmbDifficulty);
             grpGeneral.Controls.Add(lblCategory);
@@ -512,6 +516,38 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             cmbCompletionMode.Text = null;
             cmbCompletionMode.TextPadding = new Padding(2);
             cmbCompletionMode.SelectedIndexChanged += cmbCompletionMode_SelectedIndexChanged;
+            // 
+            // cmbIcon
+            // 
+            cmbIcon.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbIcon.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbIcon.BorderStyle = ButtonBorderStyle.Solid;
+            cmbIcon.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbIcon.DrawDropdownHoverOutline = false;
+            cmbIcon.DrawFocusRectangle = false;
+            cmbIcon.DrawMode = DrawMode.OwnerDrawFixed;
+            cmbIcon.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbIcon.FlatStyle = FlatStyle.Flat;
+            cmbIcon.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbIcon.FormattingEnabled = true;
+            cmbIcon.Location = new System.Drawing.Point(597, 24);
+            cmbIcon.Margin = new Padding(4, 3, 4, 3);
+            cmbIcon.Name = "cmbIcon";
+            cmbIcon.Size = new Size(224, 24);
+            cmbIcon.TabIndex = 12;
+            cmbIcon.Text = null;
+            cmbIcon.TextPadding = new Padding(2);
+            cmbIcon.SelectedIndexChanged += cmbIcon_SelectedIndexChanged;
+            // 
+            // lblIcon
+            // 
+            lblIcon.AutoSize = true;
+            lblIcon.Location = new System.Drawing.Point(486, 28);
+            lblIcon.Margin = new Padding(4, 0, 4, 0);
+            lblIcon.Name = "lblIcon";
+            lblIcon.Size = new Size(33, 15);
+            lblIcon.TabIndex = 13;
+            lblIcon.Text = "Icon:";
             // 
             // lblDifficulty
             // 
@@ -821,6 +857,8 @@ namespace Intersect.Editor.Forms.Editors.Achievements
         private System.Windows.Forms.Label lblFolder;
         private System.Windows.Forms.Label lblCompletionMode;
         private DarkComboBox cmbCompletionMode;
+        private DarkComboBox cmbIcon;
+        private System.Windows.Forms.Label lblIcon;
         private System.Windows.Forms.Label lblDifficulty;
         private DarkComboBox cmbDifficulty;
         private System.Windows.Forms.Label lblCategory;

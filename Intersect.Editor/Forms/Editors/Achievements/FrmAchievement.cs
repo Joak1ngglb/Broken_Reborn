@@ -1,5 +1,6 @@
 using System.Linq;
 using DarkUI.Forms;
+using Intersect.Editor.Content;
 using Intersect.Editor.Core;
 using Intersect.Editor.Forms.Editors;
 using Intersect.Editor.General;
@@ -59,6 +60,14 @@ public partial class FrmAchievement : EditorForm
         cmbCompletionMode.Items.Clear();
         cmbCompletionMode.Items.AddRange(Enum.GetNames(typeof(AchievementCompletionMode)));
 
+        cmbIcon.Items.Clear();
+        cmbIcon.Items.Add(Strings.General.None);
+        var iconNames = GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Achievement);
+        if (iconNames?.Length > 0)
+        {
+            cmbIcon.Items.AddRange(iconNames);
+        }
+
         cmbResource.Items.Clear();
         cmbResource.Items.AddRange(ItemDescriptor.Names);
         if (cmbResource.Items.Count > 0)
@@ -98,6 +107,7 @@ public partial class FrmAchievement : EditorForm
         lblDifficulty.Text = Strings.AchievementEditor.difficulty;
         lblCompletionMode.Text = Strings.AchievementEditor.completionmode;
         lblFolder.Text = Strings.AchievementEditor.folderlabel;
+        lblIcon.Text = Strings.AchievementEditor.icon;
 
         grpRequirements.Text = Strings.AchievementEditor.requirements;
         btnEditRequirements.Text = Strings.AchievementEditor.editrequirements;
@@ -188,6 +198,14 @@ public partial class FrmAchievement : EditorForm
             cmbDifficulty.SelectedIndex = (int)_editorItem.Difficulty;
             cmbCompletionMode.SelectedIndex = (int)_editorItem.CompletionMode;
             cmbFolder.Text = _editorItem.Folder ?? string.Empty;
+            var iconName = string.IsNullOrWhiteSpace(_editorItem.Icon)
+                ? Strings.General.None.ToString()
+                : _editorItem.Icon;
+            cmbIcon.SelectedIndex = cmbIcon.FindString(iconName);
+            if (cmbIcon.SelectedIndex < 0)
+            {
+                cmbIcon.SelectedIndex = 0;
+            }
             nudExperience.Value = _editorItem.Rewards.Experience;
             nudCurrency.Value = _editorItem.Rewards.Currency;
 
@@ -323,6 +341,16 @@ public partial class FrmAchievement : EditorForm
         }
 
         _editorItem.CompletionMode = (AchievementCompletionMode)cmbCompletionMode.SelectedIndex;
+    }
+
+    private void cmbIcon_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.Icon = cmbIcon.SelectedIndex <= 0 ? string.Empty : cmbIcon.Text;
     }
 
     private static string GetCategoryDisplayName(AchievementCategory category) =>

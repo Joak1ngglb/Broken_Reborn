@@ -26,6 +26,8 @@ public sealed partial class AchievementDescriptor : DatabaseObject<AchievementDe
 
     public AchievementDifficulty Difficulty { get; set; } = AchievementDifficulty.Natural;
 
+    public string Icon { get; set; } = string.Empty;
+
     [Column("CompletionMode")]
     public AchievementCompletionMode CompletionMode { get; set; } = AchievementCompletionMode.OrListsAndConditions;
 

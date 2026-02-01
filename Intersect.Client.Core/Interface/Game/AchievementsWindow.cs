@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
@@ -19,6 +20,7 @@ public sealed partial class AchievementsWindow : Window
 {
     private readonly ListBox _achievementList;
     private readonly ScrollControl _detailsArea;
+    private readonly ImagePanel _iconPanel;
     private readonly Label _titleLabel;
     private readonly Label _categoryLabel;
     private readonly Label _difficultyLabel;
@@ -40,10 +42,13 @@ public sealed partial class AchievementsWindow : Window
     private bool _localizationSubscribed;
 
     private const int ListWidth = 250;
+    private const int ListRowHeight = 25;
     private const int Padding = 10;
     private const int FilterSpacing = 4;
     private const int SectionSpacing = 8;
     private const int ProgressBarHeight = 20;
+    private const int DetailIconSize = 32;
+    private const int ListIconSize = 18;
 
     public AchievementsWindow(Canvas gameCanvas)
         : base(gameCanvas, Strings.Achievements.Title, false, nameof(AchievementsWindow))
@@ -82,6 +87,10 @@ public sealed partial class AchievementsWindow : Window
         _detailsArea = new ScrollControl(this, nameof(_detailsArea));
         _detailsArea.EnableScroll(false, true);
 
+        _iconPanel = new ImagePanel(_detailsArea, nameof(_iconPanel))
+        {
+            IsHidden = true,
+        };
         _titleLabel = new Label(_detailsArea, nameof(_titleLabel));
         _categoryLabel = new Label(_detailsArea, nameof(_categoryLabel));
         _difficultyLabel = new Label(_detailsArea, nameof(_difficultyLabel));
@@ -116,10 +125,6 @@ public sealed partial class AchievementsWindow : Window
         _rewardLabel = new RichLabel(_detailsArea) { Name = nameof(_rewardLabel) };
         ApplyUiDefaults();
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
-
-      // <-- AGREGA ESTO
-
-     
 
         if (_detailsArea.InnerPanel != null)
         {
@@ -232,6 +237,14 @@ public sealed partial class AchievementsWindow : Window
         var contentWidth = GetDetailsContentWidth();
         var y = 0;
         const int bottomPadding = 12;
+
+        if (!_iconPanel.IsHidden)
+        {
+            var iconSize = Math.Min(DetailIconSize, contentWidth);
+            _iconPanel.SetSize(iconSize, iconSize);
+            _iconPanel.SetPosition(0, y);
+            y += _iconPanel.Height + 6;
+        }
 
         if (!_titleLabel.IsHidden)
         {
@@ -380,7 +393,7 @@ public sealed partial class AchievementsWindow : Window
                          .ThenBy(e => e.Achievement.OrderValue))
             {
                 var localizedName = GetLocalizedAchievementField(entry.Achievement, "Name", entry.Achievement.Name);
-                AddAchievementToList(localizedName, entry.Color, entry.Achievement.Id);
+                AddAchievementToList(localizedName, entry.Color, entry.Achievement);
             }
         }
     }
@@ -397,14 +410,39 @@ public sealed partial class AchievementsWindow : Window
         };
     }
 
-    private void AddAchievementToList(string name, Color color, Guid achievementId, bool indented = true)
+    private void AddAchievementToList(string name, Color color, AchievementDescriptor achievement, bool indented = true)
     {
-        var item = _achievementList.AddRow((indented ? "\t\t\t" : "") + name);
-        item.UserData = achievementId;
+        var item = _achievementList.AddRow(string.Empty);
+        item.UserData = achievement.Id;
         item.Clicked -= AchievementListItem_Clicked;
         item.Clicked += AchievementListItem_Clicked;
-        item.SetTextColor(color);
-        item.SetSize(ListWidth - 20, 25);
+        item.SetSize(ListWidth - 20, ListRowHeight);
+
+        var iconTexture = GetAchievementIconTexture(achievement);
+        var iconOffset = 0;
+        if (iconTexture != null)
+        {
+            var icon = new ImagePanel(item)
+            {
+                Texture = iconTexture,
+                Width = ListIconSize,
+                Height = ListIconSize,
+                MouseInputEnabled = false,
+            };
+
+            icon.SetPosition(2, (ListRowHeight - ListIconSize) / 2);
+            iconOffset = ListIconSize + 6;
+        }
+
+        var label = new Label(item)
+        {
+            Text = name,
+            MouseInputEnabled = false,
+        };
+
+        var indentOffset = indented ? 16 : 0;
+        label.SetPosition(4 + iconOffset + indentOffset, 1);
+        SetTextColorSmart(label, color);
     }
 
     private void AddCategoryToList(string name, Color color)
@@ -412,7 +450,7 @@ public sealed partial class AchievementsWindow : Window
         var item = _achievementList.AddRow(name);
         item.MouseInputEnabled = false;
         item.SetTextColor(color);
-        item.SetSize(ListWidth - 20, 25);
+        item.SetSize(ListWidth - 20, ListRowHeight);
     }
 
     private void AchievementListItem_Clicked(Base sender, MouseButtonState arguments)
@@ -448,6 +486,7 @@ public sealed partial class AchievementsWindow : Window
         RequestAchievementLocalization(_selectedAchievement);
 
         _detailsArea.IsHidden = false;
+        _iconPanel.IsHidden = false;
         _titleLabel.IsHidden = false;
         _statusLabel.IsHidden = false;
         _categoryLabel.IsHidden = false;
@@ -488,6 +527,7 @@ public sealed partial class AchievementsWindow : Window
             _descriptionTemplateLabel
         );
 
+        UpdateAchievementIcon(_selectedAchievement);
         UpdateProgressDetails(_selectedAchievement);
         UpdateRewardDetails(_selectedAchievement);
 
@@ -547,6 +587,7 @@ public sealed partial class AchievementsWindow : Window
 
     private void ClearSelectedAchievement()
     {
+        _iconPanel.Hide();
         _titleLabel.Hide();
         _categoryLabel.Hide();
         _difficultyLabel.Hide();
@@ -557,6 +598,33 @@ public sealed partial class AchievementsWindow : Window
         _rewardTitleLabel.Hide();
         _rewardLabel.Hide();
         _detailsArea.Hide();
+    }
+
+    private void UpdateAchievementIcon(AchievementDescriptor achievement)
+    {
+        var iconTexture = GetAchievementIconTexture(achievement);
+        if (iconTexture == null)
+        {
+            _iconPanel.Texture = null;
+            _iconPanel.Hide();
+            return;
+        }
+
+        _iconPanel.Texture = iconTexture;
+        _iconPanel.Show();
+    }
+
+    private static IGameTexture? GetAchievementIconTexture(AchievementDescriptor achievement)
+    {
+        if (string.IsNullOrWhiteSpace(achievement.Icon))
+        {
+            return null;
+        }
+
+        return GameContentManager.Current.GetTexture(
+            Framework.Content.TextureType.Achievement,
+            achievement.Icon
+        );
     }
 
     private static string GetCategoryDisplayName(AchievementCategory category) =>

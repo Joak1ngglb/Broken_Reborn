@@ -5271,6 +5271,8 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString general = @"General";
 
+        public static LocalizedString icon = @"Icon:";
+
         public static LocalizedString name = @"Name:";
 
         public static LocalizedString New = @"New Achievement";
