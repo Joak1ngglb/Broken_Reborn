@@ -261,6 +261,13 @@ public static partial class Conditions
                 }
 
                 break;
+            case VariableComparator.Between:
+                if (lvlStat >= condition.Value && lvlStat <= condition.Value)
+                {
+                    return true;
+                }
+
+                break;
         }
 
         return false;
@@ -290,6 +297,8 @@ public static partial class Conditions
                 return currentValue < compareAgainst;
             case VariableComparator.NotEqual:
                 return currentValue != compareAgainst;
+            case VariableComparator.Between:
+                return currentValue >= compareAgainst && currentValue <= compareAgainst;
             default:
                 return false;
         }

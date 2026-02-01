@@ -10,6 +10,7 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands.Conditions;
 
 public partial class ConditionControl_PlayerStatValue : UserControl
 {
+    private readonly List<VariableComparator> _comparators = new();
     private readonly List<PlayerStatType> _statTypes = new();
 
     public ConditionControl_PlayerStatValue()
@@ -26,7 +27,24 @@ public partial class ConditionControl_PlayerStatValue : UserControl
         lblValue.Text = Strings.EventConditional.playerstatvalue;
 
         cmbComparator.Items.Clear();
-        cmbComparator.Items.AddRange(Strings.EventConditional.comparators.Values.ToArray());
+        _comparators.Clear();
+        foreach (var comparator in Enum.GetValues<VariableComparator>())
+        {
+            if (comparator == VariableComparator.Between)
+            {
+                continue;
+            }
+
+            _comparators.Add(comparator);
+            if (Strings.EventConditional.comparators.TryGetValue(comparator, out var label))
+            {
+                cmbComparator.Items.Add(label);
+            }
+            else
+            {
+                cmbComparator.Items.Add(comparator.ToString());
+            }
+        }
 
         cmbStat.Items.Clear();
         _statTypes.Clear();
@@ -56,7 +74,8 @@ public partial class ConditionControl_PlayerStatValue : UserControl
 
     public void SetupFormValues(PlayerStatCondition condition)
     {
-        cmbComparator.SelectedIndex = (int)condition.Comparator;
+        var comparatorIndex = _comparators.IndexOf(condition.Comparator);
+        cmbComparator.SelectedIndex = comparatorIndex >= 0 ? comparatorIndex : 0;
         nudValue.Value = condition.Value;
 
         var index = _statTypes.IndexOf(condition.Stat);
@@ -65,7 +84,15 @@ public partial class ConditionControl_PlayerStatValue : UserControl
 
     public void SaveFormValues(PlayerStatCondition condition)
     {
-        condition.Comparator = (VariableComparator)cmbComparator.SelectedIndex;
+        if (cmbComparator.SelectedIndex >= 0 && cmbComparator.SelectedIndex < _comparators.Count)
+        {
+            condition.Comparator = _comparators[cmbComparator.SelectedIndex];
+        }
+        else
+        {
+            condition.Comparator = VariableComparator.Equal;
+        }
+
         condition.Value = (int)nudValue.Value;
 
         if (cmbStat.SelectedIndex >= 0 && cmbStat.SelectedIndex < _statTypes.Count)

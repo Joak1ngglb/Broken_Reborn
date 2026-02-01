@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Intersect.Editor.Localization;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata;
@@ -7,6 +9,8 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands.Conditions;
 
 public partial class ConditionControl_PlayerStat : UserControl
 {
+    private readonly List<VariableComparator> _comparators = new();
+
     public ConditionControl_PlayerStat()
     {
         InitializeComponent();
@@ -27,14 +31,32 @@ public partial class ConditionControl_PlayerStat : UserControl
         }
 
         cmbLevelComparator.Items.Clear();
-        cmbLevelComparator.Items.AddRange(Strings.EventConditional.comparators.Values.ToArray());
+        _comparators.Clear();
+        foreach (var comparator in Enum.GetValues<VariableComparator>())
+        {
+            if (comparator == VariableComparator.Between)
+            {
+                continue;
+            }
+
+            _comparators.Add(comparator);
+            if (Strings.EventConditional.comparators.TryGetValue(comparator, out var label))
+            {
+                cmbLevelComparator.Items.Add(label);
+            }
+            else
+            {
+                cmbLevelComparator.Items.Add(comparator.ToString());
+            }
+        }
 
         chkStatIgnoreBuffs.Text = Strings.EventConditional.ignorestatbuffs;
     }
 
     public void SetupFormValues(LevelOrStatCondition condition)
     {
-        cmbLevelComparator.SelectedIndex = (int)condition.Comparator;
+        var comparatorIndex = _comparators.IndexOf(condition.Comparator);
+        cmbLevelComparator.SelectedIndex = comparatorIndex >= 0 ? comparatorIndex : 0;
         nudLevelStatValue.Value = condition.Value;
         cmbLevelStat.SelectedIndex = condition.ComparingLevel ? 0 : (int)condition.Stat + 1;
         chkStatIgnoreBuffs.Checked = condition.IgnoreBuffs;
@@ -42,7 +64,15 @@ public partial class ConditionControl_PlayerStat : UserControl
 
     public void SaveFormValues(LevelOrStatCondition condition)
     {
-        condition.Comparator = (VariableComparator)cmbLevelComparator.SelectedIndex;
+        if (cmbLevelComparator.SelectedIndex >= 0 && cmbLevelComparator.SelectedIndex < _comparators.Count)
+        {
+            condition.Comparator = _comparators[cmbLevelComparator.SelectedIndex];
+        }
+        else
+        {
+            condition.Comparator = VariableComparator.Equal;
+        }
+
         condition.Value = (int)nudLevelStatValue.Value;
         condition.ComparingLevel = cmbLevelStat.SelectedIndex == 0;
         condition.IgnoreBuffs = chkStatIgnoreBuffs.Checked;
