@@ -48,6 +48,8 @@ public partial class FrmAchievement : EditorForm
         cmbCategory.Items.AddRange(Enum.GetNames(typeof(AchievementCategory)));
         cmbDifficulty.Items.Clear();
         cmbDifficulty.Items.AddRange(Enum.GetNames(typeof(AchievementDifficulty)));
+        cmbCompletionMode.Items.Clear();
+        cmbCompletionMode.Items.AddRange(Enum.GetNames(typeof(AchievementCompletionMode)));
 
         cmbResource.Items.Clear();
         cmbResource.Items.AddRange(ResourceDescriptor.Names);
@@ -86,6 +88,7 @@ public partial class FrmAchievement : EditorForm
         lblDescription.Text = Strings.AchievementEditor.description;
         lblCategory.Text = Strings.AchievementEditor.category;
         lblDifficulty.Text = Strings.AchievementEditor.difficulty;
+        lblCompletionMode.Text = Strings.AchievementEditor.completionmode;
         lblFolder.Text = Strings.AchievementEditor.folderlabel;
 
         grpRequirements.Text = Strings.AchievementEditor.requirements;
@@ -167,6 +170,7 @@ public partial class FrmAchievement : EditorForm
             txtDescription.Text = _editorItem.Description;
             cmbCategory.SelectedIndex = (int)_editorItem.Category;
             cmbDifficulty.SelectedIndex = (int)_editorItem.Difficulty;
+            cmbCompletionMode.SelectedIndex = (int)_editorItem.CompletionMode;
             cmbFolder.Text = _editorItem.Folder ?? string.Empty;
             nudExperience.Value = _editorItem.Rewards.Experience;
             nudCurrency.Value = _editorItem.Rewards.Currency;
@@ -245,6 +249,16 @@ public partial class FrmAchievement : EditorForm
         }
 
         _editorItem.Difficulty = (AchievementDifficulty)cmbDifficulty.SelectedIndex;
+    }
+
+    private void cmbCompletionMode_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_editorItem == null || _updating)
+        {
+            return;
+        }
+
+        _editorItem.CompletionMode = (AchievementCompletionMode)cmbCompletionMode.SelectedIndex;
     }
 
     private void cmbFolder_SelectedIndexChanged(object sender, EventArgs e)

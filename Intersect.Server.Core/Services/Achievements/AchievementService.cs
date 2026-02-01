@@ -293,24 +293,62 @@ public static class AchievementService
         ServerAchievementProgress progress
     )
     {
-        if (achievement.MetaAchievementIds.Count > 0)
-        {
-            return achievement.MetaAchievementIds.All(
-                achievementId => player.Achievements.Any(p => p.AchievementId == achievementId && p.Completed)
-            );
-        }
+        return achievement.MetaAchievementIds.Count > 0
+            ? AreMetaAchievementsComplete(player, achievement)
+            : AreRequirementsComplete(player, achievement, progress);
+    }
 
-        if (!Conditions.MeetsConditionLists(achievement.Requirements, player, null))
-        {
-            return false;
-        }
+    private static bool AreMetaAchievementsComplete(Player player, AchievementDescriptor achievement)
+    {
+        var anyCompleted = achievement.MetaAchievementIds.Any(
+            achievementId => player.Achievements.Any(p => p.AchievementId == achievementId && p.Completed)
+        );
+        var allCompleted = achievement.MetaAchievementIds.All(
+            achievementId => player.Achievements.Any(p => p.AchievementId == achievementId && p.Completed)
+        );
 
+        return achievement.CompletionMode switch
+        {
+            AchievementCompletionMode.OrGlobal => anyCompleted,
+            AchievementCompletionMode.AndGlobal or AchievementCompletionMode.OrListsAndConditions => allCompleted,
+            _ => allCompleted
+        };
+    }
+
+    private static bool AreRequirementsComplete(
+        Player player,
+        AchievementDescriptor achievement,
+        ServerAchievementProgress progress
+    )
+    {
         if (achievement.Requirements.Lists.Count == 0)
         {
             return progress.Progress > 0;
         }
 
-        return true;
+        return achievement.CompletionMode switch
+        {
+            AchievementCompletionMode.AndGlobal => Conditions.MeetsConditionLists(
+                achievement.Requirements,
+                player,
+                null,
+                false
+            ),
+            AchievementCompletionMode.OrGlobal => MeetsAnyCondition(achievement.Requirements, player),
+            AchievementCompletionMode.OrListsAndConditions => Conditions.MeetsConditionLists(
+                achievement.Requirements,
+                player,
+                null
+            ),
+            _ => Conditions.MeetsConditionLists(achievement.Requirements, player, null)
+        };
+    }
+
+    private static bool MeetsAnyCondition(ConditionLists requirements, Player player)
+    {
+        return requirements.Lists
+            .SelectMany(list => list.Conditions)
+            .Any(condition => Conditions.MeetsCondition(condition, player, null, null));
     }
 
     private static void CompleteAchievement(

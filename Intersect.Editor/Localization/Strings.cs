@@ -5220,6 +5220,8 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString category = @"Category:";
 
+        public static LocalizedString completionmode = @"Completion Mode:";
+
         public static LocalizedString copy = @"Copy Achievement";
 
         public static LocalizedString currency = @"Currency:";

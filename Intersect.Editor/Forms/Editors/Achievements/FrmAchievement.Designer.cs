@@ -46,6 +46,8 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             btnAddFolder = new DarkButton();
             cmbFolder = new DarkComboBox();
             lblFolder = new Label();
+            lblCompletionMode = new Label();
+            cmbCompletionMode = new DarkComboBox();
             lblDifficulty = new Label();
             cmbDifficulty = new DarkComboBox();
             lblCategory = new Label();
@@ -368,6 +370,8 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             grpGeneral.Controls.Add(btnAddFolder);
             grpGeneral.Controls.Add(cmbFolder);
             grpGeneral.Controls.Add(lblFolder);
+            grpGeneral.Controls.Add(cmbCompletionMode);
+            grpGeneral.Controls.Add(lblCompletionMode);
             grpGeneral.Controls.Add(lblDifficulty);
             grpGeneral.Controls.Add(cmbDifficulty);
             grpGeneral.Controls.Add(lblCategory);
@@ -428,6 +432,38 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             lblFolder.Size = new Size(40, 15);
             lblFolder.TabIndex = 8;
             lblFolder.Text = "Folder";
+            // 
+            // lblCompletionMode
+            // 
+            lblCompletionMode.AutoSize = true;
+            lblCompletionMode.Location = new System.Drawing.Point(486, 60);
+            lblCompletionMode.Margin = new Padding(4, 0, 4, 0);
+            lblCompletionMode.Name = "lblCompletionMode";
+            lblCompletionMode.Size = new Size(102, 15);
+            lblCompletionMode.TabIndex = 11;
+            lblCompletionMode.Text = "Completion Mode";
+            // 
+            // cmbCompletionMode
+            // 
+            cmbCompletionMode.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbCompletionMode.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbCompletionMode.BorderStyle = ButtonBorderStyle.Solid;
+            cmbCompletionMode.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbCompletionMode.DrawDropdownHoverOutline = false;
+            cmbCompletionMode.DrawFocusRectangle = false;
+            cmbCompletionMode.DrawMode = DrawMode.OwnerDrawFixed;
+            cmbCompletionMode.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbCompletionMode.FlatStyle = FlatStyle.Flat;
+            cmbCompletionMode.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbCompletionMode.FormattingEnabled = true;
+            cmbCompletionMode.Location = new System.Drawing.Point(597, 58);
+            cmbCompletionMode.Margin = new Padding(4, 3, 4, 3);
+            cmbCompletionMode.Name = "cmbCompletionMode";
+            cmbCompletionMode.Size = new Size(224, 24);
+            cmbCompletionMode.TabIndex = 5;
+            cmbCompletionMode.Text = null;
+            cmbCompletionMode.TextPadding = new Padding(2);
+            cmbCompletionMode.SelectedIndexChanged += cmbCompletionMode_SelectedIndexChanged;
             // 
             // lblDifficulty
             // 
@@ -732,6 +768,8 @@ namespace Intersect.Editor.Forms.Editors.Achievements
         private DarkButton btnAddFolder;
         private DarkComboBox cmbFolder;
         private System.Windows.Forms.Label lblFolder;
+        private System.Windows.Forms.Label lblCompletionMode;
+        private DarkComboBox cmbCompletionMode;
         private System.Windows.Forms.Label lblDifficulty;
         private DarkComboBox cmbDifficulty;
         private System.Windows.Forms.Label lblCategory;
