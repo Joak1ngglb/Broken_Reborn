@@ -121,7 +121,11 @@ public partial class FrmItem : EditorForm
             return;
         }
 
-        OpenTranslationWorkbench(mEditorItem.Type.ToString(), mEditorItem.Id);
+        var translationWindow = new ItemTranslationWindow(mEditorItem)
+        {
+            Owner = this,
+        };
+        translationWindow.Show(this);
     }
 
     private void frmItem_Load(object sender, EventArgs e)
