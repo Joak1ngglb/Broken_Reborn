@@ -28,7 +28,10 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             pnlContainer = new Panel();
             grpRewards = new DarkGroupBox();
             lblTitleIds = new Label();
-            txtTitleIds = new DarkTextBox();
+            cmbTitle = new DarkComboBox();
+            btnRemoveTitle = new DarkButton();
+            btnAddTitle = new DarkButton();
+            lstTitles = new ListBox();
             btnRemoveResource = new DarkButton();
             btnAddResource = new DarkButton();
             lblResourceAmount = new Label();
@@ -158,7 +161,10 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             grpRewards.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpRewards.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
             grpRewards.Controls.Add(lblTitleIds);
-            grpRewards.Controls.Add(txtTitleIds);
+            grpRewards.Controls.Add(cmbTitle);
+            grpRewards.Controls.Add(btnRemoveTitle);
+            grpRewards.Controls.Add(btnAddTitle);
+            grpRewards.Controls.Add(lstTitles);
             grpRewards.Controls.Add(btnRemoveResource);
             grpRewards.Controls.Add(btnAddResource);
             grpRewards.Controls.Add(lblResourceAmount);
@@ -190,18 +196,60 @@ namespace Intersect.Editor.Forms.Editors.Achievements
             lblTitleIds.TabIndex = 12;
             lblTitleIds.Text = "Title IDs";
             // 
-            // txtTitleIds
+            // cmbTitle
             // 
-            txtTitleIds.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            txtTitleIds.BorderStyle = BorderStyle.FixedSingle;
-            txtTitleIds.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
-            txtTitleIds.Location = new System.Drawing.Point(597, 45);
-            txtTitleIds.Margin = new Padding(4, 3, 4, 3);
-            txtTitleIds.Multiline = true;
-            txtTitleIds.Name = "txtTitleIds";
-            txtTitleIds.Size = new Size(334, 95);
-            txtTitleIds.TabIndex = 11;
-            txtTitleIds.TextChanged += txtTitleIds_TextChanged;
+            cmbTitle.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+            cmbTitle.AutoCompleteSource = AutoCompleteSource.ListItems;
+            cmbTitle.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbTitle.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbTitle.BorderStyle = ButtonBorderStyle.Solid;
+            cmbTitle.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbTitle.DrawDropdownHoverOutline = false;
+            cmbTitle.DrawFocusRectangle = false;
+            cmbTitle.DrawMode = DrawMode.OwnerDrawFixed;
+            cmbTitle.DropDownStyle = ComboBoxStyle.DropDown;
+            cmbTitle.FlatStyle = FlatStyle.Flat;
+            cmbTitle.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbTitle.FormattingEnabled = true;
+            cmbTitle.Location = new System.Drawing.Point(597, 45);
+            cmbTitle.Margin = new Padding(4, 3, 4, 3);
+            cmbTitle.Name = "cmbTitle";
+            cmbTitle.Size = new Size(334, 24);
+            cmbTitle.TabIndex = 11;
+            // 
+            // btnRemoveTitle
+            // 
+            btnRemoveTitle.Location = new System.Drawing.Point(712, 75);
+            btnRemoveTitle.Margin = new Padding(4, 3, 4, 3);
+            btnRemoveTitle.Name = "btnRemoveTitle";
+            btnRemoveTitle.Padding = new Padding(6, 6, 6, 6);
+            btnRemoveTitle.Size = new Size(107, 28);
+            btnRemoveTitle.TabIndex = 15;
+            btnRemoveTitle.Text = "Remove";
+            btnRemoveTitle.Click += btnRemoveTitle_Click;
+            // 
+            // btnAddTitle
+            // 
+            btnAddTitle.Location = new System.Drawing.Point(597, 75);
+            btnAddTitle.Margin = new Padding(4, 3, 4, 3);
+            btnAddTitle.Name = "btnAddTitle";
+            btnAddTitle.Padding = new Padding(6, 6, 6, 6);
+            btnAddTitle.Size = new Size(107, 28);
+            btnAddTitle.TabIndex = 14;
+            btnAddTitle.Text = "Add";
+            btnAddTitle.Click += btnAddTitle_Click;
+            // 
+            // lstTitles
+            // 
+            lstTitles.BackColor = System.Drawing.Color.FromArgb(60, 63, 65);
+            lstTitles.ForeColor = System.Drawing.Color.Gainsboro;
+            lstTitles.FormattingEnabled = true;
+            lstTitles.ItemHeight = 15;
+            lstTitles.Location = new System.Drawing.Point(597, 108);
+            lstTitles.Margin = new Padding(4, 3, 4, 3);
+            lstTitles.Name = "lstTitles";
+            lstTitles.Size = new Size(334, 94);
+            lstTitles.TabIndex = 16;
             // 
             // btnRemoveResource
             // 
@@ -750,7 +798,10 @@ namespace Intersect.Editor.Forms.Editors.Achievements
         private System.Windows.Forms.Panel pnlContainer;
         private DarkGroupBox grpRewards;
         private System.Windows.Forms.Label lblTitleIds;
-        private DarkTextBox txtTitleIds;
+        private DarkComboBox cmbTitle;
+        private DarkButton btnRemoveTitle;
+        private DarkButton btnAddTitle;
+        private System.Windows.Forms.ListBox lstTitles;
         private DarkButton btnRemoveResource;
         private DarkButton btnAddResource;
         private System.Windows.Forms.Label lblResourceAmount;

@@ -5216,6 +5216,8 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString addresource = @"Add Resource";
 
+        public static LocalizedString addtitle = @"Add Title";
+
         public static LocalizedString cancel = @"Cancel";
 
         public static LocalizedString category = @"Category:";
@@ -5282,6 +5284,8 @@ Tick timer saved in server config.json.";
         public static LocalizedString resourceamount = @"Amount:";
 
         public static LocalizedString removeresource = @"Remove Resource";
+
+        public static LocalizedString removetitle = @"Remove Title";
 
         public static LocalizedString rewards = @"Rewards";
 

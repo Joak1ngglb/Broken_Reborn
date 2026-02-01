@@ -110,6 +110,8 @@ public partial class FrmAchievement : EditorForm
         btnAddResource.Text = Strings.AchievementEditor.addresource;
         btnRemoveResource.Text = Strings.AchievementEditor.removeresource;
         lblTitleIds.Text = Strings.AchievementEditor.titleids;
+        btnAddTitle.Text = Strings.AchievementEditor.addtitle;
+        btnRemoveTitle.Text = Strings.AchievementEditor.removetitle;
 
         btnAlphabetical.ToolTipText = Strings.AchievementEditor.sortalphabetically;
         txtSearch.Text = Strings.AchievementEditor.searchplaceholder;
@@ -128,6 +130,12 @@ public partial class FrmAchievement : EditorForm
                 _editorItem = null;
                 UpdateEditor();
             }
+        }
+
+        if (type == GameObjectType.Title)
+        {
+            UpdateTitleOptions();
+            UpdateTitleRewardsList();
         }
     }
 
@@ -183,9 +191,9 @@ public partial class FrmAchievement : EditorForm
             nudExperience.Value = _editorItem.Rewards.Experience;
             nudCurrency.Value = _editorItem.Rewards.Currency;
 
-            txtTitleIds.Text = string.Join(Environment.NewLine, _editorItem.Rewards.TitleIds);
-
+            UpdateTitleOptions();
             UpdateResourceRewardsList();
+            UpdateTitleRewardsList();
 
             if (!_changed.Contains(_editorItem))
             {
@@ -215,6 +223,54 @@ public partial class FrmAchievement : EditorForm
         {
             var display = $"{ItemDescriptor.GetName(reward.Key)} x{reward.Value}";
             lstResources.Items.Add(new ItemRewardEntry(reward.Key, display));
+        }
+    }
+
+    private void UpdateTitleOptions()
+    {
+        cmbTitle.Items.Clear();
+        foreach (var title in TitleDescriptor.Lookup.Values.OfType<TitleDescriptor>().OrderBy(entry => entry.Name))
+        {
+            cmbTitle.Items.Add(new TitleRewardEntry(title.Id, title.Name));
+        }
+
+        if (cmbTitle.Items.Count > 0 && cmbTitle.SelectedIndex < 0)
+        {
+            cmbTitle.SelectedIndex = 0;
+        }
+    }
+
+    private void UpdateTitleRewardsList()
+    {
+        lstTitles.Items.Clear();
+        if (_editorItem == null)
+        {
+            return;
+        }
+
+        var validTitleIds = new List<Guid>();
+        var seen = new HashSet<Guid>();
+        foreach (var titleId in _editorItem.Rewards.TitleIds)
+        {
+            if (!seen.Add(titleId))
+            {
+                continue;
+            }
+
+            if (!TitleDescriptor.Lookup.Keys.Contains(titleId))
+            {
+                continue;
+            }
+
+            var title = TitleDescriptor.Get(titleId);
+            var displayName = title?.Name ?? titleId.ToString();
+            lstTitles.Items.Add(new TitleRewardEntry(titleId, displayName));
+            validTitleIds.Add(titleId);
+        }
+
+        if (!validTitleIds.SequenceEqual(_editorItem.Rewards.TitleIds))
+        {
+            _editorItem.Rewards.TitleIds = validTitleIds;
         }
     }
 
@@ -388,31 +444,31 @@ public partial class FrmAchievement : EditorForm
         UpdateResourceRewardsList();
     }
 
-    private void txtTitleIds_TextChanged(object sender, EventArgs e)
+    private void btnAddTitle_Click(object sender, EventArgs e)
     {
-        if (_editorItem == null || _updating)
+        if (_editorItem == null || cmbTitle.SelectedItem is not TitleRewardEntry entry)
         {
             return;
         }
 
-        _editorItem.Rewards.TitleIds = ParseGuidList(txtTitleIds.Text)
-            .Where(id => TitleDescriptor.Lookup.Keys.Contains(id))
-            .ToList();
-    }
-
-    private static List<Guid> ParseGuidList(string text)
-    {
-        var results = new List<Guid>();
-        var tokens = text.Split(new[] { '\r', '\n', ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
-        foreach (var token in tokens)
+        if (_editorItem.Rewards.TitleIds.Contains(entry.TitleId))
         {
-            if (Guid.TryParse(token.Trim(), out var id))
-            {
-                results.Add(id);
-            }
+            return;
         }
 
-        return results;
+        _editorItem.Rewards.TitleIds.Add(entry.TitleId);
+        UpdateTitleRewardsList();
+    }
+
+    private void btnRemoveTitle_Click(object sender, EventArgs e)
+    {
+        if (_editorItem == null || lstTitles.SelectedItem is not TitleRewardEntry entry)
+        {
+            return;
+        }
+
+        _editorItem.Rewards.TitleIds.Remove(entry.TitleId);
+        UpdateTitleRewardsList();
     }
 
     private void toolStripItemNew_Click(object sender, EventArgs e)
@@ -580,6 +636,20 @@ public partial class FrmAchievement : EditorForm
         }
 
         public Guid ItemId { get; }
+        public string Display { get; }
+
+        public override string ToString() => Display;
+    }
+
+    private sealed class TitleRewardEntry
+    {
+        public TitleRewardEntry(Guid titleId, string display)
+        {
+            TitleId = titleId;
+            Display = display;
+        }
+
+        public Guid TitleId { get; }
         public string Display { get; }
 
         public override string ToString() => Display;
