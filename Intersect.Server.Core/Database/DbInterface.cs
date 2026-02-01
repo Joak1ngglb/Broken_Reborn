@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -406,6 +407,14 @@ public static partial class DbInterface
             _methodInfoProcessMigrations.MakeGenericMethod(contextType).Invoke(null, new object[] { context });
         }
 
+        if (!PlayerStatsTableExists(playerContext, playerDatabaseOptions))
+        {
+            ApplicationContext.Context.Value?.Logger.LogError(
+                "Player_Stats table is missing from the player database. Please apply the latest database migrations before starting the server."
+            );
+            return false;
+        }
+
         return true;
     }
 
@@ -441,6 +450,48 @@ public static partial class DbInterface
         PlayerShopManager.RespawnActiveShopEntities();
 
         return true;
+    }
+
+    private static bool PlayerStatsTableExists(PlayerContext playerContext, DatabaseOptions playerDatabaseOptions)
+    {
+        var connection = playerContext.Database.GetDbConnection();
+        var wasClosed = connection.State == ConnectionState.Closed;
+        if (wasClosed)
+        {
+            connection.Open();
+        }
+
+        try
+        {
+            using var command = connection.CreateCommand();
+            switch (playerDatabaseOptions.Type)
+            {
+                case DatabaseType.SQLite:
+                    command.CommandText =
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name='Player_Stats' LIMIT 1;";
+                    break;
+                case DatabaseType.MySQL:
+                    command.CommandText =
+                        "SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema = @database AND table_name = 'Player_Stats' LIMIT 1;";
+                    var databaseParameter = command.CreateParameter();
+                    databaseParameter.ParameterName = "@database";
+                    databaseParameter.Value = playerDatabaseOptions.Database;
+                    command.Parameters.Add(databaseParameter);
+                    break;
+                default:
+                    return true;
+            }
+
+            var result = command.ExecuteScalar();
+            return result != null && result != DBNull.Value;
+        }
+        finally
+        {
+            if (wasClosed)
+            {
+                connection.Close();
+            }
+        }
     }
 
     private static void CheckPlayerDatabaseCaseInsensitiveCollisions()
