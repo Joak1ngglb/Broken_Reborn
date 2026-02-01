@@ -5220,6 +5220,18 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString category = @"Category:";
 
+        public static LocalizedString categorydungeons = @"Dungeons";
+
+        public static LocalizedString categoryexploration = @"Exploration";
+
+        public static LocalizedString categorymonsters = @"Monsters";
+
+        public static LocalizedString categoryquests = @"Quests";
+
+        public static LocalizedString categoryprofessions = @"Professions";
+
+        public static LocalizedString categoryevents = @"Events";
+
         public static LocalizedString completionmode = @"Completion Mode:";
 
         public static LocalizedString copy = @"Copy Achievement";
@@ -5236,6 +5248,14 @@ Tick timer saved in server config.json.";
         public static LocalizedString description = @"Description:";
 
         public static LocalizedString difficulty = @"Difficulty:";
+
+        public static LocalizedString difficultydiscovery = @"Discovery";
+
+        public static LocalizedString difficultynatural = @"Natural";
+
+        public static LocalizedString difficultyepic = @"Epic";
+
+        public static LocalizedString difficultymeta = @"Meta";
 
         public static LocalizedString editrequirements = @"Edit Requirements";
 

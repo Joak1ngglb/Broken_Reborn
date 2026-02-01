@@ -1,9 +1,13 @@
+using Intersect.Framework.Core.Serialization;
+using Newtonsoft.Json;
+
 namespace Intersect.Enums;
 
+[JsonConverter(typeof(AchievementDifficultyConverter))]
 public enum AchievementDifficulty
 {
-    Descubrimiento,
+    Discovery,
     Natural,
-    Epico,
+    Epic,
     Meta,
 }

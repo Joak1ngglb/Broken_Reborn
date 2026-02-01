@@ -194,14 +194,14 @@ public static class AchievementService
         return trigger switch
         {
             AchievementTrigger.LevelUp =>
-                achievement.Category == AchievementCategory.Eventos ||
+                achievement.Category == AchievementCategory.Events ||
                 HasLevelRequirement(achievement.Requirements),
-            AchievementTrigger.NpcKill => achievement.Category == AchievementCategory.Monstruos,
+            AchievementTrigger.NpcKill => achievement.Category == AchievementCategory.Monsters,
             AchievementTrigger.QuestCompleted => MatchesQuestTrigger(achievement, context.TargetId),
             AchievementTrigger.MapEntered => MatchesMapTrigger(achievement, context),
             AchievementTrigger.ItemCollected or AchievementTrigger.ItemCrafted =>
                 MatchesItemTrigger(achievement, context.TargetId),
-            AchievementTrigger.DungeonCompleted => achievement.Category == AchievementCategory.Mazmorras,
+            AchievementTrigger.DungeonCompleted => achievement.Category == AchievementCategory.Dungeons,
             _ => false
         };
     }
@@ -627,7 +627,7 @@ public static class AchievementService
             return MatchesQuestCondition(achievement.Requirements, questId);
         }
 
-        return achievement.Category == AchievementCategory.Misiones;
+        return achievement.Category == AchievementCategory.Quests;
     }
 
     private static bool MatchesMapTrigger(AchievementDescriptor achievement, AchievementContext context)
@@ -640,7 +640,7 @@ public static class AchievementService
             return MatchesMapConditions(achievement.Requirements, context);
         }
 
-        return achievement.Category == AchievementCategory.Exploracion;
+        return achievement.Category == AchievementCategory.Exploration;
     }
 
     private static bool MatchesItemTrigger(AchievementDescriptor achievement, Guid? itemId)
@@ -651,7 +651,7 @@ public static class AchievementService
             return MatchesItemCondition(achievement.Requirements, itemId);
         }
 
-        return achievement.Category == AchievementCategory.Oficios;
+        return achievement.Category == AchievementCategory.Professions;
     }
 
     private static bool MatchesQuestCondition(ConditionLists requirements, Guid? questId)
