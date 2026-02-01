@@ -2316,7 +2316,8 @@ public static partial class PacketSender
                 Progress = achievement.Progress,
                 Completed = achievement.Completed,
                 CompletedAtTicks = achievement.CompletedAt?.Ticks,
-                SchemaVersion = AchievementProgressDto.CurrentSchemaVersion
+                SchemaVersion = AchievementProgressDto.CurrentSchemaVersion,
+                Objectives = achievement.Objectives
             };
         }
 

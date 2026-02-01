@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MessagePack;
 
 namespace Intersect.Framework.Core.GameObjects.Achievements;
@@ -18,4 +19,7 @@ public sealed class AchievementProgressDto
 
     [Key(3)]
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
+
+    [Key(4)]
+    public List<ObjectiveProgress> Objectives { get; set; } = [];
 }

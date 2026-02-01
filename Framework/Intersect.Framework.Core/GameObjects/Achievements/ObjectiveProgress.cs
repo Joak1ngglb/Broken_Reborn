@@ -1,3 +1,4 @@
+using MessagePack;
 using Newtonsoft.Json;
 
 namespace Intersect.Framework.Core.GameObjects.Achievements;
@@ -8,6 +9,7 @@ public enum ProgressMode
     Quantitative,
 }
 
+[MessagePackObject]
 public sealed class ObjectiveProgress
 {
     public ObjectiveProgress()
@@ -21,10 +23,13 @@ public sealed class ObjectiveProgress
         Mode = mode;
     }
 
+    [Key(0)]
     public int Current { get; set; }
 
+    [Key(1)]
     public int Target { get; set; }
 
+    [Key(2)]
     public ProgressMode? Mode { get; set; }
 
     [JsonIgnore]
