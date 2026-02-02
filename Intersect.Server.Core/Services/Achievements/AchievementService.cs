@@ -181,6 +181,8 @@ public static class AchievementService
 
         CompleteAchievement(player, achievement, progress);
         hasChanges = true;
+        var progressById = BuildAchievementProgressIndex(player);
+        ProcessDependentMetaAchievements(player, achievement, progressById, ref hasChanges);
 
         if (hasChanges)
         {
@@ -237,6 +239,8 @@ public static class AchievementService
         {
             CompleteAchievement(player, achievement, progress);
             hasChanges = true;
+            var progressById = BuildAchievementProgressIndex(player);
+            ProcessDependentMetaAchievements(player, achievement, progressById, ref hasChanges);
         }
 
         if (hasChanges)
@@ -285,6 +289,7 @@ public static class AchievementService
             {
                 CompleteAchievement(player, achievement, progress);
                 hasChanges = true;
+                ProcessDependentMetaAchievements(player, achievement, progressById, ref hasChanges);
             }
         }
 
@@ -310,8 +315,6 @@ public static class AchievementService
                 achievements.Add(descriptor);
             }
         }
-
-        AddRange(index.MetaAchievements);
 
         switch (trigger)
         {
@@ -371,7 +374,7 @@ public static class AchievementService
     {
         if (achievement.MetaAchievementIds.Count > 0)
         {
-            return true;
+            return false;
         }
 
         return trigger switch
@@ -689,6 +692,56 @@ public static class AchievementService
         );
     }
 
+    private static void ProcessDependentMetaAchievements(
+        Player player,
+        AchievementDescriptor completedAchievement,
+        Dictionary<Guid, ServerAchievementProgress> progressById,
+        ref bool hasChanges
+    )
+    {
+        var index = _achievementIndex;
+        if (!index.MetaByAchievementId.TryGetValue(completedAchievement.Id, out var metaAchievements) ||
+            metaAchievements.Count == 0)
+        {
+            return;
+        }
+
+        var pending = new Queue<AchievementDescriptor>(metaAchievements);
+        var processed = new HashSet<Guid>();
+        while (pending.Count > 0)
+        {
+            var metaAchievement = pending.Dequeue();
+            if (metaAchievement == null || !processed.Add(metaAchievement.Id))
+            {
+                continue;
+            }
+
+            var progress = GetOrCreateProgress(player, metaAchievement, progressById, ref hasChanges);
+            if (progress.Completed)
+            {
+                continue;
+            }
+
+            UpdateProgressFromConditions(player, metaAchievement, progress, ref hasChanges);
+
+            if (!IsAchievementCompleted(player, metaAchievement, progress))
+            {
+                continue;
+            }
+
+            CompleteAchievement(player, metaAchievement, progress);
+            hasChanges = true;
+
+            if (index.MetaByAchievementId.TryGetValue(metaAchievement.Id, out var chainedMetaAchievements))
+            {
+                foreach (var chainedMetaAchievement in chainedMetaAchievements)
+                {
+                    pending.Enqueue(chainedMetaAchievement);
+                }
+            }
+        }
+    }
+
     private static void GrantRewards(Player player, AchievementDescriptor achievement)
     {
         var rewards = achievement.Rewards;
@@ -917,7 +970,8 @@ public static class AchievementService
             new Dictionary<Guid, List<AchievementDescriptor>>(),
             new Dictionary<Guid, List<AchievementDescriptor>>(),
             new Dictionary<Guid, List<AchievementDescriptor>>(),
-            new Dictionary<MapZone, List<AchievementDescriptor>>()
+            new Dictionary<MapZone, List<AchievementDescriptor>>(),
+            new Dictionary<Guid, List<AchievementDescriptor>>()
         );
 
         private AchievementIndex(
@@ -931,7 +985,8 @@ public static class AchievementService
             Dictionary<Guid, List<AchievementDescriptor>> questById,
             Dictionary<Guid, List<AchievementDescriptor>> itemById,
             Dictionary<Guid, List<AchievementDescriptor>> mapById,
-            Dictionary<MapZone, List<AchievementDescriptor>> mapByZoneType
+            Dictionary<MapZone, List<AchievementDescriptor>> mapByZoneType,
+            Dictionary<Guid, List<AchievementDescriptor>> metaByAchievementId
         )
         {
             MetaAchievements = metaAchievements;
@@ -945,6 +1000,7 @@ public static class AchievementService
             ItemById = itemById;
             MapById = mapById;
             MapByZoneType = mapByZoneType;
+            MetaByAchievementId = metaByAchievementId;
         }
 
         public IReadOnlyList<AchievementDescriptor> MetaAchievements { get; }
@@ -969,6 +1025,8 @@ public static class AchievementService
 
         public IReadOnlyDictionary<MapZone, List<AchievementDescriptor>> MapByZoneType { get; }
 
+        public IReadOnlyDictionary<Guid, List<AchievementDescriptor>> MetaByAchievementId { get; }
+
         public static AchievementIndex Build()
         {
             var metaAchievements = new List<AchievementDescriptor>();
@@ -982,12 +1040,17 @@ public static class AchievementService
             var itemById = new Dictionary<Guid, HashSet<AchievementDescriptor>>();
             var mapById = new Dictionary<Guid, HashSet<AchievementDescriptor>>();
             var mapByZoneType = new Dictionary<MapZone, HashSet<AchievementDescriptor>>();
+            var metaByAchievementId = new Dictionary<Guid, HashSet<AchievementDescriptor>>();
 
             foreach (var achievement in AchievementDescriptor.Lookup.Values.OfType<AchievementDescriptor>())
             {
                 if (achievement.MetaAchievementIds.Count > 0)
                 {
                     metaAchievements.Add(achievement);
+                    foreach (var achievementId in achievement.MetaAchievementIds)
+                    {
+                        AddToIndex(metaByAchievementId, achievementId, achievement);
+                    }
                     continue;
                 }
 
@@ -1064,7 +1127,8 @@ public static class AchievementService
                 ToListIndex(questById),
                 ToListIndex(itemById),
                 ToListIndex(mapById),
-                ToListIndex(mapByZoneType)
+                ToListIndex(mapByZoneType),
+                ToListIndex(metaByAchievementId)
             );
         }
 
