@@ -38,7 +38,6 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         string valueLabel = ""
     )
     {
-        Clear();
         _itemDescriptor = item;
         _amount = amount;
         _itemProperties = itemProperties;
