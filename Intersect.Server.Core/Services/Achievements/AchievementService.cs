@@ -254,6 +254,7 @@ public static class AchievementService
         }
 
         var hasChanges = false;
+        var progressById = BuildAchievementProgressIndex(player);
         var achievementDescriptors = GetIndexedAchievements(trigger, context);
 
         foreach (var achievement in achievementDescriptors)
@@ -263,7 +264,7 @@ public static class AchievementService
                 continue;
             }
 
-            var progress = GetOrCreateProgress(player, achievement, ref hasChanges);
+            var progress = GetOrCreateProgress(player, achievement, progressById, ref hasChanges);
             if (progress.Completed)
             {
                 continue;
@@ -404,6 +405,36 @@ public static class AchievementService
         player.Achievements.Add(progress);
         hasChanges = true;
         return progress;
+    }
+
+    private static ServerAchievementProgress GetOrCreateProgress(
+        Player player,
+        AchievementDescriptor achievement,
+        Dictionary<Guid, ServerAchievementProgress> progressById,
+        ref bool hasChanges
+    )
+    {
+        if (progressById.TryGetValue(achievement.Id, out var progress))
+        {
+            return progress;
+        }
+
+        progress = new ServerAchievementProgress(achievement.Id);
+        player.Achievements.Add(progress);
+        progressById[achievement.Id] = progress;
+        hasChanges = true;
+        return progress;
+    }
+
+    private static Dictionary<Guid, ServerAchievementProgress> BuildAchievementProgressIndex(Player player)
+    {
+        var progressById = new Dictionary<Guid, ServerAchievementProgress>(player.Achievements.Count);
+        foreach (var progress in player.Achievements)
+        {
+            progressById.TryAdd(progress.AchievementId, progress);
+        }
+
+        return progressById;
     }
 
     private static bool UpdateProgressFromConditions(
