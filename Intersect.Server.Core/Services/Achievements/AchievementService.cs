@@ -26,6 +26,9 @@ namespace Intersect.Server.Services.Achievements;
 
 public static class AchievementService
 {
+    private static readonly object IndexLock = new();
+    private static AchievementIndex _achievementIndex = AchievementIndex.Empty;
+
     private enum AchievementTrigger
     {
         LevelUp,
@@ -128,6 +131,14 @@ public static class AchievementService
             AchievementTrigger.DungeonCompleted,
             new AchievementContext(1, mapId)
         );
+    }
+
+    public static void RebuildAchievementIndices()
+    {
+        lock (IndexLock)
+        {
+            _achievementIndex = AchievementIndex.Build();
+        }
     }
 
     public static void CompleteAchievement(Player player, Guid achievementId)
@@ -243,9 +254,7 @@ public static class AchievementService
         }
 
         var hasChanges = false;
-        var achievementDescriptors = AchievementDescriptor.Lookup.Values
-            .OfType<AchievementDescriptor>()
-            .ToList();
+        var achievementDescriptors = GetIndexedAchievements(trigger, context);
 
         foreach (var achievement in achievementDescriptors)
         {
@@ -283,6 +292,74 @@ public static class AchievementService
             player.Save();
             PacketSender.SendAchievementProgress(player);
         }
+    }
+
+    private static IReadOnlyList<AchievementDescriptor> GetIndexedAchievements(
+        AchievementTrigger trigger,
+        AchievementContext context
+    )
+    {
+        var index = _achievementIndex;
+        var achievements = new HashSet<AchievementDescriptor>();
+
+        void AddRange(IEnumerable<AchievementDescriptor> descriptors)
+        {
+            foreach (var descriptor in descriptors)
+            {
+                achievements.Add(descriptor);
+            }
+        }
+
+        AddRange(index.MetaAchievements);
+
+        switch (trigger)
+        {
+            case AchievementTrigger.LevelUp:
+                AddRange(index.LevelUp);
+                break;
+            case AchievementTrigger.NpcKill:
+                AddRange(index.NpcKill);
+                break;
+            case AchievementTrigger.QuestCompleted:
+                if (context.TargetId is { } questId &&
+                    index.QuestById.TryGetValue(questId, out var questAchievements))
+                {
+                    AddRange(questAchievements);
+                }
+
+                AddRange(index.QuestGeneral);
+                break;
+            case AchievementTrigger.MapEntered:
+                if (context.TargetId is { } mapId &&
+                    index.MapById.TryGetValue(mapId, out var mapAchievements))
+                {
+                    AddRange(mapAchievements);
+                }
+
+                if (context.ZoneType is { } zoneType &&
+                    index.MapByZoneType.TryGetValue(zoneType, out var zoneAchievements))
+                {
+                    AddRange(zoneAchievements);
+                }
+
+                AddRange(index.MapGeneral);
+                break;
+            case AchievementTrigger.ItemCollected:
+            case AchievementTrigger.ItemCrafted:
+                if (context.TargetId is { } itemId &&
+                    index.ItemById.TryGetValue(itemId, out var itemAchievements))
+                {
+                    AddRange(itemAchievements);
+                }
+
+                AddRange(index.ItemGeneral);
+                break;
+            case AchievementTrigger.DungeonCompleted:
+                AddRange(index.DungeonCompleted);
+                break;
+        }
+
+        return achievements.ToList();
     }
 
     private static bool IsTriggerRelevant(
@@ -794,6 +871,225 @@ public static class AchievementService
         );
 
         return matchesMap || matchesZone;
+    }
+
+    private sealed class AchievementIndex
+    {
+        public static AchievementIndex Empty { get; } = new(
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            new Dictionary<Guid, List<AchievementDescriptor>>(),
+            new Dictionary<Guid, List<AchievementDescriptor>>(),
+            new Dictionary<Guid, List<AchievementDescriptor>>(),
+            new Dictionary<MapZone, List<AchievementDescriptor>>()
+        );
+
+        private AchievementIndex(
+            List<AchievementDescriptor> metaAchievements,
+            List<AchievementDescriptor> levelUp,
+            List<AchievementDescriptor> npcKill,
+            List<AchievementDescriptor> dungeonCompleted,
+            List<AchievementDescriptor> questGeneral,
+            List<AchievementDescriptor> mapGeneral,
+            List<AchievementDescriptor> itemGeneral,
+            Dictionary<Guid, List<AchievementDescriptor>> questById,
+            Dictionary<Guid, List<AchievementDescriptor>> itemById,
+            Dictionary<Guid, List<AchievementDescriptor>> mapById,
+            Dictionary<MapZone, List<AchievementDescriptor>> mapByZoneType
+        )
+        {
+            MetaAchievements = metaAchievements;
+            LevelUp = levelUp;
+            NpcKill = npcKill;
+            DungeonCompleted = dungeonCompleted;
+            QuestGeneral = questGeneral;
+            MapGeneral = mapGeneral;
+            ItemGeneral = itemGeneral;
+            QuestById = questById;
+            ItemById = itemById;
+            MapById = mapById;
+            MapByZoneType = mapByZoneType;
+        }
+
+        public IReadOnlyList<AchievementDescriptor> MetaAchievements { get; }
+
+        public IReadOnlyList<AchievementDescriptor> LevelUp { get; }
+
+        public IReadOnlyList<AchievementDescriptor> NpcKill { get; }
+
+        public IReadOnlyList<AchievementDescriptor> DungeonCompleted { get; }
+
+        public IReadOnlyList<AchievementDescriptor> QuestGeneral { get; }
+
+        public IReadOnlyList<AchievementDescriptor> MapGeneral { get; }
+
+        public IReadOnlyList<AchievementDescriptor> ItemGeneral { get; }
+
+        public IReadOnlyDictionary<Guid, List<AchievementDescriptor>> QuestById { get; }
+
+        public IReadOnlyDictionary<Guid, List<AchievementDescriptor>> ItemById { get; }
+
+        public IReadOnlyDictionary<Guid, List<AchievementDescriptor>> MapById { get; }
+
+        public IReadOnlyDictionary<MapZone, List<AchievementDescriptor>> MapByZoneType { get; }
+
+        public static AchievementIndex Build()
+        {
+            var metaAchievements = new List<AchievementDescriptor>();
+            var levelUp = new List<AchievementDescriptor>();
+            var npcKill = new List<AchievementDescriptor>();
+            var dungeonCompleted = new List<AchievementDescriptor>();
+            var questGeneral = new List<AchievementDescriptor>();
+            var mapGeneral = new List<AchievementDescriptor>();
+            var itemGeneral = new List<AchievementDescriptor>();
+            var questById = new Dictionary<Guid, HashSet<AchievementDescriptor>>();
+            var itemById = new Dictionary<Guid, HashSet<AchievementDescriptor>>();
+            var mapById = new Dictionary<Guid, HashSet<AchievementDescriptor>>();
+            var mapByZoneType = new Dictionary<MapZone, HashSet<AchievementDescriptor>>();
+
+            foreach (var achievement in AchievementDescriptor.Lookup.Values.OfType<AchievementDescriptor>())
+            {
+                if (achievement.MetaAchievementIds.Count > 0)
+                {
+                    metaAchievements.Add(achievement);
+                    continue;
+                }
+
+                if (achievement.Category == AchievementCategory.Events ||
+                    HasLevelRequirement(achievement.Requirements))
+                {
+                    levelUp.Add(achievement);
+                }
+
+                if (achievement.Category == AchievementCategory.Monsters)
+                {
+                    npcKill.Add(achievement);
+                }
+
+                if (achievement.Category == AchievementCategory.Dungeons)
+                {
+                    dungeonCompleted.Add(achievement);
+                }
+
+                var questConditionIds = GetQuestConditionIds(achievement.Requirements);
+                if (questConditionIds.Count > 0)
+                {
+                    foreach (var questId in questConditionIds)
+                    {
+                        AddToIndex(questById, questId, achievement);
+                    }
+                }
+                else if (achievement.Category == AchievementCategory.Quests)
+                {
+                    questGeneral.Add(achievement);
+                }
+
+                var itemConditionIds = GetItemConditionIds(achievement.Requirements);
+                if (itemConditionIds.Count > 0)
+                {
+                    foreach (var itemId in itemConditionIds)
+                    {
+                        AddToIndex(itemById, itemId, achievement);
+                    }
+                }
+                else if (achievement.Category == AchievementCategory.Professions)
+                {
+                    itemGeneral.Add(achievement);
+                }
+
+                var mapConditionIds = GetMapConditionIds(achievement.Requirements);
+                var zoneConditionTypes = GetZoneConditionTypes(achievement.Requirements);
+                if (mapConditionIds.Count > 0 || zoneConditionTypes.Count > 0)
+                {
+                    foreach (var mapId in mapConditionIds)
+                    {
+                        AddToIndex(mapById, mapId, achievement);
+                    }
+
+                    foreach (var zoneType in zoneConditionTypes)
+                    {
+                        AddToIndex(mapByZoneType, zoneType, achievement);
+                    }
+                }
+                else if (achievement.Category == AchievementCategory.Exploration)
+                {
+                    mapGeneral.Add(achievement);
+                }
+            }
+
+            return new AchievementIndex(
+                metaAchievements,
+                levelUp,
+                npcKill,
+                dungeonCompleted,
+                questGeneral,
+                mapGeneral,
+                itemGeneral,
+                ToListIndex(questById),
+                ToListIndex(itemById),
+                ToListIndex(mapById),
+                ToListIndex(mapByZoneType)
+            );
+        }
+
+        private static void AddToIndex<TKey>(
+            Dictionary<TKey, HashSet<AchievementDescriptor>> index,
+            TKey key,
+            AchievementDescriptor achievement
+        ) where TKey : notnull
+        {
+            if (!index.TryGetValue(key, out var achievements))
+            {
+                achievements = new HashSet<AchievementDescriptor>();
+                index[key] = achievements;
+            }
+
+            achievements.Add(achievement);
+        }
+
+        private static Dictionary<TKey, List<AchievementDescriptor>> ToListIndex<TKey>(
+            Dictionary<TKey, HashSet<AchievementDescriptor>> index
+        ) where TKey : notnull
+        {
+            return index.ToDictionary(pair => pair.Key, pair => pair.Value.ToList());
+        }
+
+        private static HashSet<Guid> GetQuestConditionIds(ConditionLists requirements)
+        {
+            return requirements.Lists
+                .SelectMany(list => list.Conditions.OfType<QuestCompletedCondition>())
+                .Select(condition => condition.QuestId)
+                .ToHashSet();
+        }
+
+        private static HashSet<Guid> GetItemConditionIds(ConditionLists requirements)
+        {
+            return requirements.Lists
+                .SelectMany(list => list.Conditions.OfType<HasItemCondition>())
+                .Select(condition => condition.ItemId)
+                .ToHashSet();
+        }
+
+        private static HashSet<Guid> GetMapConditionIds(ConditionLists requirements)
+        {
+            return requirements.Lists
+                .SelectMany(list => list.Conditions.OfType<MapIsCondition>())
+                .Select(condition => condition.MapId)
+                .ToHashSet();
+        }
+
+        private static HashSet<MapZone> GetZoneConditionTypes(ConditionLists requirements)
+        {
+            return requirements.Lists
+                .SelectMany(list => list.Conditions.OfType<MapZoneTypeIs>())
+                .Select(condition => condition.ZoneType)
+                .ToHashSet();
+        }
     }
 
     private sealed class AchievementContext

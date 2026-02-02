@@ -41,6 +41,7 @@ using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.Server.Services.Achievements;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -870,6 +871,7 @@ public static partial class DbInterface
                             AchievementDescriptor.Lookup.Set(achievement.Id, achievement);
                         }
 
+                        AchievementService.RebuildAchievementIndices();
                         break;
                     case GameObjectType.Title:
                         foreach (var title in context.Titles)
@@ -1290,6 +1292,7 @@ public static partial class DbInterface
                     case GameObjectType.Achievement:
                         context.Achievements.Add((AchievementDescriptor)dbObj);
                         AchievementDescriptor.Lookup.Set(dbObj.Id, dbObj);
+                        AchievementService.RebuildAchievementIndices();
 
                         break;
                     case GameObjectType.Title:
@@ -1404,6 +1407,7 @@ public static partial class DbInterface
     {
         try
         {
+            var shouldRebuildAchievementIndex = gameObject.Type == GameObjectType.Achievement;
             using (var context = CreateGameContext(readOnly: false))
             {
                 switch (gameObject.Type)
@@ -1543,6 +1547,11 @@ public static partial class DbInterface
                 context.Entry(gameObject).State = EntityState.Deleted;
                 context.SaveChanges();
             }
+
+            if (shouldRebuildAchievementIndex)
+            {
+                AchievementService.RebuildAchievementIndices();
+            }
         }
         catch (Exception exception)
         {
@@ -1561,6 +1570,7 @@ public static partial class DbInterface
     {
         try
         {
+            var shouldRebuildAchievementIndex = gameObject.Type == GameObjectType.Achievement;
             using (var context = CreateGameContext(readOnly: false))
             {
 
@@ -1706,6 +1716,11 @@ public static partial class DbInterface
 
                 context.ChangeTracker.DetectChanges();
                 context.SaveChanges();
+            }
+
+            if (shouldRebuildAchievementIndex)
+            {
+                AchievementService.RebuildAchievementIndices();
             }
         }
         catch (Exception exception)
