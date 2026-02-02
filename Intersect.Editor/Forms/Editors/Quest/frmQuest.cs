@@ -39,6 +39,10 @@ public partial class FrmQuest : EditorForm
 
         UpdateEditor();
     }
+
+    private static string GetQuestTaskLocalizationField(QuestTaskDescriptor task, string field) =>
+        $"Task:{task.Id}:{field}";
+
     private void AssignEditorItem(Guid id)
     {
         mEditorItem = QuestDescriptor.Get(id);
@@ -205,9 +209,9 @@ public partial class FrmQuest : EditorForm
                 foreach (var task in item.Tasks)
                 {
                     TranslationSourceUpdater.UpdateEnglishSource(
-                        "QuestTask",
-                        task.Id,
-                        "Description",
+                        item.Type.ToString(),
+                        item.Id,
+                        GetQuestTaskLocalizationField(task, "Description"),
                         task.Description
                     );
                 }
