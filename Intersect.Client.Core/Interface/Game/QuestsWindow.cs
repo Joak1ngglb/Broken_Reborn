@@ -448,18 +448,44 @@ namespace Intersect.Client.Interface.Game
 
         private void RequestQuestLocalization(QuestDescriptor quest)
         {
-            GameLocalization.RequestEntries(
-                [
-                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "Name"),
-                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "BeforeDescription"),
-                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "InProgressDescription"),
-                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "EndDescription")
-                ]
-            );
+            var entries = new List<LocalizationRequestEntry>
+            {
+                new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "Name"),
+                new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "BeforeDescription"),
+                new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "InProgressDescription"),
+                new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "EndDescription")
+            };
+
+            foreach (var task in quest.Tasks)
+            {
+                entries.Add(new LocalizationRequestEntry(
+                    quest.Type.ToString(),
+                    quest.Id.ToString(),
+                    GetQuestTaskLocalizationField(task, "Description")
+                ));
+            }
+
+            GameLocalization.RequestEntries(entries);
         }
 
         private static string GetLocalizedQuestField(QuestDescriptor quest, string field, string fallback) =>
             GameLocalization.GetTextOrDefault(quest.Type.ToString(), quest.Id, field, fallback);
+
+        private static string GetQuestTaskLocalizationField(QuestTaskDescriptor task, string field) =>
+            $"Task:{task.Id}:{field}";
+
+        private static string GetLocalizedQuestTaskField(
+            QuestDescriptor quest,
+            QuestTaskDescriptor task,
+            string field,
+            string fallback
+        ) =>
+            GameLocalization.GetTextOrDefault(
+                quest.Type.ToString(),
+                quest.Id,
+                GetQuestTaskLocalizationField(task, field),
+                fallback
+            );
 
         private static string GetLocalizedItemName(Guid itemId)
         {
@@ -500,7 +526,8 @@ namespace Intersect.Client.Interface.Game
                                    (request.Field == "Name" ||
                                     request.Field == "BeforeDescription" ||
                                     request.Field == "InProgressDescription" ||
-                                    request.Field == "EndDescription")
+                                    request.Field == "EndDescription" ||
+                                    request.Field.StartsWith("Task:", StringComparison.Ordinal))
                     ))
                 {
                     UpdateSelectedQuest();
@@ -668,9 +695,15 @@ namespace Intersect.Client.Interface.Game
                     {
                         if (mSelectedQuest.Tasks[i].Id == Globals.Me.QuestProgress[mSelectedQuest.Id].TaskId)
                         {
-                            if (mSelectedQuest.Tasks[i].Description.Length > 0)
+                            var localizedTaskDescription = GetLocalizedQuestTaskField(
+                                mSelectedQuest,
+                                mSelectedQuest.Tasks[i],
+                                "Description",
+                                mSelectedQuest.Tasks[i].Description
+                            );
+                            if (localizedTaskDescription.Length > 0)
                             {
-                                mQuestCurrentTaskLabel.AddText(mSelectedQuest.Tasks[i].Description, mQuestDescTemplateLabel);
+                                mQuestCurrentTaskLabel.AddText(localizedTaskDescription, mQuestDescTemplateLabel);
                                 mQuestCurrentTaskLabel.AddLineBreak();
                                 mQuestCurrentTaskLabel.AddLineBreak();
                             }
@@ -1143,7 +1176,7 @@ namespace Intersect.Client.Interface.Game
                 int progress = GetTaskProgress(task);
                 bool isCurrent = !questCompleted && (currentIndex == i);
 
-                var desc = task.Description;
+                var desc = GetLocalizedQuestTaskField(mSelectedQuest, task, "Description", task.Description);
 
                 switch (task.Objective)
                 {
