@@ -868,6 +868,7 @@ public static partial class DbInterface
                     case GameObjectType.Achievement:
                         foreach (var achievement in context.Achievements)
                         {
+                            achievement.RebuildRequirementMetadata();
                             AchievementDescriptor.Lookup.Set(achievement.Id, achievement);
                         }
 
@@ -1290,6 +1291,11 @@ public static partial class DbInterface
 
                         break;
                     case GameObjectType.Achievement:
+                        if (dbObj is AchievementDescriptor achievementDescriptor)
+                        {
+                            achievementDescriptor.RebuildRequirementMetadata();
+                        }
+
                         context.Achievements.Add((AchievementDescriptor)dbObj);
                         AchievementDescriptor.Lookup.Set(dbObj.Id, dbObj);
                         AchievementService.RebuildAchievementIndices();
@@ -1651,6 +1657,11 @@ public static partial class DbInterface
 
                         break;
                     case GameObjectType.Achievement:
+                        if (gameObject is AchievementDescriptor achievementDescriptor)
+                        {
+                            achievementDescriptor.RebuildRequirementMetadata();
+                        }
+
                         context.Achievements.Update((AchievementDescriptor)gameObject);
 
                         break;
