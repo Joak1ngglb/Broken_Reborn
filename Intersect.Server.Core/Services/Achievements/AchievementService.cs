@@ -274,7 +274,11 @@ public static class AchievementService
                 continue;
             }
 
-            var hasConditionProgress = UpdateProgressFromConditions(player, achievement, progress, ref hasChanges);
+            // Incremental objective updates are preferred for item-based triggers.
+            // Full recalculation is reserved for descriptor changes or missing cached objective data.
+            var hasConditionProgress = trigger is AchievementTrigger.ItemCollected or AchievementTrigger.ItemCrafted
+                ? UpdateProgressFromItemDelta(player, achievement, progress, context, ref hasChanges)
+                : UpdateProgressFromConditions(player, achievement, progress, ref hasChanges);
             if (!hasConditionProgress)
             {
                 var updatedProgress = progress.Progress + Math.Max(context.ProgressDelta, 0);
@@ -285,6 +289,7 @@ public static class AchievementService
                 }
             }
 
+            // Final validation always runs against the authoritative requirements to keep incremental progress honest.
             if (IsAchievementCompleted(player, achievement, progress))
             {
                 CompleteAchievement(player, achievement, progress);
@@ -475,6 +480,96 @@ public static class AchievementService
         return true;
     }
 
+    private static bool UpdateProgressFromItemDelta(
+        Player player,
+        AchievementDescriptor achievement,
+        ServerAchievementProgress progress,
+        AchievementContext context,
+        ref bool hasChanges
+    )
+    {
+        var objectives = EnsureObjectivesForIncrementalUpdates(achievement, player, progress, ref hasChanges);
+        if (objectives.Count == 0)
+        {
+            return false;
+        }
+
+        if (context.TargetId is not { } itemId || context.ProgressDelta <= 0)
+        {
+            return true;
+        }
+
+        var conditions = achievement.Requirements.Lists.SelectMany(list => list.Conditions).ToList();
+        var delta = Math.Max(context.ProgressDelta, 0);
+        var objectiveUpdated = false;
+
+        for (var index = 0; index < conditions.Count && index < objectives.Count; index++)
+        {
+            if (conditions[index] is not HasItemCondition hasItemCondition ||
+                hasItemCondition.ItemId != itemId)
+            {
+                continue;
+            }
+
+            var objective = objectives[index];
+            var updatedValue = (long)objective.Current + delta;
+            var clampedValue = (int)Math.Min(updatedValue, int.MaxValue);
+            if (clampedValue != objective.Current)
+            {
+                objective.Current = clampedValue;
+                objectives[index] = objective;
+                objectiveUpdated = true;
+            }
+        }
+
+        if (objectiveUpdated)
+        {
+            progress.Objectives = objectives;
+            hasChanges = true;
+        }
+
+        var updatedProgress = objectives.Count(objective => objective.Current > 0);
+        if (updatedProgress != progress.Progress)
+        {
+            progress.Progress = updatedProgress;
+            hasChanges = true;
+        }
+
+        return true;
+    }
+
+    private static List<ObjectiveProgress> EnsureObjectivesForIncrementalUpdates(
+        AchievementDescriptor achievement,
+        Player player,
+        ServerAchievementProgress progress,
+        ref bool hasChanges
+    )
+    {
+        var objectives = progress.Objectives;
+        if (objectives.Count == 0)
+        {
+            objectives = GetAchievementObjectives(achievement, player);
+            if (objectives.Count == 0)
+            {
+                return objectives;
+            }
+
+            progress.Objectives = objectives;
+            hasChanges = true;
+            return objectives;
+        }
+
+        var templates = GetObjectiveTemplates(achievement);
+        if (!AreObjectivesCompatible(objectives, templates))
+        {
+            objectives = GetAchievementObjectives(achievement, player);
+            progress.Objectives = objectives;
+            hasChanges = true;
+        }
+
+        return objectives;
+    }
+
     public static List<ObjectiveProgress> GetAchievementObjectives(
         AchievementDescriptor achievement,
         Player player
@@ -501,86 +596,162 @@ public static class AchievementService
 
         foreach (var condition in achievement.Requirements.Lists.SelectMany(list => list.Conditions))
         {
-            switch (condition)
-            {
-                case LevelOrStatCondition levelCondition:
-                {
-                    var currentValue = levelCondition.ComparingLevel
-                        ? player.Level
-                        : player.GetStatValue(levelCondition.Stat);
-                    objectives.Add(new ObjectiveProgress(currentValue, levelCondition.Value, ProgressMode.Quantitative));
-                    break;
-                }
-                case HasItemCondition hasItemCondition:
-                {
-                    var currentValue = player.CountItems(
-                        hasItemCondition.ItemId,
-                        true,
-                        hasItemCondition.CheckBank
-                    );
-                    objectives.Add(new ObjectiveProgress(currentValue, hasItemCondition.Quantity, ProgressMode.Quantitative));
-                    break;
-                }
-                case QuestCompletedCondition questCompletedCondition:
-                {
-                    var currentValue = player.QuestCompleted(questCompletedCondition.QuestId) ? 1 : 0;
-                    objectives.Add(new ObjectiveProgress(currentValue, 1, ProgressMode.Binary));
-                    break;
-                }
-                case QuestInProgressCondition questInProgressCondition:
-                {
-                    var currentValue = player.QuestInProgress(
-                        questInProgressCondition.QuestId,
-                        questInProgressCondition.Progress,
-                        questInProgressCondition.TaskId
-                    )
-                        ? 1
-                        : 0;
-                    objectives.Add(new ObjectiveProgress(currentValue, 1, ProgressMode.Binary));
-                    break;
-                }
-                case MapIsCondition mapCondition:
-                {
-                    var currentValue = player.MapId == mapCondition.MapId ? 1 : 0;
-                    objectives.Add(new ObjectiveProgress(currentValue, 1, ProgressMode.Binary));
-                    break;
-                }
-                case MapZoneTypeIs zoneCondition:
-                {
-                    var currentValue = player.Map?.ZoneType == zoneCondition.ZoneType ? 1 : 0;
-                    objectives.Add(new ObjectiveProgress(currentValue, 1, ProgressMode.Binary));
-                    break;
-                }
-                case VariableIsCondition variableCondition when variableCondition.VariableType == VariableType.PlayerVariable:
-                {
-                    var currentValue = (int)player.GetVariableValue(variableCondition.VariableId).Integer;
-                    if (variableCondition.Comparison is IntegerVariableComparison intComparison)
-                    {
-                        var targetValue = intComparison.MaxValue > 0
-                            ? (int)Math.Min(intComparison.MaxValue, int.MaxValue)
-                            : (int)Math.Min(intComparison.Value, int.MaxValue);
-
-                        if (targetValue > 0)
-                        {
-                            objectives.Add(new ObjectiveProgress(currentValue, targetValue, ProgressMode.Quantitative));
-                            break;
-                        }
-                    }
-
-                    var meetsCondition = Conditions.MeetsCondition(variableCondition, player, null, null) ? 1 : 0;
-                    objectives.Add(new ObjectiveProgress(meetsCondition, 1, ProgressMode.Binary));
-                    break;
-                }
-                default:
-                {
-                    var meetsCondition = Conditions.MeetsCondition(condition, player, null, null) ? 1 : 0;
-                    objectives.Add(new ObjectiveProgress(meetsCondition, 1, ProgressMode.Binary));
-                    break;
-                }
-            }
+            objectives.Add(BuildObjectiveSnapshot(condition, player));
         }
 
         return objectives;
+    }
+
+    private static ObjectiveProgress BuildObjectiveSnapshot(Condition condition, Player player)
+    {
+        switch (condition)
+        {
+            case LevelOrStatCondition levelCondition:
+            {
+                var currentValue = levelCondition.ComparingLevel
+                    ? player.Level
+                    : player.GetStatValue(levelCondition.Stat);
+                return new ObjectiveProgress(currentValue, levelCondition.Value, ProgressMode.Quantitative);
+            }
+            case HasItemCondition hasItemCondition:
+            {
+                var currentValue = player.CountItems(
+                    hasItemCondition.ItemId,
+                    true,
+                    hasItemCondition.CheckBank
+                );
+                return new ObjectiveProgress(currentValue, hasItemCondition.Quantity, ProgressMode.Quantitative);
+            }
+            case QuestCompletedCondition questCompletedCondition:
+            {
+                var currentValue = player.QuestCompleted(questCompletedCondition.QuestId) ? 1 : 0;
+                return new ObjectiveProgress(currentValue, 1, ProgressMode.Binary);
+            }
+            case QuestInProgressCondition questInProgressCondition:
+            {
+                var currentValue = player.QuestInProgress(
+                    questInProgressCondition.QuestId,
+                    questInProgressCondition.Progress,
+                    questInProgressCondition.TaskId
+                )
+                    ? 1
+                    : 0;
+                return new ObjectiveProgress(currentValue, 1, ProgressMode.Binary);
+            }
+            case MapIsCondition mapCondition:
+            {
+                var currentValue = player.MapId == mapCondition.MapId ? 1 : 0;
+                return new ObjectiveProgress(currentValue, 1, ProgressMode.Binary);
+            }
+            case MapZoneTypeIs zoneCondition:
+            {
+                var currentValue = player.Map?.ZoneType == zoneCondition.ZoneType ? 1 : 0;
+                return new ObjectiveProgress(currentValue, 1, ProgressMode.Binary);
+            }
+            case VariableIsCondition variableCondition when variableCondition.VariableType == VariableType.PlayerVariable:
+            {
+                var currentValue = (int)player.GetVariableValue(variableCondition.VariableId).Integer;
+                if (variableCondition.Comparison is IntegerVariableComparison intComparison)
+                {
+                    var targetValue = intComparison.MaxValue > 0
+                        ? (int)Math.Min(intComparison.MaxValue, int.MaxValue)
+                        : (int)Math.Min(intComparison.Value, int.MaxValue);
+
+                    if (targetValue > 0)
+                    {
+                        return new ObjectiveProgress(currentValue, targetValue, ProgressMode.Quantitative);
+                    }
+                }
+
+                var meetsCondition = Conditions.MeetsCondition(variableCondition, player, null, null) ? 1 : 0;
+                return new ObjectiveProgress(meetsCondition, 1, ProgressMode.Binary);
+            }
+            default:
+            {
+                var meetsCondition = Conditions.MeetsCondition(condition, player, null, null) ? 1 : 0;
+                return new ObjectiveProgress(meetsCondition, 1, ProgressMode.Binary);
+            }
+        }
+    }
+
+    private static List<ObjectiveProgress> GetObjectiveTemplates(AchievementDescriptor achievement)
+    {
+        var templates = new List<ObjectiveProgress>();
+        if (achievement == null)
+        {
+            return templates;
+        }
+
+        if (achievement.MetaAchievementIds.Count > 0)
+        {
+            foreach (var _ in achievement.MetaAchievementIds)
+            {
+                templates.Add(new ObjectiveProgress(0, 1, ProgressMode.Binary));
+            }
+
+            return templates;
+        }
+
+        foreach (var condition in achievement.Requirements.Lists.SelectMany(list => list.Conditions))
+        {
+            templates.Add(BuildObjectiveTemplate(condition));
+        }
+
+        return templates;
+    }
+
+    private static ObjectiveProgress BuildObjectiveTemplate(Condition condition)
+    {
+        return condition switch
+        {
+            LevelOrStatCondition levelCondition =>
+                new ObjectiveProgress(0, levelCondition.Value, ProgressMode.Quantitative),
+            HasItemCondition hasItemCondition =>
+                new ObjectiveProgress(0, hasItemCondition.Quantity, ProgressMode.Quantitative),
+            VariableIsCondition variableCondition when variableCondition.VariableType == VariableType.PlayerVariable
+                => BuildVariableTemplate(variableCondition),
+            _ => new ObjectiveProgress(0, 1, ProgressMode.Binary)
+        };
+    }
+
+    private static ObjectiveProgress BuildVariableTemplate(VariableIsCondition variableCondition)
+    {
+        if (variableCondition.Comparison is IntegerVariableComparison intComparison)
+        {
+            var targetValue = intComparison.MaxValue > 0
+                ? (int)Math.Min(intComparison.MaxValue, int.MaxValue)
+                : (int)Math.Min(intComparison.Value, int.MaxValue);
+
+            if (targetValue > 0)
+            {
+                return new ObjectiveProgress(0, targetValue, ProgressMode.Quantitative);
+            }
+        }
+
+        return new ObjectiveProgress(0, 1, ProgressMode.Binary);
+    }
+
+    private static bool AreObjectivesCompatible(
+        IReadOnlyList<ObjectiveProgress> existing,
+        IReadOnlyList<ObjectiveProgress> templates
+    )
+    {
+        if (existing.Count != templates.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < existing.Count; index++)
+        {
+            var existingObjective = existing[index];
+            var template = templates[index];
+            if (existingObjective.Target != template.Target || existingObjective.Mode != template.Mode)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static bool AreObjectivesEqual(
