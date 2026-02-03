@@ -873,11 +873,6 @@ public static class AchievementService
         PacketSender.SendOpenMailBox(player);
     }
 
-    private static bool ContainsCondition<TCondition>(ConditionLists requirements) where TCondition : Condition
-    {
-        return requirements.Lists.Any(list => list.Conditions.OfType<TCondition>().Any());
-    }
-
     private static bool HasLevelRequirement(ConditionLists requirements)
     {
         return requirements.Lists.Any(
@@ -887,10 +882,10 @@ public static class AchievementService
 
     private static bool MatchesQuestTrigger(AchievementDescriptor achievement, Guid? questId)
     {
-        var hasQuestCondition = ContainsCondition<QuestCompletedCondition>(achievement.Requirements);
-        if (hasQuestCondition)
+        achievement.EnsureRequirementMetadata();
+        if (achievement.HasQuestRequirement)
         {
-            return MatchesQuestCondition(achievement.Requirements, questId);
+            return questId.HasValue && achievement.QuestRequirementIds.Contains(questId.Value);
         }
 
         return achievement.Category == AchievementCategory.Quests;
@@ -898,12 +893,11 @@ public static class AchievementService
 
     private static bool MatchesMapTrigger(AchievementDescriptor achievement, AchievementContext context)
     {
-        var hasMapConditions =
-            ContainsCondition<MapIsCondition>(achievement.Requirements) ||
-            ContainsCondition<MapZoneTypeIs>(achievement.Requirements);
-        if (hasMapConditions)
+        achievement.EnsureRequirementMetadata();
+        if (achievement.HasMapRequirement)
         {
-            return MatchesMapConditions(achievement.Requirements, context);
+            return (context.TargetId.HasValue && achievement.MapRequirementIds.Contains(context.TargetId.Value)) ||
+                   (context.ZoneType.HasValue && achievement.ZoneRequirementTypes.Contains(context.ZoneType.Value));
         }
 
         return achievement.Category == AchievementCategory.Exploration;
@@ -911,50 +905,13 @@ public static class AchievementService
 
     private static bool MatchesItemTrigger(AchievementDescriptor achievement, Guid? itemId)
     {
-        var hasItemCondition = ContainsCondition<HasItemCondition>(achievement.Requirements);
-        if (hasItemCondition)
+        achievement.EnsureRequirementMetadata();
+        if (achievement.HasItemRequirement)
         {
-            return MatchesItemCondition(achievement.Requirements, itemId);
+            return itemId.HasValue && achievement.ItemRequirementIds.Contains(itemId.Value);
         }
 
         return achievement.Category == AchievementCategory.Professions;
-    }
-
-    private static bool MatchesQuestCondition(ConditionLists requirements, Guid? questId)
-    {
-        if (questId == null)
-        {
-            return false;
-        }
-
-        return requirements.Lists.Any(
-            list => list.Conditions.OfType<QuestCompletedCondition>().Any(condition => condition.QuestId == questId)
-        );
-    }
-
-    private static bool MatchesItemCondition(ConditionLists requirements, Guid? itemId)
-    {
-        if (itemId == null)
-        {
-            return false;
-        }
-
-        return requirements.Lists.Any(
-            list => list.Conditions.OfType<HasItemCondition>().Any(condition => condition.ItemId == itemId)
-        );
-    }
-
-    private static bool MatchesMapConditions(ConditionLists requirements, AchievementContext context)
-    {
-        var matchesMap = requirements.Lists.Any(
-            list => list.Conditions.OfType<MapIsCondition>().Any(condition => condition.MapId == context.TargetId)
-        );
-
-        var matchesZone = requirements.Lists.Any(
-            list => list.Conditions.OfType<MapZoneTypeIs>().Any(condition => condition.ZoneType == context.ZoneType)
-        );
-
-        return matchesMap || matchesZone;
     }
 
     private sealed class AchievementIndex
@@ -1070,7 +1027,7 @@ public static class AchievementService
                     dungeonCompleted.Add(achievement);
                 }
 
-                var questConditionIds = GetQuestConditionIds(achievement.Requirements);
+                var questConditionIds = GetQuestConditionIds(achievement);
                 if (questConditionIds.Count > 0)
                 {
                     foreach (var questId in questConditionIds)
@@ -1083,7 +1040,7 @@ public static class AchievementService
                     questGeneral.Add(achievement);
                 }
 
-                var itemConditionIds = GetItemConditionIds(achievement.Requirements);
+                var itemConditionIds = GetItemConditionIds(achievement);
                 if (itemConditionIds.Count > 0)
                 {
                     foreach (var itemId in itemConditionIds)
@@ -1096,8 +1053,8 @@ public static class AchievementService
                     itemGeneral.Add(achievement);
                 }
 
-                var mapConditionIds = GetMapConditionIds(achievement.Requirements);
-                var zoneConditionTypes = GetZoneConditionTypes(achievement.Requirements);
+                var mapConditionIds = GetMapConditionIds(achievement);
+                var zoneConditionTypes = GetZoneConditionTypes(achievement);
                 if (mapConditionIds.Count > 0 || zoneConditionTypes.Count > 0)
                 {
                     foreach (var mapId in mapConditionIds)
@@ -1154,36 +1111,28 @@ public static class AchievementService
             return index.ToDictionary(pair => pair.Key, pair => pair.Value.ToList());
         }
 
-        private static HashSet<Guid> GetQuestConditionIds(ConditionLists requirements)
+        private static HashSet<Guid> GetQuestConditionIds(AchievementDescriptor achievement)
         {
-            return requirements.Lists
-                .SelectMany(list => list.Conditions.OfType<QuestCompletedCondition>())
-                .Select(condition => condition.QuestId)
-                .ToHashSet();
+            achievement.EnsureRequirementMetadata();
+            return achievement.QuestRequirementIds.ToHashSet();
         }
 
-        private static HashSet<Guid> GetItemConditionIds(ConditionLists requirements)
+        private static HashSet<Guid> GetItemConditionIds(AchievementDescriptor achievement)
         {
-            return requirements.Lists
-                .SelectMany(list => list.Conditions.OfType<HasItemCondition>())
-                .Select(condition => condition.ItemId)
-                .ToHashSet();
+            achievement.EnsureRequirementMetadata();
+            return achievement.ItemRequirementIds.ToHashSet();
         }
 
-        private static HashSet<Guid> GetMapConditionIds(ConditionLists requirements)
+        private static HashSet<Guid> GetMapConditionIds(AchievementDescriptor achievement)
         {
-            return requirements.Lists
-                .SelectMany(list => list.Conditions.OfType<MapIsCondition>())
-                .Select(condition => condition.MapId)
-                .ToHashSet();
+            achievement.EnsureRequirementMetadata();
+            return achievement.MapRequirementIds.ToHashSet();
         }
 
-        private static HashSet<MapZone> GetZoneConditionTypes(ConditionLists requirements)
+        private static HashSet<MapZone> GetZoneConditionTypes(AchievementDescriptor achievement)
         {
-            return requirements.Lists
-                .SelectMany(list => list.Conditions.OfType<MapZoneTypeIs>())
-                .Select(condition => condition.ZoneType)
-                .ToHashSet();
+            achievement.EnsureRequirementMetadata();
+            return achievement.ZoneRequirementTypes.ToHashSet();
         }
     }
 
