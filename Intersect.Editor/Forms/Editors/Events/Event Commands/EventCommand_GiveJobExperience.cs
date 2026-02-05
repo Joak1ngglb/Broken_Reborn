@@ -12,9 +12,6 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
         private JobType selectedJob;
         private long selectedExperience;
 
-        // Diccionario para manejar las experiencias de los trabajos
-        private readonly Dictionary<JobType, long> JobExperience = new Dictionary<JobType, long>();
-
         // Diccionario para mapear los índices del ComboBox con los valores del JobType
         private readonly Dictionary<int, JobType> ComboBoxJobMapping = new Dictionary<int, JobType>();
 
@@ -25,24 +22,11 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
             mMyCommand = refCommand;
             mEventEditor = editor;
 
-            // Inicializar el combo box con los trabajos y mapear los índices
+            LoadExistingValues();
             InitializeComboBox();
-
-            // Seleccionar valores iniciales
-            if (selectedJob != JobType.None)
-            {
-                var selectedIndex = ComboBoxJobMapping.FirstOrDefault(x => x.Value == selectedJob).Key;
-                cmbJob.SelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
-            }
-
-            nudExperience.Value = selectedExperience;
 
             // Cargar localización
             InitLocalization();
-
-            // Inicializar experiencias
-            InitializeJobExperiences();
-
         }
 
         private void InitLocalization()
@@ -57,13 +41,11 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
             cmbJob.Items.Clear();
             ComboBoxJobMapping.Clear();
 
-            // Agregar una opción por defecto para evitar selección accidental
             cmbJob.Items.Add("-- Select a Job --");
-            ComboBoxJobMapping[-1] = JobType.None;
+            ComboBoxJobMapping[0] = JobType.None;
 
-            int comboIndex = 0;
+            int comboIndex = 1;
 
-            // Iterar manualmente desde 1 hasta `JobCount`
             for (int i = 1; i < (int)JobType.JobCount; i++)
             {
                 JobType job = (JobType)i;
@@ -72,19 +54,8 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
                 comboIndex++;
             }
 
-            // Asegurar que el índice inicial sea el valor por defecto
-            cmbJob.SelectedIndex = 0;
-        }
-
-        private void InitializeJobExperiences()
-        {
-            foreach (JobType job in Enum.GetValues(typeof(JobType)))
-            {
-                if (job != JobType.None && job != JobType.JobCount)
-                {
-                    JobExperience[job] = 0; // Inicializar todas las experiencias a 0
-                }
-            }
+            cmbJob.SelectedIndex = FindComboIndexForJob(selectedJob);
+            nudExperience.Value = selectedExperience;
         }
 
         private void UpdateCommandPrinter()
@@ -98,12 +69,61 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
             return $"Give {selectedExperience} EXP to {General.Globals.GetJobName((int)selectedJob)}";
         }
 
+        private void LoadExistingValues()
+        {
+            selectedJob = JobType.None;
+            selectedExperience = 0;
+
+            if (mMyCommand.JobExp == null || mMyCommand.JobExp.Count == 0)
+            {
+                return;
+            }
+
+            var configuredValue = mMyCommand.JobExp
+                .FirstOrDefault(x => x.Key != JobType.None && x.Key != JobType.JobCount && x.Value != 0);
+
+            if (!configuredValue.Equals(default(KeyValuePair<JobType, long>)))
+            {
+                selectedJob = configuredValue.Key;
+                selectedExperience = configuredValue.Value;
+
+                return;
+            }
+
+            var existingValue = mMyCommand.JobExp
+                .FirstOrDefault(x => x.Key != JobType.None && x.Key != JobType.JobCount);
+
+            if (!existingValue.Equals(default(KeyValuePair<JobType, long>)))
+            {
+                selectedJob = existingValue.Key;
+                selectedExperience = existingValue.Value;
+            }
+        }
+
+        private int FindComboIndexForJob(JobType job)
+        {
+            foreach (var pair in ComboBoxJobMapping)
+            {
+                if (pair.Value == job)
+                {
+                    return pair.Key;
+                }
+            }
+
+            return 0;
+        }
+
         private void btnSave_Click(object sender, EventArgs e)
         {
             long expAmount = (long)nudExperience.Value;
-            JobType selectedJob = (JobType)cmbJob.SelectedIndex;
 
-            if (selectedJob == JobType.None)
+            if (!ComboBoxJobMapping.TryGetValue(cmbJob.SelectedIndex, out var mappedJob))
+            {
+                MessageBox.Show("Please select a valid job.");
+                return;
+            }
+
+            if (mappedJob == JobType.None)
             {
                 MessageBox.Show("Please select a valid job.");
                 return;
@@ -113,7 +133,9 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
             mMyCommand.JobExp.Clear(); // <-- Esto asegurará que solo se guarde la nueva experiencia
 
             // Guardar los datos en el comando
-            mMyCommand.JobExp[selectedJob] = expAmount;
+            mMyCommand.JobExp[mappedJob] = expAmount;
+            selectedJob = mappedJob;
+            selectedExperience = expAmount;
 
             // Actualizar el texto en la UI del evento
             UpdateCommandPrinter();
