@@ -1712,19 +1712,23 @@ public static partial class CommandPrinter
     }
     private static string GetCommandText(GiveJobExperienceCommand command, MapInstance map)
     {
-        // Iterar sobre el diccionario JobExp en el comando
-        foreach (var jobExp in command.JobExp)
+        var configuredValue = command.JobExp
+            .FirstOrDefault(x => x.Key != JobType.None && x.Key != JobType.JobCount && x.Value != 0);
+
+        if (configuredValue.Equals(default(KeyValuePair<JobType, long>)))
         {
-            if (jobExp.Value > 0) // Si el trabajo tiene experiencia asignada
-            {
-                // Obtener el mensaje del trabajo desde EventCommandList
-                var format = Strings.EventCommandList.GetJobExperienceMessage(jobExp.Key);
-                return string.Format(format, jobExp.Value); // Devuelve el mensaje formateado con la experiencia
-            }
+            configuredValue = command.JobExp
+                .FirstOrDefault(x => x.Key != JobType.None && x.Key != JobType.JobCount);
         }
 
-        // Si no hay experiencias asignadas, retorna null
-        return null;
+        if (configuredValue.Equals(default(KeyValuePair<JobType, long>)))
+        {
+            return null;
+        }
+
+        var format = Strings.EventCommandList.GetJobExperienceMessage(configuredValue.Key);
+
+        return string.Format(format, configuredValue.Value);
     }
     private static string GetCommandText(OpenEnchantmentWindowCommand command, MapInstance map)
     {
