@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Intersect.Collections;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Conditions;
+using Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata;
+using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Models;
 using Newtonsoft.Json;
 
