@@ -41,20 +41,10 @@ public sealed class AdminItemManagementWindow : Window
         _defaultFont = Skin?.DefaultFont ?? Current.GetFont(TitleLabel.FontName);
 
         IsResizable = false;
-        MinimumSize = new Point(460, 320);
-        InnerPanelPadding = new Padding(8);
-        InnerPanel.DockChildSpacing = new Padding(0, 8, 0, 0);
-
-        var contentPanel = new Panel(this, "ContentPanel")
-        {
-            Dock = Pos.Fill,
-            ShouldDrawBackground = false,
-            DockChildSpacing = new Padding(0, 8, 0, 0),
-        };
+        var contentPanel = new Panel(this, "ContentPanel");
 
         _ = new Label(contentPanel, "PlayerNameLabel")
         {
-            Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
             Text = Strings.AdminWindow.Name,
@@ -62,7 +52,6 @@ public sealed class AdminItemManagementWindow : Window
 
         _playerNameInput = new TextBox(contentPanel, nameof(_playerNameInput))
         {
-            Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
             PlaceholderText = Strings.AdminWindow.NamePlaceholder,
@@ -72,7 +61,6 @@ public sealed class AdminItemManagementWindow : Window
 
         _itemDropdown = new LabeledComboBox(contentPanel, nameof(_itemDropdown))
         {
-            Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
             Label = Strings.AdminWindow.Item,
@@ -81,25 +69,18 @@ public sealed class AdminItemManagementWindow : Window
         PopulateItemDropdown(requestLocalization: true);
         _itemDropdown.ItemSelected += (_, _) => UpdateActionControls();
 
-        var quantityPanel = new Panel(contentPanel, "QuantityPanel")
-        {
-            Dock = Pos.Top,
-            ShouldDrawBackground = false,
-        };
+        var quantityPanel = new Panel(contentPanel, "QuantityPanel");
 
         _ = new Label(quantityPanel, "QuantityLabel")
         {
-            Dock = Pos.Left,
             Font = _defaultFont,
             FontSize = 12,
-            Margin = new Margin(0, 0, 4, 0),
             Text = Strings.AdminWindow.Quantity,
             TextAlign = Pos.Left | Pos.CenterV,
         };
 
         _quantityInput = new TextBoxNumeric(quantityPanel, nameof(_quantityInput))
         {
-            Dock = Pos.Fill,
             Font = _defaultFont,
             FontSize = 12,
             Padding = new Padding(8, 4),
@@ -111,32 +92,22 @@ public sealed class AdminItemManagementWindow : Window
 
         _overflowCheckbox = new LabeledCheckBox(contentPanel, nameof(_overflowCheckbox))
         {
-            Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
-            Margin = new Margin(0, 4, 0, 0),
             Text = Strings.AdminWindow.AllowOverflow,
         };
 
         _reserveCheckbox = new LabeledCheckBox(contentPanel, nameof(_reserveCheckbox))
         {
-            Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 12,
-            Margin = new Margin(0, 4, 0, 0),
             Text = Strings.AdminWindow.ReserveSpawn,
         };
 
-        var buttonsPanel = new Panel(contentPanel, "ButtonsPanel")
-        {
-            Dock = Pos.Top,
-            ShouldDrawBackground = false,
-            DockChildSpacing = new Padding(8, 0, 0, 0),
-        };
+        var buttonsPanel = new Panel(contentPanel, "ButtonsPanel");
 
         _giveItemButton = new Button(buttonsPanel, nameof(_giveItemButton))
         {
-            Dock = Pos.Left,
             Text = Strings.AdminWindow.GiveItem,
         };
         StyleButton(_giveItemButton);
@@ -144,7 +115,6 @@ public sealed class AdminItemManagementWindow : Window
 
         _spawnItemButton = new Button(buttonsPanel, nameof(_spawnItemButton))
         {
-            Dock = Pos.Left,
             Text = Strings.AdminWindow.SpawnItem,
         };
         StyleButton(_spawnItemButton);
@@ -162,7 +132,6 @@ public sealed class AdminItemManagementWindow : Window
     {
         button.MinimumSize = new Point(120, 28);
         button.Padding = StdPad();
-        button.Margin = new Margin(0, 0, 8, 0);
         button.Font = _defaultFont;
         button.FontSize = 12;
     }
