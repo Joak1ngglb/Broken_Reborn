@@ -1,4 +1,5 @@
 using System;
+using Intersect.Enums;
 using Intersect.Server.Entities;
 using Intersect.Server.Networking;
 
@@ -129,6 +130,8 @@ public static class HonorService
         player.Honor = updated;
         player.Grade = CalculateGrade(updated);
 
+        var action = amount > 0 ? "gained" : "lost";
+        PacketSender.SendChatMsg(player, $"You have {action} {Math.Abs(amount)} honor. Current honor: {player.Honor}", ChatMessageType.Notice);
         PacketSender.SendEntityDataToProximity(player);
     }
 }

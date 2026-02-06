@@ -1526,6 +1526,8 @@ public partial class Player : Entity
             return;
         }
 
+        var expPercent = Math.Round((double)(100 * amount) / GetExperienceToNextLevel(Level));
+
         if (amount <= 0) return;
 
         // Aplicar bonificación de equipo a la experiencia ganada  
@@ -1548,6 +1550,15 @@ public partial class Player : Entity
 
         // Agregar la experiencia restante al jugador  
         Exp += (int)playerExp;
+
+        PacketSender.SendChatMsg(
+            this,
+            guildExp > 0
+                ? $"{amount} ({expPercent}%) XP gained! | Guild XP: {guildExp}"
+                : $"{amount} ({expPercent}%) XP gained!",
+            ChatMessageType.Notice,
+            CustomColors.Alerts.Success
+        );
 
         if (Exp < 0)
         {
@@ -1594,6 +1605,13 @@ public partial class Player : Entity
                 Exp = 0;
             }
         }
+
+        PacketSender.SendChatMsg(
+            this,
+            $"{amount} XP loses from death!",
+            ChatMessageType.Notice,
+            CustomColors.Alerts.Declined
+        );
 
         AddLevels(-levelsToRemove);
     }
@@ -4552,7 +4570,7 @@ public partial class Player : Entity
                     quantity = 1;
                 }
 
-               
+
                 if (TryGiveItem(craftItem.Id, quantity))
                 {
                     PacketSender.SendChatMsg(
@@ -4565,9 +4583,8 @@ public partial class Player : Entity
                         EnqueueStartCommonEvent(craftDescriptor.Event);
                     }
 
-                    if (craftDescriptor.ExperienceAmount > 0 && craftDescriptor.Jobs != JobType.None)
+                    if (craftDescriptor.Jobs != JobType.None)
                     {
-
                         var playerJobLevel = GetJob(craftDescriptor.Jobs)?.JobLevel ?? 1;
                         var grantedExperience = CraftingExperiencePolicy.CalculateAwardedExperience(craftDescriptor, playerJobLevel);
                         if (grantedExperience > 0)
