@@ -11,6 +11,7 @@ using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Config;
 using Intersect.Enums;
+using Intersect.Framework.Core.Localization;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Localization;
 
@@ -193,12 +194,12 @@ namespace Intersect.Client.Interface.Game
 
             RequestLocalization(quest);
             Show();
-            var localizedName = GetLocalizedQuestField(quest, "Name", quest.Name);
+            var localizedName = GetLocalizedQuestField(quest, QuestFieldKey.Name, quest.Name);
             mQuestTitle.Text = localizedName;
 
             var localizedStartDescription = GetLocalizedQuestField(
                 quest,
-                "StartDescription",
+                QuestFieldKey.StartDescription,
                 quest.StartDescription
             );
             if (mQuestOfferText != localizedStartDescription || quest.Id != mLastQuestId)
@@ -218,8 +219,8 @@ namespace Intersect.Client.Interface.Game
         {
             GameLocalization.RequestEntries(
                 [
-                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "Name"),
-                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), "StartDescription")
+                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), QuestFieldKey.Name),
+                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), QuestFieldKey.StartDescription)
                 ]
             );
         }
@@ -255,7 +256,7 @@ namespace Intersect.Client.Interface.Game
             if (requests.Any(
                     request => request.EntityType == entityType &&
                                request.EntityId == entityId &&
-                               (request.Field == "Name" || request.Field == "StartDescription")
+                               (request.Field == QuestFieldKey.Name || request.Field == QuestFieldKey.StartDescription)
                 ))
             {
                 Update(quest);
