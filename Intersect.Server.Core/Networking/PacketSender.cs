@@ -1085,9 +1085,15 @@ public static partial class PacketSender
     }
 
     //EventDialogPacket
-    public static void SendEventDialog(Player player, string prompt, string face, Guid eventId)
+    public static void SendEventDialog(
+        Player player,
+        string prompt,
+        string face,
+        Guid eventId,
+        LocalizationRequestEntry? promptLocalizationRequest = null
+    )
     {
-        player.SendPacket(new EventDialogPacket(eventId, prompt, face, 0, null));
+        player.SendPacket(new EventDialogPacket(eventId, prompt, face, 0, null, promptLocalizationRequest));
     }
 
     //EventDialogPacket
@@ -1099,10 +1105,22 @@ public static partial class PacketSender
         string opt3,
         string opt4,
         string face,
-        Guid eventId
+        Guid eventId,
+        LocalizationRequestEntry? promptLocalizationRequest = null,
+        List<LocalizationRequestEntry>? responseLocalizationRequests = null
     )
     {
-        player.SendPacket(new EventDialogPacket(eventId, prompt, face, 1, new string[4] { opt1, opt2, opt3, opt4 }));
+        player.SendPacket(
+            new EventDialogPacket(
+                eventId,
+                prompt,
+                face,
+                1,
+                new string[4] { opt1, opt2, opt3, opt4 },
+                promptLocalizationRequest,
+                responseLocalizationRequests
+            )
+        );
     }
 
     public static void SendInputVariableDialog(
@@ -1110,10 +1128,21 @@ public static partial class PacketSender
         string title,
         string prompt,
         VariableDataType type,
-        Guid eventId
+        Guid eventId,
+        LocalizationRequestEntry? titleLocalizationRequest = null,
+        LocalizationRequestEntry? promptLocalizationRequest = null
     )
     {
-        player.SendPacket(new InputVariablePacket(eventId, title, prompt, type));
+        player.SendPacket(
+            new InputVariablePacket(
+                eventId,
+                title,
+                prompt,
+                type,
+                titleLocalizationRequest,
+                promptLocalizationRequest
+            )
+        );
     }
 
     //MapListPacket

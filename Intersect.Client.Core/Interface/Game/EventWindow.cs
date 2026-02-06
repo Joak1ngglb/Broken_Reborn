@@ -17,7 +17,10 @@ using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Threading;
 using Intersect.Utilities;
+using Intersect.Network.Packets.Localization;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -40,6 +43,8 @@ public partial class EventWindow : Panel
     private readonly Typewriter? _writer;
 
     private readonly Dialog _dialog;
+
+    private bool _localizationSubscribed;
 
     private EventWindow(Canvas gameCanvas, Dialog dialog) : base(gameCanvas, nameof(EventWindow))
     {
@@ -209,9 +214,105 @@ public partial class EventWindow : Panel
         MakeModal(dim: true);
         BringToFront();
         Interface.InputBlockingComponents.Add(this);
+        SubscribeToLocalizationUpdates();
         ApplicationContext.CurrentContext.Logger.LogTrace("Event window opened");
 
         #endregion Configure and Display
+    }
+
+    private void SubscribeToLocalizationUpdates()
+    {
+        if (_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
+        _localizationSubscribed = true;
+    }
+
+    private void UnsubscribeFromLocalizationUpdates()
+    {
+        if (!_localizationSubscribed)
+        {
+            return;
+        }
+
+        GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
+        _localizationSubscribed = false;
+    }
+
+    private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+    {
+        if (!IsVisibleInTree || _dialog.ResponseSent)
+        {
+            return;
+        }
+
+        var shouldRefreshPrompt = _dialog.PromptLocalizationRequest != null && requests.Any(
+            request => request.EntityType == _dialog.PromptLocalizationRequest.EntityType &&
+                       request.EntityId == _dialog.PromptLocalizationRequest.EntityId &&
+                       request.Field == _dialog.PromptLocalizationRequest.Field
+        );
+
+        var shouldRefreshOptions = _dialog.OptionLocalizationRequests.Any(
+            optionRequest => optionRequest != null && requests.Any(
+                request => request.EntityType == optionRequest.EntityType &&
+                           request.EntityId == optionRequest.EntityId &&
+                           request.Field == optionRequest.Field
+            )
+        );
+
+        if (!shouldRefreshPrompt && !shouldRefreshOptions)
+        {
+            return;
+        }
+
+        if (shouldRefreshPrompt && _dialog.PromptLocalizationRequest != null)
+        {
+            var promptRequest = _dialog.PromptLocalizationRequest;
+            _dialog.Prompt = GameLocalization.GetTextOrDefault(
+                promptRequest.EntityType,
+                Guid.TryParse(promptRequest.EntityId, out var entityId) ? entityId : Guid.Empty,
+                promptRequest.Field,
+                _dialog.PromptDefault ?? _dialog.Prompt ?? string.Empty
+            );
+        }
+
+        if (shouldRefreshOptions && _dialog.Options.Length > 0)
+        {
+            for (var optionIndex = 0; optionIndex < _dialog.Options.Length; optionIndex++)
+            {
+                if (optionIndex >= _dialog.OptionLocalizationRequests.Length)
+                {
+                    continue;
+                }
+
+                var optionRequest = _dialog.OptionLocalizationRequests[optionIndex];
+                if (optionRequest == null)
+                {
+                    continue;
+                }
+
+                var fallback = optionIndex < _dialog.OptionDefaults.Length
+                    ? _dialog.OptionDefaults[optionIndex]
+                    : _dialog.Options[optionIndex];
+                _dialog.Options[optionIndex] = GameLocalization.GetTextOrDefault(
+                    optionRequest.EntityType,
+                    Guid.TryParse(optionRequest.EntityId, out var optionEntityId) ? optionEntityId : Guid.Empty,
+                    optionRequest.Field,
+                    fallback
+                );
+            }
+        }
+
+        if (Parent is not Canvas canvas)
+        {
+            return;
+        }
+
+        EnsureDestroyed();
+        _instance = new EventWindow(canvas, _dialog);
     }
 
     private static void ResizeOptionsPanelToChildren(Panel optionsPanel)
@@ -228,6 +329,7 @@ public partial class EventWindow : Panel
 
     protected override void Dispose(bool disposing)
     {
+        UnsubscribeFromLocalizationUpdates();
         EnsureControlRestored();
         base.Dispose(disposing);
     }
