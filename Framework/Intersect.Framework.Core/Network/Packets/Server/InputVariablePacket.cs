@@ -1,4 +1,5 @@
-﻿using MessagePack;
+﻿using Intersect.Network.Packets.Localization;
+using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
 
@@ -10,12 +11,21 @@ public partial class InputVariablePacket : IntersectPacket
     {
     }
 
-    public InputVariablePacket(Guid eventId, string title, string prompt, Enums.VariableDataType type)
+    public InputVariablePacket(
+        Guid eventId,
+        string title,
+        string prompt,
+        Enums.VariableDataType type,
+        LocalizationRequestEntry? titleLocalizationRequest = null,
+        LocalizationRequestEntry? promptLocalizationRequest = null
+    )
     {
         EventId = eventId;
         Title = title;
         Prompt = prompt;
         Type = type;
+        TitleLocalizationRequest = titleLocalizationRequest;
+        PromptLocalizationRequest = promptLocalizationRequest;
     }
 
     [Key(0)]
@@ -29,5 +39,11 @@ public partial class InputVariablePacket : IntersectPacket
 
     [Key(3)]
     public Enums.VariableDataType Type { get; set; }
+
+    [Key(4)]
+    public LocalizationRequestEntry? TitleLocalizationRequest { get; set; }
+
+    [Key(5)]
+    public LocalizationRequestEntry? PromptLocalizationRequest { get; set; }
 
 }

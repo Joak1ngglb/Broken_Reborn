@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using Intersect.Config;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Crafting;
@@ -11,6 +12,7 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.Localization;
 using Intersect.GameObjects;
 using Intersect.Server.Core.MapInstancing;
 using Intersect.Server.Database;
@@ -24,12 +26,51 @@ using Intersect.Utilities;
 using Intersect.Server.Services;
 using Intersect.Server.Services.Achievements;
 using Intersect.Server.Core.Services;
+using Intersect.Network.Packets.Localization;
 
 namespace Intersect.Server.Entities.Events;
 
 
 public static partial class CommandProcessing
 {
+
+    private static int ResolvePageIndex(Event instance, EventPage page) =>
+        instance.Descriptor.Pages?.FindIndex(candidate => ReferenceEquals(candidate, page)) ?? -1;
+
+    private static Guid ResolveListId(EventPage page, List<EventCommand> commandList)
+    {
+        if (page.CommandLists == null)
+        {
+            return Guid.Empty;
+        }
+
+        foreach (var (listId, commands) in page.CommandLists)
+        {
+            if (ReferenceEquals(commands, commandList))
+            {
+                return listId;
+            }
+        }
+
+        return Guid.Empty;
+    }
+
+    private static LocalizationRequestEntry BuildEventLocalizationRequest(
+        Event instance,
+        CommandInstance stackInfo,
+        Func<int, Guid, int, string> fieldFactory
+    )
+    {
+        var pageIndex = ResolvePageIndex(instance, stackInfo.Page);
+        var listId = ResolveListId(stackInfo.Page, stackInfo.CommandList);
+        var commandIndex = stackInfo.CommandIndex;
+
+        return new LocalizationRequestEntry(
+            LocalizationEntityTypes.Event,
+            instance.Descriptor.Id.ToString(),
+            fieldFactory(pageIndex, listId, commandIndex)
+        );
+    }
 
     public static void ProcessCommand(EventCommand command, Player player, Event instance)
     {
@@ -52,8 +93,17 @@ public static partial class CommandProcessing
         Stack<CommandInstance> callStack
     )
     {
+        var promptLocalizationRequest = BuildEventLocalizationRequest(
+            instance,
+            stackInfo,
+            EventFieldKey.ShowText
+        );
         PacketSender.SendEventDialog(
-            player, ParseEventText(command.Text, player, instance), command.Face, instance.PageInstance.Id
+            player,
+            ParseEventText(command.Text, player, instance),
+            command.Face,
+            instance.PageInstance.Id,
+            promptLocalizationRequest
         );
 
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
@@ -73,7 +123,30 @@ public static partial class CommandProcessing
         var opt2 = ParseEventText(command.Options[1], player, instance);
         var opt3 = ParseEventText(command.Options[2], player, instance);
         var opt4 = ParseEventText(command.Options[3], player, instance);
-        PacketSender.SendEventDialog(player, txt, opt1, opt2, opt3, opt4, command.Face, instance.PageInstance.Id);
+        var promptLocalizationRequest = BuildEventLocalizationRequest(
+            instance,
+            stackInfo,
+            EventFieldKey.OptionsText
+        );
+        var optionLocalizationRequests = new List<LocalizationRequestEntry>(4)
+        {
+            BuildEventLocalizationRequest(instance, stackInfo, (page, list, commandIndex) => EventFieldKey.Option(page, list, commandIndex, 0)),
+            BuildEventLocalizationRequest(instance, stackInfo, (page, list, commandIndex) => EventFieldKey.Option(page, list, commandIndex, 1)),
+            BuildEventLocalizationRequest(instance, stackInfo, (page, list, commandIndex) => EventFieldKey.Option(page, list, commandIndex, 2)),
+            BuildEventLocalizationRequest(instance, stackInfo, (page, list, commandIndex) => EventFieldKey.Option(page, list, commandIndex, 3)),
+        };
+        PacketSender.SendEventDialog(
+            player,
+            txt,
+            opt1,
+            opt2,
+            opt3,
+            opt4,
+            command.Face,
+            instance.PageInstance.Id,
+            promptLocalizationRequest,
+            optionLocalizationRequests
+        );
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
         stackInfo.WaitingOnCommand = command;
         stackInfo.BranchIds = command.BranchIds;
@@ -125,7 +198,25 @@ public static partial class CommandProcessing
             return;
         }
 
-        PacketSender.SendInputVariableDialog(player, title, txt, (VariableDataType)type, instance.PageInstance.Id);
+        var titleLocalizationRequest = BuildEventLocalizationRequest(
+            instance,
+            stackInfo,
+            EventFieldKey.InputTitle
+        );
+        var promptLocalizationRequest = BuildEventLocalizationRequest(
+            instance,
+            stackInfo,
+            EventFieldKey.InputText
+        );
+        PacketSender.SendInputVariableDialog(
+            player,
+            title,
+            txt,
+            (VariableDataType)type,
+            instance.PageInstance.Id,
+            titleLocalizationRequest,
+            promptLocalizationRequest
+        );
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
         stackInfo.WaitingOnCommand = command;
         stackInfo.BranchIds = command.BranchIds;
@@ -141,6 +232,22 @@ public static partial class CommandProcessing
     )
     {
         var txt = ParseEventText(command.Text, player, instance);
+        var promptLocalizationRequest = BuildEventLocalizationRequest(
+            instance,
+            stackInfo,
+            EventFieldKey.ChatboxText
+        );
+        var localizedText = LocalizationRepository.Default.Get(
+            promptLocalizationRequest.EntityType,
+            promptLocalizationRequest.EntityId,
+            promptLocalizationRequest.Field,
+            Options.Instance.Language
+        );
+        if (!string.IsNullOrWhiteSpace(localizedText))
+        {
+            txt = ParseEventText(localizedText, player, instance);
+        }
+
         var color = Color.FromName(command.Color, Strings.Colors.Presets);
         switch (command.Channel)
         {

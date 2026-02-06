@@ -1227,6 +1227,16 @@ public partial class FrmEvent : Form
             entries.AddRange(TranslationSourceUpdater.GetEventEnglishSources((EventDescriptor)eventDescriptor));
         }
 
+        foreach (var quest in QuestDescriptor.Lookup.Values)
+        {
+            if (quest == null)
+            {
+                continue;
+            }
+
+            entries.AddRange(TranslationSourceUpdater.GetQuestAndRelatedEventSources((QuestDescriptor)quest));
+        }
+
         TranslationSourceUpdater.QueueBatchEnglishSources(entries);
     }
 
