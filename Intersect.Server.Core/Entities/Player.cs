@@ -4618,6 +4618,8 @@ public partial class Player : Entity
                         if (grantedExperience > 0)
                         {
                             GiveJobExperience(craftDescriptor.Jobs, grantedExperience);
+                            var message = Strings.CraftingNamespace.GetJobExperienceMessage(craftDescriptor.Jobs, grantedExperience);
+                            PacketSender.SendChatMsg(this, message, ChatMessageType.Experience, CustomColors.Chat.PlayerMsg);
                         }
                     }
                 }

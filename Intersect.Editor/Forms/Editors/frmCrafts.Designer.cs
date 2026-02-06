@@ -42,6 +42,8 @@ namespace Intersect.Editor.Forms.Editors
             this.grpGeneral = new DarkUI.Controls.DarkGroupBox();
             this.GrpExp = new DarkUI.Controls.DarkGroupBox();
             this.cmbJobType = new DarkUI.Controls.DarkComboBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.NudRecipeLevel = new DarkUI.Controls.DarkNumericUpDown();
             this.label2 = new System.Windows.Forms.Label();
             this.NudExpAmount = new DarkUI.Controls.DarkNumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
@@ -91,6 +93,7 @@ namespace Intersect.Editor.Forms.Editors
             ((System.ComponentModel.ISupportInitialize)(this.nudCraftQuantity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudSpeed)).BeginInit();
             this.GrpExp.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.NudRecipeLevel)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NudExpAmount)).BeginInit();
             this.grpIngredients.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudQuantity)).BeginInit();
@@ -433,13 +436,15 @@ namespace Intersect.Editor.Forms.Editors
             this.GrpExp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(48)))));
             this.GrpExp.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(90)))), ((int)(((byte)(90)))), ((int)(((byte)(90)))));
             this.GrpExp.Controls.Add(this.cmbJobType);
+            this.GrpExp.Controls.Add(this.label3);
+            this.GrpExp.Controls.Add(this.NudRecipeLevel);
             this.GrpExp.Controls.Add(this.label2);
             this.GrpExp.Controls.Add(this.NudExpAmount);
             this.GrpExp.Controls.Add(this.label1);
             this.GrpExp.ForeColor = System.Drawing.Color.Gainsboro;
             this.GrpExp.Location = new System.Drawing.Point(9, 271);
             this.GrpExp.Name = "GrpExp";
-            this.GrpExp.Size = new System.Drawing.Size(254, 74);
+            this.GrpExp.Size = new System.Drawing.Size(254, 105);
             this.GrpExp.TabIndex = 51;
             this.GrpExp.TabStop = false;
             this.GrpExp.Text = "Exp";
@@ -463,6 +468,29 @@ namespace Intersect.Editor.Forms.Editors
             this.cmbJobType.TabIndex = 32;
             this.cmbJobType.SelectedIndexChanged += new System.EventHandler(this.cmbJobType_SelectedIndexChanged);
             //
+            // label3
+            //
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(6, 62);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(71, 13);
+            this.label3.TabIndex = 34;
+            this.label3.Text = "Recipe Level:";
+            //
+            // NudRecipeLevel
+            //
+            this.NudRecipeLevel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(69)))), ((int)(((byte)(73)))), ((int)(((byte)(74)))));
+            this.NudRecipeLevel.ForeColor = System.Drawing.Color.Gainsboro;
+            this.NudRecipeLevel.Location = new System.Drawing.Point(140, 60);
+            this.NudRecipeLevel.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            this.NudRecipeLevel.Maximum = new decimal(new int[] { 999, 0, 0, 0 });
+            this.NudRecipeLevel.Name = "NudRecipeLevel";
+            this.NudRecipeLevel.Size = new System.Drawing.Size(108, 20);
+            this.NudRecipeLevel.TabIndex = 33;
+            this.NudRecipeLevel.Value = new decimal(new int[] { 1, 0, 0, 0 });
+            this.NudRecipeLevel.ValueChanged += new System.EventHandler(this.NudRecipeLevel_ValueChanged);
+            //
+            //
             // label2
             //
             this.label2.AutoSize = true;
@@ -470,7 +498,7 @@ namespace Intersect.Editor.Forms.Editors
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(72, 13);
             this.label2.TabIndex = 31;
-            this.label2.Text = "EXP Amount:";
+            this.label2.Text = "EXP Override (0 auto):";
             //
             // NudExpAmount
             //
@@ -806,6 +834,7 @@ namespace Intersect.Editor.Forms.Editors
             ((System.ComponentModel.ISupportInitialize)(this.nudFailureChance)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudCraftQuantity)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudSpeed)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.NudRecipeLevel)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.NudExpAmount)).EndInit();
             this.GrpExp.ResumeLayout(false);
             this.GrpExp.PerformLayout();
@@ -868,6 +897,8 @@ namespace Intersect.Editor.Forms.Editors
         private DarkButton btnCraftRequirements;
         private DarkUI.Controls.DarkGroupBox GrpExp;
         private DarkUI.Controls.DarkComboBox cmbJobType;
+        private System.Windows.Forms.Label label3;
+        private DarkUI.Controls.DarkNumericUpDown NudRecipeLevel;
         private System.Windows.Forms.Label label2;
         private DarkUI.Controls.DarkNumericUpDown NudExpAmount;
         private System.Windows.Forms.Label label1;
