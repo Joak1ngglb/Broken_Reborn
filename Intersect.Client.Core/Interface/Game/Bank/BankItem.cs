@@ -292,19 +292,24 @@ public partial class BankItem : SlotItem
             _quantityLabel.IsVisibleInParent = false;
             Icon.Texture = default;
             Icon.IsVisibleInParent = false;
+            ResetRarityBorder();
             return;
         }
         if (bankSlots[SlotIndex] is not { Descriptor: not null } or { Quantity: <= 0 })
         {
             _quantityLabel.IsVisibleInParent = false;
             Icon.Texture = default;
+            ResetRarityBorder();
             return;
         }
 
         var bankSlot = bankSlots[SlotIndex];
         var descriptor = bankSlot.Descriptor;
 
-        _quantityLabel.IsVisibleInParent = !Icon.IsDragging && descriptor.IsStackable && bankSlot.Quantity > 1;
+        var isDragging = Icon.IsDragging;
+        UpdateRarityBorder(descriptor, isDragging);
+
+        _quantityLabel.IsVisibleInParent = !isDragging && descriptor.IsStackable && bankSlot.Quantity > 1;
         if (_quantityLabel.IsVisibleInParent)
         {
             _quantityLabel.Text = Strings.FormatQuantityAbbreviated(bankSlot.Quantity);

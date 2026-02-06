@@ -397,6 +397,7 @@ public partial class HotbarItem : SlotItem
         }
 
         var isDragging = Icon.IsDragging;
+        UpdateRarityBorder(_currentItem, isDragging);
         var invalidInventoryIndex = _inventoryItemIndex < 0;
         if (isDragging)
         {
@@ -490,6 +491,7 @@ public partial class HotbarItem : SlotItem
             else
             {
                 Icon.Hide();
+                ResetRarityBorder();
                 _textureLoaded = true;
                 _isEquipped = false;
                 _equipLabel.IsHidden = true;
@@ -514,6 +516,7 @@ public partial class HotbarItem : SlotItem
             {
                 if (_currentSpell != null)
                 {
+                    ResetRarityBorder();
                     Icon.RenderColor = Color.White;
                 }
 

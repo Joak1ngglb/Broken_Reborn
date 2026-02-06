@@ -166,6 +166,8 @@ public partial class ShopItem : SlotItem
             return;
         }
 
+        UpdateRarityBorder(itemDescriptor, false);
+
         var itemTex = Globals.ContentManager?.GetTexture(Framework.Content.TextureType.Item, itemDescriptor.Icon);
         if (itemTex != null)
         {

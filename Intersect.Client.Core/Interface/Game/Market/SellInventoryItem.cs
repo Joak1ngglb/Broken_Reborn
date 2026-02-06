@@ -101,6 +101,7 @@ namespace Intersect.Client.Interface.Game.Market
 
             // Cantidad
             var dragging = Icon.IsDragging;
+            UpdateRarityBorder(desc, dragging);
             var showQty = !dragging && desc.IsStackable && slot.Quantity > 1;
             _qty.IsVisibleInParent = showQty;
             if (showQty) _qty.Text = Intersect.Client.Localization.Strings.FormatQuantityAbbreviated(slot.Quantity);
@@ -114,6 +115,7 @@ namespace Intersect.Client.Interface.Game.Market
             Icon.Texture = null;
             _qty.IsVisibleInParent = false;
             IsVisibleInParent = false;
+            ResetRarityBorder();
         }
 
         public void SetFilterMatch(bool match)

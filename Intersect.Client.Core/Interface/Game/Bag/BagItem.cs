@@ -200,13 +200,17 @@ public partial class BagItem : SlotItem
         {
             _quantityLabel.IsVisibleInParent = false;
             Icon.Texture = default;
+            ResetRarityBorder();
             return;
         }
 
         var bagSlot = bagSlots[SlotIndex];
         var descriptor = bagSlot.Descriptor;
 
-        _quantityLabel.IsVisibleInParent = !Icon.IsDragging && descriptor.IsStackable && bagSlot.Quantity > 1;
+        var isDragging = Icon.IsDragging;
+        UpdateRarityBorder(descriptor, isDragging);
+
+        _quantityLabel.IsVisibleInParent = !isDragging && descriptor.IsStackable && bagSlot.Quantity > 1;
         if (_quantityLabel.IsVisibleInParent)
         {
             _quantityLabel.Text = Strings.FormatQuantityAbbreviated(bagSlot.Quantity);
