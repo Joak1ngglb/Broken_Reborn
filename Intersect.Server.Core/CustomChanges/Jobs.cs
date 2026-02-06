@@ -51,14 +51,22 @@ namespace Intersect.Server.Entities
 
         public void GiveJobExperience(JobType jobType, long experience)
         {
-            if (Jobs.TryGetValue(jobType, out var job))
-            {
-                job.AddExperience(experience, this);
-            }
-            else
+            if (!Jobs.TryGetValue(jobType, out var job))
             {
                 //PacketSender.SendChatMsg(this, $"Error: El trabajo '{jobType}' no está inicializado.", ChatMessageType.Error);
+                return;
             }
+
+            var awardedExperience = job.AddExperience(experience, this);
+            if (awardedExperience <= 0)
+            {
+                return;
+            }
+
+            var nextLevelExperience = Math.Max(1, job.GetExperienceToNextLevel(job.JobLevel));
+            var expPercent = Math.Round((double)(100 * awardedExperience) / nextLevelExperience);
+            var message = $"{Strings.CraftingNamespace.GetJobExperienceMessage(jobType, awardedExperience)} ({expPercent}%)";
+            PacketSender.SendChatMsg(this, message, ChatMessageType.Experience, CustomColors.Chat.PlayerMsg);
         }
 
         public void SetJobLevel(JobType jobType, int level, bool resetExperience = false)
@@ -88,7 +96,7 @@ namespace Intersect.Server.Entities
             JobType = jobType;
         }
 
-        public void AddExperience(long amount, Player player)
+        public long AddExperience(long amount, Player player)
         {
             // Aplicar multiplicador del gremio si pertenece a uno
             if (player.Guild != null)
@@ -104,6 +112,11 @@ namespace Intersect.Server.Entities
                 amount = (long)(amount/* * multiplier*/);
             }
 
+            if (amount <= 0)
+            {
+                return 0;
+            }
+
             JobExp += amount;
 
             // Nivelar si se supera la experiencia necesaria para el siguiente nivel
@@ -114,6 +127,8 @@ namespace Intersect.Server.Entities
             }
 
             PacketSender.SendJobSync(player); // Sincroniza los datos después de actualizar
+
+            return amount;
         }
 
 

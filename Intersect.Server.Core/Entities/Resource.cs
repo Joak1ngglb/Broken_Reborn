@@ -71,8 +71,6 @@ public partial class Resource : Entity
             if (ExperienceAmount > 0 && Jobs != JobType.None)
             {
                 player.GiveJobExperience(Jobs, ExperienceAmount);
-                var message = Strings.CraftingNamespace.GetJobExperienceMessage(Jobs, ExperienceAmount);
-                PacketSender.SendChatMsg(player, message, ChatMessageType.Experience, CustomColors.Chat.PlayerMsg);
             }
         }
 
