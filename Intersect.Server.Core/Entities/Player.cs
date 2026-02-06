@@ -81,6 +81,24 @@ public partial class Player : Entity
     [JsonIgnore, NotMapped]
     public long[] MaxVitals => GetMaxVitals();
 
+    [JsonIgnore, NotMapped]
+    public long DeathTimeMs { get; set; }
+
+    [JsonIgnore, NotMapped]
+    private int mLastDeathCountdownSeconds = -1;
+
+    [JsonIgnore, NotMapped]
+    private bool mHasPendingJailRespawn;
+
+    [JsonIgnore, NotMapped]
+    private Guid mPendingJailMapId = Guid.Empty;
+
+    [JsonIgnore, NotMapped]
+    private byte mPendingJailX;
+
+    [JsonIgnore, NotMapped]
+    private byte mPendingJailY;
+
     //Name, X, Y, Dir, Etc all in the base Entity Class
     public Guid ClassId { get; set; }
 
@@ -506,6 +524,11 @@ public partial class Player : Entity
             User.LoginTime = DateTime.UtcNow;
         }
 
+        if (IsDead && DeathTimeMs <= 0)
+        {
+            DeathTimeMs = Timing.Global.Milliseconds;
+        }
+
         LoadFriends();
         LoadGuild();
 
@@ -885,8 +908,16 @@ public partial class Player : Entity
                     mStaleCooldownTimer = Timing.Global.Milliseconds + Options.Instance.Processing.StaleCooldownRemovalTimer;
                 }
 
+                if (HandleDeathCountdown(timeMs))
+                {
+                    return;
+                }
 
-                base.Update(timeMs);
+                var isDowned = GetVital(Vital.Health) <= 0;
+                if (!isDowned)
+                {
+                    base.Update(timeMs);
+                }
 
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
                 {
@@ -916,7 +947,7 @@ public partial class Player : Entity
                 }
 
                 //If we have a move route then let's process it....
-                if (MoveRoute != null && MoveTimer < timeMs)
+                if (!isDowned && MoveRoute != null && MoveTimer < timeMs)
                 {
                     //Check to see if the event instance is still active for us... if not then let's remove this route
                     var foundEvent = false;
@@ -1106,6 +1137,42 @@ public partial class Player : Entity
         }
     }
 
+    private bool HandleDeathCountdown(long timeMs)
+    {
+        if (!IsDead)
+        {
+            mLastDeathCountdownSeconds = -1;
+            return false;
+        }
+
+        var deathSeconds = Options.Instance.Player.DeathSeconds;
+        if (deathSeconds <= 0 || DeathTimeMs <= 0)
+        {
+            return false;
+        }
+
+        var respawnAt = DeathTimeMs + (deathSeconds * 1000L);
+        if (timeMs >= respawnAt)
+        {
+            mLastDeathCountdownSeconds = -1;
+            RespawnFromPacket();
+            return true;
+        }
+
+        var remainingSeconds = (int)Math.Ceiling((respawnAt - timeMs) / 1000d);
+        if (remainingSeconds != mLastDeathCountdownSeconds)
+        {
+            mLastDeathCountdownSeconds = remainingSeconds;
+            PacketSender.SendActionMsg(
+                this,
+                Strings.General.RespawnIn.ToString(remainingSeconds),
+                CustomColors.Combat.Status
+            );
+        }
+
+        return false;
+    }
+
     /// <summary>
     ///     Updates the player's spell cooldown for the specified <paramref name="spellDescriptor"/>.
     ///     <para> This method is called when a spell is casted by a player. </para>
@@ -1240,7 +1307,12 @@ public partial class Player : Entity
     //Spawning/Dying
     private void Respawn()
     {
-        if (ClassDescriptor.TryGet(ClassId, out _))
+        if (mHasPendingJailRespawn && mPendingJailMapId != Guid.Empty)
+        {
+            Warp(mPendingJailMapId, mPendingJailX, mPendingJailY);
+            ClearPendingJailRespawn();
+        }
+        else if (ClassDescriptor.TryGet(ClassId, out _))
         {
             WarpToSpawn();
         }
@@ -1250,17 +1322,50 @@ public partial class Player : Entity
         }
 
         Reset();
+        DeathTimeMs = 0;
 
         PacketSender.SendEntityDataToProximity(this);
+        PacketSender.SendPlayerRespawn(this);
 
         //Search death common event trigger
         StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);
+    }
+
+    private void SetPendingJailRespawn(Guid jailMapId, byte jailX, byte jailY)
+    {
+        mHasPendingJailRespawn = true;
+        mPendingJailMapId = jailMapId;
+        mPendingJailX = jailX;
+        mPendingJailY = jailY;
+    }
+
+    private void ClearPendingJailRespawn()
+    {
+        mHasPendingJailRespawn = false;
+        mPendingJailMapId = Guid.Empty;
+        mPendingJailX = 0;
+        mPendingJailY = 0;
+    }
+
+    internal void RespawnFromResurrection()
+    {
+        Respawn();
+    }
+
+    internal void RespawnFromPacket()
+    {
+        Respawn();
     }
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
         CastTime = 0;
         CastTarget = null;
+        AttackTimer = 0;
+        CombatTimer = 0;
+        Target = null;
+        IsBlocking = false;
+        DeathTimeMs = Timing.Global.Milliseconds;
 
         //Flag death to the client
         PlayDeathAnimation();
@@ -1323,10 +1428,9 @@ public partial class Player : Entity
             }
         }
         PacketSender.SendEntityDie(this);
-        Respawn();
         if (sendToJail)
         {
-            Warp(jailMapId, jailX, jailY);
+            SetPendingJailRespawn(jailMapId, jailX, jailY);
         }
         PacketSender.SendInventory(this);
         PacketSender.SendPlayerSpells(this);
@@ -1336,6 +1440,11 @@ public partial class Player : Entity
     public override void ProcessRegen()
     {
         Debug.Assert(ClassDescriptor.Lookup != null, "ClassBase.Lookup != null");
+
+        if (GetVital(Vital.Health) <= 0)
+        {
+            return;
+        }
 
         var playerClass = ClassDescriptor.Get(ClassId);
         if (playerClass?.VitalRegen == null)
@@ -2008,6 +2117,11 @@ public partial class Player : Entity
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
     {
+        if (IsDead)
+        {
+            return false;
+        }
+
         var npc = entity as Npc;
         if (npc != default && !npc.CanPlayerAttack(this))
         {
@@ -3606,6 +3720,11 @@ public partial class Player : Entity
 
     public void UseItem(int slot, Entity target = null)
     {
+        if (IsDead)
+        {
+            return;
+        }
+
         var equipped = false;
         var Item = Items[slot];
         var itemBase = ItemDescriptor.Get(Item.ItemId);
@@ -6019,6 +6138,11 @@ public partial class Player : Entity
 
     public void UseSpell(int spellSlot, Entity target, bool softRetargetOnSelfCast)
     {
+        if (IsDead)
+        {
+            return;
+        }
+
         var slot = Spells[spellSlot];
         var pspell = slot;
         if (pspell == null)

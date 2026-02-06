@@ -147,6 +147,7 @@ public partial class GameInterface : MutableInterface
     private EscapeMenuWindow? _escapeMenu;
     private SimplifiedEscapeMenu? _simplifiedEscapeMenu;
     private TargetContextMenu? _targetContextMenu;
+    private DeathWindow? _deathWindow;
     private SendMailBoxWindow mSendMailBoxWindow;
     private MailBoxWindow mMailBoxWindow;
    public MarketWindow mMarketWindow;
@@ -164,6 +165,8 @@ public partial class GameInterface : MutableInterface
     public TargetContextMenu TargetContextMenu => _targetContextMenu ??= new TargetContextMenu(GameCanvas) {IsHidden = true};
 
     public AnnouncementWindow AnnouncementWindow => _announcementWindow ??= new AnnouncementWindow(GameCanvas) { IsHidden = true };
+
+    public DeathWindow DeathWindow => _deathWindow ??= new DeathWindow(GameCanvas) { IsHidden = true };
 
     public PlayerShopWindow PlayerShopWindow => _playerShopWindow ??= CreatePlayerShopWindow();
 
@@ -213,6 +216,23 @@ public partial class GameInterface : MutableInterface
         mMapItemWindow = new MapItemWindow(GameCanvas);
 
     }
+
+    public void ShowDeathWindow()
+    {
+        if (!DeathWindow.IsHidden)
+        {
+            return;
+        }
+
+        DeathWindow.Show();
+        DeathWindow.BringToFront();
+    }
+
+    public void HideDeathWindow()
+    {
+        _deathWindow?.Hide();
+    }
+
     public void OpenEnchantWindow()
     {
         if (mEnchantItemWindow == null)
@@ -586,6 +606,7 @@ public partial class GameInterface : MutableInterface
         mMapItemWindow.Update();
         AnnouncementWindow?.Update();
         mPictureWindow?.Update();
+        _deathWindow?.Update();
         mCreateGuildWindow?.Update();
         mBreakItemWindow?.Update();
         mEnchantItemWindow?.Update();

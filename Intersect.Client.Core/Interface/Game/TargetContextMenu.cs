@@ -205,7 +205,7 @@ public sealed partial class TargetContextMenu : ContextMenu
 
     void tradeRequest_Clicked(Base sender, MouseButtonState arguments)
     {
-        if (_me == null || _entity is not Player || _entity == _me)
+        if (_me == null || _entity is not Player || _entity == _me || _me.IsDead)
         {
             return;
         }

@@ -207,7 +207,30 @@ public abstract partial class Entity : IEntity
     }
 
     [NotMapped]
-    public bool IsDead { get; set; }
+    public bool IsDead
+    {
+        get => GetVital(Vital.Health) <= 0;
+        set
+        {
+            if (value)
+            {
+                SetVital(Vital.Health, 0);
+            }
+            else if (GetVital(Vital.Health) <= 0)
+            {
+                var reviveHealth = Math.Max(1, GetMaxVital(Vital.Health));
+                SetVital(Vital.Health, reviveHealth);
+            }
+        }
+    }
+
+    [JsonIgnore, NotMapped]
+    internal bool DeathProcessed { get; private set; }
+
+    protected void ResetDeathProcessed()
+    {
+        DeathProcessed = false;
+    }
 
     //Combat
     [NotMapped, JsonIgnore]
@@ -1225,23 +1248,27 @@ public abstract partial class Entity : IEntity
                     //Check if moving into a projectile.. if so this npc needs to be hit
                     if (currentMap != null)
                     {
-                        foreach (var instance in MapController.GetSurroundingMapInstances(currentMap.Id, MapInstanceId, true))
+                        var isDownedPlayer = this is Player movingPlayer && movingPlayer.GetVital(Vital.Health) <= 0;
+                        if (!IsDead && !isDownedPlayer)
                         {
-                            var projectiles = instance.MapProjectilesCached;
-                            foreach (var projectile in projectiles)
+                            foreach (var instance in MapController.GetSurroundingMapInstances(currentMap.Id, MapInstanceId, true))
                             {
-                                var spawns = projectile?.Spawns?.ToArray() ?? Array.Empty<ProjectileSpawn>();
-                                foreach (var spawn in spawns)
+                                var projectiles = instance.MapProjectilesCached;
+                                foreach (var projectile in projectiles)
                                 {
-                                    // TODO: Filter in Spawns variable, there should be no nulls. See #78 for evidence it is null.
-                                    if (spawn == null)
+                                    var spawns = projectile?.Spawns?.ToArray() ?? Array.Empty<ProjectileSpawn>();
+                                    foreach (var spawn in spawns)
                                     {
-                                        continue;
-                                    }
+                                        // TODO: Filter in Spawns variable, there should be no nulls. See #78 for evidence it is null.
+                                        if (spawn == null)
+                                        {
+                                            continue;
+                                        }
 
-                                    if (spawn.IsAtLocation(MapId, X, Y, Z) && spawn.HitEntity(this))
-                                    {
-                                        spawn.Dead = true;
+                                        if (spawn.IsAtLocation(MapId, X, Y, Z) && spawn.HitEntity(this))
+                                        {
+                                            spawn.Dead = true;
+                                        }
                                     }
                                 }
                             }
@@ -1483,6 +1510,8 @@ public abstract partial class Entity : IEntity
 
     public void SetVital(int vital, long value)
     {
+        var previousValue = _vitals[vital];
+
         if (value < 0)
         {
             value = 0;
@@ -1491,6 +1520,11 @@ public abstract partial class Entity : IEntity
         if (GetMaxVital(vital) < value)
         {
             value = GetMaxVital(vital);
+        }
+
+        if (vital == (int)Vital.Health && previousValue <= 0 && value > 0)
+        {
+            ResetDeathProcessed();
         }
 
         _vitals[vital] = value;
@@ -1795,6 +1829,11 @@ public abstract partial class Entity : IEntity
         }
 
         if (spellDescriptor == null)
+        {
+            return;
+        }
+
+        if (target.IsDead && spellDescriptor.SpellType != SpellType.Resurrection)
         {
             return;
         }
@@ -2570,7 +2609,8 @@ public abstract partial class Entity : IEntity
         }
 
         // Check for target validity
-        var singleTargetSpell = (spell.SpellType == SpellType.CombatSpell && spell.Combat.TargetType == SpellTargetType.Single) || spell.SpellType == SpellType.WarpTo;
+        var singleTargetSpell = ((spell.SpellType == SpellType.CombatSpell || spell.SpellType == SpellType.Resurrection) &&
+            spell.Combat.TargetType == SpellTargetType.Single) || spell.SpellType == SpellType.WarpTo;
         if (target == null && singleTargetSpell)
         {
             reason = SpellCastFailureReason.InvalidTarget;
@@ -2586,6 +2626,12 @@ public abstract partial class Entity : IEntity
         if (target != null && singleTargetSpell)
         {
             if (spell.Combat.Friendly != IsAllyOf(target) || !CanAttack(target, spell))
+            {
+                reason = SpellCastFailureReason.InvalidTarget;
+                return false;
+            }
+
+            if (spell.SpellType == SpellType.Resurrection && !target.IsDead)
             {
                 reason = SpellCastFailureReason.InvalidTarget;
                 return false;
@@ -2821,6 +2867,27 @@ public abstract partial class Entity : IEntity
                     }
 
                     break;
+                case SpellType.Resurrection:
+                    if (CastTarget is Player resurrectTarget && resurrectTarget.IsDead)
+                    {
+                        resurrectTarget.RespawnFromResurrection();
+                        PacketSender.SendActionMsg(
+                            resurrectTarget,
+                            Strings.Combat.Resurrected,
+                            CustomColors.Combat.Heal
+                        );
+
+                        if (resurrectTarget != this)
+                        {
+                            PacketSender.SendActionMsg(
+                                this,
+                                Strings.Combat.Resurrected,
+                                CustomColors.Combat.Heal
+                            );
+                        }
+                    }
+
+                    break;
                 default:
                     break;
             }
@@ -2873,7 +2940,10 @@ public abstract partial class Entity : IEntity
                                     }
                                 }
 
-                                TryAttack(entity, spellBase, spellProperties); //Handle damage
+                                if (!entity.IsDead || spellBase.SpellType == SpellType.Resurrection)
+                                {
+                                    TryAttack(entity, spellBase, spellProperties); //Handle damage
+                                }
                             }
                         }
                     }
@@ -3223,7 +3293,7 @@ public abstract partial class Entity : IEntity
     //Spawning/Dying
     public virtual void Die(bool dropItems = true, Entity killer = null)
     {
-        if (IsDead || Items == null)
+        if (DeathProcessed || Items == null)
         {
             return;
         }
@@ -3307,6 +3377,7 @@ public abstract partial class Entity : IEntity
         Stat?.ToList().ForEach(stat => stat?.Reset());
 
         IsDead = true;
+        DeathProcessed = true;
     }
 
     protected virtual bool ShouldDropItem(Entity killer, ItemDescriptor itemDescriptor, Item item, float dropRateModifier, out Guid lootOwner)
@@ -3389,6 +3460,7 @@ public abstract partial class Entity : IEntity
         CombatTimer = 0;
 
         IsDead = false;
+        ResetDeathProcessed();
     }
 
     //Empty virtual functions for players

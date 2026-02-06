@@ -29,6 +29,8 @@ public static partial class Globals
 
     public static readonly List<Guid> EntitiesToDispose = [];
 
+    public static readonly Dictionary<Guid, Corpse> Corpses = [];
+
     //Control Objects
     public static readonly List<Dialog> EventDialogs = [];
 
@@ -120,6 +122,38 @@ public static partial class Globals
         QuestJobExperience.Remove(questId);
         QuestGuildExperience.Remove(questId);
         QuestFactionHonor.Remove(questId);
+    }
+
+    public static void AddCorpse(Corpse corpse)
+    {
+        if (corpse == null)
+        {
+            return;
+        }
+
+        RemoveCorpse(corpse.OwnerId);
+        Corpses[corpse.OwnerId] = corpse;
+
+        if (Maps.MapInstance.TryGet(corpse.MapId, out var map))
+        {
+            map.LocalEntities[corpse.Id] = corpse;
+        }
+    }
+
+    public static void RemoveCorpse(Guid playerId)
+    {
+        if (!Corpses.TryGetValue(playerId, out var corpse))
+        {
+            return;
+        }
+
+        if (Maps.MapInstance.TryGet(corpse.MapId, out var map))
+        {
+            map.LocalEntitiesToDispose.Add(corpse.Id);
+        }
+
+        corpse.Dispose();
+        Corpses.Remove(playerId);
     }
 
     public static readonly Random Random = new();

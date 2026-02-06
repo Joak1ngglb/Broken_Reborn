@@ -264,6 +264,11 @@ public static partial class Input
                     switch (control)
                     {
                         case Control.Block:
+                            if (Globals.Me?.IsDead == true)
+                            {
+                                break;
+                            }
+
                             _ = (Globals.Me?.TryBlock());
                             break;
 
@@ -280,6 +285,11 @@ public static partial class Input
                             break;
 
                         case Control.PickUp:
+                            if (Globals.Me?.IsDead == true)
+                            {
+                                break;
+                            }
+
                             if (Globals.Me != default && Globals.Me.MapInstance != default)
                             {
                                 _ = Player.TryPickupItem(

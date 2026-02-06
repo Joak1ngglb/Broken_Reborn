@@ -904,8 +904,15 @@ internal sealed partial class PacketHandler
                 return;
             }
 
+            var wasAlive = entity.Vital[(int)Vital.Health] > 0;
             entity.Vital = en.Vitals;
             entity.MaxVital = en.MaxVitals;
+            var isDead = entity.Vital[(int)Vital.Health] <= 0;
+
+            if (wasAlive && isDead && entity == Globals.Me)
+            {
+                Interface.Interface.EnqueueInGame(gameInterface => gameInterface.ShowDeathWindow());
+            }
 
             if (entity == Globals.Me)
             {
@@ -1035,8 +1042,15 @@ internal sealed partial class PacketHandler
             return;
         }
 
+        var wasAlive = en.Vital[(int)Vital.Health] > 0;
         en.Vital = packet.Vitals;
         en.MaxVital = packet.MaxVitals;
+        var isDead = en.Vital[(int)Vital.Health] <= 0;
+
+        if (wasAlive && isDead && en == Globals.Me)
+        {
+            Interface.Interface.EnqueueInGame(gameInterface => gameInterface.ShowDeathWindow());
+        }
 
         if (en == Globals.Me)
         {
@@ -2329,6 +2343,77 @@ internal sealed partial class PacketHandler
             Globals.Entities[packet.PlayerId].DashQueue.Clear();
             Globals.Entities[packet.PlayerId].Dashing = null;
             Globals.Entities[packet.PlayerId].DashTimer = 0;
+        }
+
+        if (Globals.TryGetEntity(EntityType.Player, packet.PlayerId, out var entity) && entity is Player player)
+        {
+            var respawnTime = Options.Instance.Player.DeathSeconds > 0
+                ? (long)Options.Instance.Player.DeathSeconds * 1000
+                : 0;
+            var despawnTime = respawnTime > 0 ? Timing.Global.Milliseconds + respawnTime : 0;
+            Globals.AddCorpse(new Corpse(player, despawnTime));
+        }
+
+        if (packet.PlayerId == Globals.Me?.Id)
+        {
+            Interface.Interface.EnqueueInGame(gameInterface => gameInterface.ShowDeathWindow());
+        }
+    }
+
+    //PlayerRespawnPacket
+    public void HandlePacket(IPacketSender packetSender, PlayerRespawnPacket packet)
+    {
+        if (Globals.Entities.ContainsKey(packet.PlayerId))
+        {
+            Globals.Entities[packet.PlayerId].DashQueue.Clear();
+            Globals.Entities[packet.PlayerId].Dashing = null;
+            Globals.Entities[packet.PlayerId].DashTimer = 0;
+        }
+
+        Globals.RemoveCorpse(packet.PlayerId);
+
+        if (Globals.TryGetEntity(EntityType.Player, packet.PlayerId, out var entity) && entity is Player player)
+        {
+            player.MapId = packet.MapId;
+            player.X = (byte)packet.X;
+            player.Y = (byte)packet.Y;
+            player.Vital[(int)Vital.Health] = packet.Hp;
+            player.Vital[(int)Vital.Mana] = packet.Mp;
+
+            if (packet.Direction.HasValue)
+            {
+                player.DirectionFacing = packet.Direction.Value;
+            }
+        }
+
+        if (packet.PlayerId == Globals.Me?.Id)
+        {
+            if (Globals.Me != null)
+            {
+                Globals.Me.IsMoving = false;
+                Globals.Me.DirectionMoving = Direction.None;
+                Globals.Me.MoveTimer = 0;
+                Globals.Me.OffsetX = 0;
+                Globals.Me.OffsetY = 0;
+                Globals.Me.AttackTimer = 0;
+                Globals.Me.AttackTime = -1;
+                Globals.Me.CastTime = 0;
+                Globals.Me.IsBlocking = false;
+                Globals.Me.SpellCast = Guid.Empty;
+                Globals.Me.CombatTimer = 0;
+            }
+
+            Interface.Interface.EnqueueInGame(gameInterface =>
+            {
+                gameInterface.HideDeathWindow();
+                if (gameInterface.PlayerStatusWindow != null)
+                {
+                    gameInterface.PlayerStatusWindow.ShouldUpdateStatuses = true;
+                    gameInterface.PlayerStatusWindow.Update();
+                }
+
+                gameInterface.PlayerBox?.Update();
+            });
         }
     }
 
