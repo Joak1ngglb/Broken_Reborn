@@ -35,8 +35,6 @@ public partial class AdminWindow : Window
     private readonly Button _killPlayerButton;
     private readonly Button _leaveInstanceButton;
     private readonly Button _mailBroadcastButton;
-    private readonly Button _openItemWindowButton;
-    private readonly Button _openMailWindowButton;
     private readonly Label _mapListLabel;
 
     private readonly Panel _mapListPanel;
@@ -277,50 +275,6 @@ public partial class AdminWindow : Window
         );
 
         #endregion Quick Admin Actions
-
-        #region Additional Interfaces
-
-        var externalInterfacesSection = new Panel(this, "ExternalInterfacesSection")
-        {
-            Dock = Pos.Top,
-            ShouldDrawBackground = false,
-            DockChildSpacing = new Padding(0, 8, 0, 0),
-        };
-
-        _ = new Label(externalInterfacesSection, "ExternalInterfacesLabel")
-        {
-            Dock = Pos.Top,
-            Font = _defaultFont,
-            FontSize = 12,
-            Text = Strings.AdminWindow.AdditionalInterfaces,
-        };
-
-        var externalButtonsPanel = new Panel(externalInterfacesSection, "ExternalButtonsPanel")
-        {
-            Dock = Pos.Top,
-            ShouldDrawBackground = false,
-        };
-
-        _openItemWindowButton = new Button(externalButtonsPanel, nameof(_openItemWindowButton))
-        {
-            Dock = Pos.Left,
-            Text = Strings.AdminWindow.ItemManagement,
-        };
-        StyleButton(_openItemWindowButton);
-        _openItemWindowButton.Clicked += SpawnItemButtonOnClicked;
-
-        _openMailWindowButton = new Button(externalButtonsPanel, nameof(_openMailWindowButton))
-        {
-            Dock = Pos.Left,
-            Text = Strings.AdminWindow.MailBroadcast,
-        };
-        StyleButton(_openMailWindowButton);
-        _openMailWindowButton.Clicked += MailBroadcastButtonOnClicked;
-
-        externalInterfacesSection.SizeToChildren(recursive: true);
-
-        #endregion Additional Interfaces
-
 
         #region Sprite/Face Pickers
 
