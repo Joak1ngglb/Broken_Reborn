@@ -56,9 +56,11 @@ public class BestiaryItemDisplay : SlotItem
             Icon.Texture = null;
             Icon.IsVisibleInParent = false;
             _chanceLabel.IsVisibleInParent = false;
+            ResetRarityBorder();
             return;
         }
 
+        UpdateRarityBorder(descriptor, false);
         Icon.Texture = GameContentManager.Current.GetTexture(Framework.Content.TextureType.Item, descriptor.Icon);
         Icon.RenderColor = descriptor.Color;
         Icon.IsVisibleInParent = true;

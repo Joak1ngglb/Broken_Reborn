@@ -178,6 +178,7 @@ public class RuneInventoryItem : SlotItem
         }
 
         var isDragging = Icon.IsDragging;
+        UpdateRarityBorder(descriptor, isDragging);
 
         _quantityLabel.IsVisibleInParent = !isDragging && descriptor.IsStackable && item.Quantity > 1;
         if (_quantityLabel.IsVisibleInParent)
@@ -221,6 +222,7 @@ public class RuneInventoryItem : SlotItem
         Icon.Texture = null;
         _quantityLabel.IsVisibleInParent = false;
         _cooldownLabel.IsVisibleInParent = false;
+        ResetRarityBorder();
     }
 
     private static bool IsRune(ItemDescriptor descriptor)

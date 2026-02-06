@@ -90,6 +90,8 @@ public sealed class PlayerShopInventoryItem : SlotItem
             return;
         }
 
+        UpdateRarityBorder(descriptor, Icon.IsDragging);
+
         Icon.Texture = texture;
         Icon.RenderColor = descriptor.Color;
         Icon.IsVisibleInParent = true;
@@ -109,5 +111,6 @@ public sealed class PlayerShopInventoryItem : SlotItem
         Icon.IsVisibleInParent = false;
         _quantityLabel.IsVisibleInParent = false;
         IsVisibleInParent = false;
+        ResetRarityBorder();
     }
 }

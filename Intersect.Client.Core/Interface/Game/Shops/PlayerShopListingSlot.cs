@@ -111,6 +111,8 @@ public sealed class PlayerShopListingSlot : SlotItem
             return;
         }
 
+        UpdateRarityBorder(descriptor, Icon.IsDragging);
+
         Icon.Texture = texture;
         Icon.RenderColor = descriptor.Color;
         Icon.IsVisibleInParent = true;
@@ -201,6 +203,7 @@ public sealed class PlayerShopListingSlot : SlotItem
         _quantityLabel.IsVisibleInParent = false;
         _priceLabel.IsVisibleInParent = false;
         IsVisibleInParent = false;
+        ResetRarityBorder();
     }
 
     public void SetDesiredQuantity(int quantity)
