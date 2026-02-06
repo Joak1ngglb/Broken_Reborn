@@ -1,4 +1,5 @@
-﻿using MessagePack;
+﻿using Intersect.Network.Packets.Localization;
+using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
 
@@ -10,13 +11,23 @@ public partial class EventDialogPacket : IntersectPacket
     {
     }
 
-    public EventDialogPacket(Guid eventId, string prompt, string face, byte type, string[] responses)
+    public EventDialogPacket(
+        Guid eventId,
+        string prompt,
+        string face,
+        byte type,
+        string[] responses,
+        LocalizationRequestEntry? promptLocalizationRequest = null,
+        List<LocalizationRequestEntry>? responseLocalizationRequests = null
+    )
     {
         EventId = eventId;
         Prompt = prompt;
         Face = face;
         Type = type;
         Responses = responses;
+        PromptLocalizationRequest = promptLocalizationRequest;
+        ResponseLocalizationRequests = responseLocalizationRequests;
     }
 
     [Key(0)]
@@ -33,5 +44,11 @@ public partial class EventDialogPacket : IntersectPacket
 
     [Key(4)]
     public string[] Responses { get; set; }
+
+    [Key(5)]
+    public LocalizationRequestEntry? PromptLocalizationRequest { get; set; }
+
+    [Key(6)]
+    public List<LocalizationRequestEntry>? ResponseLocalizationRequests { get; set; }
 
 }

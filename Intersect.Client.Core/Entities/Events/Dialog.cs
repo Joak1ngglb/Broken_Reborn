@@ -1,3 +1,5 @@
+using Intersect.Network.Packets.Localization;
+
 namespace Intersect.Client.Entities.Events;
 
 public partial class Dialog
@@ -8,7 +10,15 @@ public partial class Dialog
 
     public string[] Options = [];
 
+    public LocalizationRequestEntry? PromptLocalizationRequest;
+
+    public LocalizationRequestEntry[] OptionLocalizationRequests = [];
+
     public string? Prompt;
+
+    public string? PromptDefault;
+
+    public string[] OptionDefaults = [];
 
     public bool ResponseSent;
 }
