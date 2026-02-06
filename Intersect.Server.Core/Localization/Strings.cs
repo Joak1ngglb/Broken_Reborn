@@ -587,7 +587,7 @@ public static partial class Strings
                 JobType.Smithing => "Blacksmithing",
                 JobType.Cooking => "Cooking",
                 JobType.Crafting => "Crafting",
-                JobType.Jewerly => "Jewerly ",
+                JobType.Jewelry => "Jewelry",
                 JobType.Tanner => "Tanner",
                 JobType.Tailoring => "Tailoring",
                 _ => null
@@ -1305,16 +1305,20 @@ public static partial class Strings
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly Dictionary<JobType, LocalizedString> JobLevelUpMessages = new Dictionary<JobType, LocalizedString>
-{
-    { JobType.Farming, @"Your Farming Job is now level {00}!" },
-    { JobType.Cooking, @"Your Cooking Job is now level {00}!" },
-    { JobType.Hunter, @"Your Hunting Job is now level {00}!" },
-    { JobType.Smithing, @"Your Blacksmith Job is now level {00}!" },
-    { JobType.Alchemy, @"Your Alchemy Job is now level {00}!" },
-    { JobType.Lumberjack, @"Your Wood Job is now level {00}!" },
-    { JobType.Fishing, @"Your Fishing Job is now level {00}!" },
-    { JobType.Mining, @"Your Mining Job is now level {00}!" }
-};
+        {
+            { JobType.Farming, @"Your Farming Job is now level {00}!" },
+            { JobType.Mining, @"Your Mining Job is now level {00}!" },
+            { JobType.Fishing, @"Your Fishing Job is now level {00}!" },
+            { JobType.Lumberjack, @"Your Woodcutting Job is now level {00}!" },
+            { JobType.Hunter, @"Your Hunting Job is now level {00}!" },
+            { JobType.Cooking, @"Your Cooking Job is now level {00}!" },
+            { JobType.Smithing, @"Your Blacksmithing Job is now level {00}!" },
+            { JobType.Alchemy, @"Your Alchemy Job is now level {00}!" },
+            { JobType.Crafting, @"Your Crafting Job is now level {00}!" },
+            { JobType.Jewelry, @"Your Jewelry Job is now level {00}!" },
+            { JobType.Tanner, @"Your Tanner Job is now level {00}!" },
+            { JobType.Tailoring, @"Your Tailoring Job is now level {00}!" }
+        };
         public LocalizedString GetJobLevelUpMessage(JobType jobType)
         {
             return JobLevelUpMessages.TryGetValue(jobType, out var message)

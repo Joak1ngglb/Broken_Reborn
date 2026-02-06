@@ -886,7 +886,7 @@ public static partial class Strings
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Crafting = "Crafting";
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public static LocalizedString Jewerly = "Jewerly";
+        public static LocalizedString Jewelry = "Jewelry";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString Tanner = "Tanner";
@@ -920,7 +920,7 @@ public static partial class Strings
                 JobType.Cooking => Strings.Job.Cooking,
                 JobType.Alchemy => Strings.Job.Alchemy,
                 JobType.Crafting => Strings.Job.Crafting,
-                JobType.Jewerly => Strings.Job.Jewerly,
+                JobType.Jewelry => Strings.Job.Jewelry,
                 JobType.Tanner => Strings.Job.Tanner,
                 JobType.Tailoring => Strings.Job.Tailoring,
                 _ => Strings.Job.None
@@ -940,7 +940,7 @@ public static partial class Strings
                 JobType.Smithing => "Harness the forge to shape metal into powerful weapons, resilient armor, and essential tools for survival and warfare.",
                 JobType.Cooking => "Prepare exquisite meals and beverages that not only restore vitality but also provide unique buffs and enhancements.",
                 JobType.Crafting => "Combine skill and creativity to assemble intricate tools, decorations, and practical items that enhance daily life.",
-                JobType.Jewerly => "Design and create elegant jewelry embedded with precious stones, enhancing the wearer's abilities and aesthetic appeal.",
+                JobType.Jewelry => "Design and create elegant jewelry embedded with precious stones, enhancing the wearer's abilities and aesthetic appeal.",
                 JobType.Tanner => "Transform raw animal hides into durable leather goods and protective armor, essential for adventurers and traders alike.",
                 JobType.Tailoring => "Spin fine threads and weave luxurious textiles to produce elegant clothing and essential materials for crafting.",
                 _ => "Description not found for this job."
