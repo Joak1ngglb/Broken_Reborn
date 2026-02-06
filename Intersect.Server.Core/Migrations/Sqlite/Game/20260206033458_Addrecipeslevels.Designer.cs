@@ -3,6 +3,7 @@ using System;
 using Intersect.Server.Database.GameData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,12 +11,69 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Intersect.Server.Migrations.Sqlite.Game
 {
     [DbContext(typeof(SqliteGameContext))]
-    partial class SqliteGameContextModelSnapshot : ModelSnapshot
+    [Migration("20260206033458_Addrecipeslevels")]
+    partial class Addrecipeslevels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
+
+            modelBuilder.Entity("Intersect.Framework.Core.GameObjects.Achievements.AchievementDescriptor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompletionMode")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("CompletionMode");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Difficulty")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Folder")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Icon")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("JsonColor")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Color");
+
+                    b.Property<string>("MetaAchievementIdsJson")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("MetaAchievementIds");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT")
+                        .HasColumnOrder(0);
+
+                    b.Property<int>("OrderValue")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RequirementsJson")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Requirements");
+
+                    b.Property<string>("RewardsJson")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Rewards");
+
+                    b.Property<long>("TimeCreated")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Achievements");
+                });
 
             modelBuilder.Entity("Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor", b =>
                 {
@@ -795,6 +853,29 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                     b.HasKey("Id");
 
                     b.ToTable("Resources");
+                });
+
+            modelBuilder.Entity("Intersect.Framework.Core.GameObjects.Titles.TitleDescriptor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Folder")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT")
+                        .HasColumnOrder(0);
+
+                    b.Property<long>("TimeCreated")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Titles");
                 });
 
             modelBuilder.Entity("Intersect.Framework.Core.GameObjects.Variables.GuildVariableDescriptor", b =>
