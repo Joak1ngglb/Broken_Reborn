@@ -74,5 +74,6 @@ public partial class CraftingRecipeDescriptor : DatabaseObject<CraftingRecipeDes
         set => CraftingRequirements.Load(value ?? "[]");
     }
     public JobType Jobs { get; set; }
+    public int RecipeLevel { get; set; } = 1;
     public long ExperienceAmount { get; set; }
 }

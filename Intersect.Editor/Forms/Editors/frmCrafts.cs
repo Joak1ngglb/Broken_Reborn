@@ -128,6 +128,7 @@ public partial class FrmCrafts : EditorForm
 
             cmbEvent.SelectedIndex = EventDescriptor.ListIndex(mEditorItem.EventId) + 1;
             cmbJobType.SelectedIndex = (int)mEditorItem.Jobs;
+            NudRecipeLevel.Value = Math.Max(1, mEditorItem.RecipeLevel);
             NudExpAmount.Value = mEditorItem.ExperienceAmount;
         }
         else
@@ -592,6 +593,12 @@ public partial class FrmCrafts : EditorForm
     private void cmbJobType_SelectedIndexChanged(object sender, EventArgs e)
     {
         mEditorItem.Jobs = (JobType)cmbJobType.SelectedIndex;
+    }
+
+    private void NudRecipeLevel_ValueChanged(object sender, EventArgs e)
+    {
+        NudRecipeLevel.Value = Math.Max(1, NudRecipeLevel.Value);
+        mEditorItem.RecipeLevel = (int)NudRecipeLevel.Value;
     }
 
     private void NudExpAmount_ValueChanged(object sender, EventArgs e)

@@ -4593,11 +4593,16 @@ public partial class Player : Entity
                         EnqueueStartCommonEvent(craftDescriptor.Event);
                     }
 
-                    if (craftDescriptor.ExperienceAmount > 0 && craftDescriptor.Jobs != JobType.None)
+                    if (craftDescriptor.Jobs != JobType.None)
                     {
-                        GiveJobExperience(craftDescriptor.Jobs, craftDescriptor.ExperienceAmount);
-                        var message = Strings.CraftingNamespace.GetJobExperienceMessage(craftDescriptor.Jobs, craftDescriptor.ExperienceAmount);
-                        PacketSender.SendChatMsg(this, message, ChatMessageType.Experience, CustomColors.Chat.PlayerMsg);
+                        var playerJobLevel = GetJob(craftDescriptor.Jobs)?.JobLevel ?? 1;
+                        var grantedExperience = CraftingExperiencePolicy.CalculateAwardedExperience(craftDescriptor, playerJobLevel);
+                        if (grantedExperience > 0)
+                        {
+                            GiveJobExperience(craftDescriptor.Jobs, grantedExperience);
+                            var message = Strings.CraftingNamespace.GetJobExperienceMessage(craftDescriptor.Jobs, grantedExperience);
+                            PacketSender.SendChatMsg(this, message, ChatMessageType.Experience, CustomColors.Chat.PlayerMsg);
+                        }
                     }
                 }
                 else

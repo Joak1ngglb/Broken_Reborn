@@ -327,6 +327,8 @@ namespace Intersect.Client.Interface.Game.Job
             RequestRecipeLocalization(recipes);
             RequestRecipeItemLocalization(recipes);
 
+            var playerJobLevel = Globals.Me.JobLevel.GetValueOrDefault(jobType, 1);
+
             foreach (var recipe in recipes)
             {
 
@@ -348,9 +350,10 @@ namespace Intersect.Client.Interface.Game.Job
                 nameLbl.SetPosition(50, 5);
 
                 // XP
+                var estimatedExperience = CraftingExperiencePolicy.CalculateAwardedExperience(recipe, playerJobLevel);
                 var xpLbl = new Label(recipeContainer, "RecipeExp")
                 {
-                    Text = Strings.Crafting.Exp.ToString(recipe.ExperienceAmount),
+                    Text = Strings.Crafting.Exp.ToString(estimatedExperience),
                     FontName = "sourcesansproblack",
                     FontSize = 10,
                     RenderColor = Color.White,
