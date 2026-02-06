@@ -8,6 +8,7 @@ using Intersect.Editor.Networking;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.Localization;
+using Intersect.GameObjects;
 using Intersect.Network.Packets.Editor;
 using Mono.Data.Sqlite;
 
@@ -284,6 +285,70 @@ public static class TranslationSourceUpdater
         }
 
         return entries;
+    }
+
+    public static IReadOnlyList<TranslationUpsertEntry> GetQuestAndRelatedEventSources(QuestDescriptor quest)
+    {
+        var entries = new List<TranslationUpsertEntry>();
+        if (quest == null)
+        {
+            return entries;
+        }
+
+        var entityType = quest.Type.ToString();
+        var entityId = quest.Id;
+
+        AddSource(entries, entityType, entityId, "Name", quest.Name);
+        AddSource(entries, entityType, entityId, "BeforeDescription", quest.BeforeDescription);
+        AddSource(entries, entityType, entityId, "StartDescription", quest.StartDescription);
+        AddSource(entries, entityType, entityId, "InProgressDescription", quest.InProgressDescription);
+        AddSource(entries, entityType, entityId, "EndDescription", quest.EndDescription);
+
+        var relatedEventIds = new HashSet<Guid>();
+        AddEventEntries(entries, quest.StartEvent, relatedEventIds);
+        AddEventEntries(entries, quest.EndEvent, relatedEventIds);
+
+        if (quest.Tasks == null)
+        {
+            return entries;
+        }
+
+        foreach (var task in quest.Tasks)
+        {
+            if (task == null)
+            {
+                continue;
+            }
+
+            AddSource(entries, entityType, entityId, $"Task:{task.Id}:Description", task.Description);
+
+            AddEventEntries(entries, task.CompletionEvent, relatedEventIds);
+            AddEventEntries(entries, task.EditingEvent, relatedEventIds);
+        }
+
+        return entries;
+    }
+
+    private static void AddEventEntries(
+        ICollection<TranslationUpsertEntry> entries,
+        EventDescriptor eventDescriptor,
+        ISet<Guid> processedEventIds
+    )
+    {
+        if (eventDescriptor == null || eventDescriptor.Id == Guid.Empty)
+        {
+            return;
+        }
+
+        if (!processedEventIds.Add(eventDescriptor.Id))
+        {
+            return;
+        }
+
+        foreach (var eventEntry in GetEventSources(eventDescriptor))
+        {
+            entries.Add(eventEntry);
+        }
     }
 
     private static void SendBatchSources(IEnumerable<TranslationUpsertEntry> entries, int batchSize)
