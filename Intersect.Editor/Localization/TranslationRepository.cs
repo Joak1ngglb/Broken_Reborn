@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
@@ -191,7 +190,7 @@ public static class TranslationSourceUpdater
         var entryList = entries as IReadOnlyCollection<TranslationUpsertEntry> ?? new List<TranslationUpsertEntry>(entries);
         if (entryList.Count == 0) return;
 
-        Task.Run(() => SendBatchSources(entryList, batchSize));
+        SendBatchSources(entryList, batchSize);
     }
 
     public static void UpdateSource(string entityType, Guid entityId, string field, string sourceText)
