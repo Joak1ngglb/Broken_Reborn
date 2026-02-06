@@ -7,6 +7,7 @@ using Intersect.Client.Framework.Gwen.Control.EventArguments;
 using Intersect.Client.Framework.Gwen.DragDrop;
 using Intersect.Client.Framework.Gwen.Input;
 using Intersect.Client.Framework.Input;
+using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.General;
 using Intersect.Client.Interface.Game.Bag;
 using Intersect.Client.Interface.Game.Bank;
@@ -17,6 +18,7 @@ using Intersect.Client.Items;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Configuration;
+using Intersect.Core;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.GameObjects;
 using Intersect.Utilities;
@@ -31,6 +33,9 @@ public partial class InventoryItem : SlotItem
     private readonly Label _cooldownLabel;
     private readonly ImagePanel _equipImageBackground;
     private readonly InventoryWindow _inventoryWindow;
+
+    private Color _rarityBorderColor = Color.Transparent;
+    private bool _showRarityBorder;
 
     // Context Menu Handling
     private readonly MenuItem _useItemMenuItem;
@@ -567,6 +572,49 @@ public partial class InventoryItem : SlotItem
         Icon.TextureFilename = null;
     }
 
+    private void UpdateRarityBorder(ItemDescriptor descriptor, bool isDragging)
+    {
+        if (descriptor == null || isDragging || descriptor.Rarity <= 0)
+        {
+            _showRarityBorder = false;
+            return;
+        }
+
+        if (!CustomColors.Items.Rarities.TryGetValue(descriptor.Rarity, out var rarityColor))
+        {
+            _showRarityBorder = false;
+            return;
+        }
+
+        _showRarityBorder = true;
+        _rarityBorderColor = rarityColor;
+    }
+
+    protected override void Render(Framework.Gwen.Skin.Base skin)
+    {
+        base.Render(skin);
+
+        if (_showRarityBorder && _rarityBorderColor != Color.Transparent)
+        {
+            DrawRarityBorder(skin);
+        }
+    }
+
+    private void DrawRarityBorder(Framework.Gwen.Skin.Base skin)
+    {
+        var renderer = skin.Renderer;
+        var bounds = Icon.RenderBounds;
+
+        renderer.DrawColor = _rarityBorderColor;
+
+        var borderWidth = 2;
+
+        renderer.DrawFilledRect(new Rectangle(bounds.X - borderWidth, bounds.Y - borderWidth, bounds.Width + borderWidth * 2, borderWidth));
+        renderer.DrawFilledRect(new Rectangle(bounds.X - borderWidth, bounds.Y + bounds.Height, bounds.Width + borderWidth * 2, borderWidth));
+        renderer.DrawFilledRect(new Rectangle(bounds.X - borderWidth, bounds.Y - borderWidth, borderWidth, bounds.Height + borderWidth * 2));
+        renderer.DrawFilledRect(new Rectangle(bounds.X + bounds.Width, bounds.Y - borderWidth, borderWidth, bounds.Height + borderWidth * 2));
+    }
+
     public override void Update()
     {
         if (Globals.Me == default)
@@ -611,6 +659,8 @@ public partial class InventoryItem : SlotItem
             Icon.RenderColor.A = descriptor.Color.A;
         }
 
+        UpdateRarityBorder(descriptor, isDragging);
+
         if (Icon.TextureFilename == descriptor.Icon)
         {
             return;
@@ -644,6 +694,7 @@ public partial class InventoryItem : SlotItem
         _quantityLabel.IsVisibleInParent = false;
         _equipLabel.IsVisibleInParent = false;
         _cooldownLabel.IsVisibleInParent = false;
+        ResetRarityBorder();
     }
 
     // Campo nuevo:

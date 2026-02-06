@@ -166,6 +166,7 @@ public partial class EnchantInventoryItem : SlotItem
         // Corregido: verificar si el SlotIndex está en alguna de las listas de MyEquipment
         var equipped = Globals.Me.MyEquipment.Values.Any(list => list.Contains(SlotIndex));
         var isDragging = Icon.IsDragging;
+        UpdateRarityBorder(descriptor, isDragging);
 
         _quantityLabel.IsVisibleInParent = !isDragging && descriptor.IsStackable && inventorySlot.Quantity > 1;
         if (_quantityLabel.IsVisibleInParent)
@@ -216,5 +217,6 @@ public partial class EnchantInventoryItem : SlotItem
         Icon.Texture = default;
         _quantityLabel.IsVisibleInParent = false;
         _cooldownLabel.IsVisibleInParent = false;
+        ResetRarityBorder();
     }
 }

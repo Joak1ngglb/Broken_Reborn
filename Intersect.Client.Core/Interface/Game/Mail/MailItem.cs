@@ -145,6 +145,9 @@ public partial class MailItem : SlotItem
         }
 
         // Actualizamos ícono si cambió
+        var isDragging = Icon.IsDragging;
+        UpdateRarityBorder(descriptor, isDragging);
+
         if (Icon.TextureFilename != descriptor.Icon)
         {
             var itemTexture = GameContentManager.Current.GetTexture(Framework.Content.TextureType.Item, descriptor.Icon);
@@ -176,6 +179,7 @@ public partial class MailItem : SlotItem
         Icon.Texture = null;
         Icon.TextureFilename = string.Empty;
         _quantityLabel.IsVisibleInParent = false;
+        ResetRarityBorder();
     }
 
     #region Drag and Drop

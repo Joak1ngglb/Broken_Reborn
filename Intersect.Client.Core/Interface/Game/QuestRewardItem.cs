@@ -10,6 +10,7 @@ using Intersect.Client.Interface;
 using Intersect.Client.Interface.Shared;
 using Intersect.Client.Localization;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Core;
 using Intersect.GameObjects;
 
 namespace Intersect.Client.Interface.Game
@@ -19,6 +20,10 @@ namespace Intersect.Client.Interface.Game
         public ImagePanel Container { get; private set; }
         private readonly ImagePanel _icon;
         private readonly Label _qty;
+        private readonly ImagePanel _rarityBorderTop;
+        private readonly ImagePanel _rarityBorderBottom;
+        private readonly ImagePanel _rarityBorderLeft;
+        private readonly ImagePanel _rarityBorderRight;
 
         // Estilo base (el JSON puede sobrescribir)
         private const int CardW = 40;
@@ -51,6 +56,11 @@ namespace Intersect.Client.Interface.Game
                 Padding = new Padding(2),
             };
 
+            _rarityBorderTop = new ImagePanel(_icon, "RarityBorderTop") { Texture = Graphics.Renderer.WhitePixel, IsVisibleInParent = false };
+            _rarityBorderBottom = new ImagePanel(_icon, "RarityBorderBottom") { Texture = Graphics.Renderer.WhitePixel, IsVisibleInParent = false };
+            _rarityBorderLeft = new ImagePanel(_icon, "RarityBorderLeft") { Texture = Graphics.Renderer.WhitePixel, IsVisibleInParent = false };
+            _rarityBorderRight = new ImagePanel(_icon, "RarityBorderRight") { Texture = Graphics.Renderer.WhitePixel, IsVisibleInParent = false };
+
             // Cargar skin si existe (puede ajustar tamaños/posiciones)
             Container.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
 
@@ -79,6 +89,7 @@ namespace Intersect.Client.Interface.Game
                 _icon.Texture = null;
                 _icon.IsVisibleInParent = false;
                 _qty.IsVisibleInParent = false;
+                UpdateRarityBorder(null);
                 return;
             }
 
@@ -90,6 +101,7 @@ namespace Intersect.Client.Interface.Game
             }
             _icon.RenderColor = desc.Color;
             _icon.IsVisibleInParent = tex != null;
+            UpdateRarityBorder(desc);
 
             // Cantidad (muestra si >1 o si quieres mostrar siempre para rewards)
             var showQty = _quantity > 1 || desc.IsStackable;
@@ -106,6 +118,34 @@ namespace Intersect.Client.Interface.Game
                 _qty.SetSize(Math.Max(24, Container.Width / 2), 16);
                 _qty.SetPosition(Container.Width - _qty.Width, Container.Height - _qty.Height);
             }
+        }
+
+        private void UpdateRarityBorder(ItemDescriptor? descriptor)
+        {
+            if (descriptor == null || descriptor.Rarity <= 0 || !CustomColors.Items.Rarities.TryGetValue(descriptor.Rarity, out var color))
+            {
+                _rarityBorderTop.IsVisibleInParent = false;
+                _rarityBorderBottom.IsVisibleInParent = false;
+                _rarityBorderLeft.IsVisibleInParent = false;
+                _rarityBorderRight.IsVisibleInParent = false;
+                return;
+            }
+
+            const int border = 2;
+            _rarityBorderTop.SetBounds(-border, -border, _icon.Width + border * 2, border);
+            _rarityBorderBottom.SetBounds(-border, _icon.Height, _icon.Width + border * 2, border);
+            _rarityBorderLeft.SetBounds(-border, -border, border, _icon.Height + border * 2);
+            _rarityBorderRight.SetBounds(_icon.Width, -border, border, _icon.Height + border * 2);
+
+            _rarityBorderTop.RenderColor = color;
+            _rarityBorderBottom.RenderColor = color;
+            _rarityBorderLeft.RenderColor = color;
+            _rarityBorderRight.RenderColor = color;
+
+            _rarityBorderTop.IsVisibleInParent = true;
+            _rarityBorderBottom.IsVisibleInParent = true;
+            _rarityBorderLeft.IsVisibleInParent = true;
+            _rarityBorderRight.IsVisibleInParent = true;
         }
 
         private void Icon_HoverEnter(Base sender, EventArgs e)

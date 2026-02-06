@@ -92,6 +92,7 @@ public class BreakInventoryItem : SlotItem
         }
 
         var isDragging = Icon.IsDragging;
+        UpdateRarityBorder(descriptor, isDragging);
 
         _quantityLabel.IsVisibleInParent = !isDragging && descriptor.IsStackable && inventorySlot.Quantity > 1;
         if (_quantityLabel.IsVisibleInParent)
@@ -161,5 +162,6 @@ public class BreakInventoryItem : SlotItem
         Icon.Texture = null;
         Icon.IsVisibleInParent = false;
         _quantityLabel.IsVisibleInParent = false;
+        ResetRarityBorder();
     }
 }
