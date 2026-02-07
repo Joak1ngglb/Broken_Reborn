@@ -1303,13 +1303,9 @@ public partial class Base : IDisposable
     /// </summary>
     public void Dispose()
     {
-        try
+        if (_disposed)
         {
-            ObjectDisposedException.ThrowIf(_disposed, this);
-        }
-        catch
-        {
-            throw;
+            return;
         }
 
         _disposeStack = new StackTrace(fNeedFileInfo: true);
@@ -1397,16 +1393,12 @@ public partial class Base : IDisposable
     private static void DisposeChildren(Base @this)
     {
         var children = @this._children.ToArray();
-        try
+        foreach (var child in children)
         {
-            foreach (var child in children)
+            if (!child.IsDisposed)
             {
                 child.Dispose();
             }
-        }
-        catch
-        {
-            throw;
         }
 
         if (@this is Modal)
