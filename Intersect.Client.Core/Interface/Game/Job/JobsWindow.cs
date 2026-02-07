@@ -9,6 +9,7 @@ using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Config;
 using Intersect.Client.Framework.Gwen;
+using Intersect.Client.Framework.Gwen.Input;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
@@ -279,8 +280,27 @@ namespace Intersect.Client.Interface.Game.Job
                 ? string.Empty
                 : GameLocalization.GetTextOrDefault(recipe.Type.ToString(), recipe.Id, "Name", recipe.Name);
 
+        private void ReleaseMouseFocusFromRecipePanel()
+        {
+            if (InputHandler.MouseFocus is not { } mouseFocus)
+            {
+                return;
+            }
+
+            for (var current = mouseFocus; current != null; current = current.Parent)
+            {
+                if (current == mRecipePanel)
+                {
+                    InputHandler.MouseFocus = null;
+                    return;
+                }
+            }
+        }
+
         private void LoadRecipes(JobType jobType)
         {  // Record current scroll position before clearing to preserve it
+            ReleaseMouseFocusFromRecipePanel();
+
             var currentScroll = mRecipePanel.VerticalScrollBar.ScrollAmount;
             // 🔄 Limpiar visual y lógicamente las recetas anteriores
             foreach (var craftedItem in mItems)
@@ -442,6 +462,8 @@ namespace Intersect.Client.Interface.Game.Job
 
         public override void Hide()
         {
+            ReleaseMouseFocusFromRecipePanel();
+
             base.Hide();
             UnsubscribeFromLocalizationUpdates();
 
