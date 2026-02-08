@@ -27,6 +27,9 @@ public partial class CombatOptions
     //Combat
     public int RegenTime { get; set; } = 3000; //3 seconds
 
+    // Item Drop Range
+    public int ItemDropRange { get; set; } = 2; //2 Tiles
+
     public bool EnableCombatChatMessages { get; set; } = false; // Enables or disables combat chat messages.
 
     //Spells
