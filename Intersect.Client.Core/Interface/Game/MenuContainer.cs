@@ -63,6 +63,7 @@ public partial class MenuContainer : Panel
     private readonly ImagePanel mJobsBackground;
     private readonly Button mJobsButton;
     private readonly MapItemWindow _mapItemWindow;
+    private readonly DeathWindow _deathWindow;
 
     public MenuContainer(Canvas gameCanvas) : base(parent: gameCanvas, name: nameof(MenuContainer))
     {
@@ -297,6 +298,7 @@ public partial class MenuContainer : Panel
         _mapItemWindow = new MapItemWindow(gameCanvas: gameCanvas);
         _guildWindow = new GuildWindow(gameCanvas: gameCanvas);
         mJobsWindow= new JobsWindow(gameCanvas: gameCanvas);
+        _deathWindow = new DeathWindow(gameCanvas);
     }
 
     //Methods
@@ -312,6 +314,7 @@ public partial class MenuContainer : Panel
         _mapItemWindow.Update();
         _guildWindow.Update();
         mJobsWindow.Update();
+        _deathWindow.Update();
 
     }
 
@@ -401,6 +404,16 @@ public partial class MenuContainer : Panel
     public void HideGuildWindow()
     {
         _guildWindow.Hide();
+    }
+
+    public void ShowDeathWindow()
+    {
+        _deathWindow.Show();
+    }
+
+    public void HideDeathWindow()
+    {
+        _deathWindow.Hide();
     }
 
     public void ToggleFactionWindow()

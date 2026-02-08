@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using Intersect.Collections.Slotting;
 using Intersect.Core;
 using Intersect.Enums;
@@ -426,6 +427,21 @@ public partial class Player : Entity
 
     [NotMapped, JsonIgnore]
     public int InstanceLives { get; set; }
+
+    [NotMapped]
+    public int DeadSeconds { get; set; }
+
+    [NotMapped]
+    public long DeadTimer { get; set; }
+
+    [NotMapped, JsonIgnore]
+    private Guid PendingRespawnMapId { get; set; } = Guid.Empty;
+
+    [NotMapped, JsonIgnore]
+    private byte PendingRespawnX { get; set; }
+
+    [NotMapped, JsonIgnore]
+    private byte PendingRespawnY { get; set; }
 
     private long mStaleCooldownTimer;
 
@@ -888,6 +904,22 @@ public partial class Player : Entity
 
                 base.Update(timeMs);
 
+                if (IsDead && DeadTimer < Timing.Global.Milliseconds && DeadSeconds > 0)
+                {
+                    DeadSeconds--;
+                    if (DeadSeconds <= 0)
+                    {
+                        Reset();
+                        Respawn();
+                    }
+                    else
+                    {
+                        PacketSender.SendActionMsg(this, DeadSeconds.ToString(), Color.Red);
+                    }
+
+                    DeadTimer = Timing.Global.Milliseconds + 1000;
+                }
+
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
                 {
                     var autorunEvents = 0;
@@ -1238,9 +1270,14 @@ public partial class Player : Entity
     }
 
     //Spawning/Dying
-    private void Respawn()
+    public void Respawn()
     {
-        if (ClassDescriptor.TryGet(ClassId, out _))
+        if (PendingRespawnMapId != Guid.Empty)
+        {
+            Warp(PendingRespawnMapId, PendingRespawnX, PendingRespawnY);
+            PendingRespawnMapId = Guid.Empty;
+        }
+        else if (ClassDescriptor.TryGet(ClassId, out _))
         {
             WarpToSpawn();
         }
@@ -1252,6 +1289,7 @@ public partial class Player : Entity
         Reset();
 
         PacketSender.SendEntityDataToProximity(this);
+        PacketSender.SendPlayerRespawn(this);
 
         //Search death common event trigger
         StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);
@@ -1323,10 +1361,13 @@ public partial class Player : Entity
             }
         }
         PacketSender.SendEntityDie(this);
-        Respawn();
+        DeadSeconds = Options.Instance.Player.DeathSeconds;
+        DeadTimer = Timing.Global.Milliseconds + 1000;
         if (sendToJail)
         {
-            Warp(jailMapId, jailX, jailY);
+            PendingRespawnMapId = jailMapId;
+            PendingRespawnX = jailX;
+            PendingRespawnY = jailY;
         }
         PacketSender.SendInventory(this);
         PacketSender.SendPlayerSpells(this);

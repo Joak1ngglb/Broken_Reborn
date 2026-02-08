@@ -587,4 +587,8 @@ public static partial class PacketSender
         Network.SendPacket(new TargetPacket(targetId));
     }
 
+    public static void SendRespawn()
+    {
+        Network.SendPacket(new RespawnPacket());
+    }
 }

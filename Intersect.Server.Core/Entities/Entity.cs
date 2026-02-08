@@ -390,7 +390,11 @@ public abstract partial class Entity : IEntity
                 //Regen Timers and regen in combat validation
                 if ((timeMs > CombatTimer || Options.Instance.Combat.RegenVitalsInCombat) && timeMs > RegenTimer)
                 {
-                    ProcessRegen();
+                    if (!IsDead)
+                    {
+                        ProcessRegen();
+                    }
+
                     RegenTimer = timeMs + Options.Instance.Combat.RegenTime;
                 }
 
@@ -2570,7 +2574,7 @@ public abstract partial class Entity : IEntity
         }
 
         // Check for target validity
-        var singleTargetSpell = (spell.SpellType == SpellType.CombatSpell && spell.Combat.TargetType == SpellTargetType.Single) || spell.SpellType == SpellType.WarpTo;
+        var singleTargetSpell = ((spell.SpellType == SpellType.CombatSpell || spell.SpellType == SpellType.Ressurect) && spell.Combat.TargetType == SpellTargetType.Single) || spell.SpellType == SpellType.WarpTo;
         if (target == null && singleTargetSpell)
         {
             reason = SpellCastFailureReason.InvalidTarget;
@@ -2796,6 +2800,29 @@ public abstract partial class Entity : IEntity
                     );
 
                     break;
+                case SpellType.Ressurect:
+                    if (CastTarget != null && CastTarget.IsDead && CastTarget is Player targetPlayer)
+                    {
+                        if (spellBase.HitAnimationId != Guid.Empty)
+                        {
+                            PacketSender.SendAnimationToProximity(
+                                spellBase.HitAnimationId,
+                                1,
+                                targetPlayer.Id,
+                                targetPlayer.MapId,
+                                0,
+                                0,
+                                targetPlayer.Dir,
+                                targetPlayer.MapInstanceId
+                            );
+                        }
+
+                        targetPlayer.Reset();
+                        targetPlayer.Respawn();
+                    }
+
+                    break;
+
                 case SpellType.SummonNpc:
                     if (spellBase.SummonNpcId != Guid.Empty)
                     {

@@ -656,6 +656,15 @@ public partial class Entity : IEntity
             return false;
         }
 
+        if (IsDead())
+        {
+            SpriteAnimation = SpriteAnimations.Death;
+        }
+        else if (SpriteAnimation == SpriteAnimations.Death)
+        {
+            SpriteAnimation = SpriteAnimations.Normal;
+        }
+
         RenderList = DetermineRenderOrder(RenderList, LatestMap);
         if (mLastUpdate == 0)
         {
@@ -1372,7 +1381,7 @@ public partial class Entity : IEntity
             }
             else if (equipSlot > -1)
             {
-                if (sprite == Sprite && Equipment.Count == Options.Instance.Equipment.Slots.Count)
+                if (sprite == Sprite && Equipment.Count == Options.Instance.Equipment.Slots.Count && !IsDead())
                 {
                     List<Guid> equipList = new();
 
@@ -2163,7 +2172,7 @@ public partial class Entity : IEntity
     private void UpdateSpriteAnimation()
     {
         // Exit if textures haven't been loaded yet
-        if (AnimatedTextures.Count == 0)
+        if (AnimatedTextures.Count == 0 || SpriteAnimation == SpriteAnimations.Death)
         {
             return;
         }
@@ -2249,6 +2258,7 @@ public partial class Entity : IEntity
             {
                 case SpriteAnimations.Cast:
                 case SpriteAnimations.Idle:
+                case SpriteAnimations.Death:
                 case SpriteAnimations.Normal:
                     break;
 
@@ -2701,4 +2711,10 @@ public partial class Entity : IEntity
     {
         Dispose();
     }
+    public bool IsDead()
+    {
+        return Vitals[(int)Vital.Health] <= 0;
+    }
+
+
 }
