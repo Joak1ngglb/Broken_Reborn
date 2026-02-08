@@ -225,7 +225,7 @@ public static partial class Globals
     { JobType.Smithing, "Blacksmith" },
     { JobType.Cooking, "Cooking" },
     { JobType.Crafting, "Crafting" },
-    { JobType.Jewerly, "Jewelry" },
+    { JobType.Jewelry, "Jewelry" },
     { JobType.Tanner, "Tanner" },
     { JobType.Tailoring, "Tailoring" }
 };

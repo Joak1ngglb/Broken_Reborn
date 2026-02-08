@@ -2515,7 +2515,7 @@ Tick timer saved in server config.json.";
         { JobType.Cooking, "Give Player {00} Cooking Experience" },
         { JobType.Smithing, "Give Player {00} Blacksmith Experience" },
         { JobType.Crafting, "Give Player {00} Crafting Experience" },
-        { JobType.Jewerly, "Give Player {00} Jewerly Experience" },
+        { JobType.Jewelry, "Give Player {00} Jewelry Experience" },
         { JobType.Tanner, "Give Player {00} Tanner Experience" },
         { JobType.Tailoring, "Give Player {00} Weaver Experience" }
     };
