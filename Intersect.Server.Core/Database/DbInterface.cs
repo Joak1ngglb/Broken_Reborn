@@ -426,6 +426,7 @@ public static partial class DbInterface
         ValidateResourceStates();
 
         LoadTime();
+        LoadRewards();
         OnClassesLoaded();
         OnMapsLoaded();
         CacheServerVariableEventTextLookups();
