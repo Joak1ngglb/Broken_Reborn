@@ -1178,6 +1178,22 @@ internal sealed partial class PacketHandler
             }
 
         }
+        else if (cmd == Strings.Chat.redeemcodecmd)
+        {
+            if (msgSplit.Length == 0)
+            {
+                return;
+            }
+
+            var redeemCode = msgSplit[0].ToLower();
+
+            if (redeemCode.Trim().Length == 0)
+            {
+                return;
+            }
+
+            Codes.TryRedeemCode(player, redeemCode);
+        }
         else if (cmd == Strings.Chat.ReplyCommand || cmd == Strings.Chat.ReplyShortcutCommand)
         {
             if (msg.Trim().Length == 0)
