@@ -1468,6 +1468,8 @@ internal sealed partial class PacketHandler
             }
             else
             {
+                mapItem.HasFallen = 1f;
+
                 // Reverse the array again to match server, add item.. then  reverse again to get the right render order.
                 map.MapItems[packet.TileIndex].Add(mapItem);
             }

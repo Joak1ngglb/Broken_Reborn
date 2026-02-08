@@ -11,6 +11,7 @@ using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Items;
 using Intersect.Client.Framework.Maps;
 using Intersect.Client.General;
+using Intersect.Client.Items;
 using Intersect.Client.Localization;
 using Intersect.Compression;
 using Intersect.Core;
@@ -982,6 +983,12 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                 var centerY = y + (_tileHeight / 2);
                 var textureXPosition = centerX - (mapItemWidth / 2);
                 var textureYPosition = centerY - (mapItemHeight / 2);
+
+                if (mapItemInstance is MapItemInstance clientMapItem && clientMapItem.HasFallen > 0)
+                {
+                    textureYPosition -= clientMapItem.HasFallen * _tileHeight;
+                    clientMapItem.HasFallen -= 0.2f;
+                }
 
                 // Draw the item texture.
                 Graphics.DrawGameTexture(
