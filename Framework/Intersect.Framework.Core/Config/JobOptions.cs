@@ -37,7 +37,7 @@ namespace Intersect.Config;
             { JobType.Crafting, 140 },
             { JobType.Smithing, 160 },
             { JobType.Hunter, 170 },
-            { JobType.Jewerly, 180 },
+            { JobType.Jewelry, 180 },
             { JobType.Tanner, 140 },
             { JobType.Tailoring, 120 }
         };
@@ -62,7 +62,7 @@ namespace Intersect.Config;
         Smithing,
         Alchemy,
         Crafting,
-        Jewerly,
+        Jewelry,
         Tanner,
         Tailoring,
 
