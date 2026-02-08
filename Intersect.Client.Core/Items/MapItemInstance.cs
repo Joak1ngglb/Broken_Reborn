@@ -18,6 +18,8 @@ public partial class MapItemInstance : Item, IMapItemInstance
 
     public int Y { get; set; }
 
+    public float HasFallen { get; set; }
+
     [JsonIgnore] public int TileIndex => Y * Options.Instance.Map.MapWidth + X;
 
     public MapItemInstance() : base()
