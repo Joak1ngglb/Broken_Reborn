@@ -17,6 +17,7 @@ using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.GameObjects;
 using Microsoft.Extensions.Logging;
 using VariableMod = Intersect.Framework.Core.GameObjects.Events.VariableMod;
+using Intersect.Config;
 
 namespace Intersect.Editor.Forms.Editors.Events;
 
