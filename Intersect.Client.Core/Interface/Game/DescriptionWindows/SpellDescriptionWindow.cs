@@ -93,6 +93,7 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         {
             case SpellType.CombatSpell:
             case SpellType.WarpTo:
+            case SpellType.Ressurect:
                 SetupCombatInfo();
                 break;
             case SpellType.Dash:

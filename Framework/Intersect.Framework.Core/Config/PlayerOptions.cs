@@ -122,5 +122,11 @@ public partial class PlayerOptions
     /// Distance (in tiles) between players in which a trade offer can be sent and accepted.
     /// </summary>
     public int TradeRange { get; set; } = 6;
+
+    /// <summary>
+    /// Number of seconds a player remains dead before being automatically respawned.
+    /// </summary>
+    public int DeathSeconds { get; set; } = 10;
+
     public int MaxSpellLevel { get; set; } = 5;
 }

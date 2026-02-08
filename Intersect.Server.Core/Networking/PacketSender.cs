@@ -128,6 +128,12 @@ public static partial class PacketSender
 
             player.LoginWarp();
 
+            if (player.IsDead)
+            {
+                player.Reset();
+                player.Respawn();
+            }
+
             SendEntityDataTo(client.Entity, player);
 
             //Search for login activated events and run them
@@ -2359,6 +2365,12 @@ public static partial class PacketSender
     public static void SendPlayerDeath(Player en)
     {
         SendDataToProximityOnMapInstance(en.MapId, en.MapInstanceId, new PlayerDeathPacket(en.Id));
+    }
+
+    //PlayerRespawn
+    public static void SendPlayerRespawn(Player player)
+    {
+        player.SendPacket(new PlayerRespawnPacket());
     }
 
     //EntityZDimensionPacket

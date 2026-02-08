@@ -614,7 +614,8 @@ public partial class FrmSpell : EditorForm
 
         if (cmbType.SelectedIndex == (int)SpellType.CombatSpell ||
             cmbType.SelectedIndex == (int)SpellType.WarpTo ||
-            cmbType.SelectedIndex == (int)SpellType.Event)
+            cmbType.SelectedIndex == (int)SpellType.Event ||
+            cmbType.SelectedIndex == (int)SpellType.Ressurect)
         {
             grpTargetInfo.Show();
             grpCombat.Show();
