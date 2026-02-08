@@ -986,7 +986,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
                 if (mapItemInstance is MapItemInstance clientMapItem && clientMapItem.HasFallen > 0)
                 {
-                    textureYPosition -= clientMapItem.HasFallen * _tileHeight;
+                    textureYPosition -= (long)(clientMapItem.HasFallen * _tileHeight);
                     clientMapItem.HasFallen -= 0.2f;
                 }
 
