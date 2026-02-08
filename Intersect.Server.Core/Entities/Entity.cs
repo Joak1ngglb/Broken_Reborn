@@ -3333,6 +3333,33 @@ public abstract partial class Entity : IEntity
             return;
         }
 
+        // Find tiles to spawn items.
+        var tiles = new List<TileHelper>();
+        for (var x = X - Options.ItemDropRange; x <= X + Options.ItemDropRange; x++)
+        {
+            for (var y = Y - Options.ItemDropRange; y <= Y + Options.ItemDropRange; y++)
+            {
+                var tileHelper = new TileHelper(MapId, x, y);
+                if (!tileHelper.TryFix())
+                {
+                    continue;
+                }
+
+                var mapId = tileHelper.GetMapId();
+                if (!MapController.TryGetInstanceFromMap(mapId, MapInstanceId, out var mapInstance))
+                {
+                    continue;
+                }
+
+                var tileX = tileHelper.GetX();
+                var tileY = tileHelper.GetY();
+                if (!mapInstance.TileBlocked(tileX, tileY))
+                {
+                    tiles.Add(tileHelper);
+                }
+            }
+        }
+
         // Drop items
         foreach (var slot in Items)
         {
@@ -3359,7 +3386,17 @@ public abstract partial class Entity : IEntity
             }
 
             // Spawn the actual item!
-            if (MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance))
+            if (tiles.Count > 0)
+            {
+                var tile = tiles[Randomization.Next(tiles.Count)];
+                var mapId = tile.GetMapId();
+                if (MapController.TryGetInstanceFromMap(mapId, MapInstanceId, out var tileInstance))
+                {
+                    var itemSource = this.AsItemSource();
+                    tileInstance.SpawnItem(itemSource, tile.GetX(), tile.GetY(), drop, drop.Quantity, lootOwner, sendUpdate);
+                }
+            }
+            else if (MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance))
             {
                 var itemSource = this.AsItemSource();
                 instance.SpawnItem(itemSource, X, Y, drop, drop.Quantity, lootOwner, sendUpdate);

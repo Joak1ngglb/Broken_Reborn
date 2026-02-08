@@ -246,6 +246,8 @@ public partial record Options
 
     public static string PlayerDeathAnimationId => Instance.Combat.PlayerDeathAnimationId;
 
+    public static int ItemDropRange => Instance.Combat.ItemDropRange;
+
     #region Player Stat Scaling Helpers
 
     public static int VitalityHealthmultiplier => Instance.Player.VitalityHealthmultiplier;
