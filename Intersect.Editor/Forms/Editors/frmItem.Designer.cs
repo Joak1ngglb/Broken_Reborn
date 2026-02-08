@@ -75,12 +75,14 @@ namespace Intersect.Editor.Forms.Editors
             nudItemDespawnTime = new DarkNumericUpDown();
             lblDespawnTime = new Label();
             cmbEquipmentAnimation = new DarkComboBox();
+            cmbDropAnimation = new DarkComboBox();
             grpRequirements = new DarkGroupBox();
             lblCannotUse = new Label();
             txtCannotUse = new DarkTextBox();
             btnEditRequirements = new DarkButton();
             chkCanGuildBank = new DarkCheckBox();
             lblEquipmentAnimation = new Label();
+            lblDropAnimation = new Label();
             nudDeathDropChance = new DarkNumericUpDown();
             lblDeathDropChance = new Label();
             chkCanSell = new DarkCheckBox();
@@ -435,9 +437,11 @@ namespace Intersect.Editor.Forms.Editors
             grpGeneral.Controls.Add(nudItemDespawnTime);
             grpGeneral.Controls.Add(lblDespawnTime);
             grpGeneral.Controls.Add(cmbEquipmentAnimation);
+            grpGeneral.Controls.Add(cmbDropAnimation);
             grpGeneral.Controls.Add(grpRequirements);
             grpGeneral.Controls.Add(chkCanGuildBank);
             grpGeneral.Controls.Add(lblEquipmentAnimation);
+            grpGeneral.Controls.Add(lblDropAnimation);
             grpGeneral.Controls.Add(nudDeathDropChance);
             grpGeneral.Controls.Add(lblDeathDropChance);
             grpGeneral.Controls.Add(chkCanSell);
@@ -504,7 +508,7 @@ namespace Intersect.Editor.Forms.Editors
             grpEnchanting.Controls.Add(lblRuneValue);
             grpEnchanting.Controls.Add(nudRuneValue);
             grpEnchanting.ForeColor = System.Drawing.Color.Gainsboro;
-            grpEnchanting.Location = new System.Drawing.Point(322, 462);
+            grpEnchanting.Location = new System.Drawing.Point(323, 489);
             grpEnchanting.Margin = new Padding(4, 3, 4, 3);
             grpEnchanting.Name = "grpEnchanting";
             grpEnchanting.Padding = new Padding(4, 3, 4, 3);
@@ -949,7 +953,7 @@ namespace Intersect.Editor.Forms.Editors
             cmbEquipmentAnimation.ForeColor = System.Drawing.Color.Gainsboro;
             cmbEquipmentAnimation.FormattingEnabled = true;
             cmbEquipmentAnimation.Items.AddRange(new object[] { "None" });
-            cmbEquipmentAnimation.Location = new System.Drawing.Point(321, 268);
+            cmbEquipmentAnimation.Location = new System.Drawing.Point(321, 263);
             cmbEquipmentAnimation.Margin = new Padding(4, 3, 4, 3);
             cmbEquipmentAnimation.Name = "cmbEquipmentAnimation";
             cmbEquipmentAnimation.Size = new Size(252, 24);
@@ -957,6 +961,28 @@ namespace Intersect.Editor.Forms.Editors
             cmbEquipmentAnimation.Text = "None";
             cmbEquipmentAnimation.TextPadding = new Padding(2);
             cmbEquipmentAnimation.SelectedIndexChanged += cmbEquipmentAnimation_SelectedIndexChanged;
+            // 
+            // cmbDropAnimation
+            // 
+            cmbDropAnimation.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbDropAnimation.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbDropAnimation.BorderStyle = ButtonBorderStyle.Solid;
+            cmbDropAnimation.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbDropAnimation.DrawDropdownHoverOutline = false;
+            cmbDropAnimation.DrawFocusRectangle = false;
+            cmbDropAnimation.DrawMode = DrawMode.OwnerDrawFixed;
+            cmbDropAnimation.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbDropAnimation.FlatStyle = FlatStyle.Flat;
+            cmbDropAnimation.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbDropAnimation.FormattingEnabled = true;
+            cmbDropAnimation.Location = new System.Drawing.Point(321, 310);
+            cmbDropAnimation.Margin = new Padding(4, 3, 4, 3);
+            cmbDropAnimation.Name = "cmbDropAnimation";
+            cmbDropAnimation.Size = new Size(252, 24);
+            cmbDropAnimation.TabIndex = 109;
+            cmbDropAnimation.Text = null;
+            cmbDropAnimation.TextPadding = new Padding(2);
+            cmbDropAnimation.SelectedIndexChanged += cmbDropAnimation_SelectedIndexChanged;
             // 
             // grpRequirements
             // 
@@ -1022,12 +1048,22 @@ namespace Intersect.Editor.Forms.Editors
             // lblEquipmentAnimation
             // 
             lblEquipmentAnimation.AutoSize = true;
-            lblEquipmentAnimation.Location = new System.Drawing.Point(317, 249);
+            lblEquipmentAnimation.Location = new System.Drawing.Point(317, 244);
             lblEquipmentAnimation.Margin = new Padding(4, 0, 4, 0);
             lblEquipmentAnimation.Name = "lblEquipmentAnimation";
             lblEquipmentAnimation.Size = new Size(127, 15);
             lblEquipmentAnimation.TabIndex = 56;
             lblEquipmentAnimation.Text = "Equipment Animation:";
+            // 
+            // lblDropAnimation
+            // 
+            lblDropAnimation.AutoSize = true;
+            lblDropAnimation.Location = new System.Drawing.Point(317, 291);
+            lblDropAnimation.Margin = new Padding(4, 0, 4, 0);
+            lblDropAnimation.Name = "lblDropAnimation";
+            lblDropAnimation.Size = new Size(95, 15);
+            lblDropAnimation.TabIndex = 108;
+            lblDropAnimation.Text = "Drop Animation:";
             // 
             // nudDeathDropChance
             // 
@@ -1267,7 +1303,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             nudPrice.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
             nudPrice.ForeColor = System.Drawing.Color.Gainsboro;
-            nudPrice.Location = new System.Drawing.Point(321, 167);
+            nudPrice.Location = new System.Drawing.Point(321, 162);
             nudPrice.Margin = new Padding(4, 3, 4, 3);
             nudPrice.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
             nudPrice.Name = "nudPrice";
@@ -1300,7 +1336,7 @@ namespace Intersect.Editor.Forms.Editors
             cmbAnimation.FlatStyle = FlatStyle.Flat;
             cmbAnimation.ForeColor = System.Drawing.Color.Gainsboro;
             cmbAnimation.FormattingEnabled = true;
-            cmbAnimation.Location = new System.Drawing.Point(321, 216);
+            cmbAnimation.Location = new System.Drawing.Point(321, 211);
             cmbAnimation.Margin = new Padding(4, 3, 4, 3);
             cmbAnimation.Name = "cmbAnimation";
             cmbAnimation.Size = new Size(252, 24);
@@ -1358,7 +1394,7 @@ namespace Intersect.Editor.Forms.Editors
             // lblAnim
             // 
             lblAnim.AutoSize = true;
-            lblAnim.Location = new System.Drawing.Point(317, 197);
+            lblAnim.Location = new System.Drawing.Point(317, 192);
             lblAnim.Margin = new Padding(4, 0, 4, 0);
             lblAnim.Name = "lblAnim";
             lblAnim.Size = new Size(102, 15);
@@ -1368,7 +1404,7 @@ namespace Intersect.Editor.Forms.Editors
             // lblPrice
             // 
             lblPrice.AutoSize = true;
-            lblPrice.Location = new System.Drawing.Point(317, 148);
+            lblPrice.Location = new System.Drawing.Point(317, 143);
             lblPrice.Margin = new Padding(4, 0, 4, 0);
             lblPrice.Name = "lblPrice";
             lblPrice.Size = new Size(36, 15);
@@ -1494,7 +1530,7 @@ namespace Intersect.Editor.Forms.Editors
             grpConsumable.Controls.Add(cmbConsume);
             grpConsumable.Controls.Add(lblInterval);
             grpConsumable.ForeColor = System.Drawing.Color.Gainsboro;
-            grpConsumable.Location = new System.Drawing.Point(321, 307);
+            grpConsumable.Location = new System.Drawing.Point(321, 340);
             grpConsumable.Margin = new Padding(4, 3, 4, 3);
             grpConsumable.Name = "grpConsumable";
             grpConsumable.Padding = new Padding(4, 3, 4, 3);
@@ -1600,7 +1636,7 @@ namespace Intersect.Editor.Forms.Editors
             grpEvent.Controls.Add(chkSingleUseEvent);
             grpEvent.Controls.Add(cmbEvent);
             grpEvent.ForeColor = System.Drawing.Color.Gainsboro;
-            grpEvent.Location = new System.Drawing.Point(321, 307);
+            grpEvent.Location = new System.Drawing.Point(321, 340);
             grpEvent.Margin = new Padding(4, 3, 4, 3);
             grpEvent.Name = "grpEvent";
             grpEvent.Padding = new Padding(4, 3, 4, 3);
@@ -1652,7 +1688,7 @@ namespace Intersect.Editor.Forms.Editors
             grpBags.Controls.Add(nudBag);
             grpBags.Controls.Add(lblBag);
             grpBags.ForeColor = System.Drawing.Color.Gainsboro;
-            grpBags.Location = new System.Drawing.Point(321, 307);
+            grpBags.Location = new System.Drawing.Point(321, 340);
             grpBags.Margin = new Padding(4, 3, 4, 3);
             grpBags.Name = "grpBags";
             grpBags.Padding = new Padding(4, 3, 4, 3);
@@ -1695,7 +1731,7 @@ namespace Intersect.Editor.Forms.Editors
             grpSpell.Controls.Add(cmbTeachSpell);
             grpSpell.Controls.Add(lblSpell);
             grpSpell.ForeColor = System.Drawing.Color.Gainsboro;
-            grpSpell.Location = new System.Drawing.Point(321, 307);
+            grpSpell.Location = new System.Drawing.Point(321, 340);
             grpSpell.Margin = new Padding(4, 3, 4, 3);
             grpSpell.Name = "grpSpell";
             grpSpell.Padding = new Padding(4, 3, 4, 3);
@@ -3663,7 +3699,9 @@ namespace Intersect.Editor.Forms.Editors
         private Label lblManaBonus;
         private Label lblHealthBonus;
         private DarkComboBox cmbEquipmentAnimation;
+        private DarkComboBox cmbDropAnimation;
         private Label lblEquipmentAnimation;
+        private Label lblDropAnimation;
         private DarkGroupBox grpAttackSpeed;
         private DarkNumericUpDown nudAttackSpeedValue;
         private Label lblAttackSpeedValue;

@@ -839,6 +839,20 @@ public partial class MapInstance : IMapInstance
             if (sendUpdate)
             {
                 PacketSender.SendMapItemUpdate(mMapController.Id, MapInstanceId, mapItem, false);
+
+                if (itemDescriptor.DropAnimationId != Guid.Empty)
+                {
+                    PacketSender.SendAnimationToProximity(
+                        itemDescriptor.DropAnimationId,
+                        -1,
+                        Guid.Empty,
+                        mMapController.Id,
+                        x,
+                        y,
+                        Direction.Down,
+                        MapInstanceId
+                    );
+                }
             }
         }
         else
@@ -867,6 +881,20 @@ public partial class MapInstance : IMapInstance
                 }
 
                 AddItem(source, mapItem);
+
+                if (itemDescriptor.DropAnimationId != Guid.Empty)
+                {
+                    PacketSender.SendAnimationToProximity(
+                        itemDescriptor.DropAnimationId,
+                        -1,
+                        Guid.Empty,
+                        mMapController.Id,
+                        x,
+                        y,
+                        Direction.Down,
+                        MapInstanceId
+                    );
+                }
             }
             PacketSender.SendMapItemsToProximity(mMapController.Id, this);
         }

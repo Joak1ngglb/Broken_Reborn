@@ -65,6 +65,17 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
         set => EquipmentAnimationId = value?.Id ?? Guid.Empty;
     }
 
+    [Column("DropAnimation")]
+    public Guid DropAnimationId { get; set; }
+
+    [NotMapped]
+    [JsonIgnore]
+    public AnimationDescriptor DropAnimation
+    {
+        get => AnimationDescriptor.Get(DropAnimationId);
+        set => DropAnimationId = value?.Id ?? Guid.Empty;
+    }
+
     /// <summary>
     /// Defines whether or not this item can be dropped by a player.
     /// </summary>

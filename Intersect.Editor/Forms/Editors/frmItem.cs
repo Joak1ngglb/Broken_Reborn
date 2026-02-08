@@ -138,6 +138,9 @@ public partial class FrmItem : EditorForm
         cmbAnimation.Items.Clear();
         cmbAnimation.Items.Add(Strings.General.None);
         cmbAnimation.Items.AddRange(AnimationDescriptor.Names);
+        cmbDropAnimation.Items.Clear();
+        cmbDropAnimation.Items.Add(Strings.General.None);
+        cmbDropAnimation.Items.AddRange(AnimationDescriptor.Names);
         cmbEquipmentAnimation.Items.Clear();
         cmbEquipmentAnimation.Items.Add(Strings.General.None);
         cmbEquipmentAnimation.Items.AddRange(AnimationDescriptor.Names);
@@ -253,6 +256,7 @@ public partial class FrmItem : EditorForm
         lblAlpha.Text = Strings.ItemEditor.Alpha;
         lblPrice.Text = Strings.ItemEditor.price;
         lblAnim.Text = Strings.ItemEditor.animation;
+        lblDropAnimation.Text = Strings.ItemEditor.dropanimation;
         chkCanDrop.Text = Strings.ItemEditor.CanDrop;
         lblDeathDropChance.Text = Strings.ItemEditor.DeathDropChance;
         lblDespawnTime.Text = Strings.ItemEditor.DespawnTime;
@@ -566,6 +570,7 @@ public partial class FrmItem : EditorForm
             //External References
             cmbProjectile.SelectedIndex = ProjectileDescriptor.ListIndex(mEditorItem.ProjectileId) + 1;
             cmbAnimation.SelectedIndex = AnimationDescriptor.ListIndex(mEditorItem.AnimationId) + 1;
+            cmbDropAnimation.SelectedIndex = AnimationDescriptor.ListIndex(mEditorItem.DropAnimationId) + 1;
 
             nudCooldown.Value = mEditorItem.Cooldown;
             cmbCooldownGroup.Text = mEditorItem.CooldownGroup;
@@ -991,6 +996,12 @@ public partial class FrmItem : EditorForm
     {
         var frm = new FrmDynamicRequirements(mEditorItem.UsageRequirements, RequirementType.Item);
         frm.ShowDialog();
+    }
+
+
+    private void cmbDropAnimation_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        mEditorItem.DropAnimation = AnimationDescriptor.Get(AnimationDescriptor.IdFromList(cmbDropAnimation.SelectedIndex - 1));
     }
 
     private void cmbAnimation_SelectedIndexChanged(object sender, EventArgs e)
