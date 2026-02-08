@@ -378,6 +378,12 @@ internal sealed partial class PacketHandler
         }
     }
 
+    //PlayerRespawnPacket
+    public void HandlePacket(IPacketSender packetSender, PlayerRespawnPacket packet)
+    {
+        Interface.Interface.GameUi?.GameMenu?.HideDeathWindow();
+    }
+
     //NpcEntityPacket
     public void HandlePacket(IPacketSender packetSender, NpcEntityPacket packet)
     {
@@ -1225,6 +1231,11 @@ internal sealed partial class PacketHandler
         if (en == null)
         {
             return;
+        }
+
+        if (en.Id == Globals.Me?.Id)
+        {
+            Interface.Interface.GameUi?.GameMenu?.ShowDeathWindow();
         }
 
         en.ClearAnimations();

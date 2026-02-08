@@ -518,6 +518,11 @@ public partial class Player : Entity, IPlayer
 
     public void TryDropItem(int inventorySlotIndex)
     {
+        if (IsDead())
+        {
+            return;
+        }
+
         var inventorySlot = Inventory[inventorySlotIndex];
         if (inventorySlot == null || inventorySlot.ItemId == Guid.Empty)
         {
@@ -658,6 +663,11 @@ public partial class Player : Entity, IPlayer
 
     public void TryUseItem(int index)
     {
+        if (IsDead())
+        {
+            return;
+        }
+
         if (!IsItemOnCooldown(index) &&
             index >= 0 && index < Globals.Me?.Inventory.Length && Globals.Me.Inventory[index]?.Quantity > 0)
         {
@@ -1513,6 +1523,11 @@ public partial class Player : Entity, IPlayer
 
     public void TryUseSpell(int index)
     {
+        if (IsDead())
+        {
+            return;
+        }
+
         if (index < 0 || Spells.Length <= index)
         {
             return;
@@ -2163,7 +2178,7 @@ public partial class Player : Entity, IPlayer
 
     public bool TryAttack()
     {
-        if (IsAttacking || IsBlocking || (IsMoving && !Options.Instance.Player.AllowCombatMovement) || Globals.Me == default)
+        if (IsAttacking || IsBlocking || (IsMoving && !Options.Instance.Player.AllowCombatMovement) || Globals.Me == default || IsDead())
         {
             return false;
         }
@@ -2746,6 +2761,11 @@ public partial class Player : Entity, IPlayer
             return;
         }
 
+        if (IsDead())
+        {
+            return;
+        }
+
         //check if player is stunned or snared, if so don't let them move.
         for (var n = 0; n < Status.Count; n++)
         {
@@ -2960,6 +2980,11 @@ public partial class Player : Entity, IPlayer
 
     public override void DrawEquipment(string filename, Color renderColor)
     {
+        if (IsDead())
+        {
+            return;
+        }
+
         //check if player is stunned or snared, if so don't let them move.
         for (var n = 0; n < Status.Count; n++)
         {
