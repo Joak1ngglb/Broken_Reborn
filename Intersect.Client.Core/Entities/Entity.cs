@@ -2360,6 +2360,7 @@ public partial class Entity : IEntity
         {
             case SpriteAnimations.Normal:
             case SpriteAnimations.Idle:
+            case SpriteAnimations.Death:
                 break;
 
             case SpriteAnimations.Attack:
@@ -2406,7 +2407,7 @@ public partial class Entity : IEntity
                 break;
 
             default:
-                throw new ArgumentOutOfRangeException(nameof(spriteAnimation));
+                return;
         }
 
         if (TryGetAnimationTexture(textureName, spriteAnimationOveride, textureOverride, out var texture))
