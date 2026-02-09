@@ -16,6 +16,7 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Spells;
+using Intersect.Framework.Core.Localization;
 using Intersect.Framework.Core.Security;
 using Intersect.GameObjects;
 using Intersect.Network;
@@ -800,6 +801,12 @@ internal sealed partial class PacketHandler
             var entityType = entry.EntityType ?? string.Empty;
             var entityId = entry.EntityId ?? string.Empty;
             var field = entry.Field ?? string.Empty;
+
+            if (!LocalizationEntityTypes.IsKnown(entityType))
+            {
+                Log.Warning("Unknown localization entity_type '{EntityType}' in TranslationBatchUpsertPacket from client {ClientId}.", entityType, client.Id);
+                continue;
+            }
 
             // SourceText es lo que nos permite recalcular hash y marcar NEEDS_REVIEW si cambió
             var sourceText = entry.SourceText ?? string.Empty;

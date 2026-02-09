@@ -18,6 +18,7 @@ using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets;
 using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.Localization;
 using Intersect.Utilities;
 using Intersect.Framework;
 using Intersect.Models;
@@ -35,6 +36,8 @@ using Intersect.Framework.Core.Security;
 using Intersect.Framework.Threading;
 using Intersect.Localization;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Intersect.Framework.Core.GameObjects.Spells;
@@ -1230,21 +1233,103 @@ internal sealed partial class PacketHandler
     //EventDialogPacket
     public void HandlePacket(IPacketSender packetSender, EventDialogPacket packet)
     {
-        var ed = new Dialog();
-        ed.Prompt = packet.Prompt;
-        ed.Face = packet.Face;
-        if (packet.Type != 0)
+        var requests = new List<LocalizationRequestEntry>();
+        var prompt = packet.Prompt;
+        if (packet.PromptLocalizationRequest is { } promptLocalizationRequest)
         {
-            ed.Options = packet.Responses;
+            prompt = GameLocalization.GetTextOrDefault(
+                promptLocalizationRequest.EntityType,
+                Guid.TryParse(promptLocalizationRequest.EntityId, out var promptEntityId) ? promptEntityId : Guid.Empty,
+                promptLocalizationRequest.Field,
+                packet.Prompt
+            );
+            requests.Add(promptLocalizationRequest);
         }
 
-        ed.EventId = packet.EventId;
+        var ed = new Dialog
+        {
+            Prompt = prompt,
+            Face = packet.Face,
+            EventId = packet.EventId,
+            PromptLocalizationRequest = packet.PromptLocalizationRequest,
+            PromptDefault = packet.Prompt,
+        };
+
+        if (packet.Type != 0)
+        {
+            var responseDefaults = packet.Responses?.ToArray() ?? [];
+            var responses = responseDefaults.ToArray();
+            var optionLocalizationRequests = packet.ResponseLocalizationRequests;
+            var optionRequestsForDialog = new LocalizationRequestEntry[responses.Length];
+            for (var optionIndex = 0; optionIndex < responses.Length; optionIndex++)
+            {
+                if (optionLocalizationRequests == null || optionIndex >= optionLocalizationRequests.Count)
+                {
+                    continue;
+                }
+
+                var optionLocalizationRequest = optionLocalizationRequests[optionIndex];
+                if (optionLocalizationRequest == null)
+                {
+                    continue;
+                }
+
+                responses[optionIndex] = GameLocalization.GetTextOrDefault(
+                    optionLocalizationRequest.EntityType,
+                    Guid.TryParse(optionLocalizationRequest.EntityId, out var optionEntityId) ? optionEntityId : Guid.Empty,
+                    optionLocalizationRequest.Field,
+                    responses[optionIndex]
+                );
+                optionRequestsForDialog[optionIndex] = optionLocalizationRequest;
+                requests.Add(optionLocalizationRequest);
+            }
+
+            ed.Options = responses;
+            ed.OptionDefaults = responseDefaults;
+            ed.OptionLocalizationRequests = optionRequestsForDialog;
+        }
+
+        if (requests.Count > 0)
+        {
+            GameLocalization.RequestEntries(requests);
+        }
+
         Globals.EventDialogs.Add(ed);
     }
 
     //InputVariablePacket
     public void HandlePacket(IPacketSender packetSender, InputVariablePacket packet)
     {
+        var requests = new List<LocalizationRequestEntry>();
+        var title = packet.Title;
+        if (packet.TitleLocalizationRequest is { } titleLocalizationRequest)
+        {
+            title = GameLocalization.GetTextOrDefault(
+                titleLocalizationRequest.EntityType,
+                Guid.TryParse(titleLocalizationRequest.EntityId, out var titleEntityId) ? titleEntityId : Guid.Empty,
+                titleLocalizationRequest.Field,
+                packet.Title
+            );
+            requests.Add(titleLocalizationRequest);
+        }
+
+        var prompt = packet.Prompt;
+        if (packet.PromptLocalizationRequest is { } promptLocalizationRequest)
+        {
+            prompt = GameLocalization.GetTextOrDefault(
+                promptLocalizationRequest.EntityType,
+                Guid.TryParse(promptLocalizationRequest.EntityId, out var promptEntityId) ? promptEntityId : Guid.Empty,
+                promptLocalizationRequest.Field,
+                packet.Prompt
+            );
+            requests.Add(promptLocalizationRequest);
+        }
+
+        if (requests.Count > 0)
+        {
+            GameLocalization.RequestEntries(requests);
+        }
+
         var type = packet.Type switch
         {
             VariableDataType.String => InputType.TextInput,
@@ -1253,8 +1338,8 @@ internal sealed partial class PacketHandler
         };
 
         _ = new InputBox(
-            title: packet.Title,
-            prompt: packet.Prompt,
+            title: title,
+            prompt: prompt,
             inputType: type,
             userData: packet.EventId,
             onSubmit: PacketSender.SendEventInputVariable,
