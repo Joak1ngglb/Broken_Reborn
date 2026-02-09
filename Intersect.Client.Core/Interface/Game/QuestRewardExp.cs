@@ -61,7 +61,7 @@ public sealed class QuestRewardExp
         { JobType.Smithing,    "smithingexp.png"    },
         { JobType.Cooking,     "cookingexp.png"     },
         { JobType.Crafting,    "craftingexp.png"    },
-        { JobType.Jewerly,     "jewerly.png"        }, // nombre del archivo según tu carpeta
+        { JobType.Jewelry,     "jewerly.png"        }, // nombre del archivo según tu carpeta
         { JobType.Tanner,      "tannerexp.png"      },
         { JobType.Tailoring,   "tailoringexp.png"   },
     };
