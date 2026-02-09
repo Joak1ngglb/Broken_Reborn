@@ -244,6 +244,7 @@ public partial class FrmResource : EditorForm
         chkWalkableBefore.Text = Strings.ResourceEditor.walkablebefore;
         chkWalkableAfter.Text = Strings.ResourceEditor.walkableafter;
         chkUseExplicitMaxHealthForResourceStates.Text = Strings.ResourceEditor.UseExplicitMaxHealthForResourceStates;
+        chkEnableTransparencyWhenBehindPlayer.Text = Strings.ResourceEditor.EnableTransparencyWhenBehindPlayer;
 
         grpDrops.Text = Strings.ResourceEditor.drops;
         lblDropItem.Text = Strings.ResourceEditor.dropitem;
@@ -301,6 +302,7 @@ public partial class FrmResource : EditorForm
             chkWalkableBefore.Checked = _editorItem.WalkableBefore;
             chkWalkableAfter.Checked = _editorItem.WalkableAfter;
             chkUseExplicitMaxHealthForResourceStates.Checked = _editorItem.UseExplicitMaxHealthForResourceStates;
+            chkEnableTransparencyWhenBehindPlayer.Checked = _editorItem.EnableTransparencyWhenBehindPlayer;
             cmbEvent.SelectedIndex = EventDescriptor.ListIndex(_editorItem.EventId) + 1;
             txtCannotHarvest.Text = _editorItem.CannotHarvestMessage;
             nudHpRegen.Value = _editorItem.VitalRegen;
@@ -323,6 +325,7 @@ public partial class FrmResource : EditorForm
                 txtStateName.Text = string.Empty;
                 cmbTextureType.SelectedIndex = (int)ResourceTextureSource.Resource;
                 chkRenderBelowEntity.Checked = false;
+                chkEnableTransparencyWhenBehindPlayer.Checked = false;
                 cmbTextureSource.Items.Clear();
                 cmbAnimation.Items.Clear();
                 nudStateRangeMin.Value = 0;
@@ -658,6 +661,16 @@ public partial class FrmResource : EditorForm
         }
 
         _editorItem.UseExplicitMaxHealthForResourceStates = chkUseExplicitMaxHealthForResourceStates.Checked;
+    }
+
+    private void chkEnableTransparencyWhenBehindPlayer_CheckedChanged(object sender, EventArgs e)
+    {
+        if (_editorItem is null)
+        {
+            return;
+        }
+
+        _editorItem.EnableTransparencyWhenBehindPlayer = chkEnableTransparencyWhenBehindPlayer.Checked;
     }
 
     private void lstDrops_SelectedIndexChanged(object sender, EventArgs e)

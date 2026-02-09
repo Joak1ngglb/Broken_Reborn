@@ -103,6 +103,8 @@ public partial class ResourceDescriptor : DatabaseObject<ResourceDescriptor>, IF
 
     public bool WalkableBefore { get; set; }
 
+    public bool EnableTransparencyWhenBehindPlayer { get; set; }
+
     /// <inheritdoc />
     public string Folder { get; set; } = string.Empty;
 }

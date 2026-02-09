@@ -5423,6 +5423,8 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString UseExplicitMaxHealthForResourceStates = @"Use Explicit Max Health for Resource States";
 
+        public static LocalizedString EnableTransparencyWhenBehindPlayer = @"Enable transparency when player is behind";
+
         public static LocalizedString walkableafter = @"Walkable after resource removal?";
 
         public static LocalizedString walkablebefore = @"Walkable before resource removal?";
