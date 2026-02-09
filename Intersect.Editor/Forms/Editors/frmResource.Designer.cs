@@ -39,6 +39,7 @@ namespace Intersect.Editor.Forms.Editors
             grpGeneral = new DarkGroupBox();
             nudHpRegen = new DarkNumericUpDown();
             chkUseExplicitMaxHealthForResourceStates = new DarkCheckBox();
+            chkEnableTransparencyWhenBehindPlayer = new DarkCheckBox();
             lblHpRegen = new Label();
             btnAddFolder = new DarkButton();
             lblFolder = new Label();
@@ -206,6 +207,7 @@ namespace Intersect.Editor.Forms.Editors
             grpGeneral.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
             grpGeneral.Controls.Add(nudHpRegen);
             grpGeneral.Controls.Add(chkUseExplicitMaxHealthForResourceStates);
+            grpGeneral.Controls.Add(chkEnableTransparencyWhenBehindPlayer);
             grpGeneral.Controls.Add(lblHpRegen);
             grpGeneral.Controls.Add(btnAddFolder);
             grpGeneral.Controls.Add(lblFolder);
@@ -255,6 +257,16 @@ namespace Intersect.Editor.Forms.Editors
             chkUseExplicitMaxHealthForResourceStates.TabIndex = 53;
             chkUseExplicitMaxHealthForResourceStates.Text = "Use explicit Max Health for Resources States?";
             chkUseExplicitMaxHealthForResourceStates.CheckedChanged += chkUseExplicitMaxHealthForResourceStates_CheckedChanged;
+            // 
+            // chkEnableTransparencyWhenBehindPlayer
+            // 
+            chkEnableTransparencyWhenBehindPlayer.Location = new System.Drawing.Point(7, 314);
+            chkEnableTransparencyWhenBehindPlayer.Margin = new Padding(4, 3, 4, 3);
+            chkEnableTransparencyWhenBehindPlayer.Name = "chkEnableTransparencyWhenBehindPlayer";
+            chkEnableTransparencyWhenBehindPlayer.Size = new Size(246, 20);
+            chkEnableTransparencyWhenBehindPlayer.TabIndex = 54;
+            chkEnableTransparencyWhenBehindPlayer.Text = "Enable transparency when player is behind";
+            chkEnableTransparencyWhenBehindPlayer.CheckedChanged += chkEnableTransparencyWhenBehindPlayer_CheckedChanged;
             // 
             // lblHpRegen
             // 
@@ -1387,6 +1399,7 @@ namespace Intersect.Editor.Forms.Editors
         private DarkNumericUpDown nudStateRangeMax;
         private DarkNumericUpDown nudStateRangeMin;
         private DarkCheckBox chkUseExplicitMaxHealthForResourceStates;
+        private DarkCheckBox chkEnableTransparencyWhenBehindPlayer;
         private Label lblHpRegen;
         private DarkGroupBox GrpExp;
         private DarkComboBox cmbJobType;

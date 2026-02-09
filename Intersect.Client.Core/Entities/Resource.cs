@@ -34,6 +34,10 @@ public partial class Resource : Entity, IResource
     private readonly int _tileHeight = Options.Instance.Map.TileHeight;
     private readonly int _mapHeight = Options.Instance.Map.MapHeight;
 
+    private float _currentTransparency = 1.0f;
+    private const float TransparencyWhenPlayerBehind = 0.4f;
+    private const float TransparencyTransitionSpeed = 0.1f;
+
     /// <inheritdoc />
     public override bool CanBeAttacked => !IsDead;
 
@@ -320,6 +324,8 @@ public partial class Resource : Entity, IResource
             return true;
         }
 
+        UpdateTransparency();
+
         var result = base.Update();
         if (!result)
         {
@@ -330,6 +336,52 @@ public partial class Resource : Entity, IResource
         }
 
         return result;
+    }
+
+    private void UpdateTransparency()
+    {
+        var targetTransparency = 1.0f;
+
+        if (Descriptor?.EnableTransparencyWhenBehindPlayer != true)
+        {
+            targetTransparency = 1.0f;
+        }
+        else if (IsPlayerBehindResource())
+        {
+            targetTransparency = TransparencyWhenPlayerBehind;
+        }
+
+        if (_currentTransparency < targetTransparency)
+        {
+            _currentTransparency = Math.Min(_currentTransparency + TransparencyTransitionSpeed, targetTransparency);
+        }
+        else if (_currentTransparency > targetTransparency)
+        {
+            _currentTransparency = Math.Max(_currentTransparency - TransparencyTransitionSpeed, targetTransparency);
+        }
+    }
+
+    private bool IsPlayerBehindResource()
+    {
+        if (Globals.Me is not { MapInstance: { } playerMap })
+        {
+            return false;
+        }
+
+        if (Globals.Me.MapId != MapId || Globals.Me.Y > Y)
+        {
+            return false;
+        }
+
+        var playerCenterX = playerMap.X + Globals.Me.X * _tileWidth + Globals.Me.OffsetX + _tileWidth / 2f;
+        var playerFeetY = playerMap.Y + Globals.Me.Y * _tileHeight + Globals.Me.OffsetY + _tileHeight;
+
+        var left = _renderBoundsDest.X;
+        var top = _renderBoundsDest.Y;
+        var right = _renderBoundsDest.X + _renderBoundsDest.Width;
+        var bottom = _renderBoundsDest.Y + _renderBoundsDest.Height;
+
+        return playerCenterX >= left && playerCenterX <= right && playerFeetY >= top && playerFeetY <= bottom;
     }
 
     public override HashSet<Entity>? DetermineRenderOrder(HashSet<Entity>? renderList, IMapInstance? map)
@@ -525,6 +577,9 @@ public partial class Resource : Entity, IResource
             return;
         }
 
-        Graphics.DrawGameTexture(Texture, _renderBoundsSrc, _renderBoundsDest, Color.White);
+        var alpha = (byte)(_currentTransparency * 255);
+        var renderColor = new Color(255, 255, 255, alpha);
+
+        Graphics.DrawGameTexture(Texture, _renderBoundsSrc, _renderBoundsDest, renderColor);
     }
 }
