@@ -12,6 +12,7 @@ using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.Localization;
 using Intersect.Framework.Reflection;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Localization;
@@ -336,7 +337,7 @@ public partial class CraftingWindow : Window
         }
 
         return GameLocalization.GetTextOrDefault(
-            Globals.ActiveCraftingTable.Type.ToString(),
+            LocalizationEntityTypes.FromGameObjectType(Globals.ActiveCraftingTable.Type),
             Globals.ActiveCraftingTable.Id,
             "Name",
             Globals.ActiveCraftingTable.Name
@@ -357,7 +358,7 @@ public partial class CraftingWindow : Window
 
         GameLocalization.RequestEntries(
             [
-                new LocalizationRequestEntry(Globals.ActiveCraftingTable.Type.ToString(), Globals.ActiveCraftingTable.Id.ToString(), "Name")
+                new LocalizationRequestEntry(LocalizationEntityTypes.FromGameObjectType(Globals.ActiveCraftingTable.Type), Globals.ActiveCraftingTable.Id.ToString(), "Name")
             ]
         );
     }
@@ -377,7 +378,7 @@ public partial class CraftingWindow : Window
                 continue;
             }
 
-            requests.Add(new LocalizationRequestEntry(recipe.Type.ToString(), recipe.Id.ToString(), "Name"));
+            requests.Add(new LocalizationRequestEntry(LocalizationEntityTypes.FromGameObjectType(recipe.Type), recipe.Id.ToString(), "Name"));
         }
 
         GameLocalization.RequestEntries(requests);
@@ -386,7 +387,7 @@ public partial class CraftingWindow : Window
     private static string GetLocalizedRecipeName(CraftingRecipeDescriptor recipe) =>
         recipe == null
             ? string.Empty
-            : GameLocalization.GetTextOrDefault(recipe.Type.ToString(), recipe.Id, "Name", recipe.Name);
+            : GameLocalization.GetTextOrDefault(LocalizationEntityTypes.FromGameObjectType(recipe.Type), recipe.Id, "Name", recipe.Name);
 
     public override void Hide()
     {

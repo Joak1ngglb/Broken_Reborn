@@ -9,8 +9,11 @@ namespace Intersect.Client.Localization;
 
 public static class GameLocalization
 {
-    private static readonly ConcurrentDictionary<LocalizationCacheKey, string> Cache = new();
-    private static readonly ConcurrentDictionary<LocalizationCacheKey, byte> PendingRequests = new();
+    private static readonly TimeSpan MissingEntryRetryDelay = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan PendingRequestRetryDelay = TimeSpan.FromSeconds(5);
+
+    private static readonly ConcurrentDictionary<LocalizationCacheKey, LocalizationCacheEntry> Cache = new();
+    private static readonly ConcurrentDictionary<LocalizationCacheKey, DateTime> PendingRequests = new();
 
     public static event Action<string, IReadOnlyCollection<LocalizationRequestEntry>>? LocalizedTextsUpdated;
 
@@ -18,9 +21,21 @@ public static class GameLocalization
     {
         var language = NormalizeLanguage(Globals.Database.Language);
         var key = new LocalizationCacheKey(entityType, entityId.ToString(), field, language);
-        if (Cache.TryGetValue(key, out var text))
+        if (Cache.TryGetValue(key, out var cacheEntry))
         {
-            return string.IsNullOrWhiteSpace(text) ? fallback : text;
+            if (cacheEntry.State == LocalizationCacheState.Resolved)
+            {
+                return string.IsNullOrWhiteSpace(cacheEntry.Text) ? fallback : cacheEntry.Text;
+            }
+
+            RequestMissingEntries(
+                language,
+                [
+                    new LocalizationRequestEntry(entityType, entityId.ToString(), field)
+                ]
+            );
+
+            return fallback;
         }
 
         RequestMissingEntries(
@@ -53,8 +68,15 @@ public static class GameLocalization
 
             var request = entry.Request;
             var key = new LocalizationCacheKey(request.EntityType, request.EntityId, request.Field, normalizedLanguage);
-            Cache[key] = entry.Text ?? string.Empty;
             PendingRequests.TryRemove(key, out _);
+
+            if (string.IsNullOrEmpty(entry.Text))
+            {
+                Cache[key] = new LocalizationCacheEntry(LocalizationCacheState.Missing, string.Empty, DateTime.UtcNow);
+                continue;
+            }
+
+            Cache[key] = new LocalizationCacheEntry(LocalizationCacheState.Resolved, entry.Text, DateTime.MinValue);
             updatedRequests.Add(request);
         }
 
@@ -72,6 +94,7 @@ public static class GameLocalization
 
     private static void RequestMissingEntries(string language, IEnumerable<LocalizationRequestEntry> requests)
     {
+        var now = DateTime.UtcNow;
         var pendingRequests = new List<LocalizationRequestEntry>();
         foreach (var request in requests)
         {
@@ -84,12 +107,35 @@ public static class GameLocalization
             }
 
             var key = new LocalizationCacheKey(request.EntityType, request.EntityId, request.Field, language);
-            if (Cache.ContainsKey(key) || PendingRequests.ContainsKey(key))
+            if (Cache.TryGetValue(key, out var cachedEntry))
+            {
+                if (cachedEntry.State == LocalizationCacheState.Resolved)
+                {
+                    continue;
+                }
+
+                if (now - cachedEntry.LastRequestUtc < MissingEntryRetryDelay)
+                {
+                    continue;
+                }
+            }
+
+            if (PendingRequests.TryGetValue(key, out var lastPendingRequestAt) &&
+                now - lastPendingRequestAt < PendingRequestRetryDelay)
             {
                 continue;
             }
 
-            PendingRequests[key] = 0;
+            PendingRequests[key] = now;
+            Cache.AddOrUpdate(
+                key,
+                _ => new LocalizationCacheEntry(LocalizationCacheState.Missing, string.Empty, now),
+                (_, existing) => new LocalizationCacheEntry(
+                    existing.State == LocalizationCacheState.Resolved ? LocalizationCacheState.Resolved : LocalizationCacheState.Missing,
+                    existing.Text,
+                    existing.State == LocalizationCacheState.Resolved ? existing.LastRequestUtc : now
+                )
+            );
             pendingRequests.Add(request);
         }
 
@@ -110,4 +156,16 @@ public static class GameLocalization
         string Field,
         string Language
     );
+
+    private readonly record struct LocalizationCacheEntry(
+        LocalizationCacheState State,
+        string Text,
+        DateTime LastRequestUtc
+    );
+
+    private enum LocalizationCacheState
+    {
+        Missing,
+        Resolved
+    }
 }

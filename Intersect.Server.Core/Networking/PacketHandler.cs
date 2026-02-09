@@ -27,6 +27,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
+using Intersect.Framework.Core.Localization;
 using Intersect.Framework.Core.Security;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Core;
@@ -519,6 +520,9 @@ internal sealed partial class PacketHandler
 
         var language = string.IsNullOrWhiteSpace(packet.Language) ? "en" : packet.Language;
         var entries = new List<LocalizedTextEntry>();
+        var validRequests = new List<LocalizationRequestEntry>(packet.Requests.Count);
+        var batchKeys = new List<LocalizationKey>(packet.Requests.Count);
+
         foreach (var request in packet.Requests)
         {
             if (request == null)
@@ -526,14 +530,40 @@ internal sealed partial class PacketHandler
                 continue;
             }
 
-            var text = LocalizationRepository.Default.Get(
-                request.EntityType ?? string.Empty,
-                request.EntityId ?? string.Empty,
-                request.Field ?? string.Empty,
-                language
-            ) ?? string.Empty;
+            var entityType = request.EntityType ?? string.Empty;
+            if (!LocalizationEntityTypes.IsKnown(entityType))
+            {
+                ApplicationContext.Context.Value?.Logger.LogWarning(
+                    "Unknown localization entity_type '{EntityType}' received from client {ClientId}.",
+                    entityType,
+                    client.Id
+                );
+                entries.Add(new LocalizedTextEntry(request, string.Empty));
+                continue;
+            }
 
-            entries.Add(new LocalizedTextEntry(request, text));
+            if (string.IsNullOrWhiteSpace(request.EntityId) || string.IsNullOrWhiteSpace(request.Field))
+            {
+                entries.Add(new LocalizedTextEntry(request, string.Empty));
+                continue;
+            }
+
+            validRequests.Add(request);
+            batchKeys.Add(new LocalizationKey(entityType, request.EntityId, request.Field));
+        }
+
+        if (batchKeys.Count > 0)
+        {
+            var batchResults = LocalizationRepository.Default.GetBatch(batchKeys, language);
+            foreach (var request in validRequests)
+            {
+                var key = new LocalizationKey(request.EntityType, request.EntityId, request.Field);
+                var text = batchResults.TryGetValue(key, out var localizedText)
+                    ? localizedText
+                    : string.Empty;
+
+                entries.Add(new LocalizedTextEntry(request, text));
+            }
         }
 
         if (entries.Count > 0)
@@ -1827,7 +1857,7 @@ internal sealed partial class PacketHandler
                 if (ItemDescriptor.TryGet(mapItem.ItemId, out var item))
                 {
                     var localizationRequest = new LocalizationRequestEntry(
-                        item.Type.ToString(),
+                        LocalizationEntityTypes.FromGameObjectType(item.Type),
                         item.Id.ToString(),
                         "Name"
                     );
