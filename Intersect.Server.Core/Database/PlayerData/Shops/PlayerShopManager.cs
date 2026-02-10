@@ -15,6 +15,7 @@ using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
 using Intersect.Server.Maps;
 using Intersect.Server.Framework.Items;
+using Intersect.Server.Localization;
 using Intersect.Server.Networking;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -281,7 +282,7 @@ public static class PlayerShopManager
 
         if (stockEntries.Count == 0)
         {
-            throw new InvalidOperationException("La tienda no tiene artículos configurados.");
+            throw new InvalidOperationException(Strings.PlayerShops.NoConfiguredItems.ToString());
         }
 
         if (owner.MapInstanceId != MapInstance.OverworldInstanceId)
@@ -291,7 +292,7 @@ public static class PlayerShopManager
 
         if (IsLocationOccupied(mapId, owner.MapInstanceId, x, y, z))
         {
-            throw new InvalidOperationException("Ya existe una tienda en esta ubicación.");
+            throw new InvalidOperationException(Strings.PlayerShops.ErrorLocationOccupied.ToString());
         }
 
         IReadOnlyList<ReservedInventoryItem> reservations = Array.Empty<ReservedInventoryItem>();
@@ -376,7 +377,7 @@ public static class PlayerShopManager
             if (IsActiveShopUniquenessViolation(exception))
             {
                 throw new InvalidOperationException(
-                    "Ya tienes una tienda activa o la ubicación ya está ocupada por otra tienda activa.",
+                    Strings.PlayerShops.ErrorUniquenessViolation.ToString(),
                     exception
                 );
             }
@@ -460,13 +461,13 @@ public static class PlayerShopManager
         {
             if (!entry.InventorySlot.HasValue)
             {
-                throw new InvalidOperationException("Falta el espacio de inventario para uno de los artículos.");
+                throw new InvalidOperationException(Strings.PlayerShops.ErrorMissingInventorySlot.ToString());
             }
 
             if (entry.Quantity <= 0)
             {
                 throw new InvalidOperationException(
-                    $"La cantidad para el espacio {entry.InventorySlot.Value + 1} debe ser mayor a 0."
+                    Strings.PlayerShops.ErrorQuantityMustBeGreaterThanZeroForSlot.ToString(entry.InventorySlot.Value + 1)
                 );
             }
 
@@ -474,23 +475,23 @@ public static class PlayerShopManager
 
             if (slotIndex < 0 || slotIndex >= owner.Items.Count)
             {
-                throw new InvalidOperationException("El espacio seleccionado no es válido.");
+                throw new InvalidOperationException(Strings.PlayerShops.InvalidSelectedSlot.ToString());
             }
 
             if (!owner.TryGetSlot(slotIndex, out var slot))
             {
-                throw new InvalidOperationException("El espacio seleccionado no es válido.");
+                throw new InvalidOperationException(Strings.PlayerShops.InvalidSelectedSlot.ToString());
             }
 
             if (slot == null || slot.ItemId == Guid.Empty)
             {
-                throw new InvalidOperationException($"El espacio {slotIndex + 1} está vacío.");
+                throw new InvalidOperationException(Strings.PlayerShops.SlotEmpty.ToString(slotIndex + 1));
             }
 
             if (slot.ItemId != entry.ItemId)
             {
                 throw new InvalidOperationException(
-                    $"El artículo en el espacio {slotIndex + 1} no coincide con el listado."
+                    Strings.PlayerShops.ErrorSlotItemMismatch.ToString(slotIndex + 1)
                 );
             }
 
@@ -508,7 +509,7 @@ public static class PlayerShopManager
 
             if (slotReservation.QuantityToTake > slot.Quantity)
             {
-                throw new InvalidOperationException($"No tienes suficientes unidades en el espacio {slotIndex + 1}.");
+                throw new InvalidOperationException(Strings.PlayerShops.NotEnoughUnitsInSlot.ToString(slotIndex + 1));
             }
         }
 
@@ -524,7 +525,7 @@ public static class PlayerShopManager
             if (!owner.TryTakeItem(reservation.Slot, reservation.QuantityToTake))
             {
                 throw new InvalidOperationException(
-                    $"No se pudieron reservar los artículos del espacio {reservation.SlotIndex + 1}."
+                    Strings.PlayerShops.ErrorReserveItemsFailedForSlot.ToString(reservation.SlotIndex + 1)
                 );
             }
 
