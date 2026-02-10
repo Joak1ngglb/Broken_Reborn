@@ -3,6 +3,7 @@ using System;
 using Intersect.Server.Database.PlayerData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Intersect.Server.Migrations.Sqlite.Player
 {
     [DbContext(typeof(SqlitePlayerContext))]
-    partial class SqlitePlayerContextModelSnapshot : ModelSnapshot
+    [Migration("20260210024336_AddDeathState")]
+    partial class AddDeathState
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
@@ -645,6 +648,149 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.ToTable("User_Variables");
                 });
 
+            modelBuilder.Entity("Intersect.Server.Database.PlayerData.Shops.PlayerShop", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Decoration")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("MapId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("MapInstanceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("PendingGold")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("X")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Y")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Z")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("MapId", "Status");
+
+                    b.HasIndex("OwnerId", "Status");
+
+                    b.ToTable("Player_Shops");
+                });
+
+            modelBuilder.Entity("Intersect.Server.Database.PlayerData.Shops.PlayerShopItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsSold")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ItemPropertiesJson")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("ItemProperties");
+
+                    b.Property<int>("PricePerUnit")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("ShopId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("SoldAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShopId");
+
+                    b.ToTable("Player_ShopItems");
+                });
+
+            modelBuilder.Entity("Intersect.Server.Database.PlayerData.Shops.PlayerShopTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("BuyerName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ItemPropertiesJson")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("ItemProperties");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("ShopId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ShopItemId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TotalPrice")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UnitPrice")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.HasIndex("ShopId");
+
+                    b.HasIndex("ShopItemId");
+
+                    b.ToTable("Player_ShopTransactions");
+                });
+
             modelBuilder.Entity("Intersect.Server.Database.PlayerData.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -696,6 +842,12 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT")
                         .HasColumnOrder(0);
+
+                    b.Property<Guid?>("ActivePlayerShopId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ActivePlayerShopStatus")
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid>("ClassId")
                         .HasColumnType("TEXT");
@@ -1175,6 +1327,55 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Intersect.Server.Database.PlayerData.Shops.PlayerShop", b =>
+                {
+                    b.HasOne("Intersect.Server.Entities.Player", "Owner")
+                        .WithMany("PlayerShops")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Intersect.Server.Database.PlayerData.Shops.PlayerShopItem", b =>
+                {
+                    b.HasOne("Intersect.Server.Database.PlayerData.Shops.PlayerShop", "Shop")
+                        .WithMany("Items")
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Shop");
+                });
+
+            modelBuilder.Entity("Intersect.Server.Database.PlayerData.Shops.PlayerShopTransaction", b =>
+                {
+                    b.HasOne("Intersect.Server.Entities.Player", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Intersect.Server.Database.PlayerData.Shops.PlayerShop", "Shop")
+                        .WithMany("Transactions")
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Intersect.Server.Database.PlayerData.Shops.PlayerShopItem", "ShopItem")
+                        .WithMany()
+                        .HasForeignKey("ShopItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("Shop");
+
+                    b.Navigation("ShopItem");
+                });
+
             modelBuilder.Entity("Intersect.Server.Entities.Player", b =>
                 {
                     b.HasOne("Intersect.Server.Database.PlayerData.Players.Guild", "Guild")
@@ -1230,6 +1431,13 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Navigation("Variables");
                 });
 
+            modelBuilder.Entity("Intersect.Server.Database.PlayerData.Shops.PlayerShop", b =>
+                {
+                    b.Navigation("Items");
+
+                    b.Navigation("Transactions");
+                });
+
             modelBuilder.Entity("Intersect.Server.Database.PlayerData.User", b =>
                 {
                     b.Navigation("Ban");
@@ -1258,6 +1466,8 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Navigation("MailBoxs");
 
                     b.Navigation("MarketListings");
+
+                    b.Navigation("PlayerShops");
 
                     b.Navigation("Quests");
 
