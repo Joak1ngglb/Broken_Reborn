@@ -46,7 +46,6 @@ public partial class SettingsWindow : Window
     private readonly LabeledCheckBox _showManaAsPercentageCheckbox;
     private readonly LabeledCheckBox _simplifiedEscapeMenu;
     private readonly LabeledComboBox _languageList;
-    private readonly LabeledCheckBox _showAchievementNotificationsCheckbox;
 
     // Game Settings - Information
     private readonly TabButton _gameSettingsTabInformation;

@@ -2714,7 +2714,7 @@ public partial class Entity : IEntity
     }
     public bool IsDead()
     {
-        return Vitals[(int)Vital.Health] <= 0;
+        return Vital[(int)Enums.Vital.Health] <= 0;
     }
 
 

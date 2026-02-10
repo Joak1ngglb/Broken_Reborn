@@ -456,6 +456,25 @@ public partial class RichLabel : Base
         }
 
         var newstrLen = newString.Length;
+        if (newstrLen <= 0)
+        {
+            // Safety net: if word-based splitting made no progress, force a character-based split
+            // to avoid recursively reprocessing the exact same input.
+            SplitLabelByChars(
+                text,
+                font,
+                fontSize,
+                block,
+                ref x,
+                ref y,
+                ref lineHeight,
+                initialX,
+                availableWidth
+            );
+
+            return;
+        }
+
         if (newstrLen < text.Length)
         {
             leftOver = text.Substring(newstrLen);

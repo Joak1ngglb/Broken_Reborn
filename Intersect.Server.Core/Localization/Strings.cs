@@ -15,30 +15,6 @@ public static partial class Strings
     private const string DefaultLanguage = "en";
     private const string StringsFileName = "server_strings.json";
 
-    public sealed partial class AchievementsNamespace : LocaleNamespace
-    {
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString CategoryLabel = @"Category: {00}";
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString CompletedNotification = @"Achievement completed: {00}";
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString DifficultyLabel = @"Difficulty: {00}";
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString FilterCompleted = @"Completed";
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString FilterInProgress = @"In Progress";
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString FilterPending = @"Pending";
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString Title = @"Achievements";
-    }
-
     public sealed partial class AccountNamespace : LocaleNamespace
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -1718,6 +1694,14 @@ public static partial class Strings
             serialized = new JObject();
             return false;
         }
+        catch (Exception exception)
+        {
+            if (exception.Message.Contains("Commands.announcement"))
+            {
+                throw new Exception(
+                    "Server strings invalid! Upgrade steps to B6 were not followed correctly. Server must close!"
+                );
+            }
 
         var json = File.ReadAllText(path, Encoding.UTF8);
         serialized = JsonConvert.DeserializeObject<JObject>(json) ?? new JObject();

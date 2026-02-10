@@ -5,7 +5,6 @@ namespace Intersect.Framework.Core.Localization;
 
 public static class LocalizationEntityTypes
 {
-    public const string Achievement = "Achievement";
     public const string Animation = "Animation";
     public const string Class = "Class";
     public const string Crafts = "Crafts";
@@ -25,7 +24,6 @@ public static class LocalizationEntityTypes
     public const string Spell = "Spell";
     public const string Tileset = "Tileset";
     public const string Time = "Time";
-    public const string Title = "Title";
     public const string UserVariable = "UserVariable";
 
     public static bool IsKnown(string entityType) =>
@@ -35,7 +33,7 @@ public static class LocalizationEntityTypes
     public static string FromGameObjectType(GameObjectType type) =>
         type switch
         {
-            GameObjectType.Achievement => Achievement,
+
             GameObjectType.Animation => Animation,
             GameObjectType.Class => Class,
             GameObjectType.Crafts => Crafts,
@@ -55,7 +53,7 @@ public static class LocalizationEntityTypes
             GameObjectType.Spell => Spell,
             GameObjectType.Tileset => Tileset,
             GameObjectType.Time => Time,
-            GameObjectType.Title => Title,
+         
             GameObjectType.UserVariable => UserVariable,
             _ => type.ToString(),
         };

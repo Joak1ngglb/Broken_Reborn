@@ -63,6 +63,8 @@ namespace Intersect.Config;
         Alchemy,
         Crafting,
         Jewelry,
+         [System.Obsolete("Use Jewelry instead. Kept as a compatibility alias for legacy serialized data.")]
+        Jewerly = Jewelry,
         Tanner,
         Tailoring,
 
