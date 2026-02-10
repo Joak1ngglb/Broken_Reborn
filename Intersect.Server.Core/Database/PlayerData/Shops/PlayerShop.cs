@@ -49,6 +49,17 @@ public class PlayerShop : IPlayerOwned
 
     public DateTime? ClosedAt { get; set; }
 
+    /// <summary>
+    /// Set once expired-shop liquidation (gold payout + unsold return) has been applied.
+    /// Null means liquidation is still pending.
+    /// </summary>
+    public DateTime? LiquidatedAt { get; set; }
+
+    /// <summary>
+    /// Audit value storing how much pending gold was paid during liquidation.
+    /// </summary>
+    public long LiquidatedGold { get; set; }
+
     public string Decoration { get; set; } = PlayerShopEntityConstants.DefaultDecoration;
 
     public virtual List<PlayerShopItem> Items { get; set; } = new();

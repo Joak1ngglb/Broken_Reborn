@@ -10,6 +10,7 @@ using Intersect.Framework.Core.Entities;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Shops;
 using Intersect.Server.Database;
+using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
 using Intersect.Server.Maps;
@@ -831,12 +832,12 @@ public static class PlayerShopManager
             {
                 lock (activeRuntime.SyncRoot)
                 {
-                    ExpireShop(now, owners, shop);
+                    ExpireShop(context, now, owners, shop);
                 }
             }
             else
             {
-                ExpireShop(now, owners, shop);
+                ExpireShop(context, now, owners, shop);
             }
         }
 
@@ -850,14 +851,20 @@ public static class PlayerShopManager
         return expired.Count;
     }
 
-    private static void ExpireShop(DateTime now, List<Guid> owners, PlayerShop shop)
+    private static void ExpireShop(PlayerContext context, DateTime now, List<Guid> owners, PlayerShop shop)
     {
+        var totalSalesGold = context.Player_ShopTransactions
+            .Where(transaction => transaction.ShopId == shop.Id)
+            .Sum(transaction => (long?)transaction.TotalPrice) ?? 0;
+
+        shop.PendingGold = Math.Max(shop.PendingGold, totalSalesGold);
         shop.Status = PlayerShopStatus.Expired;
         shop.ClosedAt = now;
         owners.Add(shop.OwnerId);
         if (ActiveShops.TryRemove(shop.Id, out var runtime))
         {
             runtime.UpdateStatus(PlayerShopStatus.Expired);
+            runtime.UpdatePendingGold(shop.PendingGold);
         }
 
         DespawnShopEntity(shop.Id);
@@ -960,6 +967,14 @@ public static class PlayerShopManager
         ShopSnapshot Snapshot
     );
 
+    public sealed record PlayerShopLiquidationSummary(
+        Guid ShopId,
+        string ShopName,
+        long GoldPaid,
+        int ReturnedStackCount,
+        int ReturnedItemQuantity
+    );
+
     public static bool TryFinalizeActiveShop(Player player, out PlayerShopFinalizationSummary? summary)
     {
         summary = null;
@@ -1059,6 +1074,123 @@ public static class PlayerShopManager
 
             return true;
         }
+    }
+
+    public static IReadOnlyList<PlayerShopLiquidationSummary> ApplyPendingLiquidations(Player player)
+    {
+        if (player == null)
+        {
+            return Array.Empty<PlayerShopLiquidationSummary>();
+        }
+
+        var summaries = new List<PlayerShopLiquidationSummary>();
+        using var context = DbInterface.CreatePlayerContext(readOnly: false, explicitLoad: true);
+        var shops = context.Player_Shops
+            .Include(shop => shop.Items)
+            .Where(
+                shop =>
+                    shop.OwnerId == player.Id
+                    && shop.Status == PlayerShopStatus.Expired
+                    && shop.LiquidatedAt == null
+            )
+            .ToList();
+
+        if (shops.Count == 0)
+        {
+            return summaries;
+        }
+
+        var currencyDescriptor = ResolveGlobalCurrencyDescriptor();
+        foreach (var shop in shops)
+        {
+            var unsoldItems = shop.Items
+                .Where(item => !item.IsSold && item.Quantity > 0)
+                .Select(item => new Item(item.ItemId, item.Quantity) { Properties = new ItemProperties(item.Properties) })
+                .ToList();
+
+            var returnedStackCount = unsoldItems.Count;
+            var returnedItemQuantity = unsoldItems.Sum(item => item.Quantity);
+            var goldPaid = 0L;
+            var pendingGold = Math.Max(0, shop.PendingGold);
+
+            if (pendingGold > 0)
+            {
+                if (currencyDescriptor == null)
+                {
+                    Log.Warning(
+                        "Skipping expired shop liquidation for {ShopId}: no global currency configured.",
+                        shop.Id
+                    );
+
+                    continue;
+                }
+
+                if (!DeliverCurrency(player, shop.Id, currencyDescriptor.Id, pendingGold))
+                {
+                    Log.Warning(
+                        "Skipping expired shop liquidation for {ShopId}: failed to deliver currency to owner {OwnerId}.",
+                        shop.Id,
+                        player.Id
+                    );
+
+                    continue;
+                }
+
+                goldPaid = pendingGold;
+                shop.PendingGold = 0;
+            }
+
+            if (unsoldItems.Count > 0 && !DeliverItems(player, shop.Id, unsoldItems))
+            {
+                if (goldPaid > 0)
+                {
+                    shop.PendingGold = goldPaid;
+                }
+
+                Log.Warning(
+                    "Skipping expired shop liquidation for {ShopId}: failed to deliver unsold items to owner {OwnerId}.",
+                    shop.Id,
+                    player.Id
+                );
+
+                continue;
+            }
+
+            var now = DateTime.UtcNow;
+            shop.LiquidatedAt = now;
+            shop.LiquidatedGold = goldPaid;
+            shop.Status = PlayerShopStatus.Closed;
+            shop.ClosedAt ??= now;
+
+            UpdatePlayerActiveShop(
+                shop.OwnerId,
+                null,
+                PlayerShopStatus.Closed,
+                owner: player,
+                context,
+                saveChanges: false
+            );
+
+            ActiveShops.TryRemove(shop.Id, out _);
+            DespawnShopEntity(shop.Id);
+
+            summaries.Add(
+                new PlayerShopLiquidationSummary(
+                    shop.Id,
+                    shop.Title,
+                    goldPaid,
+                    returnedStackCount,
+                    returnedItemQuantity
+                )
+            );
+        }
+
+        if (summaries.Count > 0)
+        {
+            context.SaveChanges();
+        }
+
+        return summaries;
     }
 
     public sealed class PlayerShopRuntime

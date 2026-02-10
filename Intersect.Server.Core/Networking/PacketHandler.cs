@@ -3527,7 +3527,35 @@ internal sealed partial class PacketHandler
 
     private static void NotifyActivePlayerShopState(Player? player)
     {
-        if (player == null || !player.ActivePlayerShopId.HasValue)
+        if (player == null)
+        {
+            return;
+        }
+
+        var liquidationSummaries = PlayerShopManager.ApplyPendingLiquidations(player);
+        foreach (var liquidation in liquidationSummaries)
+        {
+            var details = new List<string>();
+            if (liquidation.GoldPaid > 0)
+            {
+                details.Add($"💰 {liquidation.GoldPaid} oro liquidado");
+            }
+
+            if (liquidation.ReturnedItemQuantity > 0)
+            {
+                details.Add($"📦 {liquidation.ReturnedItemQuantity} artículos devueltos");
+            }
+
+            var detailText = details.Count > 0 ? string.Join(" · ", details) : "sin saldo pendiente";
+            PacketSender.SendChatMsg(
+                player,
+                $"📩 Liquidación aplicada de tu tienda expirada \"{liquidation.ShopName}\": {detailText}.",
+                ChatMessageType.Trading,
+                CustomColors.Alerts.Accepted
+            );
+        }
+
+        if (!player.ActivePlayerShopId.HasValue)
         {
             return;
         }
