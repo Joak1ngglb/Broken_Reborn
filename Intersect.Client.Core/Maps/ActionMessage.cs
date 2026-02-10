@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Maps;
@@ -13,15 +14,18 @@ public partial class ActionMessage : IActionMessage
 {
     private const long CRITICAL_FLAG_TIMEOUT = 1000;
     private const float CRITICAL_DIGIT_SCALE = 0.75f;
+    private const float CRITICAL_ROTATION_OSCILLATION_AMPLITUDE = 4f;
+    private const float CRITICAL_ROTATION_OSCILLATION_SPEED = 0.02f;
     private const int DIGIT_SPACING = 0;
     private const int DIGIT_WIDTH = 9;
     private const int DIGIT_HEIGHT = 12;
+    private static readonly object sCriticalFlagLock = new();
     private static bool _nextDamageIsCritical;
     private static long _criticalFlagTime;
 
     private readonly List<IGameTexture> _digitTextures = [];
     private bool _isCritical;
-    private float _criticalRotation;
+    private float _criticalBaseRotation;
     private IGameTexture? _criticalTexture;
     private bool _texturesLoaded;
 
@@ -67,17 +71,21 @@ public partial class ActionMessage : IActionMessage
 
         if (!hasNumericText && hasCriticalText)
         {
-            _nextDamageIsCritical = true;
-            _criticalFlagTime = Timing.Global.MillisecondsUtc;
+            // Queue a short-lived critical flag so the next numeric action message becomes critical.
+            MarkNextDamageAsCritical();
             return;
         }
 
         if (hasNumericText)
         {
-            _isCritical = hasCriticalText || _nextDamageIsCritical;
-            _criticalRotation = Globals.Random.Next(-10, 11);
-            _nextDamageIsCritical = false;
-            _criticalFlagTime = 0;
+            var consumedQueuedCritical = TryConsumeCriticalFlag();
+            _isCritical = hasCriticalText || consumedQueuedCritical;
+            _criticalBaseRotation = Globals.Random.Next(-10, 11);
+
+            if (_isCritical)
+            {
+                Audio.AddGameSound("critical", false);
+            }
         }
     }
 
@@ -113,7 +121,7 @@ public partial class ActionMessage : IActionMessage
             if (_isCritical)
             {
                 _criticalTexture = Globals.ContentManager.GetTexture(TextureType.Misc, "critical.png");
-             }
+            }
             if (_digitTextures.Count != numericText.Length)
             {
                 _digitTextures.Clear();
@@ -132,6 +140,11 @@ public partial class ActionMessage : IActionMessage
 
             if (_isCritical && _criticalTexture != null)
             {
+                var timeRemaining = Math.Clamp((float)(TransmissionTimer - Timing.Global.MillisecondsUtc), 0f, 1000f);
+                var elapsedLifetime = 1000f - timeRemaining;
+                var oscillation = (float)Math.Sin(elapsedLifetime * CRITICAL_ROTATION_OSCILLATION_SPEED)
+                    * CRITICAL_ROTATION_OSCILLATION_AMPLITUDE;
+                var criticalRotation = _criticalBaseRotation + oscillation;
                 var criticalX = x - _criticalTexture.Width / 2f;
                 var criticalY = y - _criticalTexture.Height / 2f + digitHeight / 2f;
                 Graphics.Renderer.DrawTexture(
@@ -145,7 +158,7 @@ public partial class ActionMessage : IActionMessage
                     _criticalTexture.Width,
                     _criticalTexture.Height,
                     Color.White,
-                    rotationDegrees: _criticalRotation
+                    rotationDegrees: criticalRotation
                 );
             }
 
@@ -194,27 +207,63 @@ public partial class ActionMessage : IActionMessage
         {
             _digitTextures.Clear();
             _criticalTexture = null;
-            _criticalRotation = 0;
+            _criticalBaseRotation = 0;
             _isCritical = false;
             _texturesLoaded = false;
             (Map as MapInstance)?.ActionMessages.Remove(this);
         }
     }
 
+    private static void MarkNextDamageAsCritical()
+    {
+        lock (sCriticalFlagLock)
+        {
+            _nextDamageIsCritical = true;
+            _criticalFlagTime = Timing.Global.MillisecondsUtc;
+        }
+    }
+
+    private static bool TryConsumeCriticalFlag()
+    {
+        lock (sCriticalFlagLock)
+        {
+            if (!_nextDamageIsCritical)
+            {
+                return false;
+            }
+
+            if (Timing.Global.MillisecondsUtc - _criticalFlagTime > CRITICAL_FLAG_TIMEOUT)
+            {
+                _nextDamageIsCritical = false;
+                _criticalFlagTime = 0;
+
+                return false;
+            }
+
+            _nextDamageIsCritical = false;
+            _criticalFlagTime = 0;
+
+            return true;
+        }
+    }
+
     private static void RefreshCriticalFlag()
     {
-        if (!_nextDamageIsCritical)
+        lock (sCriticalFlagLock)
         {
-            return;
-        }
+            if (!_nextDamageIsCritical)
+            {
+                return;
+            }
 
-        if (Timing.Global.MillisecondsUtc - _criticalFlagTime <= CRITICAL_FLAG_TIMEOUT)
-        {
-            return;
-        }
+            if (Timing.Global.MillisecondsUtc - _criticalFlagTime <= CRITICAL_FLAG_TIMEOUT)
+            {
+                return;
+            }
 
-        _nextDamageIsCritical = false;
-        _criticalFlagTime = 0;
+            _nextDamageIsCritical = false;
+            _criticalFlagTime = 0;
+        }
     }
 
 }
