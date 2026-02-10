@@ -45,7 +45,6 @@ public partial class EscapeMenuWindow : Window
 
         _returnToCharacterSelectionButton = new Button(this, nameof(_returnToCharacterSelectionButton))
         {
-            IsVisibleInParent = Options.Instance.Player.MaxCharacters > 1,
             IsTabable = true,
             Text = Strings.EscapeMenu.CharacterSelect,
         };
@@ -108,6 +107,8 @@ public partial class EscapeMenuWindow : Window
         {
             var modal = MakeModal(dim: true);
             _versionPanel.Parent = modal;
+
+            RefreshDynamicButtonStates();
         }
         else
         {
@@ -135,6 +136,12 @@ public partial class EscapeMenuWindow : Window
             BringToFront();
         }
 
+        RefreshDynamicButtonStates();
+    }
+
+    private void RefreshDynamicButtonStates()
+    {
+        _returnToCharacterSelectionButton.IsVisibleInParent = Options.Instance.Player.MaxCharacters > 1;
         _returnToCharacterSelectionButton.IsDisabled = Globals.Me?.CombatTimer > Timing.Global.Milliseconds;
     }
 
