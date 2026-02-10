@@ -168,22 +168,37 @@ namespace Intersect.Client.Interface.Game.Job
             mJobtDescTemplateLabel.IsHidden = true;
 
             JobDescriptionArea = new ScrollControl(InfoPanel, "JobDescriptionArea");
-            JobDescriptionArea.SetPosition(10, 70);
-            JobDescriptionArea.SetSize(InfoPanel.Width - 20, 120);
             JobDescriptionArea.EnableScroll(false, true);
+            JobDescriptionArea.BoundsChanged += (_, _) => UpdateJobDescriptionLayout();
 
             JobDescriptionLabel = new RichLabel(JobDescriptionArea, "Jobdesc")
             {
                 FontName = "sourcesansproblack",
                 FontSize = 12
             };
-            JobDescriptionLabel.SetPosition(0, 0);
-            JobDescriptionLabel.SetSize(JobDescriptionArea.Width, JobDescriptionArea.Height);
+
+            InfoPanel.BoundsChanged += (_, _) => UpdateJobDescriptionLayout();
+            UpdateJobDescriptionLayout();
 
             mRecipePanel = new ScrollControl(InfoPanel, "RecipePanel");
             mRecipePanel.SetPosition(10, 230);
             mRecipePanel.SetSize(InfoPanel.Width - 20, 170);
             mRecipePanel.EnableScroll(false, true);
+        }
+
+        private void UpdateJobDescriptionLayout()
+        {
+            if (InfoPanel == null || JobDescriptionArea == null || JobDescriptionLabel == null)
+            {
+                return;
+            }
+
+            JobDescriptionArea.SetPosition(10, 70);
+            JobDescriptionArea.SetSize(Math.Max(1, InfoPanel.Width - 20), 120);
+
+            JobDescriptionLabel.SetPosition(0, 0);
+            JobDescriptionLabel.SetSize(Math.Max(1, JobDescriptionArea.Width - 6), Math.Max(1, JobDescriptionArea.Height));
+            JobDescriptionArea.UpdateScrollBars();
         }
 
 
@@ -210,6 +225,8 @@ namespace Intersect.Client.Interface.Game.Job
 
             JobDescriptionLabel.ClearText();
             JobDescriptionLabel.AddText(Strings.Job.GetJobDescription(jobType), mJobtDescTemplateLabel);
+            JobDescriptionLabel.ForceImmediateRebuild();
+            _ = JobDescriptionLabel.SizeToChildren();
             JobDescriptionArea.UpdateScrollBars();
 
             LoadRecipes(jobType);
