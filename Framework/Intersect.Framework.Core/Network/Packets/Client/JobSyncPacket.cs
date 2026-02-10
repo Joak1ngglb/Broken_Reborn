@@ -33,4 +33,13 @@ public class JobData
 
     [Key(2)]
     public long ExperienceToNextLevel { get; set; }
+
+    [Key(3)]
+    public int UnspentJobPoints { get; set; }
+
+    [Key(4)]
+    public int SpentJobPoints { get; set; }
+
+    [Key(5)]
+    public Dictionary<int, int> PurchasedPerks { get; set; } = new();
 }

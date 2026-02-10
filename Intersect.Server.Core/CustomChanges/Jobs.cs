@@ -5,6 +5,7 @@ using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Server.Localization;
 using Intersect.Server.Networking;
 using Newtonsoft.Json;
+using System.Runtime.Serialization;
 
 namespace Intersect.Server.Entities
 {
@@ -45,6 +46,13 @@ namespace Intersect.Server.Entities
                 {
                     Jobs[jobType] = new PlayerJob(jobType);
                     //  PacketSender.SendChatMsg(this, $"Trabajo inicializado: {jobType}", ChatMessageType.Notice);
+                }
+                else
+                {
+                    var existingJob = Jobs[jobType];
+                    existingJob.PurchasedPerks ??= new Dictionary<int, int>();
+                    existingJob.UnspentJobPoints = Math.Max(0, existingJob.UnspentJobPoints);
+                    existingJob.SpentJobPoints = Math.Max(0, existingJob.SpentJobPoints);
                 }
             }
         }
@@ -90,10 +98,25 @@ namespace Intersect.Server.Entities
         public JobType JobType { get; set; }
         public int JobLevel { get; set; } = 1;
         public long JobExp { get; set; } = 0;
+        public int UnspentJobPoints { get; set; } = 0;
+        public int SpentJobPoints { get; set; } = 0;
+        public Dictionary<int, int> PurchasedPerks { get; set; } = new Dictionary<int, int>();
+
+        public PlayerJob()
+        {
+        }
 
         public PlayerJob(JobType jobType)
         {
             JobType = jobType;
+        }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            PurchasedPerks ??= new Dictionary<int, int>();
+            UnspentJobPoints = Math.Max(0, UnspentJobPoints);
+            SpentJobPoints = Math.Max(0, SpentJobPoints);
         }
 
         public long AddExperience(long amount, Player player)

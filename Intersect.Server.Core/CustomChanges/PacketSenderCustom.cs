@@ -62,7 +62,10 @@ public static partial class PacketSender
             {
                 Level = jobDetails.JobLevel,
                 Experience = jobDetails.JobExp,
-                ExperienceToNextLevel = jobDetails.GetExperienceToNextLevel(jobDetails.JobLevel)
+                ExperienceToNextLevel = jobDetails.GetExperienceToNextLevel(jobDetails.JobLevel),
+                UnspentJobPoints = jobDetails.UnspentJobPoints,
+                SpentJobPoints = jobDetails.SpentJobPoints,
+                PurchasedPerks = new Dictionary<int, int>(jobDetails.PurchasedPerks ?? new Dictionary<int, int>())
             };
         }
 
