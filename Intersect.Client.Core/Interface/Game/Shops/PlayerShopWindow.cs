@@ -18,7 +18,6 @@ using Intersect.GameObjects;
 using Intersect.Network.Packets.Shops;
 using Intersect.Client.Items;
 using Intersect.Framework.Core.GameObjects.Items;
-using Intersect.Client.Interface.Game.Market;
 using Intersect.Framework.Core.Entities;
 
 namespace Intersect.Client.Interface.Game.Shops;
@@ -31,6 +30,9 @@ public sealed class PlayerShopWindow : Window
     private TextBoxNumeric _quantityInput;
     private TextBoxNumeric _priceInput;
     private Label _selectedLabel;
+    private Label _selectedRarityLabel;
+    private Label _selectedDescriptionLabel;
+    private Label _selectedPricePreviewLabel;
     private Label _statusLabel;
     private Button _clearSlotButton;
     private Button _cancelButton;
@@ -51,8 +53,7 @@ public sealed class PlayerShopWindow : Window
     public PlayerShopWindow(Canvas parent)
         : base(parent, Strings.PlayerShops.CreatorTitle, false, nameof(PlayerShopWindow))
     {
-        // Ventana más compacta
-        SetSize(720, 460);
+        SetSize(980, 620);
         IsResizable = false;
 
         Closed += WindowOnClosed;
@@ -71,18 +72,39 @@ public sealed class PlayerShopWindow : Window
 
         _uiInitialized = true;
 
+        var listingZone = new ImagePanel(this, "PlayerShopListingZone")
+        {
+            Texture = Graphics.Renderer?.WhitePixel,
+            RenderColor = new Color(24, 28, 36, 230),
+        };
+        listingZone.SetBounds(16, 16, 610, 520);
+
+        var detailZone = new ImagePanel(this, "PlayerShopDetailZone")
+        {
+            Texture = Graphics.Renderer?.WhitePixel,
+            RenderColor = new Color(18, 22, 30, 230),
+        };
+        detailZone.SetBounds(642, 16, 322, 520);
+
+        var footerZone = new ImagePanel(this, "PlayerShopFooterZone")
+        {
+            Texture = Graphics.Renderer?.WhitePixel,
+            RenderColor = new Color(12, 16, 22, 245),
+        };
+        footerZone.SetBounds(16, 548, 948, 56);
+
         // Nombre de la tienda
         var nameLabel = new Label(this, "PlayerShopNameLabel")
         {
             Text = Strings.PlayerShops.ShopNameLabel,
         };
-        nameLabel.SetBounds(20, 20, 200, 18);
+        nameLabel.SetBounds(28, 28, 240, 20);
 
         _shopNameInput = new TextBox(this, "PlayerShopNameInput")
         {
             PlaceholderText = Strings.PlayerShops.ShopNamePlaceholder,
         };
-        _shopNameInput.SetBounds(20, 40, 300, 24);
+        _shopNameInput.SetBounds(28, 52, 360, 28);
         _shopNameInput.TextChanged += (_, _) => ValidateInputs();
 
         // Hint compacto debajo del nombre
@@ -90,7 +112,7 @@ public sealed class PlayerShopWindow : Window
         {
             Text = Strings.PlayerShops.Hint,
         };
-        _hintLabel.SetBounds(20, 68, 320, 32);
+        _hintLabel.SetBounds(28, 84, 560, 20);
         _hintLabel.SetTextColor(Color.Gray, ComponentState.Normal);
 
         _decorationSelector = new LabeledComboBox(this, "PlayerShopDecorationSelector")
@@ -98,82 +120,123 @@ public sealed class PlayerShopWindow : Window
             AutoSizeToContents = false,
             Label = Strings.PlayerShops.DecorationLabel,
         };
-        _decorationSelector.SetBounds(560, 20, 140, 64);
+        _decorationSelector.SetBounds(406, 32, 200, 64);
         _decorationSelector.ItemSelected += (_, args) => OnDecorationSelected(args.SelectedUserData as string);
 
-        // Inventario (izquierda)
+        // Grid de inventario/listados (izquierda-centro)
         _inventoryScroll = new ScrollControl(this, "PlayerShopInventoryScroll");
-        _inventoryScroll.SetBounds(20, 110, 320, 320);
+        _inventoryScroll.SetBounds(28, 132, 280, 392);
         _inventoryScroll.EnableScroll(false, true);
 
-        // Slots de la tienda (derecha arriba)
         _listingScroll = new ScrollControl(this, "PlayerShopListingScroll");
-        _listingScroll.SetBounds(360, 20, 180, 260);
+        _listingScroll.SetBounds(324, 132, 286, 392);
         _listingScroll.EnableScroll(false, true);
 
-        // Info de slot seleccionado
+        var inventoryTitle = new Label(this, "PlayerShopInventoryTitle")
+        {
+            Text = Strings.Inventory.Title,
+        };
+        inventoryTitle.SetBounds(28, 112, 200, 18);
+
+        var listingTitle = new Label(this, "PlayerShopListingTitle")
+        {
+            Text = Strings.PlayerShops.CreateShop,
+        };
+        listingTitle.SetBounds(324, 112, 200, 18);
+
+        // Panel de detalle seleccionado (derecha)
         _selectedLabel = new Label(this, "PlayerShopSelectedLabel")
         {
             Text = Strings.PlayerShops.SelectSlot,
+            FontName = "sourcesansproblack",
         };
-        _selectedLabel.SetBounds(360, 290, 340, 18);
+        _selectedLabel.SetBounds(658, 34, 292, 24);
 
-        // Inputs de cantidad y precio (en línea)
+        _selectedRarityLabel = new Label(this, "PlayerShopSelectedRarity")
+        {
+            Text = string.Empty,
+            BackgroundTemplateName = "quantity.png",
+            Alignment = [Alignments.Center],
+            FontName = "sourcesansproblack",
+            FontSize = 9,
+            Padding = new Padding(4, 2, 4, 2),
+        };
+        _selectedRarityLabel.SetBounds(658, 64, 140, 20);
+
+        _selectedDescriptionLabel = new Label(this, "PlayerShopSelectedDescription")
+        {
+            Text = Strings.PlayerShops.SelectSlot,
+            WrappingBehavior = WrappingBehavior.Wrapped,
+        };
+        _selectedDescriptionLabel.SetBounds(658, 92, 292, 128);
+
+        _selectedPricePreviewLabel = new Label(this, "PlayerShopPricePreview")
+        {
+            Text = Strings.PlayerShops.BrowserPriceEach.ToString(0),
+            BackgroundTemplateName = "quantity.png",
+            FontName = "sourcesansproblack",
+            FontSize = 10,
+            Padding = new Padding(6, 3, 6, 3),
+            TextColor = new Color(255, 235, 120),
+        };
+        _selectedPricePreviewLabel.SetBounds(658, 228, 292, 28);
+
+        var quantityLabel = new Label(this, "PlayerShopQuantityLabel")
+        {
+            Text = Strings.PlayerShops.QuantityInput,
+        };
+        quantityLabel.SetBounds(658, 272, 140, 18);
+
+        var priceLabel = new Label(this, "PlayerShopPriceLabel")
+        {
+            Text = Strings.PlayerShops.PriceInput,
+        };
+        priceLabel.SetBounds(658, 334, 140, 18);
+
         _quantityInput = new TextBoxNumeric(this, "PlayerShopQuantityInput")
         {
             Minimum = 1,
         };
-        _quantityInput.SetBounds(360, 330, 120, 24);
+        _quantityInput.SetBounds(658, 294, 292, 34);
         _quantityInput.ValueChanged += (_, args) => OnQuantityChanged((int)args.Value);
 
         _priceInput = new TextBoxNumeric(this, "PlayerShopPriceInput")
         {
             Minimum = 1,
         };
-        _priceInput.SetBounds(500, 330, 120, 24);
+        _priceInput.SetBounds(658, 356, 292, 34);
         _priceInput.ValueChanged += (_, args) => OnPriceChanged((int)args.Value);
 
-        var quantityLabel = new Label(this, "PlayerShopQuantityLabel")
-        {
-            Text = Strings.PlayerShops.QuantityInput,
-        };
-        quantityLabel.SetBounds(360, 312, 120, 16);
-
-        var priceLabel = new Label(this, "PlayerShopPriceLabel")
-        {
-            Text = Strings.PlayerShops.PriceInput,
-        };
-        priceLabel.SetBounds(500, 312, 120, 16);
-
-        // Botones inferiores (más compactos)
         _clearSlotButton = new Button(this, "PlayerShopClearSlot")
         {
             Text = Strings.PlayerShops.ClearSlot,
         };
-        _clearSlotButton.SetBounds(360, 360, 120, 30);
+        _clearSlotButton.SetBounds(658, 404, 292, 36);
         _clearSlotButton.Clicked += (_, _) => ClearSelectedSlot();
 
         _cancelButton = new Button(this, "PlayerShopCancelButton")
         {
             Text = Strings.PlayerShops.Cancel,
         };
-        _cancelButton.SetBounds(500, 360, 120, 30);
+        _cancelButton.SetBounds(28, 558, 180, 36);
         _cancelButton.Clicked += (_, _) => Close();
 
         _merchantModeButton = new Button(this, "PlayerShopCreateButton")
         {
             Text = Strings.PlayerShops.CreateShop,
         };
-        _merchantModeButton.SetBounds(360, 396, 260, 40);
+        _merchantModeButton.SetBounds(220, 558, 220, 36);
         _merchantModeButton.Clicked += (_, _) => TryCreateShop();
 
-        // Status abajo de todo
+        // Estado en barra inferior
         _statusLabel = new Label(this, "PlayerShopStatus")
         {
             Text = Strings.PlayerShops.StatusReady,
         };
-        _statusLabel.SetBounds(20, 430, 680, 20);
+        _statusLabel.SetBounds(460, 564, 496, 24);
         _statusLabel.SetTextColor(Color.ForestGreen, ComponentState.Normal);
+
+        // Legacy controls replaced by detail panel.
 
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString());
         PopulateDecorationSelector();
@@ -290,6 +353,27 @@ public sealed class PlayerShopWindow : Window
             var name = descriptor?.Name ?? Strings.PlayerShops.EmptySlot;
 
             _selectedLabel.Text = Strings.PlayerShops.SelectedItemLabel.ToString(name);
+            _selectedDescriptionLabel.Text = descriptor?.Description ?? Strings.PlayerShops.Hint;
+
+            if (descriptor != null && descriptor.Rarity > 0)
+            {
+                var rarityLabel = Strings.GetLocalizedItemRarityName(descriptor.Rarity);
+                _selectedRarityLabel.Text = rarityLabel;
+                _selectedRarityLabel.IsVisibleInParent = true;
+
+                if (CustomColors.Items.Rarities.TryGetValue(descriptor.Rarity, out var rarityColor))
+                {
+                    _selectedRarityLabel.SetTextColor(rarityColor, ComponentState.Normal);
+                }
+                else
+                {
+                    _selectedRarityLabel.SetTextColor(Color.White, ComponentState.Normal);
+                }
+            }
+            else
+            {
+                _selectedRarityLabel.IsVisibleInParent = false;
+            }
 
             _quantityInput.Enable();
             _priceInput.Enable();
@@ -302,10 +386,14 @@ public sealed class PlayerShopWindow : Window
             // Usar double.MaxValue en vez de NaN
             _priceInput.SetRange(1, double.MaxValue);
             _priceInput.Value = Math.Max(1, listing.PricePerUnit);
+            _selectedPricePreviewLabel.Text = Strings.PlayerShops.BrowserPriceEach.ToString(listing.PricePerUnit);
         }
         else
         {
             _selectedLabel.Text = Strings.PlayerShops.SelectSlot;
+            _selectedRarityLabel.IsVisibleInParent = false;
+            _selectedDescriptionLabel.Text = Strings.PlayerShops.Hint;
+            _selectedPricePreviewLabel.Text = Strings.PlayerShops.BrowserPriceEach.ToString(0);
             _quantityInput.Disable();
             _priceInput.Disable();
             _clearSlotButton.Disable();
@@ -361,6 +449,7 @@ public sealed class PlayerShopWindow : Window
         }
 
         _selectedSlot.SetPrice(newValue);
+        _selectedPricePreviewLabel.Text = Strings.PlayerShops.BrowserPriceEach.ToString(_selectedSlot.PricePerUnit);
         UpdateMerchantModeButtonState();
     }
 

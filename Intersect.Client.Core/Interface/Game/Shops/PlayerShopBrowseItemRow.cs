@@ -18,8 +18,10 @@ namespace Intersect.Client.Interface.Game.Shops
     {
         private readonly PlayerShopBrowseWindow _owner;
 
+        private readonly ImagePanel _cardPanel;
         private readonly ImagePanel _iconPanel;
         private readonly Label _nameLabel;
+        private readonly Label _rarityLabel;
         private readonly Label _priceLabel;
         private readonly Label _availableLabel;
         private readonly Label _totalLabel;
@@ -40,60 +42,75 @@ namespace Intersect.Client.Interface.Game.Shops
             _owner = owner;
             _snapshot = snapshot;
 
-            // Tamaño y layout básico
-            SetSize(_owner.RowWidth, 64);
+            SetSize(_owner.RowWidth, 82);
             Dock = Pos.None;
-            Margin = new Margin(0, 0, 0, 4);
+            Margin = new Margin(0, 0, 0, 6);
 
-            // Icono
+            _cardPanel = new ImagePanel(this, "PlayerShopBrowseCard")
+            {
+                Texture = Graphics.Renderer?.WhitePixel,
+                RenderColor = new Color(28, 34, 46, 230),
+            };
+            _cardPanel.SetBounds(0, 0, _owner.RowWidth, 82);
+
             _iconPanel = new ImagePanel(this, "PlayerShopBrowseIcon");
-            _iconPanel.SetBounds(6, 8, 40, 40);
+            _iconPanel.SetBounds(10, 10, 56, 56);
             _iconPanel.HoverEnter += OnHoverEnter;
             _iconPanel.HoverLeave += OnHoverLeave;
             _iconPanel.Clicked += OnIconClick;
 
-            // Nombre
             _nameLabel = new Label(this, "PlayerShopBrowseName")
             {
                 Text = Strings.PlayerShops.UnknownItem,
+                FontName = "sourcesansproblack",
             };
-            _nameLabel.SetBounds(56, 6, 220, 18);
+            _nameLabel.SetBounds(78, 8, 260, 20);
 
-            // Precio unitario
+            _rarityLabel = new Label(this, "PlayerShopBrowseRarity")
+            {
+                Text = string.Empty,
+                BackgroundTemplateName = "quantity.png",
+                Padding = new Padding(4, 2, 4, 2),
+            };
+            _rarityLabel.SetBounds(78, 30, 120, 18);
+
             _priceLabel = new Label(this, "PlayerShopBrowsePrice")
             {
                 Text = Strings.PlayerShops.BrowserPriceEach.ToString(snapshot.PricePerUnit),
+                BackgroundTemplateName = "quantity.png",
+                TextColor = new Color(255, 235, 120),
+                Padding = new Padding(6, 2, 6, 2),
+                FontName = "sourcesansproblack",
             };
-            _priceLabel.SetBounds(56, 26, 220, 18);
+            _priceLabel.SetBounds(206, 30, 190, 18);
 
-            // Cantidad disponible
             _availableLabel = new Label(this, "PlayerShopBrowseAvailable")
             {
                 Text = Strings.PlayerShops.BrowserAvailable.ToString(snapshot.Quantity),
+                BackgroundTemplateName = "quantity.png",
+                Padding = new Padding(6, 2, 6, 2),
             };
-            _availableLabel.SetBounds(56, 44, 220, 18);
+            _availableLabel.SetBounds(78, 52, 180, 18);
 
-            // Cantidad a comprar
             _quantityInput = new TextBoxNumeric(this, "PlayerShopBrowseQuantity")
             {
                 Minimum = 1,
             };
-            _quantityInput.SetBounds(300, 20, 70, 24);
+            _quantityInput.SetBounds(438, 24, 90, 30);
             _quantityInput.ValueChanged += QuantityInputOnValueChanged;
 
-            // Total
             _totalLabel = new Label(this, "PlayerShopBrowseTotal")
             {
                 Text = Strings.PlayerShops.BrowserTotal.ToString(snapshot.PricePerUnit),
+                FontName = "sourcesansproblack",
             };
-            _totalLabel.SetBounds(380, 20, 140, 24);
+            _totalLabel.SetBounds(538, 26, 170, 24);
 
-            // Botón comprar
             _buyButton = new Button(this, "PlayerShopBrowseBuy")
             {
                 Text = Strings.PlayerShops.BrowserBuy,
             };
-            _buyButton.SetBounds(530, 16, 90, 32);
+            _buyButton.SetBounds(714, 20, 110, 36);
             _buyButton.Clicked += (_, _) => _owner.RequestPurchase(this);
             LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString());
             UpdateRow();
@@ -107,17 +124,34 @@ namespace Intersect.Client.Interface.Game.Shops
 
         private void UpdateRow()
         {
-            // Descriptor + icono
+            _cardPanel.SetBounds(0, 0, Width, Height);
+
             if (!ItemDescriptor.TryGet(_snapshot.ItemId, out _descriptor))
             {
                 _descriptor = null;
                 _nameLabel.Text = Strings.PlayerShops.UnknownItem;
                 _iconPanel.Texture = null;
                 _iconPanel.IsVisibleInParent = false;
+                _rarityLabel.IsVisibleInParent = false;
             }
             else
             {
                 _nameLabel.Text = GetLocalizedItemName(_descriptor);
+
+                if (_descriptor.Rarity > 0)
+                {
+                    _rarityLabel.Text = Strings.GetLocalizedItemRarityName(_descriptor.Rarity);
+                    _rarityLabel.IsVisibleInParent = true;
+
+                    if (CustomColors.Items.Rarities.TryGetValue(_descriptor.Rarity, out var rarityColor))
+                    {
+                        _rarityLabel.SetTextColor(rarityColor, ComponentState.Normal);
+                    }
+                }
+                else
+                {
+                    _rarityLabel.IsVisibleInParent = false;
+                }
 
                 var tex = GameContentManager.Current.GetTexture(
                     Framework.Content.TextureType.Item,
@@ -135,7 +169,6 @@ namespace Intersect.Client.Interface.Game.Shops
                 }
             }
 
-            // Texto de precio, disponibles y total
             _priceLabel.Text = Strings.PlayerShops.BrowserPriceEach.ToString(_snapshot.PricePerUnit);
             _availableLabel.Text = Strings.PlayerShops.BrowserAvailable.ToString(_snapshot.Quantity);
 
@@ -176,7 +209,6 @@ namespace Intersect.Client.Interface.Game.Shops
                 descriptor.Name ?? Strings.PlayerShops.UnknownItem
             );
 
-        // 🔧 Firma corregida: TextBoxNumeric + double
         private void QuantityInputOnValueChanged(TextBoxNumeric sender, ValueChangedEventArgs<double> args)
         {
             var raw = (int)args.Value;
@@ -211,7 +243,6 @@ namespace Intersect.Client.Interface.Game.Shops
                 return;
             }
 
-            // Click en el icono = intentar comprar con la cantidad actual
             _owner.RequestPurchase(this);
         }
 
@@ -226,7 +257,7 @@ namespace Intersect.Client.Interface.Game.Shops
             Interface.GameUi.ItemDescriptionWindow.Show(
                 _descriptor,
                 _snapshot.Quantity,
-                null // si luego agregas ItemProperties al snapshot, lo pones aquí
+                null
             );
         }
 
@@ -243,23 +274,10 @@ namespace Intersect.Client.Interface.Game.Shops
 
         public void DetachEvents()
         {
-            try
-            {
-                _iconPanel.HoverEnter -= OnHoverEnter;
-                _iconPanel.HoverLeave -= OnHoverLeave;
-                _iconPanel.Clicked -= OnIconClick;
-            }
-            catch
-            {
-            }
-
-            try
-            {
-                _quantityInput.ValueChanged -= QuantityInputOnValueChanged;
-            }
-            catch
-            {
-            }
+            _iconPanel.HoverEnter -= OnHoverEnter;
+            _iconPanel.HoverLeave -= OnHoverLeave;
+            _iconPanel.Clicked -= OnIconClick;
+            _quantityInput.ValueChanged -= QuantityInputOnValueChanged;
         }
     }
 }

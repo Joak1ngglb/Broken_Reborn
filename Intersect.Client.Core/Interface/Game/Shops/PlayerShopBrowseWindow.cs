@@ -16,7 +16,7 @@ namespace Intersect.Client.Interface.Game.Shops
 {
     public sealed class PlayerShopBrowseWindow : Window
     {
-        private const int DefaultRowHeight = 68;
+        private const int DefaultRowHeight = 86;
 
         private Label _ownerLabel;
         private ScrollControl _itemsScroll;
@@ -40,15 +40,14 @@ namespace Intersect.Client.Interface.Game.Shops
         {
             _snapshot = snapshot;
 
-            // Ventana más compacta
-            SetSize(640, 430);
+            SetSize(900, 620);
             DisableResizing();
 
             InitializeUi();
             SubscribeToLocalizationUpdates();
         }
 
-        internal int RowWidth => Math.Max(520, _itemsScroll.Width - 20);
+        internal int RowWidth => Math.Max(760, _itemsScroll.Width - 16);
 
         private void InitializeUi()
         {
@@ -59,16 +58,29 @@ namespace Intersect.Client.Interface.Game.Shops
 
             _uiInitialized = true;
 
-            // Propietario de la tienda
+            var browseZone = new ImagePanel(this, "PlayerShopBrowseZone")
+            {
+                Texture = Graphics.Renderer?.WhitePixel,
+                RenderColor = new Color(22, 26, 36, 235),
+            };
+            browseZone.SetBounds(16, 16, 868, 536);
+
+            var footerZone = new ImagePanel(this, "PlayerShopBrowseFooterZone")
+            {
+                Texture = Graphics.Renderer?.WhitePixel,
+                RenderColor = new Color(14, 18, 25, 245),
+            };
+            footerZone.SetBounds(16, 562, 868, 42);
+
             _ownerLabel = new Label(this, "PlayerShopOwnerLabel")
             {
                 Text = Strings.PlayerShops.BrowserOwner.ToString(_snapshot.OwnerName),
             };
-            _ownerLabel.SetBounds(16, 28, 400, 22);
+            _ownerLabel.SetBounds(30, 32, 560, 22);
 
             // Scroll de items
             _itemsScroll = new ScrollControl(this, "PlayerShopItemsScroll");
-            _itemsScroll.SetBounds(16, 56, 608, 300);
+            _itemsScroll.SetBounds(30, 66, 840, 470);
             _itemsScroll.EnableScroll(false, true);
 
             _emptyLabel = new Label(_itemsScroll, "PlayerShopEmptyLabel")
@@ -84,7 +96,7 @@ namespace Intersect.Client.Interface.Game.Shops
             {
                 Text = Strings.PlayerShops.BrowseStatus,
             };
-            _statusLabel.SetBounds(16, 370, 480, 24);
+            _statusLabel.SetBounds(30, 572, 840, 24);
             _statusLabel.SetTextColor(Color.White, ComponentState.Normal);
 
             LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString());
