@@ -49,7 +49,7 @@ namespace Intersect.Server.Networking;
 
 internal sealed partial class PacketHandler
 {
-    private const string PlayerShopOutOfRangeMessage = "Debes estar junto a la tienda para interactuar.";
+    private static string PlayerShopOutOfRangeMessage => Strings.PlayerShops.OutOfRange;
 
     public void HandlePacket(Client client, GuildExpPercentagePacket packet)
     {
@@ -744,7 +744,7 @@ internal sealed partial class PacketHandler
         {
             PacketSender.SendChatMsg(
                 player,
-                "❌ Ya tienes una tienda activa.",
+                Strings.PlayerShops.AlreadyHaveActive,
                 ChatMessageType.Error,
                 CustomColors.Alerts.Error
             );
@@ -754,18 +754,18 @@ internal sealed partial class PacketHandler
 
         if (player.MapId == Guid.Empty)
         {
-            PacketSender.SendChatMsg(player, "❌ No puedes abrir una tienda aquí.", ChatMessageType.Error, CustomColors.Alerts.Error);
+            PacketSender.SendChatMsg(player, Strings.PlayerShops.CannotOpenHere, ChatMessageType.Error, CustomColors.Alerts.Error);
             return;
         }
 
         if (packet.Stock == null || packet.Stock.Count == 0)
         {
-            PacketSender.SendChatMsg(player, "Agrega al menos un artículo a la tienda.", ChatMessageType.Error, CustomColors.Alerts.Error);
+            PacketSender.SendChatMsg(player, Strings.PlayerShops.AddAtLeastOneItem, ChatMessageType.Error, CustomColors.Alerts.Error);
             return;
         }
 
         var customName = string.IsNullOrWhiteSpace(packet.Name)
-            ? "Tienda"
+            ? Strings.PlayerShops.DefaultName.ToString()
             : packet.Name.Trim();
         var normalizedName = $"{player.Name} - {customName}";
         var decoration = packet.Decoration;
@@ -791,40 +791,40 @@ internal sealed partial class PacketHandler
             var slotIndex = payload.InventorySlot;
             if (slotIndex < 0 || slotIndex >= player.Items.Count)
             {
-                PacketSender.SendChatMsg(player, "El espacio seleccionado no es válido.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.InvalidSelectedSlot, ChatMessageType.Error, CustomColors.Alerts.Error);
                 return;
             }
 
             var slot = player.Items[slotIndex];
             if (slot == null || slot.ItemId == Guid.Empty)
             {
-                PacketSender.SendChatMsg(player, $"El espacio {slotIndex + 1} está vacío.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.SlotEmpty.ToString(slotIndex + 1), ChatMessageType.Error, CustomColors.Alerts.Error);
                 return;
             }
 
             if (payload.PricePerUnit <= 0)
             {
-                PacketSender.SendChatMsg(player, "El precio debe ser mayor a 0.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.PriceMustBeGreaterThanZero, ChatMessageType.Error, CustomColors.Alerts.Error);
                 return;
             }
 
             var desiredQuantity = Math.Min(payload.Quantity, slot.Quantity);
             if (desiredQuantity <= 0)
             {
-                PacketSender.SendChatMsg(player, "Cantidad inválida para el listado.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.InvalidListingQuantity, ChatMessageType.Error, CustomColors.Alerts.Error);
                 return;
             }
 
             if (!slot.Descriptor.Stackable && desiredQuantity != 1)
             {
-                PacketSender.SendChatMsg(player, "Los objetos no apilables se venden de uno en uno.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.NonStackableSellOne, ChatMessageType.Error, CustomColors.Alerts.Error);
                 return;
             }
 
             inventoryUsage.TryGetValue(slotIndex, out var usedAmount);
             if (usedAmount + desiredQuantity > slot.Quantity)
             {
-                PacketSender.SendChatMsg(player, $"No tienes suficientes unidades en el espacio {slotIndex + 1}.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.NotEnoughUnitsInSlot.ToString(slotIndex + 1), ChatMessageType.Error, CustomColors.Alerts.Error);
                 return;
             }
 
@@ -842,7 +842,7 @@ internal sealed partial class PacketHandler
 
         if (stockEntries.Count == 0)
         {
-            PacketSender.SendChatMsg(player, "La tienda no tiene artículos configurados.", ChatMessageType.Error, CustomColors.Alerts.Error);
+            PacketSender.SendChatMsg(player, Strings.PlayerShops.NoConfiguredItems, ChatMessageType.Error, CustomColors.Alerts.Error);
             return;
         }
 
@@ -860,21 +860,21 @@ internal sealed partial class PacketHandler
                 decoration: decoration
             );
 
-            PacketSender.SendChatMsg(player, "🛒 Tu tienda quedó activa.", ChatMessageType.Trading, CustomColors.Alerts.Accepted);
+            PacketSender.SendChatMsg(player, Strings.PlayerShops.ShopActivated, ChatMessageType.Trading, CustomColors.Alerts.Accepted);
             client?.Disconnect("Entering merchant mode");
         }
         catch (InvalidOperationException exception)
         {
             var message = string.IsNullOrWhiteSpace(exception.Message)
-                ? "❌ No se pudo crear la tienda."
-                : $"❌ {exception.Message}";
+                ? Strings.PlayerShops.ShopCreateFailed.ToString()
+                : exception.Message;
 
             PacketSender.SendChatMsg(player, message, ChatMessageType.Error, CustomColors.Alerts.Error);
         }
         catch (Exception exception)
         {
             Log.Error(exception, "Failed to create player shop for {Player}", player.Name);
-            PacketSender.SendChatMsg(player, "❌ No se pudo crear la tienda.", ChatMessageType.Error, CustomColors.Alerts.Error);
+            PacketSender.SendChatMsg(player, Strings.PlayerShops.ShopCreateFailed, ChatMessageType.Error, CustomColors.Alerts.Error);
         }
     }
 
@@ -912,7 +912,7 @@ internal sealed partial class PacketHandler
 
         if (packet.Quantity <= 0)
         {
-            PacketSender.SendChatMsg(player, "Cantidad inválida.", ChatMessageType.Error, CustomColors.Alerts.Error);
+            PacketSender.SendChatMsg(player, Strings.PlayerShops.InvalidQuantity, ChatMessageType.Error, CustomColors.Alerts.Error);
             return;
         }
 
@@ -932,7 +932,7 @@ internal sealed partial class PacketHandler
 
         if (currencyDescriptor == null)
         {
-            PacketSender.SendChatMsg(player, "La moneda del mundo no está configurada.", ChatMessageType.Error, CustomColors.Alerts.Error);
+            PacketSender.SendChatMsg(player, Strings.PlayerShops.WorldCurrencyNotConfigured, ChatMessageType.Error, CustomColors.Alerts.Error);
             return;
         }
 
@@ -940,14 +940,14 @@ internal sealed partial class PacketHandler
         {
             if (!runtime.TryGetItem(packet.ShopItemId, out var runtimeItem) || runtimeItem.IsSold)
             {
-                PacketSender.SendChatMsg(player, "Ese artículo ya se vendió.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.ItemAlreadySold, ChatMessageType.Error, CustomColors.Alerts.Error);
                 PacketSender.SendPlayerShopSnapshot(player, PlayerShopManager.BuildSnapshot(runtime));
                 return;
             }
 
             if (packet.Quantity > runtimeItem.Quantity)
             {
-                PacketSender.SendChatMsg(player, "No hay suficiente stock disponible.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.NotEnoughStock, ChatMessageType.Error, CustomColors.Alerts.Error);
                 return;
             }
 
@@ -955,13 +955,13 @@ internal sealed partial class PacketHandler
             var availableCurrency = player.FindInventoryItemQuantity(currencyDescriptor.Id);
             if (availableCurrency < totalPrice)
             {
-                PacketSender.SendChatMsg(player, "No tienes suficiente oro.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.NotEnoughGold, ChatMessageType.Error, CustomColors.Alerts.Error);
                 return;
             }
 
             if (!player.CanGiveItem(runtimeItem.Item.ItemId, packet.Quantity))
             {
-                PacketSender.SendChatMsg(player, "Tu inventario está lleno.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.InventoryFull, ChatMessageType.Error, CustomColors.Alerts.Error);
                 return;
             }
 
@@ -972,7 +972,7 @@ internal sealed partial class PacketHandler
                     player.TryGiveItem(currencyDescriptor.Id, removedAmount);
                 }
 
-                PacketSender.SendChatMsg(player, "No se pudo retirar la moneda.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.CurrencyWithdrawFailed, ChatMessageType.Error, CustomColors.Alerts.Error);
                 return;
             }
 
@@ -985,7 +985,7 @@ internal sealed partial class PacketHandler
                     return;
                 }
 
-                PacketSender.SendChatMsg(player, "No se pudo completar la compra.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(player, Strings.PlayerShops.PurchaseFailed, ChatMessageType.Error, CustomColors.Alerts.Error);
                 PacketSender.SendPlayerShopSnapshot(player, PlayerShopManager.BuildSnapshot(runtime));
                 return;
             }
@@ -1002,10 +1002,10 @@ internal sealed partial class PacketHandler
                 sendUpdate: true
             );
 
-            var itemName = runtimeItem.Item.Descriptor?.Name ?? "artículo";
+            var itemName = runtimeItem.Item.Descriptor?.Name ?? Strings.PlayerShops.FallbackItemName;
             PacketSender.SendChatMsg(
                 player,
-                $"🛍️ Compraste {packet.Quantity}x {itemName}.",
+                Strings.PlayerShops.PurchaseSuccess.ToString(packet.Quantity, itemName),
                 ChatMessageType.Trading,
                 CustomColors.Alerts.Accepted
             );
@@ -1016,13 +1016,13 @@ internal sealed partial class PacketHandler
 
     private static void NotifyShopNotAvailable(Player player, Guid shopId)
     {
-        var message = "La tienda ya no está disponible.";
+        var message = Strings.PlayerShops.ShopUnavailable;
         if (PlayerShopManager.TryGetShopStatus(shopId, out var status))
         {
             message = status switch
             {
-                PlayerShopStatus.Closed => "Esta tienda ya fue cerrada.",
-                PlayerShopStatus.Expired => "Esta tienda expiró.",
+                PlayerShopStatus.Closed => Strings.PlayerShops.ShopAlreadyClosed,
+                PlayerShopStatus.Expired => Strings.PlayerShops.ShopExpired,
                 _ => message,
             };
         }

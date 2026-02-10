@@ -3433,7 +3433,7 @@ internal sealed partial class PacketHandler
         {
             PacketSender.SendChatMsg(
                 player,
-                "No tienes una tienda activa.",
+                Strings.PlayerShops.NoActiveShop,
                 ChatMessageType.Error,
                 CustomColors.Alerts.Error
             );
@@ -3450,7 +3450,7 @@ internal sealed partial class PacketHandler
                 {
                     PacketSender.SendChatMsg(
                         player,
-                        "No se pudo localizar la tienda activa. Usa /pshop close para cerrar y cobrar si corresponde.",
+                        Strings.PlayerShops.ActiveShopNotFoundUseClose,
                         ChatMessageType.Error,
                         CustomColors.Alerts.Error
                     );
@@ -3466,7 +3466,7 @@ internal sealed partial class PacketHandler
                 PacketSender.SendPlayerShopSnapshot(player, PlayerShopManager.BuildSnapshot(runtime));
                 PacketSender.SendChatMsg(
                     player,
-                    "Te llevamos a tu tienda activa.",
+                    Strings.PlayerShops.WarpedToActiveShop,
                     ChatMessageType.Trading,
                     CustomColors.Alerts.Accepted
                 );
@@ -3479,7 +3479,7 @@ internal sealed partial class PacketHandler
                 {
                     PacketSender.SendChatMsg(
                         player,
-                        "No se pudo cerrar la tienda ahora mismo.",
+                        Strings.PlayerShops.CloseNowFailed,
                         ChatMessageType.Error,
                         CustomColors.Alerts.Error
                     );
@@ -3490,18 +3490,22 @@ internal sealed partial class PacketHandler
                 var details = new List<string>();
                 if (summary.GoldPaid > 0)
                 {
-                    details.Add($"💰 {summary.GoldPaid} oro entregado");
+                    details.Add(Strings.PlayerShops.GoldDeliveredDetail.ToString(summary.GoldPaid));
                 }
 
                 if (summary.ReturnedItemQuantity > 0)
                 {
-                    details.Add($"📦 {summary.ReturnedItemQuantity} artículos devueltos");
+                    details.Add(Strings.PlayerShops.ItemsReturnedDetail.ToString(summary.ReturnedItemQuantity));
                 }
+                // Reemplaza la línea problemática en NotifyActivePlayerShopState(Player? player):
 
-                var detailText = details.Count > 0 ? string.Join(" · ", details) : "sin ventas pendientes";
+                var detailText = details.Count > 0
+                    ? string.Join(" · ", details)
+                    : Strings.PlayerShops.NoPendingBalance.ToString();
+                
                 PacketSender.SendChatMsg(
                     player,
-                    $"📋 Tu tienda \"{summary.ShopName}\" ha sido cerrada: {detailText}.",
+                    Strings.PlayerShops.ShopClosedSummary.ToString(summary.ShopName, detailText),
                     ChatMessageType.Trading,
                     CustomColors.Alerts.Accepted
                 );
@@ -3516,7 +3520,7 @@ internal sealed partial class PacketHandler
             default:
                 PacketSender.SendChatMsg(
                     player,
-                    "Uso: /pshop go (ir a tienda) o /pshop close (cerrar y cobrar).",
+                    Strings.PlayerShops.CommandUsage,
                     ChatMessageType.Notice,
                     CustomColors.Alerts.Info
                 );
@@ -3538,18 +3542,21 @@ internal sealed partial class PacketHandler
             var details = new List<string>();
             if (liquidation.GoldPaid > 0)
             {
-                details.Add($"💰 {liquidation.GoldPaid} oro liquidado");
+                details.Add(Strings.PlayerShops.GoldLiquidatedDetail.ToString(liquidation.GoldPaid));
             }
 
             if (liquidation.ReturnedItemQuantity > 0)
             {
-                details.Add($"📦 {liquidation.ReturnedItemQuantity} artículos devueltos");
+                details.Add(Strings.PlayerShops.ItemsReturnedDetail.ToString(liquidation.ReturnedItemQuantity));
             }
 
-            var detailText = details.Count > 0 ? string.Join(" · ", details) : "sin saldo pendiente";
+            var detailText = details.Count > 0
+                ? string.Join(" · ", details)
+                : Strings.PlayerShops.NoPendingBalance.ToString();
+
             PacketSender.SendChatMsg(
                 player,
-                $"📩 Liquidación aplicada de tu tienda expirada \"{liquidation.ShopName}\": {detailText}.",
+                Strings.PlayerShops.ExpiredLiquidationApplied.ToString(liquidation.ShopName, detailText),
                 ChatMessageType.Trading,
                 CustomColors.Alerts.Accepted
             );
@@ -3584,7 +3591,7 @@ internal sealed partial class PacketHandler
 
         PacketSender.SendChatMsg(
             player,
-            $"🛒 Tu tienda \"{runtime.Title}\" sigue abierta en ({runtime.X}, {runtime.Y}). Opciones: ir a tienda o cerrar y cobrar.",
+            Strings.PlayerShops.ActiveShopStillOpen.ToString(runtime.Title, runtime.X, runtime.Y),
             ChatMessageType.Trading,
             CustomColors.Alerts.Accepted
         );

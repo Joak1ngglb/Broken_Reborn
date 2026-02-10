@@ -1823,6 +1823,9 @@ public static partial class Strings
         public readonly MailNamespace Mails = new MailNamespace();
 
         public MarketNamespace Market = new MarketNamespace();
+
+        public readonly RewardsNamespace Rewards = new RewardsNamespace();
+        public readonly PlayerShopsNamespace PlayerShops = new PlayerShopsNamespace();
     }
 
     // ReSharper restore MemberHidesStaticFromOuterClass
@@ -1902,6 +1905,10 @@ public static partial class Strings
 
     public static UpnpNamespace Upnp => Root.Upnp;
     public static MailNamespace Mails => Root.Mails;
+
+    public static RewardsNamespace Rewards => Root.Rewards;
+
+    public static PlayerShopsNamespace PlayerShops => Root.PlayerShops;
 
     #endregion
 
