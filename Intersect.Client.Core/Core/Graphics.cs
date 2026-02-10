@@ -80,13 +80,10 @@ public static partial class Graphics
     //Overlay Stuff
     public static Color OverlayColor = Color.Transparent;
 
-    private static float sScreenShakeAmount;
+    public static float CurrentShake;
 
-    private static int sScreenShakeDurationMs;
+    private static float sShakeDecrement = 0.12f;
 
-    private static long sScreenShakeEnd;
-
-    private static readonly Random sShakeRandom = new();
 
     public static ColorF PlayerLightColor = ColorF.White;
 
@@ -127,9 +124,10 @@ public static partial class Graphics
 
     public static void TriggerScreenShake(float shakeAmount, int durationMs)
     {
-        sScreenShakeAmount = Math.Max(sScreenShakeAmount, shakeAmount);
-        sScreenShakeDurationMs = Math.Max(1, durationMs);
-        sScreenShakeEnd = Timing.Global.MillisecondsUtc + sScreenShakeDurationMs;
+        CurrentShake = Math.Max(CurrentShake, shakeAmount);
+
+        var durationFrames = Math.Max(1f, durationMs / 16f);
+        sShakeDecrement = Math.Max(0.01f, shakeAmount / durationFrames);
     }
 
     //Init Functions
@@ -989,7 +987,25 @@ public static partial class Graphics
             var sx = 0;
             var sy = 0;
             CurrentView = new FloatRect(sx, sy, sw / scale, sh / scale);
+            CurrentShake = 0f;
             return;
+        }
+
+        CurrentShake = (float)MathHelper.Clamp(CurrentShake - sShakeDecrement, 0f, 100f);
+        var yShake = CurrentShake;
+        var xShake = CurrentShake;
+
+        if (CurrentShake > 0f)
+        {
+            if (Randomization.Next(0, 2) == 1)
+            {
+                yShake *= -1;
+            }
+
+            if (Randomization.Next(0, 2) == 1)
+            {
+                xShake *= -1;
+            }
         }
 
         var mapWidth = Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth;
@@ -1036,8 +1052,8 @@ public static partial class Graphics
         var h = y1 - y;
         var restrictView = new FloatRect(x, y, w, h );
         var newView = new FloatRect(
-            (int)Math.Ceiling(en.Center.X - Renderer.ScreenWidth / scale / 2f),
-            (int)Math.Ceiling(en.Center.Y - Renderer.ScreenHeight / scale / 2f),
+            (int)Math.Ceiling(en.Center.X - Renderer.ScreenWidth / scale / 2f) + (int)xShake,
+            (int)Math.Ceiling(en.Center.Y - Renderer.ScreenHeight / scale / 2f) + (int)yShake,
             Renderer.ScreenWidth / scale,
             Renderer.ScreenHeight / scale
         );
@@ -1074,18 +1090,6 @@ public static partial class Graphics
         else if (Options.Instance.Map.GameBorderStyle == GameBorderStyle.Seamed)
         {
             newView.Y = restrictView.Y - (newView.Height - restrictView.Height) / 2;
-        }
-
-        if (Timing.Global.MillisecondsUtc <= sScreenShakeEnd && sScreenShakeAmount > 0f)
-        {
-            var progress = (sScreenShakeEnd - Timing.Global.MillisecondsUtc) / (float)sScreenShakeDurationMs;
-            var currentShake = sScreenShakeAmount * Math.Clamp(progress, 0f, 1f);
-            newView.X += (float)(sShakeRandom.NextDouble() * 2 - 1) * currentShake;
-            newView.Y += (float)(sShakeRandom.NextDouble() * 2 - 1) * currentShake;
-        }
-        else
-        {
-            sScreenShakeAmount = 0f;
         }
 
         CurrentView = new FloatRect(
