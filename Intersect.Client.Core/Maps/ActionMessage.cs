@@ -70,6 +70,11 @@ public partial class ActionMessage : IActionMessage
                 }
             }
 
+            if (_digitTextures.Count != numericText.Length)
+            {
+                _digitTextures.Clear();
+            }
+
             _texturesLoaded = true;
         }
 
