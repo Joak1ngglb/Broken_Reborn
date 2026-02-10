@@ -531,7 +531,11 @@ public partial class CharacterWindow : Window
                 var invIndex = list[0];
                 if (invIndex >= 0 && invIndex < Options.Instance.Player.MaxInventory)
                 {
-                    weaponId = player.Inventory[invIndex].ItemId;
+                    var inventorySlot = player.Inventory.ElementAtOrDefault(invIndex);
+                    if (inventorySlot != null)
+                    {
+                        weaponId = inventorySlot.ItemId;
+                    }
                 }
             }
         }
