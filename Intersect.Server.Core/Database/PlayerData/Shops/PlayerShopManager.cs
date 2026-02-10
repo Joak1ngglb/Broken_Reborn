@@ -17,7 +17,9 @@ using Intersect.Server.Maps;
 using Intersect.Server.Framework.Items;
 using Intersect.Server.Localization;
 using Intersect.Server.Networking;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 using Serilog;
 
 namespace Intersect.Server.Database.PlayerData.Shops;
@@ -379,8 +381,32 @@ public static class PlayerShopManager
                     exception
                 );
             }
+
             throw;
         }
+    }
+
+    private static bool IsActiveShopUniquenessViolation(Exception exception)
+    {
+        if (exception is not DbUpdateException dbUpdateException)
+        {
+            return false;
+        }
+
+        if (dbUpdateException.InnerException is SqliteException sqliteException)
+        {
+            return sqliteException.SqliteErrorCode == 19;
+        }
+
+        if (dbUpdateException.InnerException is MySqlException mySqlException)
+        {
+            return mySqlException.Number == 1062;
+        }
+
+        var message = dbUpdateException.InnerException?.Message ?? dbUpdateException.Message;
+        return message.Contains("unique", StringComparison.OrdinalIgnoreCase)
+               || message.Contains("duplicate", StringComparison.OrdinalIgnoreCase)
+               || message.Contains("constraint", StringComparison.OrdinalIgnoreCase);
     }
 
     public static bool UpdateStock(Guid shopId, IEnumerable<PlayerShopStock> stock)

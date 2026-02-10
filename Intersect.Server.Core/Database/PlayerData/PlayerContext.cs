@@ -165,7 +165,25 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
             .HasIndex(shop => new { shop.OwnerId, shop.Status });
 
         modelBuilder.Entity<PlayerShop>()
+            .HasIndex(shop => new { shop.OwnerId, shop.ActiveUniquenessToken })
+            .IsUnique();
+
+        modelBuilder.Entity<PlayerShop>()
             .HasIndex(shop => new { shop.MapId, shop.Status });
+
+        modelBuilder.Entity<PlayerShop>()
+            .HasIndex(
+                shop => new
+                {
+                    shop.MapId,
+                    shop.MapInstanceId,
+                    shop.X,
+                    shop.Y,
+                    shop.Z,
+                    shop.ActiveUniquenessToken,
+                }
+            )
+            .IsUnique();
 
         modelBuilder.Entity<PlayerShop>()
             .HasIndex(shop => shop.ExpiresAt);
@@ -201,6 +219,46 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
         ChangeTracker.DetectChanges();
         SaveChanges();
 #endif
+    }
+
+    private void SyncPlayerShopUniquenessTokens()
+    {
+        var trackedShops = ChangeTracker.Entries<PlayerShop>()
+            .Where(entry => entry.State == EntityState.Added || entry.State == EntityState.Modified);
+
+        foreach (var trackedShop in trackedShops)
+        {
+            trackedShop.Entity.ActiveUniquenessToken = trackedShop.Entity.Status == PlayerShopStatus.Active
+                ? 1
+                : null;
+        }
+    }
+
+    public override int SaveChanges()
+    {
+        SyncPlayerShopUniquenessTokens();
+        return base.SaveChanges();
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        SyncPlayerShopUniquenessTokens();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        SyncPlayerShopUniquenessTokens();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    public override Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default
+    )
+    {
+        SyncPlayerShopUniquenessTokens();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
     public override void OnSchemaMigrationsProcessed(string[] migrations)
