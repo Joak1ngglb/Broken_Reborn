@@ -158,7 +158,14 @@ public static class PlayerShopManager
         PacketSender.SendEntityLeave(entity);
     }
 
-    private static void UpdatePlayerActiveShop(Guid ownerId, Guid? shopId, PlayerShopStatus? status, Player? owner = null)
+    private static void UpdatePlayerActiveShop(
+        Guid ownerId,
+        Guid? shopId,
+        PlayerShopStatus? status,
+        Player? owner = null,
+        PlayerContext? context = null,
+        bool saveChanges = true
+    )
     {
         if (ownerId == Guid.Empty)
         {
@@ -172,10 +179,26 @@ public static class PlayerShopManager
             owner.ActivePlayerShopStatus = status;
         }
 
-        using var context = DbInterface.CreatePlayerContext(readOnly: false);
-        context.Database.ExecuteSqlInterpolated(
-            $"UPDATE Players SET ActivePlayerShopId = {shopId}, ActivePlayerShopStatus = {status} WHERE Id = {ownerId}"
-        );
+        if (context == null)
+        {
+            using var ownedContext = DbInterface.CreatePlayerContext(readOnly: false);
+            UpdatePlayerActiveShop(ownerId, shopId, status, context: ownedContext);
+            return;
+        }
+
+        var persistedOwner = context.Players.FirstOrDefault(player => player.Id == ownerId);
+        if (persistedOwner == null)
+        {
+            return;
+        }
+
+        persistedOwner.ActivePlayerShopId = shopId;
+        persistedOwner.ActivePlayerShopStatus = status;
+
+        if (saveChanges)
+        {
+            context.SaveChanges();
+        }
     }
 
     public static IReadOnlyCollection<PlayerShopRuntime> GetActiveShops()
@@ -269,9 +292,11 @@ public static class PlayerShopManager
         }
 
         IReadOnlyList<ReservedInventoryItem> reservations = Array.Empty<ReservedInventoryItem>();
+        var persistenceCommitted = false;
 
         try
         {
+            // Fase 1: reservar artículos únicamente en memoria.
             reservations = ReserveInventory(owner, stockEntries);
 
             if (reservations.Count > 0)
@@ -279,41 +304,70 @@ public static class PlayerShopManager
                 owner.Save();
             }
 
-            var shop = new PlayerShop
+            // Fase 2: persistencia atómica de tienda/items + estado activo del owner.
+            PlayerShop shop;
+            using (var context = DbInterface.CreatePlayerContext(readOnly: false))
+            using (var transaction = context.Database.BeginTransaction())
             {
-                OwnerId = owner.Id,
-                MapId = mapId,
-                MapInstanceId = owner.MapInstanceId,
-                X = x,
-                Y = y,
-                Z = z,
-                Title = title ?? owner.Name,
-                Status = PlayerShopStatus.Active,
-                ExpiresAt = expiresAt,
-                Decoration = string.IsNullOrWhiteSpace(decoration)
-                    ? PlayerShopEntityConstants.DefaultDecoration
-                    : decoration,
-            };
+                shop = new PlayerShop
+                {
+                    OwnerId = owner.Id,
+                    MapId = mapId,
+                    MapInstanceId = owner.MapInstanceId,
+                    X = x,
+                    Y = y,
+                    Z = z,
+                    Title = title ?? owner.Name,
+                    Status = PlayerShopStatus.Active,
+                    ExpiresAt = expiresAt,
+                    Decoration = string.IsNullOrWhiteSpace(decoration)
+                        ? PlayerShopEntityConstants.DefaultDecoration
+                        : decoration,
+                };
 
-            foreach (var entry in stockEntries)
-            {
-                shop.Items.Add(entry.ToEntity());
+                foreach (var entry in stockEntries)
+                {
+                    shop.Items.Add(entry.ToEntity());
+                }
+
+                context.Player_Shops.Add(shop);
+                UpdatePlayerActiveShop(
+                    owner.Id,
+                    shop.Id,
+                    PlayerShopStatus.Active,
+                    owner,
+                    context,
+                    saveChanges: false
+                );
+                context.SaveChanges();
+
+                transaction.Commit();
+                persistenceCommitted = true;
             }
-
-            using var context = DbInterface.CreatePlayerContext(readOnly: false);
-            context.Player_Shops.Add(shop);
-            context.SaveChanges();
 
             var runtime = new PlayerShopRuntime(shop, ownerName, owner);
             RegisterActiveShop(runtime, owner);
 
             return runtime;
         }
-        catch
+        catch (Exception exception)
         {
-            if (reservations.Count > 0)
+            if (!persistenceCommitted && reservations.Count > 0)
             {
                 RestoreInventory(owner, reservations);
+            }
+            else if (persistenceCommitted)
+            {
+                Log.Error(
+                    exception,
+                    "Player shop persistence already committed for owner {OwnerId} at map {MapId} ({X}, {Y}, {Z}). " +
+                    "Automatic inventory rollback is disabled post-commit; run explicit compensation workflow.",
+                    owner.Id,
+                    mapId,
+                    x,
+                    y,
+                    z
+                );
             }
 
             throw;
