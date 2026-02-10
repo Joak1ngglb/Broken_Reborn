@@ -184,6 +184,25 @@ public static class PlayerShopManager
     public static bool TryGetShop(Guid shopId, out PlayerShopRuntime runtime)
         => ActiveShops.TryGetValue(shopId, out runtime);
 
+    public static bool TryGetShopStatus(Guid shopId, out PlayerShopStatus status)
+    {
+        using var context = DbInterface.CreatePlayerContext(readOnly: true);
+        var resolvedStatus = context.Player_Shops
+            .AsNoTracking()
+            .Where(shop => shop.Id == shopId)
+            .Select(shop => (PlayerShopStatus?)shop.Status)
+            .FirstOrDefault();
+
+        if (!resolvedStatus.HasValue)
+        {
+            status = default;
+            return false;
+        }
+
+        status = resolvedStatus.Value;
+        return true;
+    }
+
     public static void LoadActiveShops()
     {
         using var context = DbInterface.CreatePlayerContext(readOnly: true, explicitLoad: true);
@@ -521,7 +540,7 @@ public static class PlayerShopManager
         using var transaction = context.Database.BeginTransaction(IsolationLevel.Serializable);
         var item = context.Player_ShopItems
             .Include(i => i.Shop)
-            .FirstOrDefault(i => i.ShopId == shopId && i.Id == shopItemId);
+            .FirstOrDefault(i => i.ShopId == shopId && i.Id == shopItemId && i.Shop.Status == PlayerShopStatus.Active);
 
         if (item?.Shop == null)
         {
@@ -669,6 +688,19 @@ public static class PlayerShopManager
 
     public static bool CloseShop(Guid shopId, PlayerShopStatus status = PlayerShopStatus.Closed)
     {
+        if (ActiveShops.TryGetValue(shopId, out var activeRuntime))
+        {
+            lock (activeRuntime.SyncRoot)
+            {
+                return CloseShopCore(shopId, status);
+            }
+        }
+
+        return CloseShopCore(shopId, status);
+    }
+
+    private static bool CloseShopCore(Guid shopId, PlayerShopStatus status)
+    {
         using var context = DbInterface.CreatePlayerContext(readOnly: false);
         var shop = context.Player_Shops.FirstOrDefault(s => s.Id == shopId);
         if (shop == null)
@@ -708,15 +740,17 @@ public static class PlayerShopManager
         var owners = new List<Guid>(expired.Count);
         foreach (var shop in expired)
         {
-            shop.Status = PlayerShopStatus.Expired;
-            shop.ClosedAt = now;
-            owners.Add(shop.OwnerId);
-            if (ActiveShops.TryRemove(shop.Id, out var runtime))
+            if (ActiveShops.TryGetValue(shop.Id, out var activeRuntime))
             {
-                runtime.UpdateStatus(PlayerShopStatus.Expired);
+                lock (activeRuntime.SyncRoot)
+                {
+                    ExpireShop(now, owners, shop);
+                }
             }
-
-            DespawnShopEntity(shop.Id);
+            else
+            {
+                ExpireShop(now, owners, shop);
+            }
         }
 
         context.SaveChanges();
@@ -727,6 +761,19 @@ public static class PlayerShopManager
         }
 
         return expired.Count;
+    }
+
+    private static void ExpireShop(DateTime now, List<Guid> owners, PlayerShop shop)
+    {
+        shop.Status = PlayerShopStatus.Expired;
+        shop.ClosedAt = now;
+        owners.Add(shop.OwnerId);
+        if (ActiveShops.TryRemove(shop.Id, out var runtime))
+        {
+            runtime.UpdateStatus(PlayerShopStatus.Expired);
+        }
+
+        DespawnShopEntity(shop.Id);
     }
 
     public static bool TryBuildSnapshot(Guid shopId, out ShopSnapshot snapshot)

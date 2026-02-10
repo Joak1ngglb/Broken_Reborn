@@ -886,8 +886,7 @@ internal sealed partial class PacketHandler
 
         if (!PlayerShopManager.TryGetShop(packet.ShopId, out var runtime))
         {
-            PacketSender.SendChatMsg(player, "La tienda ya no está disponible.", ChatMessageType.Error, CustomColors.Alerts.Error);
-            PacketSender.SendPlayerShopWindow(player, false, false, true);
+            NotifyShopNotAvailable(player, packet.ShopId);
             return;
         }
 
@@ -917,8 +916,7 @@ internal sealed partial class PacketHandler
 
         if (!PlayerShopManager.TryGetShop(packet.ShopId, out var runtime))
         {
-            PacketSender.SendChatMsg(player, "La tienda ya no está disponible.", ChatMessageType.Error, CustomColors.Alerts.Error);
-            PacketSender.SendPlayerShopWindow(player, false, false, true);
+            NotifyShopNotAvailable(player, packet.ShopId);
             return;
         }
 
@@ -979,7 +977,14 @@ internal sealed partial class PacketHandler
             if (!PlayerShopManager.TryCommitPurchase(packet.ShopId, packet.ShopItemId, player.Name, packet.Quantity, out var pendingGold))
             {
                 player.TryGiveItem(currencyDescriptor.Id, removedAmount);
+                if (!PlayerShopManager.TryGetShop(packet.ShopId, out _))
+                {
+                    NotifyShopNotAvailable(player, packet.ShopId);
+                    return;
+                }
+
                 PacketSender.SendChatMsg(player, "No se pudo completar la compra.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                PacketSender.SendPlayerShopSnapshot(player, PlayerShopManager.BuildSnapshot(runtime));
                 return;
             }
 
@@ -1005,6 +1010,23 @@ internal sealed partial class PacketHandler
 
             PacketSender.SendPlayerShopSnapshot(player, PlayerShopManager.BuildSnapshot(runtime));
         }
+    }
+
+    private static void NotifyShopNotAvailable(Player player, Guid shopId)
+    {
+        var message = "La tienda ya no está disponible.";
+        if (PlayerShopManager.TryGetShopStatus(shopId, out var status))
+        {
+            message = status switch
+            {
+                PlayerShopStatus.Closed => "Esta tienda ya fue cerrada.",
+                PlayerShopStatus.Expired => "Esta tienda expiró.",
+                _ => message,
+            };
+        }
+
+        PacketSender.SendChatMsg(player, message, ChatMessageType.Error, CustomColors.Alerts.Error);
+        PacketSender.SendPlayerShopWindow(player, false, false, true);
     }
 
     private static bool TryRemoveCurrency(Player player, Guid currencyId, int amount, out int removedAmount)
