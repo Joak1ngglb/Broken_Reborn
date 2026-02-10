@@ -157,7 +157,7 @@ public partial class EscapeMenuWindow : Window
         ToggleHidden();
         if (Globals.Me?.CombatTimer > Timing.Global.Milliseconds)
         {
-            ShowCombatWarning();
+            ShowCombatWarning(Strings.Combat.WarningCharacterSelect, LogoutToCharacterSelect);
         }
         else
         {
@@ -180,7 +180,7 @@ public partial class EscapeMenuWindow : Window
         ToggleHidden();
         if (Globals.Me?.CombatTimer > Timing.Global.Milliseconds)
         {
-            ShowCombatWarning();
+            ShowCombatWarning(Strings.Combat.WarningLogout, LogoutToMainMenu);
         }
         else
         {
@@ -203,7 +203,7 @@ public partial class EscapeMenuWindow : Window
         ToggleHidden();
         if (Globals.Me?.CombatTimer > Timing.Global.Milliseconds)
         {
-            ShowCombatWarning();
+            ShowCombatWarning(Strings.Combat.WarningExitDesktop, ExitToDesktop);
         }
         else
         {
@@ -211,13 +211,16 @@ public partial class EscapeMenuWindow : Window
         }
     }
 
-    private void ShowCombatWarning()
+    private void ShowCombatWarning(
+        string message,
+        GwenEventHandler<InputSubmissionEventArgs>? handleSubmit
+    )
     {
         AlertWindow.Open(
-            Strings.Combat.WarningCharacterSelect,
+            message,
             Strings.Combat.WarningTitle,
             AlertType.Warning,
-            handleSubmit: LogoutToCharacterSelect,
+            handleSubmit: handleSubmit,
             inputType: InputType.YesNo
         );
     }
