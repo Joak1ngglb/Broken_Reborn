@@ -31,6 +31,7 @@ namespace Intersect.Client.Interface.Game.Job
         private Label ExpLabel;
         private Label ExpTitle;
         private RichLabel JobDescriptionLabel;
+        private ScrollControl JobDescriptionArea;
         private Label JobLevelLabel;
 
         private ScrollControl mRecipePanel;
@@ -164,18 +165,24 @@ namespace Intersect.Client.Interface.Game.Job
                 FontSize = 12,
                 RenderColor = Color.White
             };
+            mJobtDescTemplateLabel.IsHidden = true;
 
-            JobDescriptionLabel = new RichLabel(mJobtDescTemplateLabel, "Jobdesc")
+            JobDescriptionArea = new ScrollControl(InfoPanel, "JobDescriptionArea");
+            JobDescriptionArea.SetPosition(10, 70);
+            JobDescriptionArea.SetSize(InfoPanel.Width - 20, 120);
+            JobDescriptionArea.EnableScroll(false, true);
+
+            JobDescriptionLabel = new RichLabel(JobDescriptionArea, "Jobdesc")
             {
                 FontName = "sourcesansproblack",
                 FontSize = 12
             };
-            JobDescriptionLabel.SetPosition(10, 120);
-            JobDescriptionLabel.SetSize(260, 160);
+            JobDescriptionLabel.SetPosition(0, 0);
+            JobDescriptionLabel.SetSize(JobDescriptionArea.Width, JobDescriptionArea.Height);
 
             mRecipePanel = new ScrollControl(InfoPanel, "RecipePanel");
             mRecipePanel.SetPosition(10, 230);
-            mRecipePanel.SetSize(300, 170);
+            mRecipePanel.SetSize(InfoPanel.Width - 20, 170);
             mRecipePanel.EnableScroll(false, true);
         }
 
@@ -203,6 +210,7 @@ namespace Intersect.Client.Interface.Game.Job
 
             JobDescriptionLabel.ClearText();
             JobDescriptionLabel.AddText(Strings.Job.GetJobDescription(jobType), mJobtDescTemplateLabel);
+            JobDescriptionArea.UpdateScrollBars();
 
             LoadRecipes(jobType);
         }
@@ -355,7 +363,8 @@ namespace Intersect.Client.Interface.Game.Job
                 // Contenedor de receta
                 var recipeContainer = new ImagePanel(mRecipePanel, "JobsRecipeContainer");
                 recipeContainer.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
-                recipeContainer.SetSize(265, 80);
+                var recipeContainerWidth = Math.Max(100, mRecipePanel.Width - mRecipePanel.Margin.Left - mRecipePanel.Margin.Right - 10);
+                recipeContainer.SetSize(recipeContainerWidth, 80);
                 recipeContainer.SetPosition(0, yOffset);
 
                 // Nombre
@@ -394,11 +403,14 @@ namespace Intersect.Client.Interface.Game.Job
 
                 // Panel de ingredientes
                 var ingredientsPanel = new ScrollControl(recipeContainer, "IngredientsPanel");
-                ingredientsPanel.SetSize(295, 50);
-                ingredientsPanel.SetPosition(0, 40);
+                ingredientsPanel.SetSize(recipeContainer.Width - 10, 50);
+                ingredientsPanel.SetPosition(5, 40);
                 ingredientsPanel.EnableScroll(false, false);
 
-                int xOff = 0;
+                var iconSize = 32;
+                var iconSpacing = 5;
+                var step = iconSize + iconSpacing;
+                var itemsPerRow = Math.Max(1, ingredientsPanel.Width / step);
                 for (int i = 0; i < recipe.Ingredients.Count; i++)
                 {
                     var ing = recipe.Ingredients[i];
@@ -409,7 +421,10 @@ namespace Intersect.Client.Interface.Game.Job
                     recipeItem.Setup("IngredientItemIcon");
                     recipeItem.Container.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
                     recipeItem.Container.SetSize(32, 32);
-                    recipeItem.Container.SetPosition(xOff, 0);
+
+                    var ingredientColumn = i % itemsPerRow;
+                    var ingredientRow = i / itemsPerRow;
+                    recipeItem.Container.SetPosition(ingredientColumn * step, ingredientRow * step);
                     recipeItem.LoadItem();
 
                     var onHand = inventoryItemsByDescriptorId.GetValueOrDefault(ing.ItemId, 0);
@@ -431,9 +446,13 @@ namespace Intersect.Client.Interface.Game.Job
 
                     ingredientsPanel.AddChild(recipeItem.Container);
                     mItems.Add(recipeItem);
-
-                    xOff += 37;
                 }
+
+                var ingredientRows = Math.Max(1, (int)Math.Ceiling(recipe.Ingredients.Count / (double)itemsPerRow));
+                var ingredientPanelHeight = Math.Max(32, ingredientRows * step - iconSpacing);
+                ingredientsPanel.SetSize(ingredientsPanel.Width, ingredientPanelHeight);
+
+                recipeContainer.SetSize(recipeContainer.Width, Math.Max(80, 45 + ingredientPanelHeight));
 
                 recipeContainer.AddChild(ingredientsPanel);
                 mRecipePanel.AddChild(recipeContainer);
