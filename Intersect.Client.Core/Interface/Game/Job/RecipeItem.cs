@@ -1,6 +1,5 @@
 using Intersect.Client.Core;
 using Intersect.Client.Framework.Gwen.Control;
-using Intersect.Client.Framework.Gwen.Input;
 using Intersect.Client.Framework.Input;
 using Intersect.Client.General;
 using Intersect.Client.Interface.Game.DescriptionWindows;
@@ -133,11 +132,6 @@ namespace Intersect.Client.Interface.Game.Job
 
         void pnl_HoverEnter(Base sender, EventArgs arguments)
         {
-            if (InputHandler.MouseFocus != null)
-            {
-                return;
-            }
-
             mMouseOver = true;
             mCanDrag = true;
             if (Globals.InputManager.IsMouseButtonDown(MouseButton.Left))
