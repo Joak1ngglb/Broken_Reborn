@@ -1700,6 +1700,9 @@ Tick timer saved in server config.json.";
         public static LocalizedString instructionsnpccanbeattacked =
             @"Below are condition lists. If there are conditions, and they are not met, then the player will not be able to attack this npc.";
 
+        public static LocalizedString instructionsachievement =
+            @"Below are condition lists. If conditions are met on any of the lists then the achievement can be earned.";
+
         public static LocalizedString instructionsquest =
             @"Below are condition lists. If conditions are met on any of the lists then the player can start the quest.";
 
@@ -2146,6 +2149,14 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString completetask = @"Complete Quest Task [Quest: {00}, Task: {01}]";
 
+        public static LocalizedString completeachievement = @"Complete Achievement [Achievement: {00}]";
+
+        public static LocalizedString completeachievementtask = @"Complete Achievement Task [Achievement: {00}, Task: {01}]";
+
+        public static LocalizedString achievementundefined = @"Undefined";
+
+        public static LocalizedString metaachievementtask = @"Meta Achievement: {00}";
+
         public static LocalizedString conditionalbranch = @"Conditional Branch: [{00}]";
 
         public static LocalizedString conditionalelse = @"Else";
@@ -2574,6 +2585,8 @@ Tick timer saved in server config.json.";
             {"changespells", @"Change Spells"},
             {"changesprite", @"Change Sprite"},
             {"completequesttask", @"Complete Quest Task"},
+            {"completeachievement", @"Complete Achievement"},
+            {"completeachievementtask", @"Complete Achievement Task"},
             {"conditionalbranch", @"Conditional Branch"},
             {"despawnnpc", @"Despawn NPC"},
             {"dialogue", @"Dialogue"},
@@ -2599,6 +2612,7 @@ Tick timer saved in server config.json.";
             {"playercontrol", @"Player Control"},
             {"playsound", @"Play Sound"},
             {"questcontrol", @"Quest Control"},
+            {"achievementcontrol", @"Achievement Control"},
             {"releaseplayer", @"Release Player"},
             {"restorehp", @"Restore HP"},
             {"restoremp", @"Restore MP"},
@@ -2662,6 +2676,40 @@ Tick timer saved in server config.json.";
         public static LocalizedString task = @"Task:";
 
         public static LocalizedString title = @"Complete Quest Task";
+
+    }
+
+    public partial struct EventCompleteAchievement
+    {
+
+        public static LocalizedString cancel = @"Cancel";
+
+        public static LocalizedString okay = @"Ok";
+
+        public static LocalizedString achievement = @"Achievement:";
+
+        public static LocalizedString title = @"Complete Achievement";
+
+    }
+
+    public partial struct EventCompleteAchievementTask
+    {
+
+        public static LocalizedString cancel = @"Cancel";
+
+        public static LocalizedString okay = @"Ok";
+
+        public static LocalizedString achievement = @"Achievement:";
+
+        public static LocalizedString task = @"Task:";
+
+        public static LocalizedString title = @"Complete Achievement Task";
+
+        public static LocalizedString achievementundefined = @"Undefined";
+
+        public static LocalizedString metaachievement = @"Meta Achievement: {00}";
+
+        public static LocalizedString noobjectives = @"No Objectives";
 
     }
 
@@ -4391,6 +4439,10 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString animationeditor = @"Animation Editor";
 
+        public static LocalizedString achievementeditor = @"Achievement Editor";
+
+        public static LocalizedString titleeditor = @"Title Editor";
+
         public static LocalizedString classeditor = @"Class Editor";
 
         public static LocalizedString commoneventeditor = @"Common Event Editor";
@@ -5199,6 +5251,160 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString undoprompt =
             @"Are you sure you want to undo changes made to this projectile? This action cannot be reverted!";
+
+        public static LocalizedString undotitle = @"Undo Changes";
+
+    }
+
+    public partial struct AchievementEditor
+    {
+
+        public static LocalizedString achievements = @"Achievements";
+
+        public static LocalizedString addresource = @"Add Resource";
+
+        public static LocalizedString addtitle = @"Add Title";
+
+        public static LocalizedString cancel = @"Cancel";
+
+        public static LocalizedString category = @"Category:";
+
+        public static LocalizedString categorydungeons = @"Dungeons";
+
+        public static LocalizedString categoryexploration = @"Exploration";
+
+        public static LocalizedString categorymonsters = @"Monsters";
+
+        public static LocalizedString categoryquests = @"Quests";
+
+        public static LocalizedString categoryprofessions = @"Professions";
+
+        public static LocalizedString categoryevents = @"Events";
+
+        public static LocalizedString completionmode = @"Completion Mode:";
+
+        public static LocalizedString copy = @"Copy Achievement";
+
+        public static LocalizedString currency = @"Currency:";
+
+        public static LocalizedString delete = @"Delete Achievement";
+
+        public static LocalizedString deleteprompt =
+            @"Are you sure you want to delete this achievement? This action cannot be reverted!";
+
+        public static LocalizedString deletetitle = @"Delete Achievement";
+
+        public static LocalizedString description = @"Description:";
+
+        public static LocalizedString difficulty = @"Difficulty:";
+
+        public static LocalizedString difficultydiscovery = @"Discovery";
+
+        public static LocalizedString difficultynatural = @"Natural";
+
+        public static LocalizedString difficultyepic = @"Epic";
+
+        public static LocalizedString difficultymeta = @"Meta";
+
+        public static LocalizedString editrequirements = @"Edit Requirements";
+
+        public static LocalizedString experience = @"Experience:";
+
+        public static LocalizedString folderlabel = @"Folder:";
+
+        public static LocalizedString folderprompt = @"Enter a name for the folder you'd like to add:";
+
+        public static LocalizedString foldertitle = @"Add Folder";
+
+        public static LocalizedString general = @"General";
+
+        public static LocalizedString icon = @"Icon:";
+
+        public static LocalizedString name = @"Name:";
+
+        public static LocalizedString New = @"New Achievement";
+
+        public static LocalizedString paste = @"Paste Achievement";
+
+        public static LocalizedString requirements = @"Requirements";
+
+        public static LocalizedString resource = @"Resource:";
+
+        public static LocalizedString resourceamount = @"Amount:";
+
+        public static LocalizedString removeresource = @"Remove Resource";
+
+        public static LocalizedString removetitle = @"Remove Title";
+
+        public static LocalizedString rewards = @"Rewards";
+
+        public static LocalizedString save = @"Save";
+
+        public static LocalizedString searchplaceholder = @"Search...";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString sortalphabetically = @"Order Alphabetically";
+
+        public static LocalizedString title = @"Achievement Editor";
+
+        public static LocalizedString titleids = @"Title IDs:";
+
+        public static LocalizedString undo = @"Undo Changes";
+
+        public static LocalizedString undoprompt =
+            @"Are you sure you want to undo changes made to this achievement? This action cannot be reverted!";
+
+        public static LocalizedString undotitle = @"Undo Changes";
+
+    }
+
+    public partial struct TitleEditor
+    {
+
+        public static LocalizedString addfolder = @"Add";
+
+        public static LocalizedString cancel = @"Cancel";
+
+        public static LocalizedString copy = @"Copy Title";
+
+        public static LocalizedString delete = @"Delete Title";
+
+        public static LocalizedString deleteprompt =
+            @"Are you sure you want to delete this title? This action cannot be reverted!";
+
+        public static LocalizedString deletetitle = @"Delete Title";
+
+        public static LocalizedString description = @"Description:";
+
+        public static LocalizedString folderlabel = @"Folder:";
+
+        public static LocalizedString folderprompt = @"Enter a name for the folder you'd like to add:";
+
+        public static LocalizedString foldertitle = @"Add Folder";
+
+        public static LocalizedString general = @"General";
+
+        public static LocalizedString name = @"Name:";
+
+        public static LocalizedString New = @"New Title";
+
+        public static LocalizedString paste = @"Paste Title";
+
+        public static LocalizedString save = @"Save";
+
+        public static LocalizedString searchplaceholder = @"Search...";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString sortalphabetically = @"Order Alphabetically";
+
+        public static LocalizedString title = @"Title Editor";
+
+        public static LocalizedString titles = @"Titles";
+
+        public static LocalizedString undo = @"Undo Changes";
+
+        public static LocalizedString undoprompt =
+            @"Are you sure you want to undo changes made to this title? This action cannot be reverted!";
 
         public static LocalizedString undotitle = @"Undo Changes";
 

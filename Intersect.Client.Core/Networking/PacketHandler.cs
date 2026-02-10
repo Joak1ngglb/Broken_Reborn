@@ -25,6 +25,7 @@ using Intersect.Models;
 using Intersect.Client.Interface.Shared;
 using Intersect.Client.Interface;
 using Intersect.Framework.Core;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -2299,6 +2300,53 @@ internal sealed partial class PacketHandler
                 }
             );
         }
+    }
+
+    //AchievementProgressPacket
+    public void HandlePacket(IPacketSender packetSender, AchievementProgressPacket packet)
+    {
+        foreach (var achievement in packet.Achievements)
+        {
+            var progress = new AchievementProgress
+            {
+                Progress = achievement.Value.Progress,
+                Completed = achievement.Value.Completed,
+                CompletedAt = achievement.Value.CompletedAtTicks.HasValue
+                    ? new DateTime(achievement.Value.CompletedAtTicks.Value)
+                    : null,
+                Objectives = achievement.Value.Objectives
+            };
+
+            Globals.AchievementProgress[achievement.Key] = progress;
+        }
+
+        Globals.AchievementDirty = true;
+
+        Interface.Interface.EnqueueInGame(
+            gameInterface => gameInterface.NotifyAchievementsUpdated()
+        );
+    }
+
+    //AchievementCompletedPacket
+    public void HandlePacket(IPacketSender packetSender, AchievementCompletedPacket packet)
+    {
+        Globals.AchievementCompletedRewards[packet.AchievementId] = new AchievementRewards
+        {
+            Experience = packet.Experience,
+            Currency = packet.Currency,
+            Items = packet.Items,
+            TitleIds = packet.TitleIds
+        };
+
+        Globals.AchievementDirty = true;
+
+        Interface.Interface.EnqueueInGame(
+            gameInterface =>
+            {
+                gameInterface.NotifyAchievementsUpdated();
+                gameInterface.NotifyAchievementCompleted(packet.AchievementId);
+            }
+        );
     }
 
     //TradePacket

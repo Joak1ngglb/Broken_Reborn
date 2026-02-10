@@ -367,7 +367,7 @@ public partial class Event
         if (player != null)
         {
             //Player Name, Map, X, Y, Z?
-            //Player Vitals, Player Stats, Player Sprite?
+            //Player Vitals, Player Sprite?
             //More later.. good start now
             prams.Add("plyrName", player.Name);
             prams.Add("plyrMap", player.Map.Name);

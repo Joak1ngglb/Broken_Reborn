@@ -19,11 +19,13 @@ using Intersect.Client.Interface.Game.Shops;
 using Intersect.Client.Interface.Game.Trades;
 using Intersect.Client.Interface.Menu;
 using Intersect.Client.Interface.Shared;
+using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.GameObjects;
 using Microsoft.Extensions.Logging;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Client.Interface.Game.Spells;
 using Intersect.Client.Interface.Game.Market;
@@ -103,6 +105,7 @@ public partial class GameInterface : MutableInterface
     private bool mShouldOpenTrading;
 
     private bool mShouldUpdateQuestLog = true;
+    private bool mShouldUpdateAchievementLog = true;
 
     private bool mShouldUpdateFriendsList;
 
@@ -488,6 +491,38 @@ public partial class GameInterface : MutableInterface
         mShouldUpdateQuestLog = true;
     }
 
+    public void NotifyAchievementsUpdated()
+    {
+        mShouldUpdateAchievementLog = true;
+    }
+
+    public void NotifyAchievementCompleted(Guid achievementId)
+    {
+        mShouldUpdateAchievementLog = true;
+
+        if (Globals.Database?.ShowAchievementNotifications != true)
+        {
+            return;
+        }
+
+        if (!AchievementDescriptor.TryGet(achievementId, out var achievement))
+        {
+            return;
+        }
+
+        var name = GameLocalization.GetTextOrDefault(
+            achievement.Type.ToString(),
+            achievement.Id,
+            "Name",
+            achievement.Name
+        );
+
+        AnnouncementWindow.ShowAnnouncement(
+            Strings.Achievements.CompletedNotification.ToString(name),
+            4000
+        );
+    }
+
     //Trading
     public void NotifyOpenTrading(string traderName)
     {
@@ -535,8 +570,15 @@ public partial class GameInterface : MutableInterface
             Globals.QuestDirty = false;
         }
 
-        GameMenu?.Update(mShouldUpdateQuestLog);
+        if (Globals.AchievementDirty)
+        {
+            mShouldUpdateAchievementLog = true;
+            Globals.AchievementDirty = false;
+        }
+
+        GameMenu?.Update(mShouldUpdateQuestLog, mShouldUpdateAchievementLog);
         mShouldUpdateQuestLog = false;
+        mShouldUpdateAchievementLog = false;
         Hotbar?.Update();
         EscapeMenu.Update();
         PlayerBox?.Update();

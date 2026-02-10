@@ -200,7 +200,8 @@ public partial class Player
         entityEntry.Collection(p => p.Quests).Load();
         entityEntry.Collection(p => p.Spells).Load();
         entityEntry.Collection(p => p.Variables).Load();
-        entityEntry.Collection(p => p.BestiaryUnlocks).Load();
+         entityEntry.Collection(p => p.BestiaryUnlocks).Load();
+        entityEntry.Collection(p => p.Achievements).Load();
 
         if (loadBags)
         {
@@ -255,10 +256,6 @@ public partial class Player
             return false;
         }
 
-        // player.Bank = player.Bank.OrderBy(bankSlot => bankSlot?.Slot)
-        // player.Items = player.Items.OrderBy(inventorySlot => inventorySlot?.Slot).ToList();
-        // player.Hotbar = player.Hotbar.OrderBy(hotbarSlot => hotbarSlot?.Slot).ToList();
-        // player.Spells = player.Spells.OrderBy(spellSlot => spellSlot?.Slot).ToList();
 
         return true;
     }
@@ -542,7 +539,7 @@ public partial class Player
                 .Include(p => p.Items)
                 .Include(p => p.Quests)
                 .Include(p => p.Spells)
-                .Include(p => p.Variables)
+                .Include(p => p.Variables)         
              .Include(p => p.MailBoxs)
                .ThenInclude(m => m.SenderPlayer)
                 .AsSplitQuery()
@@ -589,7 +586,7 @@ public partial class Player
                 .Include(p => p.Variables)
                 .Include(p => p.Items)
                 .Include(p => p.Spells)
-             .Include(p => p.MailBoxs)
+                    .Include(p => p.MailBoxs)
                .ThenInclude(m => m.SenderPlayer)
                 .AsSplitQuery()
                 .FirstOrDefault()
@@ -606,7 +603,7 @@ public partial class Player
                 .Include(p => p.Variables)
                 .Include(p => p.Items)
                 .Include(p => p.Spells)
-             .Include(p => p.MailBoxs)
+                .Include(p => p.MailBoxs)
                .ThenInclude(m => m.SenderPlayer)
                 .AsSplitQuery()
                 .FirstOrDefault()
@@ -627,7 +624,7 @@ public partial class Player
                 .Include(c => c.Quests)
                 .Include(c => c.Spells)
                 .Include(c => c.Variables)
-             .Include(c => c.MailBoxs)
+                .Include(c => c.MailBoxs)
                .ThenInclude(m => m.SenderPlayer)
                 .AsSplitQuery()
                 .FirstOrDefault()

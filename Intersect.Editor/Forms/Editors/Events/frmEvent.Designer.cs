@@ -94,6 +94,9 @@ namespace Intersect.Editor.Forms.Editors.Events
             var treeNode54 = new TreeNode("Complete Quest Task");
             var treeNode55 = new TreeNode("End Quest");
             var treeNode56 = new TreeNode("Quest Control", new TreeNode[] { treeNode53, treeNode54, treeNode55 });
+            var treeNode85 = new TreeNode("Complete Achievement");
+            var treeNode86 = new TreeNode("Complete Achievement Task");
+            var treeNode87 = new TreeNode("Achievement Control", new TreeNode[] { treeNode85, treeNode86 });
             var treeNode57 = new TreeNode("Wait...");
             var treeNode58 = new TreeNode("Etc", new TreeNode[] { treeNode57 });
             var treeNode59 = new TreeNode("Open Bank");
@@ -982,6 +985,12 @@ namespace Intersect.Editor.Forms.Editors.Events
             treeNode55.Text = "End Quest";
             treeNode56.Name = "questcontrol";
             treeNode56.Text = "Quest Control";
+            treeNode85.Name = "completeachievement";
+            treeNode85.Text = "Complete Achievement";
+            treeNode86.Name = "completeachievementtask";
+            treeNode86.Text = "Complete Achievement Task";
+            treeNode87.Name = "achievementcontrol";
+            treeNode87.Text = "Achievement Control";
             treeNode57.Name = "wait";
             treeNode57.Text = "Wait...";
             treeNode58.Name = "etc";
@@ -1030,7 +1039,7 @@ namespace Intersect.Editor.Forms.Editors.Events
             treeNode81.Text = "Open Sell Market";
             treeNode82.Name = "market";
             treeNode82.Text = "Market";
-            lstCommands.Nodes.AddRange(new TreeNode[] { treeNode5, treeNode13, treeNode33, treeNode43, treeNode52, treeNode56, treeNode58, treeNode62, treeNode67, treeNode69, treeNode73, treeNode76, treeNode82 });
+            lstCommands.Nodes.AddRange(new TreeNode[] { treeNode5, treeNode13, treeNode33, treeNode43, treeNode52, treeNode56, treeNode87, treeNode58, treeNode62, treeNode67, treeNode69, treeNode73, treeNode76, treeNode82 });
             lstCommands.Size = new Size(500, 536);
             lstCommands.TabIndex = 2;
             lstCommands.NodeMouseDoubleClick += lstCommands_NodeMouseDoubleClick;

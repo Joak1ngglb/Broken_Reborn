@@ -28,7 +28,9 @@ public enum RequirementType
 
     NpcCanBeAttacked,
 
-    Craft
+    Craft,
+
+    Achievement
 
 }
 
@@ -98,6 +100,10 @@ public partial class FrmDynamicRequirements : Form
                 break;
             case RequirementType.Craft:
                 lblInstructions.Text = Strings.DynamicRequirements.instructionscraft;
+
+                break;
+            case RequirementType.Achievement:
+                lblInstructions.Text = Strings.DynamicRequirements.instructionsachievement;
 
                 break;
             default:

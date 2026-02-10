@@ -13,6 +13,7 @@ using Intersect.Client.Plugins.Interfaces;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Config;
+using Intersect.Framework.Core.GameObjects.Achievements;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
@@ -105,6 +106,12 @@ public static partial class Globals
     public static readonly Dictionary<Guid, Dictionary<Factions, int>> QuestFactionHonor = new();
 
     public static bool QuestDirty;
+
+    public static readonly Dictionary<Guid, AchievementProgress> AchievementProgress = new();
+
+    public static readonly Dictionary<Guid, AchievementRewards> AchievementCompletedRewards = new();
+
+    public static bool AchievementDirty;
 
     public static void RemoveQuestRewards(Guid questId)
     {

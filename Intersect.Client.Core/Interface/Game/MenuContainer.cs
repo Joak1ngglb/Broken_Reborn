@@ -39,6 +39,10 @@ public partial class MenuContainer : Panel
     private readonly Button _questsButton;
     private readonly QuestsWindow _questsWindow;
 
+    private readonly ImagePanel _achievementsButtonContainer;
+    private readonly Button _achievementsButton;
+    private readonly AchievementsWindow _achievementsWindow;
+
     private readonly ImagePanel _friendsButtonContainer;
     private readonly Button _friendsButton;
     private readonly FriendsWindow _friendsWindow;
@@ -144,6 +148,25 @@ public partial class MenuContainer : Panel
         _questsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "questsicon_hovered.png");
         _questsButton.SetToolTipText(text: Strings.GameMenu.Quest);
         _questsButton.Clicked += QuestBtn_Clicked;
+
+        _achievementsButtonContainer = new ImagePanel(parent: this, name: nameof(_achievementsButtonContainer))
+        {
+            Dock = Pos.Left,
+            MaximumSize = new Point(x: 36, y: 36),
+            MinimumSize = new Point(x: 36, y: 36),
+            Padding = new Padding(size: 2),
+            Size = new Point(x: 36, y: 36),
+            TextureFilename = "menuitem.png",
+        };
+        _achievementsButton = new Button(parent: _achievementsButtonContainer, name: nameof(_achievementsButton), disableText: true)
+        {
+            Alignment = [Alignments.Center],
+            Size = new Point(x: 32, y: 32),
+        };
+        _achievementsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "questsicon.png");
+        _achievementsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "questsicon_hovered.png");
+        _achievementsButton.SetToolTipText(text: Strings.GameMenu.Achievements);
+        _achievementsButton.Clicked += AchievementsBtn_Clicked;
 
         _friendsButtonContainer = new ImagePanel(parent: this, name: nameof(_friendsButtonContainer))
         {
@@ -271,6 +294,7 @@ public partial class MenuContainer : Panel
         _spellsWindow = new SpellsWindow(gameCanvas: gameCanvas);
         _characterWindow = new CharacterWindow(gameCanvas: gameCanvas);
         _questsWindow = new QuestsWindow(gameCanvas: gameCanvas);
+        _achievementsWindow = new AchievementsWindow(gameCanvas: gameCanvas);
         _mapItemWindow = new MapItemWindow(gameCanvas: gameCanvas);
         _guildWindow = new GuildWindow(gameCanvas: gameCanvas);
         mJobsWindow= new JobsWindow(gameCanvas: gameCanvas);
@@ -278,7 +302,7 @@ public partial class MenuContainer : Panel
     }
 
     //Methods
-    public void Update(bool updateQuestLog)
+    public void Update(bool updateQuestLog, bool updateAchievements)
     {
         _inventoryWindow.Update();
         _spellsWindow.Update();
@@ -286,6 +310,7 @@ public partial class MenuContainer : Panel
         _partyWindow.Update();
         _friendsWindow.Update();
         _questsWindow.Update(updateQuestLog);
+        _achievementsWindow.Update(updateAchievements);
         _mapItemWindow.Update();
         _guildWindow.Update();
         mJobsWindow.Update();
@@ -321,6 +346,7 @@ public partial class MenuContainer : Panel
         _inventoryWindow.Hide();
         _partyWindow.Hide();
         _questsWindow.Hide();
+        _achievementsWindow.Hide();
         _spellsWindow.Hide();
         _guildWindow.Hide();
         _factionWindow.Hide();
@@ -458,6 +484,19 @@ public partial class MenuContainer : Panel
         }
     }
 
+    public void ToggleAchievementsWindow()
+    {
+        if (_achievementsWindow.IsVisible())
+        {
+            _achievementsWindow.Hide();
+        }
+        else
+        {
+            HideWindows();
+            _achievementsWindow.Show();
+        }
+    }
+
     public void ToggleSimplifiedEscapeMenu()
     {
         Interface.GameUi.SimplifiedEscapeMenu.ToggleHidden(_escapeMenuButton);
@@ -485,6 +524,7 @@ public partial class MenuContainer : Panel
         _inventoryWindow.Hide();
 
         _questsWindow.Hide();
+        _achievementsWindow.Hide();
 
         _spellsWindow.Hide();
 
@@ -500,6 +540,7 @@ public partial class MenuContainer : Panel
                           _friendsWindow.IsVisible ||
                           _inventoryWindow.IsVisibleInTree ||
                           _questsWindow.IsVisible() ||
+                          _achievementsWindow.IsVisible() ||
                           _spellsWindow.IsVisibleInTree ||
                           _partyWindow.IsVisible() ||
                           _guildWindow.IsVisibleInTree ||
@@ -549,6 +590,11 @@ public partial class MenuContainer : Panel
     private void QuestBtn_Clicked(Base sender, MouseButtonState arguments)
     {
         ToggleQuestsWindow();
+    }
+
+    private void AchievementsBtn_Clicked(Base sender, MouseButtonState arguments)
+    {
+        ToggleAchievementsWindow();
     }
 
     private void InventoryButton_Clicked(Base sender, MouseButtonState arguments)

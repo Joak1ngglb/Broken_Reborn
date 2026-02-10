@@ -1,5 +1,6 @@
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Reflection;
 using Intersect.Network.Packets.Server;
@@ -65,7 +66,7 @@ public partial class Resource : Entity
         Passable = Descriptor.WalkableAfter;
         IsDead = true;
 
-        if (killer is Player player && ExperienceAmount > 0 && Jobs != JobType.None)
+        if (killer is Player player)
         {
 
             player.GiveJobExperience(Jobs, ExperienceAmount);

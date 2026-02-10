@@ -339,6 +339,9 @@ public static partial class Strings
         public readonly LocalizedString ResourceRequirements = @"You do not meet the requirements to harvest this resource!";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString Resurrected = @"RESURRECTED!";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString Silenced = @"You cannot cast this ability while silenced.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -756,6 +759,9 @@ public static partial class Strings
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString NoticeError = @"Error Notice";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString RespawnIn = @"Respawn in {00}s";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString UnknownErrorPleaseTryAgain = @"An unknown error occurred, please try again.";
@@ -1688,6 +1694,14 @@ public static partial class Strings
             serialized = new JObject();
             return false;
         }
+        catch (Exception exception)
+        {
+            if (exception.Message.Contains("Commands.announcement"))
+            {
+                throw new Exception(
+                    "Server strings invalid! Upgrade steps to B6 were not followed correctly. Server must close!"
+                );
+            }
 
         var json = File.ReadAllText(path, Encoding.UTF8);
         serialized = JsonConvert.DeserializeObject<JObject>(json) ?? new JObject();
@@ -1750,6 +1764,8 @@ public static partial class Strings
     {
 
         public readonly AccountNamespace Account = new AccountNamespace();
+
+        public readonly AchievementsNamespace Achievements = new AchievementsNamespace();
 
         public readonly AlignmentNamespace Alignment = new AlignmentNamespace();
 
@@ -1832,6 +1848,8 @@ public static partial class Strings
     #region Namespace Exposure
 
     public static AccountNamespace Account => Root.Account;
+
+    public static AchievementsNamespace Achievements => Root.Achievements;
 
     public static AlignmentNamespace Alignment => Root.Alignment;
 

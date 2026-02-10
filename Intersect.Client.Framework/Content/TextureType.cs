@@ -11,6 +11,8 @@ public enum TextureType
 
     Spell,
 
+    Achievement,
+
     Animation,
 
     Face,
