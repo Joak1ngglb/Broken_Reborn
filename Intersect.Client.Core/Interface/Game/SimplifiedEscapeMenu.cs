@@ -14,10 +14,6 @@ namespace Intersect.Client.Interface.Game;
 public sealed partial class SimplifiedEscapeMenu : Framework.Gwen.Control.Menu
 {
     private readonly Func<SettingsWindow> _settingsWindowProvider;
-    private readonly MenuItem _settings;
-    private readonly MenuItem _character;
-    private readonly MenuItem _logout;
-    private readonly MenuItem _exit;
 
     public SimplifiedEscapeMenu(Canvas gameCanvas, Func<SettingsWindow> settingsWindowProvider) : base(gameCanvas, nameof(SimplifiedEscapeMenu))
     {
@@ -25,17 +21,7 @@ public sealed partial class SimplifiedEscapeMenu : Framework.Gwen.Control.Menu
         IconMarginDisabled = true;
         _settingsWindowProvider = settingsWindowProvider;
 
-        ClearChildren();
-
-        _settings = AddItem(Strings.EscapeMenu.Settings);
-        _character = AddItem(Strings.EscapeMenu.CharacterSelect);
-        _logout = AddItem(Strings.EscapeMenu.Logout);
-        _exit = AddItem(Strings.EscapeMenu.ExitToDesktop);
-
-        _settings.Clicked += OpenSettingsWindow;
-        _character.Clicked += LogoutToCharacterSelectSelectClicked;
-        _logout.Clicked += LogoutToMainToMainMenuClicked;
-        _exit.Clicked += ExitToDesktopClicked;
+        RebuildMenuItems();
 
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString());
     }
@@ -50,6 +36,8 @@ public sealed partial class SimplifiedEscapeMenu : Framework.Gwen.Control.Menu
 
         if (this.IsHidden)
         {
+            RebuildMenuItems();
+
             // Position the context menu within the game canvas if near borders.
             var menuPosX = target.ToCanvas(new Point(0, 0)).X;
             var menuPosY = target.ToCanvas(new Point(0, 0)).Y;
@@ -74,6 +62,34 @@ public sealed partial class SimplifiedEscapeMenu : Framework.Gwen.Control.Menu
         {
             Close();
         }
+    }
+
+    private void RebuildMenuItems()
+    {
+        ClearChildren();
+
+        var settings = AddItem(Strings.EscapeMenu.Settings);
+        settings.Clicked += OpenSettingsWindow;
+
+        if (!string.IsNullOrEmpty(Strings.MainMenu.SettingsTooltip))
+        {
+            settings.SetToolTipText(Strings.MainMenu.SettingsTooltip);
+        }
+
+        if (Options.Instance.Player.MaxCharacters > 1)
+        {
+            var character = AddItem(Strings.EscapeMenu.CharacterSelect);
+            character.Clicked += LogoutToCharacterSelectSelectClicked;
+        }
+
+        if (!ClientContext.IsSinglePlayer)
+        {
+            var logout = AddItem(Strings.EscapeMenu.Logout);
+            logout.Clicked += LogoutToMainToMainMenuClicked;
+        }
+
+        var exit = AddItem(Strings.EscapeMenu.ExitToDesktop);
+        exit.Clicked += ExitToDesktopClicked;
     }
 
     private void LogoutToCharacterSelectSelectClicked(Base sender, MouseButtonState arguments)
