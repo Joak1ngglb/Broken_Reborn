@@ -10,5 +10,7 @@ public interface IActionMessage
     int XOffset { get; init; }
     int Y { get; init; }
 
+    void Draw(int mapX, int mapY, int tileWidth, int tileHeight);
+
     void TryRemove();
 }
