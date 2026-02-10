@@ -741,11 +741,10 @@ internal sealed partial class PacketHandler
             if (Player.FindOnline(chr.Id) != null)
             {
                 client.LoadCharacter(chr);
-                var shopSummary = FinalizePlayerShopIfNeeded(client.Entity);
                 client.Entity.SetOnline();
 
                 PacketSender.SendJoinGame(client);
-                NotifyPlayerShopFinalization(client.Entity, shopSummary);
+                NotifyActivePlayerShopState(client.Entity);
                 return;
             }
         }
@@ -771,10 +770,9 @@ internal sealed partial class PacketHandler
                 explicitLoad: true
             );
             client.LoadCharacter(character);
-            var shopSummary = FinalizePlayerShopIfNeeded(client.Entity);
             client.Entity.SetOnline();
             PacketSender.SendJoinGame(client);
-            NotifyPlayerShopFinalization(client.Entity, shopSummary);
+            NotifyActivePlayerShopState(client.Entity);
         }
     }
 
@@ -1006,6 +1004,11 @@ internal sealed partial class PacketHandler
         }
 
         var msgSplit = msg.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (HandlePlayerShopCommand(player, cmd, msgSplit))
+        {
+            return;
+        }
 
         if (cmd == Strings.Chat.LocalCommand)
         {
@@ -1735,7 +1738,6 @@ internal sealed partial class PacketHandler
         }
 
         client.LoadCharacter(newChar);
-        var creationShopSummary = FinalizePlayerShopIfNeeded(client.Entity);
 
         newChar.SetVital(Vital.Health, classBase.BaseVital[(int)Vital.Health]);
         newChar.SetVital(Vital.Mana, classBase.BaseVital[(int)Vital.Mana]);
@@ -1776,7 +1778,7 @@ internal sealed partial class PacketHandler
         newChar.SetOnline();
 
         PacketSender.SendJoinGame(client);
-        NotifyPlayerShopFinalization(client.Entity, creationShopSummary);
+        NotifyActivePlayerShopState(client.Entity);
     }
 
     //PickupItemPacket
@@ -2732,8 +2734,6 @@ internal sealed partial class PacketHandler
 
         client.LoadCharacter(character);
 
-        var selectionShopSummary = FinalizePlayerShopIfNeeded(client.Entity);
-
         UserActivityHistory.LogActivity(
             client.User?.Id ?? Guid.Empty,
             client?.Entity?.Id ?? Guid.Empty,
@@ -2748,7 +2748,7 @@ internal sealed partial class PacketHandler
             client.Entity?.SetOnline();
 
             PacketSender.SendJoinGame(client);
-            NotifyPlayerShopFinalization(client.Entity, selectionShopSummary);
+            NotifyActivePlayerShopState(client.Entity);
         }
         catch (Exception exception)
         {
@@ -3422,47 +3422,146 @@ internal sealed partial class PacketHandler
         }
     }
 
-    private static PlayerShopManager.PlayerShopFinalizationSummary? FinalizePlayerShopIfNeeded(Player? player)
+    private static bool HandlePlayerShopCommand(Player player, string cmd, IReadOnlyList<string> args)
     {
-        if (player == null)
+        if (!string.Equals(cmd, "/pshop", StringComparison.OrdinalIgnoreCase))
         {
-            return null;
+            return false;
         }
 
-        PlayerShopManager.TryFinalizeActiveShop(player, out var summary);
-        return summary;
+        if (!player.ActivePlayerShopId.HasValue)
+        {
+            PacketSender.SendChatMsg(
+                player,
+                "No tienes una tienda activa.",
+                ChatMessageType.Error,
+                CustomColors.Alerts.Error
+            );
+
+            return true;
+        }
+
+        var action = args.Count > 0 ? args[0].ToLowerInvariant() : "";
+        switch (action)
+        {
+            case "go":
+            case "ir":
+                if (!PlayerShopManager.TryGetShop(player.ActivePlayerShopId.Value, out var runtime))
+                {
+                    PacketSender.SendChatMsg(
+                        player,
+                        "No se pudo localizar la tienda activa. Usa /pshop close para cerrar y cobrar si corresponde.",
+                        ChatMessageType.Error,
+                        CustomColors.Alerts.Error
+                    );
+
+                    return true;
+                }
+
+                if (player.MapId != runtime.MapId || player.MapInstanceId != runtime.MapInstanceId)
+                {
+                    player.Warp(runtime.MapId, runtime.X, runtime.Y);
+                }
+
+                PacketSender.SendPlayerShopSnapshot(player, PlayerShopManager.BuildSnapshot(runtime));
+                PacketSender.SendChatMsg(
+                    player,
+                    "Te llevamos a tu tienda activa.",
+                    ChatMessageType.Trading,
+                    CustomColors.Alerts.Accepted
+                );
+
+                return true;
+
+            case "close":
+            case "cerrar":
+                if (!PlayerShopManager.TryFinalizeActiveShop(player, out var summary) || summary == null)
+                {
+                    PacketSender.SendChatMsg(
+                        player,
+                        "No se pudo cerrar la tienda ahora mismo.",
+                        ChatMessageType.Error,
+                        CustomColors.Alerts.Error
+                    );
+
+                    return true;
+                }
+
+                var details = new List<string>();
+                if (summary.GoldPaid > 0)
+                {
+                    details.Add($"💰 {summary.GoldPaid} oro entregado");
+                }
+
+                if (summary.ReturnedItemQuantity > 0)
+                {
+                    details.Add($"📦 {summary.ReturnedItemQuantity} artículos devueltos");
+                }
+
+                var detailText = details.Count > 0 ? string.Join(" · ", details) : "sin ventas pendientes";
+                PacketSender.SendChatMsg(
+                    player,
+                    $"📋 Tu tienda \"{summary.ShopName}\" ha sido cerrada: {detailText}.",
+                    ChatMessageType.Trading,
+                    CustomColors.Alerts.Accepted
+                );
+
+                if (summary.ReturnedStackCount > 0 && summary.Snapshot != null)
+                {
+                    PacketSender.SendPlayerShopSnapshot(player, summary.Snapshot);
+                }
+
+                return true;
+
+            default:
+                PacketSender.SendChatMsg(
+                    player,
+                    "Uso: /pshop go (ir a tienda) o /pshop close (cerrar y cobrar).",
+                    ChatMessageType.Notice,
+                    CustomColors.Alerts.Info
+                );
+
+                return true;
+        }
     }
 
-    private static void NotifyPlayerShopFinalization(
-        Player? player,
-        PlayerShopManager.PlayerShopFinalizationSummary? summary
-    )
+    private static void NotifyActivePlayerShopState(Player? player)
     {
-        if (player == null || summary == null)
+        if (player == null || !player.ActivePlayerShopId.HasValue)
         {
             return;
         }
 
-        var details = new List<string>();
-        if (summary.GoldPaid > 0)
+        var shopId = player.ActivePlayerShopId.Value;
+        if (!PlayerShopManager.TryGetShop(shopId, out var runtime))
         {
-            details.Add($"💰 {summary.GoldPaid} oro entregado");
+            if (
+                !PlayerShopManager.TryGetShopStatus(shopId, out var persistedStatus)
+                || persistedStatus != PlayerShopStatus.Active
+            )
+            {
+                player.ActivePlayerShopId = null;
+                player.ActivePlayerShopStatus = persistedStatus;
+            }
+
+            return;
         }
 
-        if (summary.ReturnedItemQuantity > 0)
+        player.ActivePlayerShopStatus = runtime.Status;
+        if (runtime.Status != PlayerShopStatus.Active)
         {
-            details.Add($"📦 {summary.ReturnedItemQuantity} artículos devueltos");
+            player.ActivePlayerShopId = null;
+            return;
         }
 
-        var detailText = details.Count > 0 ? string.Join(" · ", details) : "sin ventas pendientes";
-        var message = $"📋 Tu tienda \"{summary.ShopName}\" ha sido cerrada: {detailText}.";
+        PacketSender.SendChatMsg(
+            player,
+            $"🛒 Tu tienda \"{runtime.Title}\" sigue abierta en ({runtime.X}, {runtime.Y}). Opciones: ir a tienda o cerrar y cobrar.",
+            ChatMessageType.Trading,
+            CustomColors.Alerts.Accepted
+        );
 
-        PacketSender.SendChatMsg(player, message, ChatMessageType.Trading, CustomColors.Alerts.Accepted);
-
-        if (summary.ReturnedStackCount > 0 && summary.Snapshot != null)
-        {
-            PacketSender.SendPlayerShopSnapshot(player, summary.Snapshot);
-        }
+        PacketSender.SendPlayerShopSnapshot(player, PlayerShopManager.BuildSnapshot(runtime));
     }
 
 
