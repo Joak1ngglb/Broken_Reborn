@@ -200,9 +200,21 @@ public static partial class CustomColors
 
         public Color Critical = new Color(255, 255, 255, 0);
 
+        public Color CriticalEntityFlash = new Color(255, 255, 230, 120);
+
+        public Color CriticalScreenFlash = new Color(255, 255, 240, 120);
+
+        public Color DamageEntityFlash = new Color(255, 255, 90, 90);
+
+        public Color DamageScreenFlash = new Color(255, 255, 80, 80);
+
         public Color Dash = new Color(255, 0, 0, 255);
 
         public Color Heal = new Color(255, 0, 255, 0);
+
+        public Color HealEntityFlash = new Color(255, 90, 255, 120);
+
+        public Color HealScreenFlash = new Color(255, 80, 255, 120);
 
         public Color Invulnerable = new Color(255, 255, 0, 0);
 

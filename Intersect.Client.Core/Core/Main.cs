@@ -63,6 +63,7 @@ internal static partial class Main
         {
             Networking.Network.Update();
             Fade.Update();
+            Flash.Update();
             Interface.Interface.SetHandleInput(Globals.GameState != GameStates.Intro);
 
             switch (Globals.GameState)

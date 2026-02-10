@@ -150,6 +150,14 @@ public partial class Entity : IEntity
 
     public Color Color { get; set; } = new Color(255, 255, 255, 255);
 
+    private Color sFlashColor = Color.Transparent;
+
+    private float sFlashIntensity;
+
+    private int sFlashDurationMs;
+
+    private long sFlashEndTime;
+
     public virtual Direction DirectionMoving { get; set; } = Direction.None;
 
     public long MoveTimer { get; set; }
@@ -1270,6 +1278,14 @@ public partial class Entity : IEntity
         return existingRenderSet;
     }
 
+    public void TriggerFlash(Color color, float intensity, int durationMs)
+    {
+        sFlashColor = color ?? Color.White;
+        sFlashIntensity = Math.Clamp(intensity, 0f, 1f);
+        sFlashDurationMs = Math.Max(1, durationMs);
+        sFlashEndTime = Timing.Global.MillisecondsUtc + sFlashDurationMs;
+    }
+
     //Rendering Functions
     public virtual void Draw()
     {
@@ -1288,6 +1304,15 @@ public partial class Entity : IEntity
         var sprite = string.Empty;
         // Copy the actual render color, because we'll be editing it later and don't want to overwrite it.
         var renderColor = new Color(Color.A, Color.R, Color.G, Color.B);
+
+        if (sFlashIntensity > 0f && Timing.Global.MillisecondsUtc <= sFlashEndTime)
+        {
+            var remaining = Math.Clamp((sFlashEndTime - Timing.Global.MillisecondsUtc) / (float)sFlashDurationMs, 0f, 1f);
+            var flashBlend = sFlashIntensity * remaining;
+            renderColor.R = (byte)Math.Clamp(renderColor.R + (sFlashColor.R - renderColor.R) * flashBlend, 0, 255);
+            renderColor.G = (byte)Math.Clamp(renderColor.G + (sFlashColor.G - renderColor.G) * flashBlend, 0, 255);
+            renderColor.B = (byte)Math.Clamp(renderColor.B + (sFlashColor.B - renderColor.B) * flashBlend, 0, 255);
+        }
 
         string transformedSprite = string.Empty;
 

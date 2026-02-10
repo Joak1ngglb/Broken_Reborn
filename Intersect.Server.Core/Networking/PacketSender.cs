@@ -1826,6 +1826,44 @@ public static partial class PacketSender
         player.SendPacket(new StopSoundsPacket());
     }
 
+    public static void SendFlashScreenPacket(Player player, float flashIntensity, int flashDurationMs, Color flashColor)
+    {
+        player.SendPacket(new FlashScreenPacket(flashIntensity, flashDurationMs, flashColor));
+    }
+
+    public static void SendShakeScreenPacket(Player player, float shakeAmount, int durationMs)
+    {
+        player.SendPacket(new ShakeScreenPacket(shakeAmount, durationMs));
+    }
+
+    public static void SendCombatEffectPacket(
+        Player player,
+        Guid targetId,
+        float shakeAmount,
+        float flashIntensity,
+        int flashDurationMs,
+        Color flashColor,
+        string sound,
+        Color entityFlashColor,
+        float entityFlashIntensity,
+        int entityFlashDurationMs
+    )
+    {
+        player.SendPacket(
+            new CombatEffectPacket(
+                targetId,
+                shakeAmount,
+                flashIntensity,
+                flashDurationMs,
+                flashColor,
+                sound,
+                entityFlashColor,
+                entityFlashIntensity,
+                entityFlashDurationMs
+            )
+        );
+    }
+
     //ShowPicturePacket
     public static void SendShowPicture(Player player, string picture, int size, bool clickable, int hideTime, Guid eventId)
     {

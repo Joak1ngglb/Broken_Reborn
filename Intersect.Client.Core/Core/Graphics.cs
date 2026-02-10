@@ -80,6 +80,14 @@ public static partial class Graphics
     //Overlay Stuff
     public static Color OverlayColor = Color.Transparent;
 
+    private static float sScreenShakeAmount;
+
+    private static int sScreenShakeDurationMs;
+
+    private static long sScreenShakeEnd;
+
+    private static readonly Random sShakeRandom = new();
+
     public static ColorF PlayerLightColor = ColorF.White;
 
     //Game Renderer
@@ -116,6 +124,13 @@ public static partial class Graphics
     public static float MinimumWorldScale => Options.Instance?.Map?.MinimumWorldScale ?? 1;
 
     public static float MaximumWorldScale => Options.Instance?.Map?.MaximumWorldScale ?? 1;
+
+    public static void TriggerScreenShake(float shakeAmount, int durationMs)
+    {
+        sScreenShakeAmount = Math.Max(sScreenShakeAmount, shakeAmount);
+        sScreenShakeDurationMs = Math.Max(1, durationMs);
+        sScreenShakeEnd = Timing.Global.MillisecondsUtc + sScreenShakeDurationMs;
+    }
 
     //Init Functions
     public static void InitGraphics()
@@ -620,6 +635,18 @@ public static partial class Graphics
             blendMode: GameBlendModes.None
         );
 
+        if (Flash.IsActive)
+        {
+            DrawGameTexture(
+                tex: renderer.WhitePixel,
+                srcRectangle: new FloatRect(0, 0, 1, 1),
+                targetRect: CurrentView,
+                renderColor: Flash.Color,
+                renderTarget: null,
+                blendMode: GameBlendModes.None
+            );
+        }
+
         // Draw our mousecursor at the very end, but not when taking screenshots.
         if (!takingScreenshot && Renderer.Cursor is { } cursorTexture)
         {
@@ -1047,6 +1074,18 @@ public static partial class Graphics
         else if (Options.Instance.Map.GameBorderStyle == GameBorderStyle.Seamed)
         {
             newView.Y = restrictView.Y - (newView.Height - restrictView.Height) / 2;
+        }
+
+        if (Timing.Global.MillisecondsUtc <= sScreenShakeEnd && sScreenShakeAmount > 0f)
+        {
+            var progress = (sScreenShakeEnd - Timing.Global.MillisecondsUtc) / (float)sScreenShakeDurationMs;
+            var currentShake = sScreenShakeAmount * Math.Clamp(progress, 0f, 1f);
+            newView.X += (float)(sShakeRandom.NextDouble() * 2 - 1) * currentShake;
+            newView.Y += (float)(sShakeRandom.NextDouble() * 2 - 1) * currentShake;
+        }
+        else
+        {
+            sScreenShakeAmount = 0f;
         }
 
         CurrentView = new FloatRect(
