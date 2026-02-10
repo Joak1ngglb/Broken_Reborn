@@ -2093,6 +2093,85 @@ public abstract partial class Entity : IEntity
         );
     }
 
+    private void SendCombatEffects(Entity enemy, bool isHeal, bool isCrit, long amount)
+    {
+        if (enemy == null || amount <= 0)
+        {
+            return;
+        }
+
+        Player recipient = null;
+
+        if (enemy == this && this is Player selfPlayer)
+        {
+            recipient = selfPlayer;
+        }
+        else if (this is Player attackerPlayer)
+        {
+            recipient = attackerPlayer;
+        }
+
+        if (recipient == null)
+        {
+            return;
+        }
+
+        var distance = Math.Max(1, recipient.GetDistanceTo(enemy));
+        var distanceScale = 1f / distance;
+        var damageScale = Math.Clamp(amount / 150f, 0.5f, 2f);
+
+        var shakeBase = isHeal
+            ? Options.HealScreenShakeAmount
+            : isCrit
+                ? Options.CriticalScreenShakeAmount
+                : Options.DamageScreenShakeAmount;
+
+        var shakeAmount = Math.Min(Options.MaxScreenShakeAmount, shakeBase * distanceScale * damageScale);
+
+        var flashIntensity = isHeal
+            ? Options.HealScreenFlashIntensity
+            : isCrit
+                ? Options.CriticalScreenFlashIntensity
+                : Options.DamageScreenFlashIntensity;
+
+        var flashDuration = isHeal
+            ? Options.HealScreenFlashDurationMs
+            : isCrit
+                ? Options.CriticalScreenFlashDurationMs
+                : Options.DamageScreenFlashDurationMs;
+
+        var flashColor = isHeal
+            ? Options.HealScreenFlashColor
+            : isCrit
+                ? Options.CriticalScreenFlashColor
+                : Options.DamageScreenFlashColor;
+
+        var sound = isHeal
+            ? Options.HealCombatEffectSound
+            : isCrit
+                ? Options.CriticalCombatEffectSound
+                : Options.DamageCombatEffectSound;
+
+        var entityFlashColor = isHeal
+            ? Options.HealEntityFlashColor
+            : isCrit
+                ? Options.CriticalEntityFlashColor
+                : Options.DamageEntityFlashColor;
+
+        PacketSender.SendCombatEffectPacket(
+            recipient,
+            enemy.Id,
+            shakeAmount,
+            flashIntensity,
+            flashDuration,
+            flashColor,
+            sound,
+            entityFlashColor,
+            Options.EntityFlashIntensity,
+            Options.EntityFlashDurationMs
+        );
+    }
+
     public void Attack(
         Entity enemy,
         long baseDamage,
@@ -2236,6 +2315,7 @@ public abstract partial class Entity : IEntity
                 }
 
                 appliedHealthDamage = Math.Min(enemyVitals[(int)Vital.Health], baseDamage);
+                SendCombatEffects(enemy, false, isCrit, appliedHealthDamage);
                 enemy.SubVital(Vital.Health, baseDamage);
                 switch (damageType)
                 {
@@ -2290,6 +2370,7 @@ public abstract partial class Entity : IEntity
                 PacketSender.SendActionMsg(
                     enemy, Strings.Combat.AddSymbol + Math.Abs(baseDamage), CustomColors.Combat.Heal
                 );
+                SendCombatEffects(enemy, true, false, Math.Abs(baseDamage));
             }
         }
 

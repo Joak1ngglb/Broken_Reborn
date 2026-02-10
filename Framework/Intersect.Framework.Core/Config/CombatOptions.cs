@@ -1,7 +1,53 @@
+using Intersect;
+
 ﻿namespace Intersect.Config;
 
 public partial class CombatOptions
 {
+    public float DamageScreenFlashIntensity { get; set; } = 0.18f;
+
+    public int DamageScreenFlashDurationMs { get; set; } = 130;
+
+    public Color DamageScreenFlashColor { get; set; } = new(255, 255, 80, 80);
+
+    public float HealScreenFlashIntensity { get; set; } = 0.12f;
+
+    public int HealScreenFlashDurationMs { get; set; } = 110;
+
+    public Color HealScreenFlashColor { get; set; } = new(255, 80, 255, 120);
+
+    public float CriticalScreenFlashIntensity { get; set; } = 0.28f;
+
+    public int CriticalScreenFlashDurationMs { get; set; } = 170;
+
+    public Color CriticalScreenFlashColor { get; set; } = new(255, 255, 240, 120);
+
+    public float DamageScreenShakeAmount { get; set; } = 2.5f;
+
+    public float HealScreenShakeAmount { get; set; } = 1.2f;
+
+    public float CriticalScreenShakeAmount { get; set; } = 4.2f;
+
+    public int ScreenShakeDurationMs { get; set; } = 140;
+
+    public float MaxScreenShakeAmount { get; set; } = 8f;
+
+    public string DamageCombatEffectSound { get; set; } = string.Empty;
+
+    public string HealCombatEffectSound { get; set; } = string.Empty;
+
+    public string CriticalCombatEffectSound { get; set; } = string.Empty;
+
+    public Color DamageEntityFlashColor { get; set; } = new(255, 255, 90, 90);
+
+    public Color HealEntityFlashColor { get; set; } = new(255, 90, 255, 120);
+
+    public Color CriticalEntityFlashColor { get; set; } = new(255, 255, 230, 120);
+
+    public float EntityFlashIntensity { get; set; } = 0.45f;
+
+    public int EntityFlashDurationMs { get; set; } = 120;
+
     public int BlockingSlow { get; set; } = 30; //Slow when moving with a shield. Default 30%
 
     public int CombatTime { get; set; } = 10000; //10 seconds

@@ -1859,6 +1859,42 @@ internal sealed partial class PacketHandler
         }
     }
 
+
+    public void HandlePacket(IPacketSender packetSender, ShakeScreenPacket packet)
+    {
+        Graphics.TriggerScreenShake(packet.ShakeAmount, packet.DurationMs);
+    }
+
+    public void HandlePacket(IPacketSender packetSender, FlashScreenPacket packet)
+    {
+        Flash.Trigger(packet.FlashIntensity, packet.FlashDurationMs, packet.FlashColor);
+    }
+
+    public void HandlePacket(IPacketSender packetSender, CombatEffectPacket packet)
+    {
+        if (packet.ShakeAmount > 0)
+        {
+            Graphics.TriggerScreenShake(packet.ShakeAmount, Options.ScreenShakeDurationMs);
+        }
+
+        if (packet.FlashIntensity > 0)
+        {
+            Flash.Trigger(packet.FlashIntensity, packet.FlashDurationMs, packet.FlashColor);
+        }
+
+        if (!string.IsNullOrWhiteSpace(packet.Sound))
+        {
+            Audio.AddGameSound(packet.Sound, false);
+        }
+
+        if (packet.TargetId != Guid.Empty &&
+            Globals.Entities.TryGetValue(packet.TargetId, out var entity) &&
+            entity != null)
+        {
+            entity.TriggerFlash(packet.EntityFlashColor, packet.EntityFlashIntensity, packet.EntityFlashDurationMs);
+        }
+    }
+
     //PlayMusicPacket
     public void HandlePacket(IPacketSender packetSender, PlayMusicPacket packet)
     {

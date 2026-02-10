@@ -246,6 +246,52 @@ public partial record Options
 
     public static string PlayerDeathAnimationId => Instance.Combat.PlayerDeathAnimationId;
 
+    public static int ItemDropRange => Instance.Combat.ItemDropRange;
+
+    public static float DamageScreenFlashIntensity => Instance.Combat.DamageScreenFlashIntensity;
+
+    public static int DamageScreenFlashDurationMs => Instance.Combat.DamageScreenFlashDurationMs;
+
+    public static Color DamageScreenFlashColor => Instance.Combat.DamageScreenFlashColor;
+
+    public static float HealScreenFlashIntensity => Instance.Combat.HealScreenFlashIntensity;
+
+    public static int HealScreenFlashDurationMs => Instance.Combat.HealScreenFlashDurationMs;
+
+    public static Color HealScreenFlashColor => Instance.Combat.HealScreenFlashColor;
+
+    public static float CriticalScreenFlashIntensity => Instance.Combat.CriticalScreenFlashIntensity;
+
+    public static int CriticalScreenFlashDurationMs => Instance.Combat.CriticalScreenFlashDurationMs;
+
+    public static Color CriticalScreenFlashColor => Instance.Combat.CriticalScreenFlashColor;
+
+    public static float DamageScreenShakeAmount => Instance.Combat.DamageScreenShakeAmount;
+
+    public static float HealScreenShakeAmount => Instance.Combat.HealScreenShakeAmount;
+
+    public static float CriticalScreenShakeAmount => Instance.Combat.CriticalScreenShakeAmount;
+
+    public static int ScreenShakeDurationMs => Instance.Combat.ScreenShakeDurationMs;
+
+    public static float MaxScreenShakeAmount => Instance.Combat.MaxScreenShakeAmount;
+
+    public static string DamageCombatEffectSound => Instance.Combat.DamageCombatEffectSound;
+
+    public static string HealCombatEffectSound => Instance.Combat.HealCombatEffectSound;
+
+    public static string CriticalCombatEffectSound => Instance.Combat.CriticalCombatEffectSound;
+
+    public static Color DamageEntityFlashColor => Instance.Combat.DamageEntityFlashColor;
+
+    public static Color HealEntityFlashColor => Instance.Combat.HealEntityFlashColor;
+
+    public static Color CriticalEntityFlashColor => Instance.Combat.CriticalEntityFlashColor;
+
+    public static float EntityFlashIntensity => Instance.Combat.EntityFlashIntensity;
+
+    public static int EntityFlashDurationMs => Instance.Combat.EntityFlashDurationMs;
+
     #region Player Stat Scaling Helpers
 
     public static int VitalityHealthmultiplier => Instance.Player.VitalityHealthmultiplier;
