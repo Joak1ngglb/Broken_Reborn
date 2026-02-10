@@ -3497,8 +3497,12 @@ internal sealed partial class PacketHandler
                 {
                     details.Add(Strings.PlayerShops.ItemsReturnedDetail.ToString(summary.ReturnedItemQuantity));
                 }
+                // Reemplaza la línea problemática en NotifyActivePlayerShopState(Player? player):
 
-                var detailText = details.Count > 0 ? string.Join(" · ", details) : Strings.PlayerShops.NoPendingSales;
+                var detailText = details.Count > 0
+                    ? string.Join(" · ", details)
+                    : Strings.PlayerShops.NoPendingBalance.ToString();
+                
                 PacketSender.SendChatMsg(
                     player,
                     Strings.PlayerShops.ShopClosedSummary.ToString(summary.ShopName, detailText),
@@ -3546,7 +3550,10 @@ internal sealed partial class PacketHandler
                 details.Add(Strings.PlayerShops.ItemsReturnedDetail.ToString(liquidation.ReturnedItemQuantity));
             }
 
-            var detailText = details.Count > 0 ? string.Join(" · ", details) : Strings.PlayerShops.NoPendingBalance;
+            var detailText = details.Count > 0
+                ? string.Join(" · ", details)
+                : Strings.PlayerShops.NoPendingBalance.ToString();
+
             PacketSender.SendChatMsg(
                 player,
                 Strings.PlayerShops.ExpiredLiquidationApplied.ToString(liquidation.ShopName, detailText),

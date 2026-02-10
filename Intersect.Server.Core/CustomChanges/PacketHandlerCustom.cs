@@ -866,7 +866,7 @@ internal sealed partial class PacketHandler
         catch (InvalidOperationException exception)
         {
             var message = string.IsNullOrWhiteSpace(exception.Message)
-                ? Strings.PlayerShops.ShopCreateFailed
+                ? Strings.PlayerShops.ShopCreateFailed.ToString()
                 : exception.Message;
 
             PacketSender.SendChatMsg(player, message, ChatMessageType.Error, CustomColors.Alerts.Error);

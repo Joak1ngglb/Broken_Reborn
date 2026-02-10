@@ -7,7 +7,7 @@ using Intersect.Localization;
 using Newtonsoft.Json;
 
 namespace Intersect.Server.Localization;
-public partial class Strings
+public static partial class Strings
 {
     public sealed partial class ChatNamespace
     {
@@ -146,7 +146,7 @@ public partial class Strings
         public readonly LocalizedString NoPendingSales = @"no pending sales";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString ShopClosedSummary = @"📋 Your shop \"{00}\" was closed: {01}.";
+        public readonly LocalizedString ShopClosedSummary = @"📋 Your shop ""{00}"" was closed: {01}.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString CommandUsage = @"Usage: /pshop go (go to shop) or /pshop close (close and claim).";
@@ -158,10 +158,10 @@ public partial class Strings
         public readonly LocalizedString NoPendingBalance = @"no pending balance";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString ExpiredLiquidationApplied = @"📩 Liquidation applied for your expired shop \"{00}\": {01}.";
+        public readonly LocalizedString ExpiredLiquidationApplied = @"📩 Liquidation applied for your expired shop {00}: {01}.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString ActiveShopStillOpen = @"🛒 Your shop \"{00}\" is still open at ({01}, {02}). Options: go to shop or close and claim.";
+        public readonly LocalizedString ActiveShopStillOpen = @"🛒 Your shop ""{00}"" is still open at ({01}, {02}). Options: go to shop or close and claim.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString ErrorMissingInventorySlot = @"Missing inventory slot for one of the listed items.";
@@ -179,16 +179,9 @@ public partial class Strings
         public readonly LocalizedString ErrorLocationOccupied = @"There is already a shop at this location.";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public readonly LocalizedString ErrorUniquenessViolation = @"You already have an active shop or the location is occupied by another active shop.";
+        public LocalizedString ErrorUniquenessViolation = @"You already have an active shop or the location is occupied by another active shop.";
     }
 
-    private sealed partial class RootNamespace
-    {
-        public readonly RewardsNamespace Rewards = new RewardsNamespace();
-        public readonly PlayerShopsNamespace PlayerShops = new PlayerShopsNamespace();
-    }
 
-    public static RewardsNamespace Rewards => Root.Rewards;
-
-    public static PlayerShopsNamespace PlayerShops => Root.PlayerShops;
+  
 }
