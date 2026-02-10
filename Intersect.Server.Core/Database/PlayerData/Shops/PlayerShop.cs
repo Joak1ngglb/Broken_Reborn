@@ -35,6 +35,12 @@ public class PlayerShop : IPlayerOwned
 
     public PlayerShopStatus Status { get; set; } = PlayerShopStatus.Active;
 
+    /// <summary>
+    /// Helper column used to enforce uniqueness only for active shops.
+    /// 1 = active, null = inactive/closed.
+    /// </summary>
+    public int? ActiveUniquenessToken { get; set; }
+
     public long PendingGold { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

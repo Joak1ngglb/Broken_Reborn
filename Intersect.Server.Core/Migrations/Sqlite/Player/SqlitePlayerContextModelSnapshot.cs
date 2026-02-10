@@ -672,6 +672,9 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("ActiveUniquenessToken")
+                        .HasColumnType("INTEGER");
+
                     b.Property<long>("PendingGold")
                         .HasColumnType("INTEGER");
 
@@ -694,7 +697,13 @@ namespace Intersect.Server.Migrations.Sqlite.Player
 
                     b.HasIndex("ExpiresAt");
 
+                    b.HasIndex("MapId", "MapInstanceId", "X", "Y", "Z", "ActiveUniquenessToken")
+                        .IsUnique();
+
                     b.HasIndex("MapId", "Status");
+
+                    b.HasIndex("OwnerId", "ActiveUniquenessToken")
+                        .IsUnique();
 
                     b.HasIndex("OwnerId", "Status");
 
