@@ -49,6 +49,8 @@ namespace Intersect.Server.Networking;
 
 internal sealed partial class PacketHandler
 {
+    private const string PlayerShopOutOfRangeMessage = "Debes estar junto a la tienda para interactuar.";
+
     public void HandlePacket(Client client, GuildExpPercentagePacket packet)
     {
         var player = client?.Entity;
@@ -890,9 +892,9 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        if (runtime.MapId != player.MapId || runtime.MapInstanceId != player.MapInstanceId)
+        if (!IsWithinPlayerShopInteractionRange(player, runtime))
         {
-            PacketSender.SendChatMsg(player, "Debes estar junto a la tienda para verla.", ChatMessageType.Error, CustomColors.Alerts.Error);
+            PacketSender.SendChatMsg(player, PlayerShopOutOfRangeMessage, ChatMessageType.Error, CustomColors.Alerts.Error);
             return;
         }
 
@@ -922,7 +924,7 @@ internal sealed partial class PacketHandler
 
         if (!IsWithinPlayerShopInteractionRange(player, runtime))
         {
-            PacketSender.SendChatMsg(player, "Debes estar junto a la tienda para comprar.", ChatMessageType.Error, CustomColors.Alerts.Error);
+            PacketSender.SendChatMsg(player, PlayerShopOutOfRangeMessage, ChatMessageType.Error, CustomColors.Alerts.Error);
             return;
         }
 

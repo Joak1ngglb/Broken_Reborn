@@ -1950,6 +1950,22 @@ public partial class Player : Entity
             return;
         }
 
+        if (target is PlayerShopEntity shopEntity)
+        {
+            if (!IsOneBlockAway(target))
+            {
+                PacketSender.SendChatMsg(this, "Debes estar junto a la tienda para interactuar.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                return;
+            }
+
+            if (PlayerShopManager.TryBuildSnapshot(shopEntity.ShopId, out var snapshot))
+            {
+                PacketSender.SendPlayerShopSnapshot(this, snapshot);
+            }
+
+            return;
+        }
+
         if (!IsOneBlockAway(target))
         {
             return;
@@ -1962,16 +1978,6 @@ public partial class Player : Entity
 
         if (target is EventPage)
         {
-            return;
-        }
-
-        if (target is PlayerShopEntity shopEntity)
-        {
-            if (PlayerShopManager.TryBuildSnapshot(shopEntity.ShopId, out var snapshot))
-            {
-                PacketSender.SendPlayerShopSnapshot(this, snapshot);
-            }
-
             return;
         }
 
