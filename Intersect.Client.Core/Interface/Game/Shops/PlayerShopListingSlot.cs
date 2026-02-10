@@ -28,9 +28,9 @@ public sealed class PlayerShopListingSlot : SlotItem
         _owner = owner;
 
         TextureFilename = "inventoryitem.png";
-        SetSize(48, 48);
+        SetSize(56, 56);
 
-        Icon.SetBounds(6, 6, 36, 36);
+        Icon.SetBounds(8, 8, 40, 40);
         Icon.Clicked += IconOnClicked;
 
         _quantityLabel = new Label(this, "ListingQuantityLabel")
@@ -38,8 +38,9 @@ public sealed class PlayerShopListingSlot : SlotItem
             Alignment = [Alignments.Bottom, Alignments.Left],
             FontName = "sourcesansproblack",
             FontSize = 8,
-            Padding = new Padding(2),
+            Padding = new Padding(4, 2, 4, 2),
             TextColor = Color.White,
+            BackgroundTemplateName = "quantity.png",
         };
 
         _priceLabel = new Label(this, "ListingPriceLabel")
@@ -47,8 +48,9 @@ public sealed class PlayerShopListingSlot : SlotItem
             Alignment = [Alignments.Bottom, Alignments.Right],
             FontName = "sourcesansproblack",
             FontSize = 8,
-            Padding = new Padding(2),
+            Padding = new Padding(4, 2, 4, 2),
             TextColor = Color.White,
+            BackgroundTemplateName = "quantity.png",
         };
 
         var removeItem = contextMenu.AddItem(Strings.PlayerShops.ClearSlot);
