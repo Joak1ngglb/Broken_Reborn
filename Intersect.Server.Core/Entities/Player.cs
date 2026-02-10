@@ -429,14 +429,17 @@ public partial class Player : Entity
     [NotMapped]
     public long DeadTimer { get; set; }
 
-    [NotMapped, JsonIgnore]
-    private Guid PendingRespawnMapId { get; set; } = Guid.Empty;
+    [Column("PendingRespawnMapId")]
+    [JsonProperty]
+    public Guid PendingRespawnMapId { get; private set; } = Guid.Empty;
 
-    [NotMapped, JsonIgnore]
-    private byte PendingRespawnX { get; set; }
+    [Column("PendingRespawnX")]
+    [JsonProperty]
+    public byte PendingRespawnX { get; private set; }
 
-    [NotMapped, JsonIgnore]
-    private byte PendingRespawnY { get; set; }
+    [Column("PendingRespawnY")]
+    [JsonProperty]
+    public byte PendingRespawnY { get; private set; }
 
     private long mStaleCooldownTimer;
 
