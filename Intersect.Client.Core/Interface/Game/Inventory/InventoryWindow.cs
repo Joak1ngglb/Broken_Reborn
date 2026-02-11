@@ -26,6 +26,7 @@ public partial class InventoryWindow : Window
     private readonly Base _headerPanel;
     private readonly ScrollControl _slotContainer;
     private readonly ContextMenu _contextMenu;
+    private readonly ContextMenu _sortContextMenu;
     private readonly TextBox _searchBox;
     private readonly Button _sortButton;
     private readonly ComboBox _typeBox;
@@ -144,6 +145,14 @@ public partial class InventoryWindow : Window
             ItemFontSize = 10,
         };
 
+        _sortContextMenu = new ContextMenu(gameCanvas, "InventorySortContextMenu")
+        {
+            IsVisibleInParent = false,
+            IconMarginDisabled = true,
+            ItemFont = GameContentManager.Current.GetFont(name: "sourcesansproblack"),
+            ItemFontSize = 10,
+        };
+
         // Estado inicial
         _lastQuery = _searchBox.Text;
         _selectedType = (ItemType?)_typeBox.SelectedItem?.UserData;
@@ -178,30 +187,84 @@ public partial class InventoryWindow : Window
 
     private void SortButton_Clicked(Base sender, MouseButtonState arguments)
     {
-        if (_sortAscending)
-        {
-            _sortAscending = false;
-        }
-        else
-        {
-            _sortAscending = true;
-            _criterion = _criterion switch
-            {
-                SortCriterion.TypeThenName => SortCriterion.Name,
-                SortCriterion.Name => SortCriterion.Quantity,
-                SortCriterion.Quantity => SortCriterion.Price,
-                _ => SortCriterion.TypeThenName,
-            };
-        }
-
-        UpdateSortButtonText();
-        SortItems(sender, arguments);
+        OpenSortMenu();
     }
 
     private void UpdateSortButtonText()
     {
         var arrow = _sortAscending ? "▲" : "▼";
-        _sortButton.SetText($"{Strings.Inventory.Sort}: {_criterion} {arrow}");
+        var criterionLabel = GetSortCriterionLabel(_criterion);
+        _sortButton.SetText($"{Strings.Inventory.Sort}: {criterionLabel} {arrow}");
+        _sortButton.SetToolTipText($"{Strings.Inventory.Sort}: {criterionLabel} ({GetSortDirectionLabel(_sortAscending)})");
+    }
+
+    private void OpenSortMenu()
+    {
+        _sortContextMenu.ClearChildren();
+
+        AddSortMenuOption(SortCriterion.Name);
+        AddSortMenuOption(SortCriterion.Rarity);
+        AddSortMenuOption(SortCriterion.Price);
+        AddSortMenuOption(SortCriterion.TypeThenName);
+
+        var directionText = _sortAscending ? "▼ Descending" : "▲ Ascending";
+        var directionItem = _sortContextMenu.AddItem(directionText);
+        directionItem.Clicked += (_, _) => ToggleSortDirection();
+
+        _sortContextMenu.SizeToChildren();
+        _sortContextMenu.Open(Pos.None);
+
+        var buttonCanvas = _sortButton.ToCanvas(Point.Empty);
+        _sortContextMenu.SetPosition(buttonCanvas.X, buttonCanvas.Y + _sortButton.Height);
+    }
+
+    private void AddSortMenuOption(SortCriterion criterion)
+    {
+        var isSelected = _criterion == criterion;
+        var prefix = isSelected ? "✓ " : string.Empty;
+        var item = _sortContextMenu.AddItem($"{prefix}{GetSortCriterionLabel(criterion)}");
+        item.Clicked += (_, _) => SelectSortCriterion(criterion);
+    }
+
+    private void SelectSortCriterion(SortCriterion criterion)
+    {
+        var criterionChanged = _criterion != criterion;
+        _criterion = criterion;
+
+        if (criterionChanged)
+        {
+            _sortAscending = true;
+        }
+
+        _sortContextMenu.Close();
+        UpdateSortButtonText();
+        SortItems(_sortButton, default);
+    }
+
+    private void ToggleSortDirection()
+    {
+        _sortAscending = !_sortAscending;
+        _sortContextMenu.Close();
+        UpdateSortButtonText();
+        SortItems(_sortButton, default);
+    }
+
+    private static string GetSortCriterionLabel(SortCriterion criterion)
+    {
+        return criterion switch
+        {
+            SortCriterion.Name => "Name",
+            SortCriterion.Rarity => "Rarity",
+            SortCriterion.Price => "Value",
+            SortCriterion.TypeThenName => "Type",
+            SortCriterion.Quantity => "Quantity",
+            _ => "Type",
+        };
+    }
+
+    private static string GetSortDirectionLabel(bool ascending)
+    {
+        return ascending ? "Ascending" : "Descending";
     }
 
     private void TypeBox_Selected(Base sender, ItemSelectedEventArgs args)
@@ -553,6 +616,7 @@ public partial class InventoryWindow : Window
     {
         if (!Globals.CanCloseInventory) return;
         _contextMenu?.Close();
+        _sortContextMenu?.Close();
         base.Hide();
     }
 }
