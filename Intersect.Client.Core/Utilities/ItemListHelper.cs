@@ -14,6 +14,7 @@ namespace Intersect.Client.Utilities
     {
         TypeThenName,   // por tipo → subtipo → nombre
         Name,           // alfabético por nombre
+        Rarity,         // por rareza (ItemDescriptor.Rarity)
         Quantity,       // por cantidad
         Price           // por precio base (ItemDescriptor.Price)
     }
@@ -239,6 +240,27 @@ namespace Intersect.Client.Utilities
                     }
                     break;
 
+                case SortCriterion.Rarity:
+                    if (ascending)
+                    {
+                        ordered = withDesc
+                            .OrderBy(x => x.d.Rarity)
+                            .ThenBy(x => TypeOrder(x.d.ItemType))
+                            .ThenBy(x => SubtypeOrder(x.d))
+                            .ThenBy(x => NameKey(x.d), NameComparer)
+                            .ThenBy(x => x.d.Price);
+                    }
+                    else
+                    {
+                        ordered = withDesc
+                            .OrderByDescending(x => x.d.Rarity)
+                            .ThenBy(x => TypeOrder(x.d.ItemType))
+                            .ThenBy(x => SubtypeOrder(x.d))
+                            .ThenBy(x => NameKey(x.d), NameComparer)
+                            .ThenBy(x => x.d.Price);
+                    }
+                    break;
+
                 case SortCriterion.Price:
                     if (ascending)
                     {
@@ -296,10 +318,22 @@ namespace Intersect.Client.Utilities
             return criterion switch
             {
                 SortCriterion.Name => CompareByName(dx!, dy!, ascending),
+                SortCriterion.Rarity => CompareRarity(dx!, dy!, ascending),
                 SortCriterion.Quantity => CompareQuantity(left!, right!, ascending),
                 SortCriterion.Price => ComparePrice(dx!, dy!, ascending),
                 _ => CompareDescriptors(dx!, dy!, ascending),
             };
+        }
+
+        private static int CompareRarity(ItemDescriptor dx, ItemDescriptor dy, bool ascending)
+        {
+            var cmp = dx.Rarity.CompareTo(dy.Rarity);
+            if (cmp != 0)
+            {
+                return ascending ? cmp : -cmp;
+            }
+
+            return CompareDescriptors(dx, dy, ascending);
         }
 
         private static int CompareByName(ItemDescriptor dx, ItemDescriptor dy, bool ascending)
