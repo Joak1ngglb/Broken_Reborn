@@ -37,6 +37,7 @@ using Intersect.Server.Database.PlayerData.Security;
 using Intersect.Server.Entities.Events;
 using Intersect.Server.Framework.Entities;
 using Intersect.Server.Framework.Items;
+using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
@@ -1695,13 +1696,16 @@ public partial class Player : Entity
                     var playerEvent = descriptor.OnDeathEvent;
                     var partyEvent = descriptor.OnDeathPartyEvent;
 
+                    // Calcular XP base automaticamente baseado no nível do NPC
+                    var npcExperience = NpcExperienceCalculator.GetNpcExperience(descriptor);
+
                     // If in party, split the exp.
                     if (Party != null && Party.Count > 0)
                     {
                         var partyMembersInXpRange = Party.Where(partyMember => partyMember.InRangeOf(this, Options.Instance.Party.SharedXpRange)).ToArray();
                         float bonusExp = Options.Instance.Party.BonusExperiencePercentPerMember / 100;
                         var multiplier = 1.0f + (partyMembersInXpRange.Length * bonusExp);
-                        var partyExperience = (int)(descriptor.Experience * multiplier) / partyMembersInXpRange.Length;
+                        var partyExperience = (int)(npcExperience * multiplier) / partyMembersInXpRange.Length;
                         foreach (var partyMember in partyMembersInXpRange)
                         {
                             partyMember.GiveExperience(
@@ -1723,7 +1727,7 @@ public partial class Player : Entity
                     }
                     else
                     {
-                        GiveExperience(ExpModifiedByLevel(descriptor.Level, descriptor.Experience));
+                        GiveExperience(ExpModifiedByLevel(descriptor.Level, npcExperience));
                         UpdateQuestKillTasks(entity);
                     }
 
