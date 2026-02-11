@@ -1,10 +1,14 @@
 using System;
+using Intersect.Server.Database.PlayerData;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Intersect.Server.Migrations.Sqlite.Player
 {
+    [DbContext(typeof(SqlitePlayerContext))]
+    [Migration("20260210130000_AddPlayerShopLiquidationTracking")]
     public partial class AddPlayerShopLiquidationTracking : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)

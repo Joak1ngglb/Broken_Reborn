@@ -1,10 +1,14 @@
 using Intersect.Framework.Core.Entities;
+using Intersect.Server.Database.PlayerData;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Intersect.Server.Migrations.Sqlite.Player
 {
+    [DbContext(typeof(SqlitePlayerContext))]
+    [Migration("20251126000000_AddPlayerShopDecoration")]
     /// <inheritdoc />
     public partial class AddPlayerShopDecoration : Migration
     {

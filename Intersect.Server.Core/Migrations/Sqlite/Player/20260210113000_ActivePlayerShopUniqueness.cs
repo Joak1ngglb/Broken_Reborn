@@ -1,9 +1,13 @@
+using Intersect.Server.Database.PlayerData;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Intersect.Server.Migrations.Sqlite.Player
 {
+    [DbContext(typeof(SqlitePlayerContext))]
+    [Migration("20260210113000_ActivePlayerShopUniqueness")]
     public partial class ActivePlayerShopUniqueness : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
