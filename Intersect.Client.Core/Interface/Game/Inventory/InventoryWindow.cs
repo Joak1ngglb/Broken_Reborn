@@ -11,6 +11,7 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
 using Intersect.Client.General;
 using Intersect.Client.Localization;
+using Intersect.Client.Networking;
 using Intersect.Client.Utilities;
 using Intersect.Client.Framework.Items;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -393,7 +394,7 @@ public partial class InventoryWindow : Window
     }
 
     /// <summary>
-    /// Ordena todos los ítems del inventario con un burbujeo simple, sin aplicar filtros.
+    /// Ordena todos los ítems del inventario calculando una permutación mínima de swaps.
     /// Los slots vacíos siempre terminan al final.
     /// </summary>
     private void SortItems(Base sender, MouseButtonState arguments)
@@ -404,21 +405,126 @@ public partial class InventoryWindow : Window
         }
 
         var inventory = Globals.Me.Inventory;
-        var max = Options.Instance.Player.MaxInventory;
+        var max = Math.Min(Options.Instance.Player.MaxInventory, inventory.Length);
 
-        // Bubble sort sobre todos los slots del inventario
-        for (var pass = 0; pass < max - 1; pass++)
+        var swaps = BuildSortSwapPlan(inventory, max, _criterion, _sortAscending);
+        foreach (var (from, to) in swaps)
         {
-            for (var i = 0; i < max - pass - 1; i++)
-            {
-                if (ItemListHelper.CompareItems(inventory[i], inventory[i + 1], _criterion, _sortAscending) > 0)
-                {
-                    Globals.Me.SwapItems(i, i + 1);
-                }
-            }
+            PacketSender.SendSwapInvItems(from, to);
         }
 
         ApplyFilters();
+    }
+
+    internal static IReadOnlyList<(int from, int to)> BuildSortSwapPlan(
+        IReadOnlyList<IItem> inventory,
+        int max,
+        SortCriterion criterion,
+        bool sortAscending
+    )
+    {
+        if (max <= 1)
+        {
+            return [];
+        }
+
+        var slotCount = Math.Min(max, inventory.Count);
+        if (slotCount <= 1)
+        {
+            return [];
+        }
+
+        // Snapshot de slots ocupados/vacíos para no mutar inventario local durante el sort.
+        var occupiedSlots = new List<int>(slotCount);
+        var emptySlots = new List<int>(slotCount);
+
+        for (var slotIndex = 0; slotIndex < slotCount; slotIndex++)
+        {
+            if (inventory[slotIndex]?.Descriptor == null)
+            {
+                emptySlots.Add(slotIndex);
+                continue;
+            }
+
+            occupiedSlots.Add(slotIndex);
+        }
+
+        if (occupiedSlots.Count <= 1)
+        {
+            return [];
+        }
+
+        // Orden objetivo para slots ocupados.
+        var orderedOccupied = occupiedSlots
+            .OrderBy(index => index, Comparer<int>.Create((leftIndex, rightIndex) =>
+            {
+                var comparison = ItemListHelper.CompareItems(inventory[leftIndex], inventory[rightIndex], criterion, sortAscending);
+                return comparison != 0 ? comparison : leftIndex.CompareTo(rightIndex);
+            }))
+            .ToArray();
+
+        // Permutación objetivo: qué item origen debería terminar en cada slot destino.
+        var targetSourceAtSlot = new int[slotCount];
+        for (var slotIndex = 0; slotIndex < orderedOccupied.Length; slotIndex++)
+        {
+            targetSourceAtSlot[slotIndex] = orderedOccupied[slotIndex];
+        }
+
+        for (var slotIndex = orderedOccupied.Length; slotIndex < slotCount; slotIndex++)
+        {
+            targetSourceAtSlot[slotIndex] = emptySlots[slotIndex - orderedOccupied.Length];
+        }
+
+        return BuildSwapSequence(targetSourceAtSlot);
+    }
+
+    private static IReadOnlyList<(int from, int to)> BuildSwapSequence(IReadOnlyList<int> targetSourceAtSlot)
+    {
+        var size = targetSourceAtSlot.Count;
+        if (size <= 1)
+        {
+            return [];
+        }
+
+        // Estado actual: al inicio el slot i contiene el item que venía de i.
+        var currentSourceAtSlot = new int[size];
+        var slotBySource = new int[size];
+
+        for (var slotIndex = 0; slotIndex < size; slotIndex++)
+        {
+            currentSourceAtSlot[slotIndex] = slotIndex;
+            slotBySource[slotIndex] = slotIndex;
+        }
+
+        var swaps = new List<(int from, int to)>();
+
+        // Descompone en ciclos y resuelve cada ciclo con n-1 swaps (mínimo).
+        for (var destinationSlot = 0; destinationSlot < size; destinationSlot++)
+        {
+            var desiredSource = targetSourceAtSlot[destinationSlot];
+            if (desiredSource < 0 || desiredSource >= size)
+            {
+                continue;
+            }
+
+            if (currentSourceAtSlot[destinationSlot] == desiredSource)
+            {
+                continue;
+            }
+
+            var sourceCurrentSlot = slotBySource[desiredSource];
+            swaps.Add((destinationSlot, sourceCurrentSlot));
+
+            // Simula swap en snapshot local de permutación.
+            var displacedSource = currentSourceAtSlot[destinationSlot];
+            currentSourceAtSlot[destinationSlot] = desiredSource;
+            currentSourceAtSlot[sourceCurrentSlot] = displacedSource;
+
+            slotBySource[desiredSource] = destinationSlot;
+            slotBySource[displacedSource] = sourceCurrentSlot;
+        }
+
+        return swaps;
     }
 
     protected override void EnsureInitialized()
