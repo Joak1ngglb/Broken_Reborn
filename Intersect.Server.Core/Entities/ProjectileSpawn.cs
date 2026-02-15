@@ -71,6 +71,12 @@ public partial class ProjectileSpawn
             return false;
         }
 
+        // Can't hit hidden entities
+        if (targetEntity.HideEntity)
+        {
+            return false;
+        }
+
         Player targetPlayer = targetEntity as Player;
 
         if (targetEntity != null && targetEntity != Parent.Owner)
