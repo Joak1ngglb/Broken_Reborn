@@ -369,7 +369,33 @@ public partial class InventoryItem : SlotItem
 
         if (Globals.GameShop == null)
         {
-            Interface.GameUi.ItemDescriptionWindow?.Show(inventorySlotDescriptor, inventorySlot.Quantity, inventorySlot.ItemProperties);
+            var valueLabel = string.Empty;
+            if (inventorySlotDescriptor.CanSell && inventorySlotDescriptor.Price > 0)
+            {
+                string? defaultCurrencyName = default;
+                foreach (var descriptor in ItemDescriptor.Lookup.Values)
+                {
+                    if (descriptor is not ItemDescriptor itemDescriptor || itemDescriptor.ItemType != ItemType.Currency)
+                    {
+                        continue;
+                    }
+
+                    defaultCurrencyName = GetLocalizedItemName(itemDescriptor);
+                    break;
+                }
+
+                valueLabel = Strings.ItemDescription.Value.ToString(
+                    inventorySlotDescriptor.Price,
+                    string.IsNullOrWhiteSpace(defaultCurrencyName) ? string.Empty : $" {defaultCurrencyName}"
+                );
+            }
+
+            Interface.GameUi.ItemDescriptionWindow?.Show(
+                inventorySlotDescriptor,
+                inventorySlot.Quantity,
+                inventorySlot.ItemProperties,
+                valueLabel
+            );
         }
         else
         {

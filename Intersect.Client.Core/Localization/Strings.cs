@@ -2613,6 +2613,9 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString UnknownVital = @"Unknown Vital";
 
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString Value = @"Value: {00}{01}";
+
         // Integer Dictionaries (A - Z):
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
