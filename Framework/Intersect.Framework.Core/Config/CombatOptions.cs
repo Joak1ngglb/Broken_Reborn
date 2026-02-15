@@ -73,8 +73,11 @@ public partial class CombatOptions
     //Combat
     public int RegenTime { get; set; } = 3000; //3 seconds
 
-    // Item Drop Range
-    public int ItemDropRange { get; set; } = 2; //2 Tiles
+    /// <summary>
+    /// Item drop search radius in tiles.
+    /// Recommended: keep this between 1 and 2 to avoid excessive drop dispersion.
+    /// </summary>
+    public int ItemDropRange { get; set; } = 2;
 
     public bool EnableCombatChatMessages { get; set; } = false; // Enables or disables combat chat messages.
 

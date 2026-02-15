@@ -3466,11 +3466,19 @@ public abstract partial class Entity : IEntity
         }
 
         // Find tiles to spawn items.
-        var tiles = new List<TileHelper>();
-        for (var x = X - Options.ItemDropRange; x <= X + Options.ItemDropRange; x++)
+        var range = Math.Max(0, Options.ItemDropRange);
+        var tiles = new List<(TileHelper Tile, int Distance)>();
+        for (var x = X - range; x <= X + range; x++)
         {
-            for (var y = Y - Options.ItemDropRange; y <= Y + Options.ItemDropRange; y++)
+            for (var y = Y - range; y <= Y + range; y++)
             {
+                // Use a radial selection (Manhattan distance) rather than a full square area.
+                var distance = Math.Abs(x - X) + Math.Abs(y - Y);
+                if (distance > range)
+                {
+                    continue;
+                }
+
                 var tileHelper = new TileHelper(MapId, x, y);
                 if (!tileHelper.TryFix())
                 {
@@ -3478,6 +3486,13 @@ public abstract partial class Entity : IEntity
                 }
 
                 var mapId = tileHelper.GetMapId();
+
+                // Drops should stay on the current map unless explicitly intended otherwise.
+                if (mapId != MapId)
+                {
+                    continue;
+                }
+
                 if (!MapController.TryGetInstanceFromMap(mapId, MapInstanceId, out var mapInstance))
                 {
                     continue;
@@ -3487,10 +3502,17 @@ public abstract partial class Entity : IEntity
                 var tileY = tileHelper.GetY();
                 if (!mapInstance.TileBlocked(tileX, tileY))
                 {
-                    tiles.Add(tileHelper);
+                    tiles.Add((tileHelper, distance));
                 }
             }
         }
+
+        var orderedTiles = tiles
+            .OrderBy(tileData => tileData.Distance)
+            .ThenBy(_ => Randomization.Next())
+            .ToList();
+
+        var closestTilePoolCount = Math.Min(5, orderedTiles.Count);
 
         // Drop items
         foreach (var slot in Items)
@@ -3518,9 +3540,9 @@ public abstract partial class Entity : IEntity
             }
 
             // Spawn the actual item!
-            if (tiles.Count > 0)
+            if (closestTilePoolCount > 0)
             {
-                var tile = tiles[Randomization.Next(tiles.Count)];
+                var tile = orderedTiles[Randomization.Next(closestTilePoolCount)].Tile;
                 var mapId = tile.GetMapId();
                 if (MapController.TryGetInstanceFromMap(mapId, MapInstanceId, out var tileInstance))
                 {
