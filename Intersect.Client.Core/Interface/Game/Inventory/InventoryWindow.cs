@@ -196,7 +196,7 @@ public partial class InventoryWindow : Window
         var arrow = _sortAscending ? "▲" : "▼";
         var criterionLabel = GetSortCriterionLabel(_criterion);
         _sortButton.SetText($"{Strings.Inventory.Sort}: {criterionLabel} {arrow}");
-        _sortButton.SetToolTipText($"{Strings.Inventory.Sort}: {criterionLabel} ({GetSortDirectionLabel(_sortAscending)})");
+        _sortButton.SetToolTipText($"{Strings.Inventory.SortInventory}: {criterionLabel} ({GetSortDirectionLabel(_sortAscending)})");
     }
 
     private void OpenSortMenu()
@@ -254,12 +254,12 @@ public partial class InventoryWindow : Window
     {
         return criterion switch
         {
-            SortCriterion.Name => "Name",
-            SortCriterion.Rarity => "Rarity",
-            SortCriterion.Price => "Value",
-            SortCriterion.TypeThenName => "Type",
+            SortCriterion.Name => Strings.Inventory.SortByName,
+            SortCriterion.Rarity => Strings.Inventory.SortByRarity,
+            SortCriterion.Price => Strings.Inventory.SortByValue,
+            SortCriterion.TypeThenName => Strings.Inventory.SortByType,
             SortCriterion.Quantity => "Quantity",
-            _ => "Type",
+            _ => Strings.Inventory.SortByType,
         };
     }
 
