@@ -20,6 +20,10 @@ public partial class MapItemInstance : Item, IMapItemInstance
 
     public float HasFallen { get; set; }
 
+    public float DropRotationDegrees { get; set; }
+
+    public float DropAngularSpeed { get; set; }
+
     [JsonIgnore] public int TileIndex => Y * Options.Instance.Map.MapWidth + X;
 
     public MapItemInstance() : base()
