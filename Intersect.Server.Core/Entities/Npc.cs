@@ -1612,6 +1612,12 @@ public partial class Npc : Entity
                     //TODO Check if NPC is allowed to attack player with new conditions
                     if (entity is Player player)
                     {
+                        // Can't target hidden players
+                        if (player.HideEntity)
+                        {
+                            continue;
+                        }
+
                         // Are we aggressive towards this player or have they hit us?
                         if (ShouldAttackPlayerOnSight(player) || (DamageMap.ContainsKey(entity) && entity.MapInstanceId == MapInstanceId))
                         {

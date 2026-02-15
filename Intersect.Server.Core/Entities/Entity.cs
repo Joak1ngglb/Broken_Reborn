@@ -1458,8 +1458,8 @@ public abstract partial class Entity : IEntity
             return true;
         }
 
-        // If it's not an ally we can't target it if it's stealthed
-        return !entity.HasStatusEffect(SpellEffect.Stealth);
+        // If it's not an ally we can't target it if it's stealthed or hidden
+        return !entity.HasStatusEffect(SpellEffect.Stealth) && !entity.HideEntity;
     }
 
     public virtual void ProcessRegen()
@@ -1634,6 +1634,12 @@ public abstract partial class Entity : IEntity
             return;
         }
 
+        // Can't attack hidden entities
+        if (target.HideEntity)
+        {
+            return;
+        }
+
         if (parentSpell != null)
         {
             var props = (this as Player)?.GetSpellProperties(parentSpell.Id);
@@ -1798,6 +1804,12 @@ public abstract partial class Entity : IEntity
         }
 
         if (spellDescriptor == null)
+        {
+            return;
+        }
+
+        // Can't attack hidden entities (unless it's a friendly/healing spell)
+        if (target.HideEntity && !spellDescriptor.Combat.Friendly)
         {
             return;
         }
@@ -2036,6 +2048,12 @@ public abstract partial class Entity : IEntity
             return;
         }
 
+        // Can't attack hidden entities
+        if (target.HideEntity)
+        {
+            return;
+        }
+
         //Check for parties and safe zones, friendly fire off (unless its healing)
         if (target is Player targetPlayer && this is Player player)
         {
@@ -2196,6 +2214,12 @@ public abstract partial class Entity : IEntity
         var secondaryDamagingAttack = secondaryDamage > 0;
 
         if (enemy == null)
+        {
+            return;
+        }
+
+        // Can't attack hidden entities
+        if (enemy.HideEntity)
         {
             return;
         }
