@@ -984,10 +984,28 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                 var textureXPosition = centerX - (mapItemWidth / 2);
                 var textureYPosition = centerY - (mapItemHeight / 2);
 
-                if (mapItemInstance is MapItemInstance clientMapItem && clientMapItem.HasFallen > 0)
+                var rotationDegrees = 0f;
+                if (mapItemInstance is MapItemInstance clientMapItem)
                 {
-                    textureYPosition -= (long)(clientMapItem.HasFallen * _tileHeight);
-                    clientMapItem.HasFallen -= 0.2f;
+                    if (clientMapItem.HasFallen > 0)
+                    {
+                        var fallStep = MathF.Min(clientMapItem.HasFallen, 0.2f);
+                        textureYPosition -= (long)(clientMapItem.HasFallen * _tileHeight);
+                        clientMapItem.HasFallen -= fallStep;
+                        clientMapItem.DropRotationDegrees += clientMapItem.DropAngularSpeed * fallStep;
+                        rotationDegrees = clientMapItem.DropRotationDegrees;
+
+                        if (clientMapItem.HasFallen <= 0)
+                        {
+                            clientMapItem.HasFallen = 0;
+                            clientMapItem.DropRotationDegrees = 0;
+                            rotationDegrees = 0;
+                        }
+                    }
+                    else if (clientMapItem.DropRotationDegrees != 0)
+                    {
+                        clientMapItem.DropRotationDegrees = 0;
+                    }
                 }
 
                 // Draw the item texture.
@@ -995,7 +1013,8 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                     itemTexture,
                     new FloatRect(0, 0, itemTexture.Width, itemTexture.Height),
                     new FloatRect(textureXPosition, textureYPosition, mapItemWidth, mapItemHeight),
-                    itemDescriptor.Color
+                    itemDescriptor.Color,
+                    rotationDegrees: rotationDegrees
                 );
             }
         }
