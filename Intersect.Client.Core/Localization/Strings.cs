@@ -2279,6 +2279,21 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
         public static LocalizedString Sort = @"Sort";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SortByName = @"Name";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SortByRarity = @"Rarity";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SortByValue = @"Value";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SortByType = @"Type";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SortInventory = @"Sort inventory";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString All = @"All";
     }
 
