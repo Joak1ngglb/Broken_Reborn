@@ -90,6 +90,12 @@ namespace Intersect.Editor.Forms.Editors
             lblBossRespawnMinutes = new Label();
             chkIsBoss = new DarkCheckBox();
             grpImmunities = new DarkGroupBox();
+            grpBoss = new DarkGroupBox();
+            chkIsBoss = new DarkCheckBox();
+            lblBossRespawnMinutes = new Label();
+            nudBossRespawnMinutes = new DarkNumericUpDown();
+            chkBossAnnounceOnKill = new DarkCheckBox();
+            chkBossAnnounceOnRespawn = new DarkCheckBox();
             nudTenacity = new DarkNumericUpDown();
             lblTenacity = new Label();
             chkTaunt = new DarkCheckBox();
@@ -226,7 +232,9 @@ namespace Intersect.Editor.Forms.Editors
             grpBoss.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudBossRespawnMinutes).BeginInit();
             grpImmunities.SuspendLayout();
+            grpBoss.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudTenacity).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudBossRespawnMinutes).BeginInit();
             grpCombat.SuspendLayout();
             grpAttackSpeed.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudAttackSpeedValue).BeginInit();
@@ -928,6 +936,7 @@ namespace Intersect.Editor.Forms.Editors
             pnlContainer.TabIndex = 17;
             pnlContainer.Paint += pnlContainer_Paint;
             // 
+            // 
             // grpBoss
             // 
             grpBoss.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
@@ -938,7 +947,7 @@ namespace Intersect.Editor.Forms.Editors
             grpBoss.Controls.Add(lblBossRespawnMinutes);
             grpBoss.Controls.Add(chkIsBoss);
             grpBoss.ForeColor = System.Drawing.Color.Gainsboro;
-            grpBoss.Location = new System.Drawing.Point(810, 744);
+            grpBoss.Location = new System.Drawing.Point(536, 722);
             grpBoss.Margin = new Padding(2);
             grpBoss.Name = "grpBoss";
             grpBoss.Padding = new Padding(2);
@@ -947,27 +956,26 @@ namespace Intersect.Editor.Forms.Editors
             grpBoss.TabStop = false;
             grpBoss.Text = "Boss";
             // 
-            // chkBossAnnounceOnRespawn
+            // chkIsBoss
             // 
-            chkBossAnnounceOnRespawn.AutoSize = true;
-            chkBossAnnounceOnRespawn.Location = new System.Drawing.Point(150, 98);
-            chkBossAnnounceOnRespawn.Margin = new Padding(4, 3, 4, 3);
-            chkBossAnnounceOnRespawn.Name = "chkBossAnnounceOnRespawn";
-            chkBossAnnounceOnRespawn.Size = new Size(148, 19);
-            chkBossAnnounceOnRespawn.TabIndex = 91;
-            chkBossAnnounceOnRespawn.Text = "Announce on Respawn";
-            chkBossAnnounceOnRespawn.CheckedChanged += chkBossAnnounceOnRespawn_CheckedChanged;
+            chkIsBoss.AutoSize = true;
+            chkIsBoss.Location = new System.Drawing.Point(15, 24);
+            chkIsBoss.Margin = new Padding(4, 3, 4, 3);
+            chkIsBoss.Name = "chkIsBoss";
+            chkIsBoss.Size = new Size(63, 19);
+            chkIsBoss.TabIndex = 87;
+            chkIsBoss.Text = "Is Boss";
+            chkIsBoss.CheckedChanged += chkIsBoss_CheckedChanged;
             // 
-            // chkBossAnnounceOnKill
+            // lblBossRespawnMinutes
             // 
-            chkBossAnnounceOnKill.AutoSize = true;
-            chkBossAnnounceOnKill.Location = new System.Drawing.Point(15, 98);
-            chkBossAnnounceOnKill.Margin = new Padding(4, 3, 4, 3);
-            chkBossAnnounceOnKill.Name = "chkBossAnnounceOnKill";
-            chkBossAnnounceOnKill.Size = new Size(117, 19);
-            chkBossAnnounceOnKill.TabIndex = 90;
-            chkBossAnnounceOnKill.Text = "Announce on Kill";
-            chkBossAnnounceOnKill.CheckedChanged += chkBossAnnounceOnKill_CheckedChanged;
+            lblBossRespawnMinutes.AutoSize = true;
+            lblBossRespawnMinutes.Location = new System.Drawing.Point(12, 50);
+            lblBossRespawnMinutes.Margin = new Padding(4, 0, 4, 0);
+            lblBossRespawnMinutes.Name = "lblBossRespawnMinutes";
+            lblBossRespawnMinutes.Size = new Size(138, 15);
+            lblBossRespawnMinutes.TabIndex = 88;
+            lblBossRespawnMinutes.Text = "Respawn Time (minutes):";
             // 
             // nudBossRespawnMinutes
             // 
@@ -979,29 +987,29 @@ namespace Intersect.Editor.Forms.Editors
             nudBossRespawnMinutes.Name = "nudBossRespawnMinutes";
             nudBossRespawnMinutes.Size = new Size(275, 23);
             nudBossRespawnMinutes.TabIndex = 89;
-            nudBossRespawnMinutes.Value = new decimal(new int[] { 0, 0, 0, 0 });
             nudBossRespawnMinutes.ValueChanged += nudBossRespawnMinutes_ValueChanged;
             // 
-            // lblBossRespawnMinutes
+            // chkBossAnnounceOnKill
             // 
-            lblBossRespawnMinutes.AutoSize = true;
-            lblBossRespawnMinutes.Location = new System.Drawing.Point(12, 50);
-            lblBossRespawnMinutes.Margin = new Padding(4, 0, 4, 0);
-            lblBossRespawnMinutes.Name = "lblBossRespawnMinutes";
-            lblBossRespawnMinutes.Size = new Size(141, 15);
-            lblBossRespawnMinutes.TabIndex = 88;
-            lblBossRespawnMinutes.Text = "Respawn Time (minutes):";
+            chkBossAnnounceOnKill.AutoSize = true;
+            chkBossAnnounceOnKill.Location = new System.Drawing.Point(15, 98);
+            chkBossAnnounceOnKill.Margin = new Padding(4, 3, 4, 3);
+            chkBossAnnounceOnKill.Name = "chkBossAnnounceOnKill";
+            chkBossAnnounceOnKill.Size = new Size(116, 19);
+            chkBossAnnounceOnKill.TabIndex = 90;
+            chkBossAnnounceOnKill.Text = "Announce on Kill";
+            chkBossAnnounceOnKill.CheckedChanged += chkBossAnnounceOnKill_CheckedChanged;
             // 
-            // chkIsBoss
+            // chkBossAnnounceOnRespawn
             // 
-            chkIsBoss.AutoSize = true;
-            chkIsBoss.Location = new System.Drawing.Point(15, 24);
-            chkIsBoss.Margin = new Padding(4, 3, 4, 3);
-            chkIsBoss.Name = "chkIsBoss";
-            chkIsBoss.Size = new Size(61, 19);
-            chkIsBoss.TabIndex = 87;
-            chkIsBoss.Text = "Is Boss";
-            chkIsBoss.CheckedChanged += chkIsBoss_CheckedChanged;
+            chkBossAnnounceOnRespawn.AutoSize = true;
+            chkBossAnnounceOnRespawn.Location = new System.Drawing.Point(150, 98);
+            chkBossAnnounceOnRespawn.Margin = new Padding(4, 3, 4, 3);
+            chkBossAnnounceOnRespawn.Name = "chkBossAnnounceOnRespawn";
+            chkBossAnnounceOnRespawn.Size = new Size(139, 19);
+            chkBossAnnounceOnRespawn.TabIndex = 91;
+            chkBossAnnounceOnRespawn.Text = "Announce on Respawn";
+            chkBossAnnounceOnRespawn.CheckedChanged += chkBossAnnounceOnRespawn_CheckedChanged;
             // 
             // grpImmunities
             // 
@@ -2563,10 +2571,10 @@ namespace Intersect.Editor.Forms.Editors
             pnlContainer.ResumeLayout(false);
             grpBoss.ResumeLayout(false);
             grpBoss.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)nudBossRespawnMinutes).EndInit();
             grpImmunities.ResumeLayout(false);
             grpImmunities.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nudTenacity).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudBossRespawnMinutes).EndInit();
             grpCombat.ResumeLayout(false);
             grpCombat.PerformLayout();
             grpAttackSpeed.ResumeLayout(false);
