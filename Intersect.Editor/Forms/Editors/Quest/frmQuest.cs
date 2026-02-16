@@ -40,6 +40,12 @@ public partial class FrmQuest : EditorForm
         UpdateEditor();
     }
 
+    protected override void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+        LocalizationReindexService.EnsureInitialQuestEventReindexIfNeeded(this);
+    }
+
     private void AssignEditorItem(Guid id)
     {
         mEditorItem = QuestDescriptor.Get(id);
@@ -112,6 +118,7 @@ public partial class FrmQuest : EditorForm
 
         btnSave.Text = Strings.QuestEditor.save;
         btnCancel.Text = Strings.QuestEditor.cancel;
+        btnReindexQuestEventLocalization.Text = "Reindexar localización Quest/Event";
     }
 
     protected override void GameObjectUpdatedDelegate(GameObjectType type)
@@ -178,8 +185,7 @@ public partial class FrmQuest : EditorForm
                     return;
                 }
 
-                var translationEntries = TranslationSourceUpdater.GetQuestAndRelatedEventSources(item);
-                TranslationSourceUpdater.QueueBatchSources(translationEntries);
+                LocalizationReindexService.UpdateIncrementalQuestAndEventSources(item);
 
                 foreach (var id in item.OriginalTaskEventIds.Keys)
                 {
@@ -228,6 +234,12 @@ public partial class FrmQuest : EditorForm
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();
+    }
+
+
+    private void btnReindexQuestEventLocalization_Click(object sender, EventArgs e)
+    {
+        LocalizationReindexService.ReindexQuestAndEventLocalization(this, "Acción manual desde editor de quests");
     }
 
     private void UpdateEditor()

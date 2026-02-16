@@ -878,6 +878,7 @@ public partial class FrmEvent : Form
         MinimumSize = default;
 
         FrmEvent_Move(sender, e);
+        LocalizationReindexService.EnsureInitialQuestEventReindexIfNeeded(this);
     }
 
     private void FrmEvent_Move(object? sender, EventArgs e)
@@ -1020,6 +1021,7 @@ public partial class FrmEvent : Form
         btnPaste.Text = Strings.EventEditor.pastecommand;
         btnSave.Text = Strings.EventEditor.save;
         btnCancel.Text = Strings.EventEditor.cancel;
+        btnReindexTranslations.Text = "Reindexar localización Quest/Event";
 
         for (var i = 0; i < lstCommands.Nodes.Count; i++)
         {
@@ -1194,7 +1196,7 @@ public partial class FrmEvent : Form
 
         if (MyEvent != null)
         {
-            TranslationSourceUpdater.UpdateEventEnglishSources(MyEvent);
+            LocalizationReindexService.UpdateIncrementalEventSources(MyEvent);
         }
 
         if (MyEvent.CommonEvent && MyEvent.Id != Guid.Empty)
@@ -1208,28 +1210,7 @@ public partial class FrmEvent : Form
 
     private void btnReindexTranslations_Click(object sender, EventArgs e)
     {
-        var entries = new List<TranslationUpsertEntry>();
-        foreach (var eventDescriptor in EventDescriptor.Lookup.Values)
-        {
-            if (eventDescriptor == null)
-            {
-                continue;
-            }
-
-            entries.AddRange(TranslationSourceUpdater.GetEventEnglishSources((EventDescriptor)eventDescriptor));
-        }
-
-        foreach (var quest in QuestDescriptor.Lookup.Values)
-        {
-            if (quest == null)
-            {
-                continue;
-            }
-
-            entries.AddRange(TranslationSourceUpdater.GetQuestAndRelatedEventSources((QuestDescriptor)quest));
-        }
-
-        TranslationSourceUpdater.QueueBatchEnglishSources(entries);
+        LocalizationReindexService.ReindexQuestAndEventLocalization(this, "Acción manual desde editor de eventos");
     }
 
     #endregion

@@ -79,6 +79,7 @@ namespace Intersect.Editor.Forms.Editors.Quest
             this.lblOnStart = new System.Windows.Forms.Label();
             this.btnCancel = new DarkUI.Controls.DarkButton();
             this.btnSave = new DarkUI.Controls.DarkButton();
+            this.btnReindexQuestEventLocalization = new DarkUI.Controls.DarkButton();
             this.toolStrip = new DarkUI.Controls.DarkToolStrip();
             this.toolStripItemNew = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -692,6 +693,17 @@ namespace Intersect.Editor.Forms.Editors.Quest
             this.btnSave.Text = "Save";
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
+            // btnReindexQuestEventLocalization
+            // 
+            this.btnReindexQuestEventLocalization.Location = new System.Drawing.Point(404, 414);
+            this.btnReindexQuestEventLocalization.Name = "btnReindexQuestEventLocalization";
+            this.btnReindexQuestEventLocalization.Padding = new System.Windows.Forms.Padding(5);
+            this.btnReindexQuestEventLocalization.Size = new System.Drawing.Size(190, 27);
+            this.btnReindexQuestEventLocalization.TabIndex = 40;
+            this.btnReindexQuestEventLocalization.Text = "Reindexar localización Quest/Event";
+            this.btnReindexQuestEventLocalization.Click += new System.EventHandler(this.btnReindexQuestEventLocalization_Click);
+            // 
+            // 
             // toolStrip
             // 
             this.toolStrip.AutoSize = false;
@@ -853,6 +865,7 @@ namespace Intersect.Editor.Forms.Editors.Quest
             this.Controls.Add(this.toolStrip);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.btnReindexQuestEventLocalization);
             this.Controls.Add(this.grpQuests);
             this.Controls.Add(this.pnlContainer);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -898,6 +911,7 @@ namespace Intersect.Editor.Forms.Editors.Quest
         private System.Windows.Forms.Panel pnlContainer;
         private DarkButton btnSave;
         private DarkButton btnCancel;
+        private DarkButton btnReindexQuestEventLocalization;
         private DarkGroupBox grpQuestReqs;
         private DarkCheckBox chkRepeatable;
         private DarkCheckBox chkQuittable;
