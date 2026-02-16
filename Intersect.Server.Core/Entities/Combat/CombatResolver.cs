@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Intersect.Enums;
+using Intersect.Framework.Core.Combat;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Server.Entities;
 using Intersect.Server.General;
@@ -27,26 +28,19 @@ public static class CombatResolver
         CombatantEffects defenderEffects
     )
     {
-        const double minChance = 0.1d;
-        const double maxChance = 0.98d;
-        const double baseChance = 0.7d;
-        const double swingFactor = 0.3d;
+        var accuracy = CombatFormulaCalculator.CalculateAccuracyScore(
+            attacker.Stat[(int)Enums.Stat.Agility].Value(),
+            attacker.Stat[(int)Enums.Stat.Attack].Value(),
+            attackerEffects.GetTotalEffectValue(ItemEffect.Accuracy)
+        );
 
-        var accuracy =
-            attacker.Stat[(int)Enums.Stat.Agility].Value() * 0.5d +
-            attacker.Stat[(int)Enums.Stat.Attack].Value() * 0.3d +
-            attackerEffects.GetTotalEffectValue(ItemEffect.Accuracy);
+        var evasion = CombatFormulaCalculator.CalculateEvasionScore(
+            defender.Stat[(int)Enums.Stat.Agility].Value(),
+            defender.Stat[(int)Enums.Stat.Defense].Value(),
+            defenderEffects.GetTotalEffectValue(ItemEffect.Evasion)
+        );
 
-        var evasion =
-            defender.Stat[(int)Enums.Stat.Agility].Value() * 0.7d +
-            defender.Stat[(int)Enums.Stat.Defense].Value() * 0.2d +
-            defenderEffects.GetTotalEffectValue(ItemEffect.Evasion);
-
-        var statBalance = accuracy - evasion;
-        var normalization = Math.Max(50d, accuracy + evasion);
-        var hitChance = baseChance + swingFactor * statBalance / normalization;
-
-        return Math.Clamp(hitChance, minChance, maxChance);
+        return CombatFormulaCalculator.CalculateHitChance(accuracy, evasion);
     }
 
     public static int CalculateCriticalChance(
@@ -55,16 +49,13 @@ public static class CombatResolver
         CombatantEffects defenderEffects
     )
     {
-        var critChance = baseCritChance;
-
-        var agilityPerCrit = Math.Max(1, Options.Instance.Combat.AgilityPerCritChance);
-        critChance += attackerEffects.Entity.Stat[(int)Enums.Stat.Agility].Value() / agilityPerCrit;
-        critChance += attackerEffects.GetTotalEffectValue(ItemEffect.CriticalChance);
-
-        var antiCrit = defenderEffects.GetTotalEffectValue(ItemEffect.AntiCritChance);
-        critChance -= antiCrit;
-
-        return Math.Max(0, critChance);
+        return CombatFormulaCalculator.CalculateCriticalChance(
+            baseCritChance,
+            attackerEffects.Entity.Stat[(int)Enums.Stat.Agility].Value(),
+            Options.Instance.Combat.AgilityPerCritChance,
+            attackerEffects.GetTotalEffectValue(ItemEffect.CriticalChance),
+            defenderEffects.GetTotalEffectValue(ItemEffect.AntiCritChance)
+        );
     }
 
     public static IReadOnlyDictionary<string, object>? BuildDefenseOverrides(
