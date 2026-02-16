@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using Intersect.Framework.Core.Localization;
 using Intersect.Server.Database.PlayerData.Security;
@@ -14,6 +15,28 @@ namespace Intersect.Server.Web.Controllers.Api.V1
     [Authorize(Roles = nameof(ApiRoles.UserManage))]
     public sealed partial class LocalizationController : IntersectController
     {
+
+        [HttpGet("stats")]
+        [ProducesResponseType(typeof(LocalizationStatsResponseBody), (int)HttpStatusCode.OK, ContentTypes.Json)]
+        public IActionResult GetLocalizationStats([FromQuery] int minutes = 5)
+        {
+            var boundedMinutes = Math.Clamp(minutes, 1, 1440);
+            var snapshot = LocalizationStatsTracker.GetSnapshot(TimeSpan.FromMinutes(boundedMinutes));
+
+            return Ok(
+                new LocalizationStatsResponseBody(
+                    snapshot.WindowMinutes,
+                    snapshot.TotalRequests,
+                    snapshot.ValidRequests,
+                    snapshot.EmptyRequests,
+                    snapshot.UnknownEntityTypeRequests,
+                    snapshot.RepositoryMissingSourceCount,
+                    snapshot.RepositoryMissingCurrentHashTranslationCount,
+                    snapshot.MissesByEntityTypeAndField
+                )
+            );
+        }
+
         [HttpPost("translations")]
         [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.BadRequest, ContentTypes.Json)]
         [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
