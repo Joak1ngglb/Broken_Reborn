@@ -1,4 +1,5 @@
 using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Config;
 
 namespace Intersect.Server.General;
 
@@ -9,29 +10,6 @@ namespace Intersect.Server.General;
 public static partial class NpcExperienceCalculator
 {
     /// <summary>
-    /// Fator de ajuste da experiência. Valores menores = mais XP, valores maiores = menos XP.
-    /// Valor padrão: 0.5
-    /// </summary>
-    private const double ExperienceFactor = 0.5;
-
-    /// <summary>
-    /// Define se o sistema deve SEMPRE usar o cálculo automático, ignorando valores do banco de dados.
-    /// true = sempre calcula automaticamente
-    /// false = usa valor do banco se configurado manualmente
-    /// </summary>
-    private const bool AlwaysUseAutomaticCalculation = true;
-
-    /// <summary>
-    /// Multiplicador de XP para NPCs marcados como [BOSS]
-    /// </summary>
-    private const int BossExperienceMultiplier = 30;
-
-    /// <summary>
-    /// Tag que identifica um NPC como Boss
-    /// </summary>
-    private const string BossTag = "[BOSS]";
-
-    /// <summary>
     /// Calcula a experiência que um NPC deve dar baseado em seu nível.
     /// Fórmula: baseexp / (2.4 * level * fator)
     /// Onde baseexp = (50/3) * (level³ - 6*level² + 17*level - 12)
@@ -40,6 +18,8 @@ public static partial class NpcExperienceCalculator
     /// <returns>Experiência calculada</returns>
     public static long CalculateExperience(int level)
     {
+        var experienceOptions = Options.Instance.Npc.Experience;
+
         if (level <= 0)
         {
             return 0;
@@ -51,10 +31,17 @@ public static partial class NpcExperienceCalculator
         var baseExp = (50.0 / 3.0) * (levelCubed - 6 * levelSquared + 17 * level - 12);
 
         // Cálculo da XP final
-        var experience = baseExp / (2.4 * level * ExperienceFactor);
+        var experienceFactor = experienceOptions.ExperienceFactor;
+        if (experienceFactor <= 0)
+        {
+            experienceFactor = 0.5;
+        }
+
+        var experience = baseExp / (2.4 * level * experienceFactor);
+        var minimumExperience = Math.Max(1, experienceOptions.MinimumNpcExperience);
 
         // Garantir que a XP seja pelo menos 1
-        return (long)Math.Max(1, Math.Round(experience));
+        return (long)Math.Max(minimumExperience, Math.Round(experience));
     }
 
     /// <summary>
@@ -64,12 +51,19 @@ public static partial class NpcExperienceCalculator
     /// <returns>True se o NPC tem a tag [BOSS] no nome</returns>
     private static bool IsBoss(string npcName)
     {
+        var bossTag = Options.Instance.Npc.Experience.BossTag;
+
         if (string.IsNullOrWhiteSpace(npcName))
         {
             return false;
         }
 
-        return npcName.Contains(BossTag, StringComparison.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(bossTag))
+        {
+            return false;
+        }
+
+        return npcName.Contains(bossTag, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -82,6 +76,8 @@ public static partial class NpcExperienceCalculator
     /// <returns>Experiência que o NPC deve dar</returns>
     public static long GetNpcExperience(NPCDescriptor npcDescriptor)
     {
+        var experienceOptions = Options.Instance.Npc.Experience;
+
         if (npcDescriptor == null)
         {
             return 0;
@@ -90,7 +86,7 @@ public static partial class NpcExperienceCalculator
         long experience;
 
         // Se configurado para SEMPRE usar cálculo automático
-        if (AlwaysUseAutomaticCalculation)
+        if (experienceOptions.UseAutomaticNpcExperience)
         {
             experience = CalculateExperience(npcDescriptor.Level);
         }
@@ -108,7 +104,7 @@ public static partial class NpcExperienceCalculator
         // Aplicar multiplicador de Boss se o NPC tiver [BOSS] no nome
         if (IsBoss(npcDescriptor.Name))
         {
-            experience *= BossExperienceMultiplier;
+            experience *= Math.Max(1, experienceOptions.BossExperienceMultiplier);
         }
 
         return experience;

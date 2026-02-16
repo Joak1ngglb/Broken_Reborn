@@ -59,4 +59,47 @@ public partial class NpcOptions
     /// If true, NPCs will go to reset state if their combat timer is exceeded
     /// </summary>
     public bool ResetIfCombatTimerExceeded { get; set; } = true;
+
+    /// <summary>
+    /// Configuración de experiencia automática para NPCs.
+    /// </summary>
+    public NpcExperienceOptions Experience { get; set; } = new();
+}
+
+public class NpcExperienceOptions
+{
+    /// <summary>
+    /// Si el servidor siempre debe calcular la experiencia automáticamente.
+    /// </summary>
+    public bool UseAutomaticNpcExperience { get; set; } = true;
+
+    /// <summary>
+    /// Factor de ajuste de experiencia. Valores menores otorgan más experiencia.
+    /// </summary>
+    public double ExperienceFactor { get; set; } = 0.5;
+
+    /// <summary>
+    /// Tope de nivel para aplicar límite de experiencia de bajo nivel.
+    /// </summary>
+    public int LowLevelCapMaxLevel { get; set; }
+
+    /// <summary>
+    /// Experiencia máxima por nivel para NPCs de bajo nivel.
+    /// </summary>
+    public int LowLevelCapPerLevel { get; set; }
+
+    /// <summary>
+    /// Tag que identifica NPCs de tipo boss.
+    /// </summary>
+    public string BossTag { get; set; } = "[BOSS]";
+
+    /// <summary>
+    /// Multiplicador de experiencia para NPCs boss.
+    /// </summary>
+    public int BossExperienceMultiplier { get; set; } = 10;
+
+    /// <summary>
+    /// Experiencia mínima que puede otorgar un NPC al calcularse automáticamente.
+    /// </summary>
+    public int MinimumNpcExperience { get; set; } = 1;
 }
