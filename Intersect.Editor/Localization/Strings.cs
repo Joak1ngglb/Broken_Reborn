@@ -4818,6 +4818,16 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString behavior = @"Behavior:";
 
+        public static LocalizedString boss = @"Boss";
+
+        public static LocalizedString isboss = @"Is Boss";
+
+        public static LocalizedString bossrespawnminutes = @"Respawn Time (minutes):";
+
+        public static LocalizedString bossannounceonkill = @"Announce on Kill";
+
+        public static LocalizedString bossannounceonrespawn = @"Announce on Respawn";
+
         public static LocalizedString cancel = @"Cancel";
 
         public static LocalizedString combat = @"Combat";

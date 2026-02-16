@@ -290,6 +290,12 @@ public partial class FrmNpc : EditorForm
         chkSleep.Text = Strings.NpcEditor.Immunities[SpellEffect.Sleep];
         lblTenacity.Text = Strings.NpcEditor.Tenacity;
 
+        grpBoss.Text = Strings.NpcEditor.boss;
+        chkIsBoss.Text = Strings.NpcEditor.isboss;
+        lblBossRespawnMinutes.Text = Strings.NpcEditor.bossrespawnminutes;
+        chkBossAnnounceOnKill.Text = Strings.NpcEditor.bossannounceonkill;
+        chkBossAnnounceOnRespawn.Text = Strings.NpcEditor.bossannounceonrespawn;
+
         btnSave.Text = Strings.NpcEditor.save;
         btnCancel.Text = Strings.NpcEditor.cancel;
     }
@@ -413,6 +419,12 @@ public partial class FrmNpc : EditorForm
 
             // Tenacity and immunities
             nudTenacity.Value = (decimal)mEditorItem.Tenacity;
+
+            // Boss settings
+            chkIsBoss.Checked = mEditorItem.IsBoss;
+            nudBossRespawnMinutes.Value = mEditorItem.BossRespawnMinutes;
+            chkBossAnnounceOnKill.Checked = mEditorItem.BossAnnounceOnKill;
+            chkBossAnnounceOnRespawn.Checked = mEditorItem.BossAnnounceOnRespawn;
 
             UpdateImmunities();
         }
@@ -1301,6 +1313,26 @@ public partial class FrmNpc : EditorForm
     private void nudTenacity_ValueChanged(object sender, EventArgs e)
     {
         mEditorItem.Tenacity = (double)nudTenacity.Value;
+    }
+
+    private void chkIsBoss_CheckedChanged(object sender, EventArgs e)
+    {
+        mEditorItem.IsBoss = chkIsBoss.Checked;
+    }
+
+    private void nudBossRespawnMinutes_ValueChanged(object sender, EventArgs e)
+    {
+        mEditorItem.BossRespawnMinutes = (int)nudBossRespawnMinutes.Value;
+    }
+
+    private void chkBossAnnounceOnKill_CheckedChanged(object sender, EventArgs e)
+    {
+        mEditorItem.BossAnnounceOnKill = chkBossAnnounceOnKill.Checked;
+    }
+
+    private void chkBossAnnounceOnRespawn_CheckedChanged(object sender, EventArgs e)
+    {
+        mEditorItem.BossAnnounceOnRespawn = chkBossAnnounceOnRespawn.Checked;
     }
 
     private void pnlContainer_Paint(object sender, PaintEventArgs e)
