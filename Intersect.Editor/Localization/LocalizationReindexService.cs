@@ -1,9 +1,11 @@
 using DarkUI.Forms;
 using Intersect.Editor.Core;
 using Intersect.Editor.Forms;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.Localization;
 using Intersect.Framework.Core.Network.Packets;
 using Intersect.GameObjects;
+using Intersect.Network.Packets.Editor;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
@@ -205,7 +207,7 @@ public static class LocalizationReindexService
 
     private static void LogSummary(ReindexSummary summary, string operationName)
     {
-        var logger = ApplicationContext.Context.Value?.Logger;
+        var logger = Intersect.Core.ApplicationContext.Context.Value?.Logger;
         if (logger == null)
         {
             return;

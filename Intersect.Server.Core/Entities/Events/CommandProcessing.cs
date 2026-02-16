@@ -26,6 +26,8 @@ using Intersect.Utilities;
 using Intersect.Server.Services;
 using Intersect.Server.Core.Services;
 using Intersect.Network.Packets.Localization;
+using Intersect.Core;
+using Microsoft.Extensions.Logging;
 
 namespace Intersect.Server.Entities.Events;
 

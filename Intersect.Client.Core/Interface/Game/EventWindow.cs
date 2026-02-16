@@ -10,6 +10,7 @@ using Intersect.Client.Framework.Input;
 using Intersect.Client.General;
 using Intersect.Client.Interface.Game.Typewriting;
 using Intersect.Client.Localization;
+using Intersect.Network.Packets.Localization;
 using Intersect.Client.Networking;
 using Intersect.Client.Utilities;
 using Intersect.Configuration;
@@ -134,6 +135,7 @@ public partial class EventWindow : Panel
         };
 
         CreateOptionButtons();
+        GameLocalization.LocalizedTextsUpdated += OnLocalizedTextsUpdated;
 
         try
         {
@@ -259,6 +261,79 @@ public partial class EventWindow : Panel
         }
     }
 
+    private void OnLocalizedTextsUpdated(string language, IReadOnlyCollection<LocalizationRequestEntry> requests)
+    {
+        if (!IsVisibleInTree || requests.Count < 1)
+        {
+            return;
+        }
+
+        static bool RequestsMatch(LocalizationRequestEntry? expectedRequest, IReadOnlyCollection<LocalizationRequestEntry> updatedRequests)
+        {
+            if (expectedRequest == null)
+            {
+                return false;
+            }
+
+            return updatedRequests.Any(
+                request => request.EntityType == expectedRequest.EntityType &&
+                           request.EntityId == expectedRequest.EntityId &&
+                           request.Field == expectedRequest.Field
+            );
+        }
+
+        var promptRequestMatched = RequestsMatch(_dialog.PromptLocalizationRequest, requests);
+        var optionsRequestMatched = _dialog.OptionLocalizationRequests.Any(optionRequest => RequestsMatch(optionRequest, requests));
+        if (!promptRequestMatched && !optionsRequestMatched)
+        {
+            return;
+        }
+
+        if (_dialog.PromptLocalizationRequest is { } promptLocalizationRequest)
+        {
+            if (Guid.TryParse(promptLocalizationRequest.EntityId, out var promptEntityId))
+            {
+                _dialog.Prompt = GameLocalization.GetTextOrDefault(
+                    promptLocalizationRequest.EntityType,
+                    promptEntityId,
+                    promptLocalizationRequest.Field,
+                    _dialog.PromptDefault ?? string.Empty
+                );
+            }
+        }
+
+        for (var optionIndex = 0; optionIndex < _dialog.OptionLocalizationRequests.Length; optionIndex++)
+        {
+            if (optionIndex >= _dialog.Options.Length)
+            {
+                break;
+            }
+
+            var optionRequest = _dialog.OptionLocalizationRequests[optionIndex];
+            if (optionRequest == null)
+            {
+                continue;
+            }
+
+            var optionFallback = _dialog.OptionDefaults.ElementAtOrDefault(optionIndex) ?? string.Empty;
+            if (!Guid.TryParse(optionRequest.EntityId, out var optionEntityId))
+            {
+                _dialog.Options[optionIndex] = optionFallback;
+                continue;
+            }
+
+            _dialog.Options[optionIndex] = GameLocalization.GetTextOrDefault(
+                optionRequest.EntityType,
+                optionEntityId,
+                optionRequest.Field,
+                optionFallback
+            );
+        }
+
+        ApplyPromptAndTypewriter();
+        CreateOptionButtons();
+    }
+
     private void Update()
     {
         if (!IsVisibleInTree || !_typewriting || _writer is null)
@@ -367,6 +442,7 @@ public partial class EventWindow : Panel
 
     protected override void Dispose(bool disposing)
     {
+        GameLocalization.LocalizedTextsUpdated -= OnLocalizedTextsUpdated;
         EnsureControlRestored();
         base.Dispose(disposing);
     }
