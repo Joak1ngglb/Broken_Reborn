@@ -49,6 +49,10 @@ public class BossTrigger
     public string RequiredAppliedState { get; set; } = string.Empty;
 
     public int CombatTimeSeconds { get; set; }
+
+    public int CooldownSeconds { get; set; }
+
+    public List<BossAction> Actions { get; set; } = [];
 }
 
 public class BossAction

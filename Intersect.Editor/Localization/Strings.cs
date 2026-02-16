@@ -4828,6 +4828,30 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString bossannounceonrespawn = @"Announce on Respawn";
 
+        public static LocalizedString bossai = @"Boss AI";
+
+        public static LocalizedString bossaiphases = @"Phases";
+
+        public static LocalizedString bossaitriggers = @"Triggers";
+
+        public static LocalizedString bossaiactions = @"Actions";
+
+        public static LocalizedString bossaipreset30 = @"Fase 30%: heal + enrage";
+
+        public static LocalizedString add = @"Add";
+
+        public static LocalizedString remove = @"Remove";
+
+        public static LocalizedString bossaivalidationtitle = @"Boss AI Validation";
+
+        public static LocalizedString bossaivalidationhpoverlap = @"Boss AI phases cannot have overlapping HP ranges.";
+
+        public static LocalizedString bossaivalidationspell = @"Boss AI has a Cast Spell action with an invalid spell.";
+
+        public static LocalizedString bossaivalidationcooldown = @"Boss AI triggers with timed/status conditions require cooldown > 0.";
+
+        public static LocalizedString bossaivalidationactions = @"Each Boss AI trigger must contain at least one action.";
+
         public static LocalizedString cancel = @"Cancel";
 
         public static LocalizedString combat = @"Combat";

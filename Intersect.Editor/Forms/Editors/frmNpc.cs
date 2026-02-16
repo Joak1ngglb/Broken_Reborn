@@ -38,6 +38,8 @@ public partial class FrmNpc : EditorForm
 
     private BindingList<NotifiableBestiaryUnlock> _bestiaryUnlocks = [];
 
+    private bool _isUpdatingBossAiUi;
+
 
     public FrmNpc()
     {
@@ -86,6 +88,11 @@ public partial class FrmNpc : EditorForm
 
     private void btnSave_Click(object sender, EventArgs e)
     {
+        if (!ValidateBossBehaviorProfiles())
+        {
+            return;
+        }
+
         //Send Changed items
         foreach (var item in mChanged)
         {
@@ -295,6 +302,17 @@ public partial class FrmNpc : EditorForm
         lblBossRespawnMinutes.Text = Strings.NpcEditor.bossrespawnminutes;
         chkBossAnnounceOnKill.Text = Strings.NpcEditor.bossannounceonkill;
         chkBossAnnounceOnRespawn.Text = Strings.NpcEditor.bossannounceonrespawn;
+        grpBossAi.Text = Strings.NpcEditor.bossai;
+        lblBossPhases.Text = Strings.NpcEditor.bossaiphases;
+        lblBossTriggers.Text = Strings.NpcEditor.bossaitriggers;
+        lblBossActions.Text = Strings.NpcEditor.bossaiactions;
+        btnBossPhaseAdd.Text = Strings.NpcEditor.add;
+        btnBossPhaseRemove.Text = Strings.NpcEditor.remove;
+        btnBossTriggerAdd.Text = Strings.NpcEditor.add;
+        btnBossTriggerRemove.Text = Strings.NpcEditor.remove;
+        btnBossActionAdd.Text = Strings.NpcEditor.add;
+        btnBossActionRemove.Text = Strings.NpcEditor.remove;
+        btnBossPreset.Text = Strings.NpcEditor.bossaipreset30;
 
         btnSave.Text = Strings.NpcEditor.save;
         btnCancel.Text = Strings.NpcEditor.cancel;
@@ -425,6 +443,7 @@ public partial class FrmNpc : EditorForm
             nudBossRespawnMinutes.Value = mEditorItem.BossRespawnMinutes;
             chkBossAnnounceOnKill.Checked = mEditorItem.BossAnnounceOnKill;
             chkBossAnnounceOnRespawn.Checked = mEditorItem.BossAnnounceOnRespawn;
+            LoadBossBehaviorProfile();
 
             UpdateImmunities();
         }
@@ -1313,6 +1332,297 @@ public partial class FrmNpc : EditorForm
     private void nudTenacity_ValueChanged(object sender, EventArgs e)
     {
         mEditorItem.Tenacity = (double)nudTenacity.Value;
+    }
+
+    private BossBehaviorProfile EnsureBossBehaviorProfile()
+    {
+        mEditorItem.BossBehaviorProfile ??= new BossBehaviorProfile();
+        mEditorItem.BossBehaviorProfile.Phases ??= [];
+
+        foreach (var phase in mEditorItem.BossBehaviorProfile.Phases)
+        {
+            phase.Triggers ??= [];
+            if (phase.Actions?.Count > 0 && phase.Triggers.Count > 0 && phase.Triggers.All(trigger => trigger.Actions.Count == 0))
+            {
+                phase.Triggers[0].Actions = [.. phase.Actions];
+            }
+
+            foreach (var trigger in phase.Triggers)
+            {
+                trigger.Actions ??= [];
+            }
+        }
+
+        return mEditorItem.BossBehaviorProfile;
+    }
+
+    private void LoadBossBehaviorProfile()
+    {
+        _isUpdatingBossAiUi = true;
+        lstBossPhases.Items.Clear();
+        lstBossTriggers.Items.Clear();
+        lstBossActions.Items.Clear();
+
+        var profile = EnsureBossBehaviorProfile();
+        foreach (var phase in profile.Phases)
+        {
+            lstBossPhases.Items.Add($"{phase.Id} ({phase.MinimumHealthPercent}-{phase.MaximumHealthPercent}%)");
+        }
+
+        if (lstBossPhases.Items.Count > 0)
+        {
+            lstBossPhases.SelectedIndex = 0;
+        }
+
+        _isUpdatingBossAiUi = false;
+    }
+
+    private void LoadBossTriggers()
+    {
+        if (_isUpdatingBossAiUi || lstBossPhases.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        _isUpdatingBossAiUi = true;
+        lstBossTriggers.Items.Clear();
+        lstBossActions.Items.Clear();
+
+        var phase = EnsureBossBehaviorProfile().Phases[lstBossPhases.SelectedIndex];
+        for (var i = 0; i < phase.Triggers.Count; i++)
+        {
+            var trigger = phase.Triggers[i];
+            lstBossTriggers.Items.Add($"{trigger.Condition} ({trigger.CooldownSeconds}s)");
+        }
+
+        if (lstBossTriggers.Items.Count > 0)
+        {
+            lstBossTriggers.SelectedIndex = 0;
+        }
+
+        _isUpdatingBossAiUi = false;
+    }
+
+    private void LoadBossActions()
+    {
+        if (_isUpdatingBossAiUi || lstBossPhases.SelectedIndex < 0 || lstBossTriggers.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        _isUpdatingBossAiUi = true;
+        lstBossActions.Items.Clear();
+
+        var trigger = EnsureBossBehaviorProfile().Phases[lstBossPhases.SelectedIndex].Triggers[lstBossTriggers.SelectedIndex];
+        foreach (var action in trigger.Actions)
+        {
+            var display = action.Action == BossActionType.CastSpell
+                ? $"{action.Action}: {SpellDescriptor.GetName(action.SpellId)}"
+                : action.Action.ToString();
+            lstBossActions.Items.Add(display);
+        }
+
+        _isUpdatingBossAiUi = false;
+    }
+
+    private bool ValidateBossBehaviorProfiles()
+    {
+        foreach (var item in mChanged)
+        {
+            if (item?.IsBoss != true)
+            {
+                continue;
+            }
+
+            var phases = item.BossBehaviorProfile?.Phases ?? [];
+            for (var i = 0; i < phases.Count; i++)
+            {
+                var phase = phases[i];
+                for (var j = i + 1; j < phases.Count; j++)
+                {
+                    var other = phases[j];
+                    var overlaps = phase.MinimumHealthPercent <= other.MaximumHealthPercent && other.MinimumHealthPercent <= phase.MaximumHealthPercent;
+                    if (overlaps)
+                    {
+                        DarkMessageBox.ShowError(Strings.NpcEditor.bossaivalidationhpoverlap, Strings.NpcEditor.bossaivalidationtitle, DarkDialogButton.Ok, Icon);
+                        return false;
+                    }
+                }
+
+                foreach (var trigger in phase.Triggers)
+                {
+                    if (trigger.CooldownSeconds <= 0 && trigger.Condition != BossTriggerConditionType.HealthPercentAtOrBelow)
+                    {
+                        DarkMessageBox.ShowError(Strings.NpcEditor.bossaivalidationcooldown, Strings.NpcEditor.bossaivalidationtitle, DarkDialogButton.Ok, Icon);
+                        return false;
+                    }
+
+                    if (trigger.Actions.Count == 0)
+                    {
+                        DarkMessageBox.ShowError(Strings.NpcEditor.bossaivalidationactions, Strings.NpcEditor.bossaivalidationtitle, DarkDialogButton.Ok, Icon);
+                        return false;
+                    }
+
+                    foreach (var action in trigger.Actions.Where(a => a.Action == BossActionType.CastSpell))
+                    {
+                        if (action.SpellId == Guid.Empty || SpellDescriptor.Get(action.SpellId) == null)
+                        {
+                            DarkMessageBox.ShowError(Strings.NpcEditor.bossaivalidationspell, Strings.NpcEditor.bossaivalidationtitle, DarkDialogButton.Ok, Icon);
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private void lstBossPhases_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        LoadBossTriggers();
+    }
+
+    private void lstBossTriggers_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        LoadBossActions();
+    }
+
+    private void btnBossPhaseAdd_Click(object sender, EventArgs e)
+    {
+        var profile = EnsureBossBehaviorProfile();
+        var index = profile.Phases.Count + 1;
+        profile.Phases.Add(new BossPhase
+        {
+            Id = $"Phase {index}",
+            MinimumHealthPercent = 0,
+            MaximumHealthPercent = 100,
+            Priority = index,
+            Triggers =
+            [
+                new BossTrigger
+                {
+                    Condition = BossTriggerConditionType.HealthPercentAtOrBelow,
+                    ThresholdHealthPercent = 30,
+                    CooldownSeconds = 1,
+                    Actions =
+                    [
+                        new BossAction { Action = BossActionType.Enrage, EnragePercentBonus = 20 },
+                    ],
+                },
+            ],
+        });
+
+        LoadBossBehaviorProfile();
+        lstBossPhases.SelectedIndex = profile.Phases.Count - 1;
+    }
+
+    private void btnBossPhaseRemove_Click(object sender, EventArgs e)
+    {
+        if (lstBossPhases.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        EnsureBossBehaviorProfile().Phases.RemoveAt(lstBossPhases.SelectedIndex);
+        LoadBossBehaviorProfile();
+    }
+
+    private void btnBossTriggerAdd_Click(object sender, EventArgs e)
+    {
+        if (lstBossPhases.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        var trigger = new BossTrigger
+        {
+            Condition = BossTriggerConditionType.HealthPercentAtOrBelow,
+            ThresholdHealthPercent = 50,
+            CooldownSeconds = 1,
+            Actions =
+            [
+                new BossAction { Action = BossActionType.Enrage, EnragePercentBonus = 10 },
+            ],
+        };
+
+        EnsureBossBehaviorProfile().Phases[lstBossPhases.SelectedIndex].Triggers.Add(trigger);
+        LoadBossTriggers();
+    }
+
+    private void btnBossTriggerRemove_Click(object sender, EventArgs e)
+    {
+        if (lstBossPhases.SelectedIndex < 0 || lstBossTriggers.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        EnsureBossBehaviorProfile().Phases[lstBossPhases.SelectedIndex].Triggers.RemoveAt(lstBossTriggers.SelectedIndex);
+        LoadBossTriggers();
+    }
+
+    private void btnBossActionAdd_Click(object sender, EventArgs e)
+    {
+        if (lstBossPhases.SelectedIndex < 0 || lstBossTriggers.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        var trigger = EnsureBossBehaviorProfile().Phases[lstBossPhases.SelectedIndex].Triggers[lstBossTriggers.SelectedIndex];
+        var selectedSpell = cmbSpell.SelectedIndex >= 0 && cmbSpell.SelectedIndex < SpellDescriptor.Lookup.Count
+            ? SpellDescriptor.Get(SpellDescriptor.IdFromList(cmbSpell.SelectedIndex))
+            : SpellDescriptor.Lookup.Values.FirstOrDefault();
+
+        trigger.Actions.Add(new BossAction
+        {
+            Action = selectedSpell != null ? BossActionType.CastSpell : BossActionType.Enrage,
+            SpellId = selectedSpell?.Id ?? Guid.Empty,
+            EnragePercentBonus = 15,
+        });
+
+        LoadBossActions();
+    }
+
+    private void btnBossActionRemove_Click(object sender, EventArgs e)
+    {
+        if (lstBossPhases.SelectedIndex < 0 || lstBossTriggers.SelectedIndex < 0 || lstBossActions.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        var trigger = EnsureBossBehaviorProfile().Phases[lstBossPhases.SelectedIndex].Triggers[lstBossTriggers.SelectedIndex];
+        trigger.Actions.RemoveAt(lstBossActions.SelectedIndex);
+        LoadBossActions();
+    }
+
+    private void btnBossPreset_Click(object sender, EventArgs e)
+    {
+        var profile = EnsureBossBehaviorProfile();
+        var healSpell = SpellDescriptor.Lookup.Values.FirstOrDefault();
+        var phase = new BossPhase
+        {
+            Id = "Phase 30%",
+            MinimumHealthPercent = 0,
+            MaximumHealthPercent = 30,
+            Priority = 1,
+            Triggers =
+            [
+                new BossTrigger
+                {
+                    Condition = BossTriggerConditionType.HealthPercentAtOrBelow,
+                    ThresholdHealthPercent = 30,
+                    CooldownSeconds = 10,
+                    Actions =
+                    [
+                        new BossAction { Action = BossActionType.CastSpell, SpellId = healSpell?.Id ?? Guid.Empty },
+                        new BossAction { Action = BossActionType.Enrage, EnragePercentBonus = 25 },
+                    ],
+                },
+            ],
+        };
+
+        profile.Phases.Add(phase);
+        LoadBossBehaviorProfile();
     }
 
     private void chkIsBoss_CheckedChanged(object sender, EventArgs e)
