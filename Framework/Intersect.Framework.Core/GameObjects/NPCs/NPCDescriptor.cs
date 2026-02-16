@@ -35,6 +35,14 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
 
     public bool HiddenUntilDefeated { get; set; } = false;
 
+    public bool IsBoss { get; set; } = false;
+
+    public int BossRespawnMinutes { get; set; } = 0;
+
+    public bool BossAnnounceOnKill { get; set; } = false;
+
+    public bool BossAnnounceOnRespawn { get; set; } = false;
+
     [NotMapped]
     public Dictionary<BestiaryUnlock, int> BestiaryRequirements { get; set; } = new();
 

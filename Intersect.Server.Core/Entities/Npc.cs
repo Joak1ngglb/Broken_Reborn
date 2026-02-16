@@ -21,6 +21,7 @@ using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using Stat = Intersect.Enums.Stat;
+using Intersect.Server.General;
 
 namespace Intersect.Server.Entities;
 
@@ -1826,6 +1827,7 @@ public partial class Npc : Entity
         var pkt = (NpcEntityPacket)packet;
         pkt.Aggression = GetAggression(forPlayer);
         pkt.Level = Level; // Asegúrate de que el nivel se incluya en el paquete
+        pkt.IsBoss = NpcBossCompatibility.IsBoss(Descriptor);
 
         return pkt;
     }

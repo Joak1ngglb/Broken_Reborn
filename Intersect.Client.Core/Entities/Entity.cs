@@ -233,6 +233,8 @@ public partial class Entity : IEntity
 
     public NpcAggression Aggression { get; set; }
 
+    public bool IsBossEntity { get; set; }
+
     public long[] Vital { get; set; } = new long[Enum.GetValues<Vital>().Length];
 
     IReadOnlyDictionary<Vital, long> IEntity.Vitals =>
@@ -1747,16 +1749,15 @@ public partial class Entity : IEntity
             return;
         }
 
-        // Detectar se é um BOSS e remover a tag do nome
+        // Detectar BOSS por flag explícita enviada pelo servidor e remover prefixo legado do nome exibido.
         var displayName = Name;
-        var isBoss = Name.Contains("[BOSS]", StringComparison.OrdinalIgnoreCase);
+        var isBoss = IsBossEntity;
 
         if (isBoss)
         {
-            // Remover a tag [BOSS] do nome exibido (case-insensitive)
             displayName = System.Text.RegularExpressions.Regex.Replace(
                 Name,
-                @"\[BOSS\]",
+                @"^\[BOSS\]\s*",
                 "",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase
             ).Trim();

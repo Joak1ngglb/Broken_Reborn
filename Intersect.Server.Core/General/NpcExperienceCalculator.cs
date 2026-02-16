@@ -120,32 +120,10 @@ public static partial class NpcExperienceCalculator
     }
 
     /// <summary>
-    /// Verifica se o NPC é um Boss baseado no nome
-    /// </summary>
-    /// <param name="npcName">Nome do NPC</param>
-    /// <returns>True se o NPC tem a tag [BOSS] no nome</returns>
-    private static bool IsBoss(string npcName)
-    {
-        var bossTag = Options.Instance.Npc.Experience.BossTag;
-
-        if (string.IsNullOrWhiteSpace(npcName))
-        {
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(bossTag))
-        {
-            return false;
-        }
-
-        return npcName.Contains(bossTag, StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
     /// Calcula a experiência usando a fórmula automática baseada no nível do NPC.
     /// IMPORTANTE: Se AlwaysUseAutomaticCalculation = true, SEMPRE usa o cálculo automático,
     /// ignorando o valor configurado no editor.
-    /// NPCs com [BOSS] no nome recebem multiplicador de XP x30.
+    /// NPCs marcados como Boss recebem multiplicador de XP configurável.
     /// </summary>
     /// <param name="npcDescriptor">Descritor do NPC</param>
     /// <returns>Experiência que o NPC deve dar</returns>
@@ -176,8 +154,9 @@ public static partial class NpcExperienceCalculator
             experience = CalculateExperience(npcDescriptor.Level);
         }
 
-        // Aplicar multiplicador de Boss se o NPC tiver [BOSS] no nome
-        if (IsBoss(npcDescriptor.Name))
+        // Aplicar multiplicador de Boss utilizando o flag explícito.
+        // Compatibilidade temporária: aceita prefixo legado [BOSS] com warning de migração.
+        if (NpcBossCompatibility.IsBoss(npcDescriptor))
         {
             experience *= Math.Max(1, experienceOptions.BossExperienceMultiplier);
         }
