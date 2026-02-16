@@ -1,7 +1,10 @@
 using System.Linq;
+using Intersect;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Server.Entities;
+using Intersect.Server.Networking;
 using Intersect.Utilities;
 
 namespace Intersect.Server.Entities.BossSystem;
@@ -15,6 +18,11 @@ internal sealed class BossAiExecutor
         if (npc.Descriptor.BossBehaviorProfile is not { Phases.Count: > 0 } profile)
         {
             return false;
+        }
+
+        if (TryExecutePendingAction(npc, now))
+        {
+            return true;
         }
 
         var evaluationInterval = Math.Max(100, profile.EvaluationIntervalMs);
@@ -34,7 +42,7 @@ internal sealed class BossAiExecutor
         var candidates = BuildCandidates(npc, profile, target, now);
         if (candidates.Count == 0)
         {
-            return false;
+            return TryFallbackAction(npc, target);
         }
 
         var selected = candidates
@@ -42,9 +50,15 @@ internal sealed class BossAiExecutor
             .ThenBy(c => c.Index)
             .First();
 
+        if (ShouldTelegraphAction(selected.Action, profile) &&
+            TryStartTelegraph(npc, selected.Action, target, profile, now))
+        {
+            return true;
+        }
+
         if (!TryExecuteAction(npc, selected.Action, target, now))
         {
-            return false;
+            return TryFallbackAction(npc, target);
         }
 
         var actionKey = BuildActionCooldownKey(selected.Action);
@@ -85,7 +99,7 @@ internal sealed class BossAiExecutor
 
             foreach (var action in phase.Actions)
             {
-                if (IsActionOnCooldown(action, now))
+                if (!CanUseAction(action, profile, now) || IsActionOnCooldown(action, now))
                 {
                     runningIndex++;
                     continue;
@@ -114,7 +128,7 @@ internal sealed class BossAiExecutor
 
                 foreach (var action in trigger.Actions)
                 {
-                    if (IsActionOnCooldown(action, now))
+                    if (!CanUseAction(action, profile, now) || IsActionOnCooldown(action, now))
                     {
                         runningIndex++;
                         continue;
@@ -214,6 +228,11 @@ internal sealed class BossAiExecutor
 
     private bool TryExecuteAction(Npc npc, BossAction action, Entity target, long now)
     {
+        if (!CanUseAction(action, npc.Descriptor.BossBehaviorProfile, now))
+        {
+            return false;
+        }
+
         switch (action.Action)
         {
             case BossActionType.CastSpell:
@@ -224,7 +243,7 @@ internal sealed class BossAiExecutor
 
                 if (npc.TryCastSpellById(action.SpellId, target))
                 {
-                    _runtime.LastCastAt = now;
+                    OnSuccessfulCast(action, now);
                     return true;
                 }
 
@@ -246,7 +265,7 @@ internal sealed class BossAiExecutor
                         continue;
                     }
 
-                    _runtime.LastCastAt = now;
+                    OnSuccessfulCast(action, now);
                     return true;
                 }
 
@@ -334,6 +353,142 @@ internal sealed class BossAiExecutor
         }
 
         return target.HasStatusEffect(spellEffect);
+    }
+
+    private bool CanUseAction(BossAction action, BossBehaviorProfile profile, long now)
+    {
+        profile ??= new BossBehaviorProfile();
+
+        if (IsControlAction(action) &&
+            profile.MaxConsecutiveControlCasts > 0 &&
+            _runtime.ConsecutiveControlCasts >= profile.MaxConsecutiveControlCasts)
+        {
+            return false;
+        }
+
+        if (IsBigSkill(action) &&
+            profile.MinIntervalBetweenBigSkills > 0 &&
+            _runtime.LastBigSkillAt + profile.MinIntervalBetweenBigSkills > now)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void OnSuccessfulCast(BossAction action, long now)
+    {
+        _runtime.LastCastAt = now;
+        _runtime.ConsecutiveControlCasts = IsControlAction(action) ? _runtime.ConsecutiveControlCasts + 1 : 0;
+
+        if (IsBigSkill(action))
+        {
+            _runtime.LastBigSkillAt = now;
+        }
+    }
+
+    private static bool IsControlAction(BossAction action)
+    {
+        return action.IsControlSkill;
+    }
+
+    private static bool IsBigSkill(BossAction action)
+    {
+        return action.IsBigSkill;
+    }
+
+    private bool TryExecutePendingAction(Npc npc, long now)
+    {
+        var pending = _runtime.PendingAction;
+        if (pending == null)
+        {
+            return false;
+        }
+
+        if (pending.ExecuteAt > now)
+        {
+            return true;
+        }
+
+        _runtime.PendingAction = null;
+        if (TryExecuteAction(npc, pending.Action, pending.Target, now))
+        {
+            return true;
+        }
+
+        return TryFallbackAction(npc, npc.Target);
+    }
+
+    private bool TryStartTelegraph(Npc npc, BossAction action, Entity target, BossBehaviorProfile profile, long now)
+    {
+        if (profile.TelegraphMs <= 0)
+        {
+            return false;
+        }
+
+        var telegraphMessage = string.IsNullOrWhiteSpace(action.TelegraphMessage)
+            ? $"{npc.Name} prepara una habilidad crítica..."
+            : action.TelegraphMessage;
+
+        PacketSender.SendActionMsg(npc, telegraphMessage, new Color(255, 255, 215, 0));
+        PacketSender.SendChatBubble(npc.Id, npc.MapInstanceId, EntityType.GlobalEntity, telegraphMessage, npc.MapId);
+
+        var telegraphAnimation = action.TelegraphAnimationId;
+        if (telegraphAnimation != Guid.Empty)
+        {
+            PacketSender.SendAnimationToProximity(
+                telegraphAnimation,
+                1,
+                npc.Id,
+                npc.MapId,
+                0,
+                0,
+                npc.Dir,
+                npc.MapInstanceId,
+                AnimationSourceType.SpellCast,
+                Guid.Empty
+            );
+        }
+
+        var executeAt = now + profile.TelegraphMs;
+        _runtime.PendingAction = new BossAiRuntimeState.PendingBossAction
+        {
+            Action = action,
+            Target = target,
+            ExecuteAt = executeAt,
+        };
+
+        _runtime.GlobalCooldownUntil = Math.Max(_runtime.GlobalCooldownUntil, executeAt);
+        return true;
+    }
+
+    private static bool ShouldTelegraphAction(BossAction action, BossBehaviorProfile profile)
+    {
+        return action.IsCriticalSkill && profile.TelegraphMs > 0;
+    }
+
+    private static bool TryFallbackAction(Npc npc, Entity target)
+    {
+        if (target != null && !target.IsDead && npc.CanAttack(target))
+        {
+            npc.TryAttack(target);
+            return true;
+        }
+
+        var directions = new[]
+        {
+            Direction.Up,
+            Direction.Down,
+            Direction.Left,
+            Direction.Right,
+            Direction.UpLeft,
+            Direction.UpRight,
+            Direction.DownRight,
+            Direction.DownLeft,
+        };
+
+        var proposedDirection = directions[Randomization.Next(0, directions.Length)];
+        return npc.TryMove(proposedDirection, true, true);
     }
 
     private static int GetHealthPercent(Entity entity)
