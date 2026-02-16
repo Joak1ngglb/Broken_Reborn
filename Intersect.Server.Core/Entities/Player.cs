@@ -6825,7 +6825,7 @@ public partial class Player : Entity
 
                         if (((StartQuestCommand)stackInfo.WaitingOnCommand).QuestId == questId)
                         {
-                            var tmpStack = new CommandInstance(stackInfo.Page, stackInfo.BranchIds[0]);
+                            var tmpStack = new CommandInstance(stackInfo.Page, stackInfo.BranchIds[0], pageIndex: stackInfo.PageIndex);
                             evt.Value.CallStack.Peek().WaitingForResponse = CommandInstance.EventResponse.None;
                             evt.Value.CallStack.Push(tmpStack);
                         }
@@ -6862,7 +6862,7 @@ public partial class Player : Entity
                     if (((StartQuestCommand)stackInfo.WaitingOnCommand).QuestId == questId)
                     {
                         //Run failure branch
-                        var tmpStack = new CommandInstance(stackInfo.Page, stackInfo.BranchIds[1]);
+                        var tmpStack = new CommandInstance(stackInfo.Page, stackInfo.BranchIds[1], pageIndex: stackInfo.PageIndex);
                         stackInfo.WaitingForResponse = CommandInstance.EventResponse.None;
                         evt.Value.CallStack.Push(tmpStack);
                     }
@@ -7230,7 +7230,7 @@ public partial class Player : Entity
                     return;
                 }
 
-                var newStack = new CommandInstance(evt.Value.PageInstance.MyPage);
+                var newStack = new CommandInstance(evt.Value.PageInstance.MyPage, pageIndex: evt.Value.PageIndex);
                 evt.Value.CallStack.Push(newStack);
                 if (!evt.Value.Global)
                 {
@@ -7286,7 +7286,7 @@ public partial class Player : Entity
                     if (stackInfo.WaitingOnCommand != null &&
                         stackInfo.WaitingOnCommand.Type == EventCommandType.ShowOptions)
                     {
-                        var tmpStack = new CommandInstance(stackInfo.Page, stackInfo.BranchIds[responseId - 1]);
+                        var tmpStack = new CommandInstance(stackInfo.Page, stackInfo.BranchIds[responseId - 1], pageIndex: stackInfo.PageIndex);
                         evt.Value.CallStack.Push(tmpStack);
                     }
 
@@ -7497,8 +7497,8 @@ public partial class Player : Entity
                         }
 
                         var tmpStack = success
-                            ? new CommandInstance(stackInfo.Page, stackInfo.BranchIds[0])
-                            : new CommandInstance(stackInfo.Page, stackInfo.BranchIds[1]);
+                            ? new CommandInstance(stackInfo.Page, stackInfo.BranchIds[0], pageIndex: stackInfo.PageIndex)
+                            : new CommandInstance(stackInfo.Page, stackInfo.BranchIds[1], pageIndex: stackInfo.PageIndex);
 
                         evt.Value.CallStack.Push(tmpStack);
                     }
@@ -7701,7 +7701,7 @@ public partial class Player : Entity
                             throw Exceptions.UnreachableInvalidEnum(trigger);
                     }
 
-                    var newStack = new CommandInstance(newEvent.PageInstance.MyPage);
+                    var newStack = new CommandInstance(newEvent.PageInstance.MyPage, pageIndex: newEvent.PageIndex);
                     newEvent.CallStack.Push(newStack);
 
                     break;
@@ -7878,7 +7878,7 @@ public partial class Player : Entity
                             return;
                         }
 
-                        var newStack = new CommandInstance(evt.Value.PageInstance.MyPage);
+                        var newStack = new CommandInstance(evt.Value.PageInstance.MyPage, pageIndex: evt.Value.PageIndex);
                         evt.Value.CallStack.Push(newStack);
                     }
                 }
@@ -7918,7 +7918,7 @@ public partial class Player : Entity
                 return;
             }
 
-            var newStack = new CommandInstance(eventInstance.PageInstance.MyPage);
+            var newStack = new CommandInstance(eventInstance.PageInstance.MyPage, pageIndex: eventInstance.PageIndex);
             eventInstance.CallStack.Push(newStack);
         }
     }
