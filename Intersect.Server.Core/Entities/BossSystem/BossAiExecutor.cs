@@ -1,5 +1,6 @@
 using System.Linq;
 using Intersect;
+using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.NPCs;
@@ -12,6 +13,7 @@ namespace Intersect.Server.Entities.BossSystem;
 internal sealed class BossAiExecutor
 {
     private readonly BossAiRuntimeState _runtime = new();
+    private readonly BossAiDecisionSelector _selector = new();
 
     public bool TryExecute(Npc npc, long now)
     {
@@ -39,16 +41,26 @@ internal sealed class BossAiExecutor
         }
 
         var target = npc.Target;
-        var candidates = BuildCandidates(npc, profile, target, now);
-        if (candidates.Count == 0)
+        var bossId = npc.Descriptor.Id;
+        var debugEnabled = BossAiDebugSettings.IsEnabled(bossId);
+        var selection = BuildCandidates(npc, profile, target, now, debugEnabled);
+        if (selection.Candidates.Count == 0 || selection.Selected == null)
         {
             return TryFallbackAction(npc, target);
         }
 
-        var selected = candidates
-            .OrderByDescending(c => c.Priority)
-            .ThenBy(c => c.Index)
-            .First();
+        var selected = selection.Selected;
+        if (!string.Equals(_runtime.CurrentPhaseId, selected.PhaseId, StringComparison.Ordinal))
+        {
+            LogDebug(
+                debugEnabled,
+                npc,
+                "Cambio de fase detectado: '{PreviousPhase}' -> '{NextPhase}'.",
+                string.IsNullOrWhiteSpace(_runtime.CurrentPhaseId) ? "<none>" : _runtime.CurrentPhaseId,
+                selected.PhaseId
+            );
+            _runtime.CurrentPhaseId = selected.PhaseId;
+        }
 
         if (ShouldTelegraphAction(selected.Action, profile) &&
             TryStartTelegraph(npc, selected.Action, target, profile, now))
@@ -84,77 +96,37 @@ internal sealed class BossAiExecutor
         return true;
     }
 
-    private List<ActionCandidate> BuildCandidates(Npc npc, BossBehaviorProfile profile, Entity target, long now)
+    private BossAiSelectionResult BuildCandidates(Npc npc, BossBehaviorProfile profile, Entity target, long now, bool debugEnabled)
     {
-        var candidates = new List<ActionCandidate>();
         var healthPercent = GetHealthPercent(npc);
-        var runningIndex = 0;
-
-        foreach (var phase in profile.Phases.OrderByDescending(p => p.Priority))
-        {
-            if (healthPercent < phase.MinimumHealthPercent || healthPercent > phase.MaximumHealthPercent)
+        return _selector.BuildCandidates(
+            profile,
+            healthPercent,
+            now,
+            (phaseId, trigger, triggerIndex) =>
             {
-                continue;
-            }
-
-            foreach (var action in phase.Actions)
-            {
-                if (!CanUseAction(action, profile, now) || IsActionOnCooldown(action, now))
-                {
-                    runningIndex++;
-                    continue;
-                }
-
-                candidates.Add(new ActionCandidate(action, phase.Priority + action.Priority, runningIndex++, 0, string.Empty));
-            }
-
-            for (var triggerIndex = 0; triggerIndex < phase.Triggers.Count; triggerIndex++)
-            {
-                var trigger = phase.Triggers[triggerIndex];
-                var triggerCooldownKey = $"{phase.Id}:{triggerIndex}";
+                var triggerCooldownKey = $"{phaseId}:{triggerIndex}";
                 if (trigger.CooldownSeconds > 0 &&
                     _runtime.TriggerCooldowns.TryGetValue(triggerCooldownKey, out var triggerCooldownUntil) &&
                     triggerCooldownUntil > now)
                 {
-                    runningIndex += trigger.Actions.Count;
-                    continue;
+                    LogDebug(debugEnabled, npc, "Trigger evaluado idx={TriggerIndex}: en cooldown hasta {CooldownUntil}.", triggerIndex, triggerCooldownUntil);
+                    return false;
                 }
 
-                if (!IsTriggerActive(npc, trigger, target, now))
-                {
-                    runningIndex += trigger.Actions.Count;
-                    continue;
-                }
-
-                foreach (var action in trigger.Actions)
-                {
-                    if (!CanUseAction(action, profile, now) || IsActionOnCooldown(action, now))
-                    {
-                        runningIndex++;
-                        continue;
-                    }
-
-                    var priority = phase.Priority + trigger.Priority + action.Priority;
-                    candidates.Add(
-                        new ActionCandidate(
-                            action,
-                            priority,
-                            runningIndex++,
-                            trigger.CooldownSeconds * 1000,
-                            triggerCooldownKey
-                        )
-                    );
-                }
-            }
-        }
-
-        return candidates;
+                return IsTriggerActive(npc, trigger, target, now, debugEnabled, triggerIndex);
+            },
+            action => CanUseAction(action, profile, now),
+            action => IsActionOnCooldown(action, now),
+            message => LogDebug(debugEnabled, npc, message)
+        );
     }
 
-    private bool IsTriggerActive(Npc npc, BossTrigger trigger, Entity target, long now)
+    private bool IsTriggerActive(Npc npc, BossTrigger trigger, Entity target, long now, bool debugEnabled, int triggerIndex)
     {
         if (!EvaluateLegacyTriggerCondition(npc, trigger, target, now))
         {
+            LogDebug(debugEnabled, npc, "Trigger evaluado idx={TriggerIndex}: condición legacy no cumplida.", triggerIndex);
             return false;
         }
 
@@ -162,10 +134,12 @@ internal sealed class BossAiExecutor
         {
             if (!EvaluateCondition(npc, condition, target, now))
             {
+                LogDebug(debugEnabled, npc, "Trigger evaluado idx={TriggerIndex}: condición {ConditionType} no cumplida.", triggerIndex, condition.Type);
                 return false;
             }
         }
 
+        LogDebug(debugEnabled, npc, "Trigger evaluado idx={TriggerIndex}: activo.", triggerIndex);
         return true;
     }
 
@@ -502,11 +476,21 @@ internal sealed class BossAiExecutor
         return (int)Math.Clamp(entity.GetVital(Vital.Health) * 100 / maxHealth, 0, 100);
     }
 
-    private readonly record struct ActionCandidate(
-        BossAction Action,
-        int Priority,
-        int Index,
-        int TriggerCooldownMs,
-        string TriggerCooldownKey
-    );
+    private static void LogDebug(bool enabled, Npc npc, string message, params object[] args)
+    {
+        if (!enabled)
+        {
+            return;
+        }
+
+        var logArgs = new object[args.Length + 2];
+        logArgs[0] = npc.Name;
+        logArgs[1] = npc.Descriptor.Id;
+        Array.Copy(args, 0, logArgs, 2, args.Length);
+
+        ApplicationContext.Context.Value?.Logger.LogDebug(
+            "[BossAI:{BossName}/{BossId}] " + message,
+            logArgs
+        );
+    }
 }

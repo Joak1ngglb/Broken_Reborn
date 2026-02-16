@@ -24,6 +24,8 @@ internal sealed class BossAiRuntimeState
 
     public int ConsecutiveControlCasts { get; set; }
 
+    public string CurrentPhaseId { get; set; } = string.Empty;
+
     public PendingBossAction? PendingAction { get; set; }
 
     public ConcurrentDictionary<string, long> ActionCooldowns { get; } = new();
