@@ -2,6 +2,7 @@ using Intersect.Client.Core;
 using Intersect.Client.Entities;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
@@ -15,6 +16,7 @@ using Intersect.Client.Interface;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Enums;
+using Intersect.Framework.Core.Combat;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 
@@ -198,6 +200,8 @@ public partial class CharacterWindow : Window
     }
 
     private string FormatEffectValue(int value) => value == 0 ? "0" : $"{value}%";
+
+    private static string FormatScore(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
     // -------------------------
     // Init
@@ -835,10 +839,42 @@ public partial class CharacterWindow : Window
         mDamageBuffRow.SetValueText(Strings.Character.FlatDamage.ToString(FormatEffectValue(_flatDamage)));
         mCureBuffRow.SetValueText(Strings.Character.FlatCures.ToString(FormatEffectValue(_flatCures)));
 
-        mAccuracyRow.SetText(Strings.ItemDescription.BonusEffects[(int)ItemEffect.Accuracy], FormatEffectValue(_accuracy));
-        mEvasionRow.SetText(Strings.ItemDescription.BonusEffects[(int)ItemEffect.Evasion], FormatEffectValue(_evasion));
-        mCritBonusRow.SetText(Strings.ItemDescription.BonusEffects[(int)ItemEffect.CriticalChance], FormatEffectValue(_critBonus));
-        mAntiCritRow.SetText(Strings.ItemDescription.BonusEffects[(int)ItemEffect.AntiCritChance], FormatEffectValue(_antiCrit));
+        var agility = player?.Stat[(int)Stat.Agility] ?? 0;
+        var attack = player?.Stat[(int)Stat.Attack] ?? 0;
+        var defense = player?.Stat[(int)Stat.Defense] ?? 0;
+
+        var accuracyScore = CombatFormulaCalculator.CalculateAccuracyScore(agility, attack, _accuracy);
+        var evasionScore = CombatFormulaCalculator.CalculateEvasionScore(agility, defense, _evasion);
+
+        var baseCritChance = player?.GetBaseCriticalChance() ?? 0;
+        var agilityCritContribution = CombatFormulaCalculator.CalculateAgilityCriticalContribution(
+            agility,
+            Options.Instance.Combat.AgilityPerCritChance
+        );
+        var effectiveCritChance = CombatFormulaCalculator.CalculateCriticalChance(
+            baseCritChance,
+            agility,
+            Options.Instance.Combat.AgilityPerCritChance,
+            _critBonus,
+            antiCritChance: 0
+        );
+
+        mAccuracyRow.SetText(
+            $"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.Accuracy]} Score",
+            $"{FormatScore(accuracyScore)} (Agi {FormatScore(agility * 0.5d)} + Atk {FormatScore(attack * 0.3d)} + Eq {_accuracy})"
+        );
+        mEvasionRow.SetText(
+            $"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.Evasion]} Score",
+            $"{FormatScore(evasionScore)} (Agi {FormatScore(agility * 0.7d)} + Def {FormatScore(defense * 0.2d)} + Eq {_evasion})"
+        );
+        mCritBonusRow.SetText(
+            "Crítico efectivo (sin anti-crit del objetivo)",
+            $"{effectiveCritChance}% (Base {baseCritChance} + Agi {agilityCritContribution} + Eq {_critBonus})"
+        );
+        mAntiCritRow.SetText(
+            "Anti-crit propio (mitiga crítico recibido)",
+            $"{_antiCrit}%"
+        );
         mArmorPenetrationRow.SetText(Strings.ItemDescription.BonusEffects[(int)ItemEffect.ArmorPenetration], FormatEffectValue(_armorPenetration));
         mDamageReductionRow.SetText(Strings.ItemDescription.BonusEffects[(int)ItemEffect.DamageReduction], FormatEffectValue(_damageReduction));
         mDamageReflectRow.SetText(Strings.ItemDescription.BonusEffects[(int)ItemEffect.DamageReflect], FormatEffectValue(_damageReflect));
