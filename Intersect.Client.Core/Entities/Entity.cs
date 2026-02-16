@@ -1761,10 +1761,10 @@ public partial class Entity : IEntity
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase
             ).Trim();
 
-            // Aplicar cores de BOSS
-            textColor = new Color(255, 255, 0, 0);        // Vermelho puro
-            backgroundColor = new Color(255, 0, 0, 0);    // Preto sólido
-            borderColor = new Color(255, 0, 0, 0);        // Borda preta
+            // Aplicar cores de BOSS (ARGB)
+            textColor = new Color(255, 255, 0, 255);      // Amarelo sólido (ARGB: 255, 255, 0, 255)
+            borderColor = new Color(0, 0, 0, 255);        // Preto sólido (ARGB: 0, 0, 0, 255)
+            backgroundColor = new Color(0, 0, 0, 255);    // Preto sólido (ARGB: 0, 0, 0, 255)
         }
 
         if (cachedNameColor == null || lastPlayerLevel != player.Level)
