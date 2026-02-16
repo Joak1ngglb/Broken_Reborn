@@ -43,6 +43,8 @@ public partial class CommandInstance
 
     public EventPage Page;
 
+    public int PageIndex;
+
     public EventResponse WaitingForResponse = EventResponse.None;
 
     public Guid WaitingForRoute;
@@ -51,24 +53,60 @@ public partial class CommandInstance
 
     public EventCommand WaitingOnCommand = null;
 
-    public CommandInstance(EventPage page, int listIndex = 0)
+    public CommandInstance(EventPage page, int listIndex = 0, int pageIndex = -1)
     {
         Page = page;
-        CommandList = page.CommandLists.Values.First();
+        PageIndex = pageIndex;
+
+        if (page.CommandLists?.Any() == true)
+        {
+            var firstList = page.CommandLists.First();
+            CommandListId = firstList.Key;
+            CommandList = firstList.Value;
+        }
+
         CommandIndex = listIndex;
     }
 
-    public CommandInstance(EventPage page, List<EventCommand> commandList, int listIndex = 0)
+    public CommandInstance(
+        EventPage page,
+        List<EventCommand> commandList,
+        int listIndex = 0,
+        int pageIndex = -1,
+        Guid commandListId = default
+    )
     {
         Page = page;
+        PageIndex = pageIndex;
         CommandList = commandList;
+        CommandListId = commandListId;
+
+        if (CommandListId == Guid.Empty && commandList != null && page.CommandLists != null)
+        {
+            foreach (var (listId, commands) in page.CommandLists)
+            {
+                if (commands == commandList)
+                {
+                    CommandListId = listId;
+                    break;
+                }
+            }
+        }
+
         CommandIndex = listIndex;
     }
 
-    public CommandInstance(EventPage page, Guid commandListId, int listIndex = 0)
+    public CommandInstance(EventPage page, Guid commandListId, int listIndex = 0, int pageIndex = -1)
     {
         Page = page;
-        CommandList = page.CommandLists[commandListId];
+        PageIndex = pageIndex;
+        CommandListId = commandListId;
+
+        if (page.CommandLists != null && page.CommandLists.TryGetValue(commandListId, out var commandList))
+        {
+            CommandList = commandList;
+        }
+
         CommandIndex = listIndex;
     }
 
@@ -78,7 +116,9 @@ public partial class CommandInstance
         set
         {
             commandIndex = value;
-            Command = commandIndex >= 0 && commandIndex < CommandList.Count ? CommandList[commandIndex] : null;
+            Command = CommandList != null && commandIndex >= 0 && commandIndex < CommandList.Count
+                ? CommandList[commandIndex]
+                : null;
         }
     }
 

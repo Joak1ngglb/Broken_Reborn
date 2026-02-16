@@ -32,37 +32,28 @@ namespace Intersect.Server.Entities.Events;
 
 public static partial class CommandProcessing
 {
-
-    private static int ResolvePageIndex(Event instance, EventPage page) =>
-        instance.Descriptor.Pages?.FindIndex(candidate => ReferenceEquals(candidate, page)) ?? -1;
-
-    private static Guid ResolveListId(EventPage page, List<EventCommand> commandList)
-    {
-        if (page.CommandLists == null)
-        {
-            return Guid.Empty;
-        }
-
-        foreach (var (listId, commands) in page.CommandLists)
-        {
-            if (ReferenceEquals(commands, commandList))
-            {
-                return listId;
-            }
-        }
-
-        return Guid.Empty;
-    }
-
-    private static LocalizationRequestEntry BuildEventLocalizationRequest(
+    private static LocalizationRequestEntry? BuildEventLocalizationRequest(
         Event instance,
         CommandInstance stackInfo,
         Func<int, Guid, int, string> fieldFactory
     )
     {
-        var pageIndex = ResolvePageIndex(instance, stackInfo.Page);
-        var listId = ResolveListId(stackInfo.Page, stackInfo.CommandList);
+        var pageIndex = stackInfo.PageIndex;
+        var listId = stackInfo.CommandListId;
         var commandIndex = stackInfo.CommandIndex;
+
+        if (pageIndex < 0 || listId == Guid.Empty)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Unable to build event localization key because command metadata is invalid. eventId={EventId}, commandIndex={CommandIndex}, pageIndex={PageIndex}, listId={ListId}",
+                instance.Descriptor.Id,
+                commandIndex,
+                pageIndex,
+                listId
+            );
+
+            return null;
+        }
 
         return new LocalizationRequestEntry(
             LocalizationEntityTypes.Event,
@@ -127,13 +118,17 @@ public static partial class CommandProcessing
             stackInfo,
             EventFieldKey.OptionsText
         );
-        var optionLocalizationRequests = new List<LocalizationRequestEntry>(4)
-        {
-            BuildEventLocalizationRequest(instance, stackInfo, (page, list, commandIndex) => EventFieldKey.Option(page, list, commandIndex, 0)),
-            BuildEventLocalizationRequest(instance, stackInfo, (page, list, commandIndex) => EventFieldKey.Option(page, list, commandIndex, 1)),
-            BuildEventLocalizationRequest(instance, stackInfo, (page, list, commandIndex) => EventFieldKey.Option(page, list, commandIndex, 2)),
-            BuildEventLocalizationRequest(instance, stackInfo, (page, list, commandIndex) => EventFieldKey.Option(page, list, commandIndex, 3)),
-        };
+        var optionLocalizationRequests = Enumerable.Range(0, 4)
+            .Select(
+                optionIndex => BuildEventLocalizationRequest(
+                    instance,
+                    stackInfo,
+                    (page, list, commandIndex) => EventFieldKey.Option(page, list, commandIndex, optionIndex)
+                )
+            )
+             .Where(entry => entry != null)
+            .Select(entry => entry!)
+            .ToList();
         PacketSender.SendEventDialog(
             player,
             txt,
@@ -144,7 +139,7 @@ public static partial class CommandProcessing
             command.Face,
             instance.PageInstance.Id,
             promptLocalizationRequest,
-            optionLocalizationRequests
+            optionLocalizationRequests.Count > 0 ? optionLocalizationRequests : null
         );
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
         stackInfo.WaitingOnCommand = command;
@@ -192,7 +187,7 @@ public static partial class CommandProcessing
         }
         else if (type == -1)
         {
-            var tmpStack = new CommandInstance(stackInfo.Page, command.BranchIds[1]);
+            var tmpStack = new CommandInstance(stackInfo.Page, command.BranchIds[1], pageIndex: stackInfo.PageIndex);
             callStack.Push(tmpStack);
             return;
         }
@@ -236,15 +231,18 @@ public static partial class CommandProcessing
             stackInfo,
             EventFieldKey.ChatboxText
         );
-        var localizedText = LocalizationRepository.Default.Get(
-            promptLocalizationRequest.EntityType,
-            promptLocalizationRequest.EntityId,
-            promptLocalizationRequest.Field,
-            Options.Instance.Language
-        );
-        if (!string.IsNullOrWhiteSpace(localizedText))
+        if (promptLocalizationRequest != null)
         {
-            txt = ParseEventText(localizedText, player, instance);
+            var localizedText = LocalizationRepository.Default.Get(
+                promptLocalizationRequest.EntityType,
+                promptLocalizationRequest.EntityId,
+                promptLocalizationRequest.Field,
+                Options.Instance.Language
+            );
+            if (!string.IsNullOrWhiteSpace(localizedText))
+            {
+                txt = ParseEventText(localizedText, player, instance);
+            }
         }
 
         var color = Color.FromName(command.Color, Strings.Colors.Presets);
@@ -370,11 +368,9 @@ public static partial class CommandProcessing
 
         if (newCommandList != null)
         {
-            var tmpStack = new CommandInstance(stackInfo.Page)
-            {
-                CommandList = newCommandList,
-                CommandIndex = 0,
-            };
+            var newCommandListId = success ? command.BranchIds[0] : command.BranchIds[1];
+            var tmpStack = new CommandInstance(stackInfo.Page, newCommandList, pageIndex: stackInfo.PageIndex, commandListId: newCommandListId);
+            tmpStack.CommandIndex = 0;
 
             callStack.Push(tmpStack);
         }
@@ -414,7 +410,7 @@ public static partial class CommandProcessing
     )
     {
         //Recursively search through commands for the label, and create a brand new call stack based on where that label is located.
-        var newCallStack = LoadLabelCallstack(command.Label, stackInfo.Page);
+        var newCallStack = LoadLabelCallstack(command.Label, stackInfo.Page, stackInfo.PageIndex);
         if (newCallStack != null)
         {
             newCallStack.Reverse();
@@ -450,7 +446,7 @@ public static partial class CommandProcessing
         {
             if (Conditions.CanSpawnPage(page, player, instance))
             {
-                var commonEventStack = new CommandInstance(page);
+                var commonEventStack = new CommandInstance(page, pageIndex: commonEvent.Pages?.IndexOf(page) ?? -1);
                 callStack.Push(commonEventStack);
             }
         }
@@ -628,11 +624,9 @@ public static partial class CommandProcessing
             newCommandList = stackInfo.Page.CommandLists[command.BranchIds[1]];
         }
 
-        var tmpStack = new CommandInstance(stackInfo.Page)
-        {
-            CommandList = newCommandList,
-            CommandIndex = 0,
-        };
+        var newCommandListId = success ? command.BranchIds[0] : command.BranchIds[1];
+        var tmpStack = new CommandInstance(stackInfo.Page, newCommandList, pageIndex: stackInfo.PageIndex, commandListId: newCommandListId);
+        tmpStack.CommandIndex = 0;
 
         callStack.Push(tmpStack);
     }
@@ -705,11 +699,9 @@ public static partial class CommandProcessing
             newCommandList = stackInfo.Page.CommandLists[command.BranchIds[1]];
         }
 
-        var tmpStack = new CommandInstance(stackInfo.Page)
-        {
-            CommandList = newCommandList,
-            CommandIndex = 0,
-        };
+        var newCommandListId = success ? command.BranchIds[0] : command.BranchIds[1];
+        var tmpStack = new CommandInstance(stackInfo.Page, newCommandList, pageIndex: stackInfo.PageIndex, commandListId: newCommandListId);
+        tmpStack.CommandIndex = 0;
 
         callStack.Push(tmpStack);
     }
@@ -1520,11 +1512,9 @@ public static partial class CommandProcessing
             newCommandList = stackInfo.Page.CommandLists[command.BranchIds[1]];
         }
 
-        var tmpStack = new CommandInstance(stackInfo.Page)
-        {
-            CommandList = newCommandList,
-            CommandIndex = 0,
-        };
+        var newCommandListId = success ? command.BranchIds[0] : command.BranchIds[1];
+        var tmpStack = new CommandInstance(stackInfo.Page, newCommandList, pageIndex: stackInfo.PageIndex, commandListId: newCommandListId);
+        tmpStack.CommandIndex = 0;
 
         callStack.Push(tmpStack);
     }
@@ -1600,11 +1590,9 @@ public static partial class CommandProcessing
             newCommandList = stackInfo.Page.CommandLists[command.BranchIds[1]];
         }
 
-        var tmpStack = new CommandInstance(stackInfo.Page)
-        {
-            CommandList = newCommandList,
-            CommandIndex = 0,
-        };
+        var newCommandListId = success ? command.BranchIds[0] : command.BranchIds[1];
+        var tmpStack = new CommandInstance(stackInfo.Page, newCommandList, pageIndex: stackInfo.PageIndex, commandListId: newCommandListId);
+        tmpStack.CommandIndex = 0;
 
         callStack.Push(tmpStack);
     }
@@ -1659,11 +1647,9 @@ public static partial class CommandProcessing
             newCommandList = stackInfo.Page.CommandLists[command.BranchIds[1]];
         }
 
-        var tmpStack = new CommandInstance(stackInfo.Page)
-        {
-            CommandList = newCommandList,
-            CommandIndex = 0,
-        };
+        var newCommandListId = success ? command.BranchIds[0] : command.BranchIds[1];
+        var tmpStack = new CommandInstance(stackInfo.Page, newCommandList, pageIndex: stackInfo.PageIndex, commandListId: newCommandListId);
+        tmpStack.CommandIndex = 0;
 
         callStack.Push(tmpStack);
     }
@@ -1796,10 +1782,10 @@ public static partial class CommandProcessing
         }
     }
 
-    private static Stack<CommandInstance> LoadLabelCallstack(string label, EventPage currentPage)
+    private static Stack<CommandInstance> LoadLabelCallstack(string label, EventPage currentPage, int currentPageIndex)
     {
         var newStack = new Stack<CommandInstance>();
-        newStack.Push(new CommandInstance(currentPage)); //Start from the top
+        newStack.Push(new CommandInstance(currentPage, pageIndex: currentPageIndex)); //Start from the top
         if (FindLabelResursive(newStack, currentPage, newStack.Peek().CommandList, label))
         {
             return newStack;
@@ -1862,9 +1848,8 @@ public static partial class CommandProcessing
                 {
                     if (page.CommandLists.ContainsKey(branch))
                     {
-                        var tmpStack = new CommandInstance(page)
+                        var tmpStack = new CommandInstance(page, page.CommandLists[branch], pageIndex: stack.Peek().PageIndex, commandListId: branch)
                         {
-                            CommandList = page.CommandLists[branch],
                             CommandIndex = 0,
                         };
 

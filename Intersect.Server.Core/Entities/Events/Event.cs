@@ -275,7 +275,7 @@ public partial class Event
                 {
                     if (PageInstance.Trigger == EventTrigger.Autorun && WaitTimer < Timing.Global.Milliseconds)
                     {
-                        var newStack = new CommandInstance(PageInstance.MyPage);
+                        var newStack = new CommandInstance(PageInstance.MyPage, pageIndex: PageIndex);
                         CallStack.Push(newStack);
                     }
                 }
