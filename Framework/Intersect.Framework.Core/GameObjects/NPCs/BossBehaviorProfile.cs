@@ -48,6 +48,9 @@ public enum BossTargetSelectionType
     HighestThreat = 0,
     Tank = 1,
     Healer = 2,
+    LowestThreat = 3,
+    LowestHealth = 4,
+    LowestHealthPercent = 5,
 }
 
 public class BossBehaviorProfile

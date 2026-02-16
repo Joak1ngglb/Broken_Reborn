@@ -270,8 +270,15 @@ internal sealed class BossAiExecutor
     private static bool TrySelectTarget(Npc npc, BossTargetSelectionType selection, out Entity selected)
     {
         selected = null;
-        var candidates = npc.DamageMap.Keys
-            .Where(entity => entity != null && !entity.IsDisposed && !entity.IsDead && npc.CanTarget(entity))
+        var candidates = npc.DamageMap
+            .Where(entry =>
+                entry.Key != null &&
+                !entry.Key.IsDisposed &&
+                !entry.Key.IsDead &&
+                entry.Key.MapInstanceId == npc.MapInstanceId &&
+                npc.CanTarget(entry.Key)
+            )
+            .Select(entry => (Entity: entry.Key, Threat: entry.Value))
             .ToArray();
 
         if (candidates.Length == 0)
@@ -282,8 +289,27 @@ internal sealed class BossAiExecutor
         selected = selection switch
         {
             BossTargetSelectionType.HighestThreat => npc.DamageMapHighest,
-            BossTargetSelectionType.Tank => candidates.OrderByDescending(entity => entity.GetMaxVital(Vital.Health)).FirstOrDefault(),
-            BossTargetSelectionType.Healer => candidates.OrderByDescending(entity => entity.Stat[(int)Stat.Intelligence].Value()).FirstOrDefault(),
+            BossTargetSelectionType.Tank => candidates
+                .OrderByDescending(candidate => candidate.Entity.GetMaxVital(Vital.Health))
+                .Select(candidate => candidate.Entity)
+                .FirstOrDefault(),
+            BossTargetSelectionType.Healer => candidates
+                .OrderByDescending(candidate => candidate.Entity.Stat[(int)Stat.Intelligence].Value())
+                .Select(candidate => candidate.Entity)
+                .FirstOrDefault(),
+            BossTargetSelectionType.LowestThreat => candidates
+                .OrderBy(candidate => candidate.Threat)
+                .Select(candidate => candidate.Entity)
+                .FirstOrDefault(),
+            BossTargetSelectionType.LowestHealth => candidates
+                .OrderBy(candidate => candidate.Entity.GetVital(Vital.Health))
+                .Select(candidate => candidate.Entity)
+                .FirstOrDefault(),
+            BossTargetSelectionType.LowestHealthPercent => candidates
+                .OrderBy(candidate => GetHealthPercent(candidate.Entity))
+                .ThenBy(candidate => candidate.Entity.GetVital(Vital.Health))
+                .Select(candidate => candidate.Entity)
+                .FirstOrDefault(),
             _ => npc.DamageMapHighest,
         };
 
@@ -292,7 +318,7 @@ internal sealed class BossAiExecutor
             return true;
         }
 
-        selected = candidates[0];
+        selected = candidates[0].Entity;
         return true;
     }
 
