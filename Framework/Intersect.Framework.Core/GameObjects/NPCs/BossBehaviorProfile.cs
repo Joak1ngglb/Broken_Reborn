@@ -1,3 +1,5 @@
+using Intersect.Enums;
+
 namespace Intersect.Framework.Core.GameObjects.NPCs;
 
 public enum BossTriggerConditionType
@@ -14,6 +16,38 @@ public enum BossActionType
     SummonAdds = 2,
     ChangeTarget = 3,
     Enrage = 4,
+    CastSpellFromList = 5,
+    SetInternalState = 6,
+}
+
+public enum BossConditionType
+{
+    SelfHealthPercent = 0,
+    TargetHealthPercent = 1,
+    StatusPresent = 2,
+    DistanceToTarget = 3,
+    TimeSinceLastCastMilliseconds = 4,
+    InternalState = 5,
+}
+
+public enum BossComparisonType
+{
+    LessOrEqual = 0,
+    GreaterOrEqual = 1,
+    BetweenInclusive = 2,
+}
+
+public enum BossStatusTargetType
+{
+    Self = 0,
+    CurrentTarget = 1,
+}
+
+public enum BossTargetSelectionType
+{
+    HighestThreat = 0,
+    Tank = 1,
+    Healer = 2,
 }
 
 public class BossBehaviorProfile
@@ -21,6 +55,10 @@ public class BossBehaviorProfile
     public const int LatestVersion = 1;
 
     public int Version { get; set; } = LatestVersion;
+
+    public int EvaluationIntervalMs { get; set; } = 250;
+
+    public int GlobalCooldownMs { get; set; } = 1000;
 
     public List<BossPhase> Phases { get; set; } = [];
 }
@@ -52,6 +90,10 @@ public class BossTrigger
 
     public int CooldownSeconds { get; set; }
 
+    public int Priority { get; set; }
+
+    public List<BossCondition> Conditions { get; set; } = [];
+
     public List<BossAction> Actions { get; set; } = [];
 }
 
@@ -60,6 +102,8 @@ public class BossAction
     public BossActionType Action { get; set; } = BossActionType.CastSpell;
 
     public Guid SpellId { get; set; } = Guid.Empty;
+
+    public List<Guid> SpellIds { get; set; } = [];
 
     public int DestinationX { get; set; }
 
@@ -72,4 +116,33 @@ public class BossAction
     public bool TargetHighestThreat { get; set; } = true;
 
     public int EnragePercentBonus { get; set; }
+
+    public BossTargetSelectionType TargetSelection { get; set; } = BossTargetSelectionType.HighestThreat;
+
+    public string InternalStateKey { get; set; } = string.Empty;
+
+    public bool InternalStateValue { get; set; } = true;
+
+    public int Priority { get; set; }
+
+    public int CooldownMs { get; set; }
+}
+
+public class BossCondition
+{
+    public BossConditionType Type { get; set; } = BossConditionType.SelfHealthPercent;
+
+    public BossComparisonType Comparison { get; set; } = BossComparisonType.LessOrEqual;
+
+    public int Value { get; set; }
+
+    public int MinimumValue { get; set; }
+
+    public int MaximumValue { get; set; }
+
+    public SpellEffect StatusEffect { get; set; } = SpellEffect.None;
+
+    public BossStatusTargetType StatusTarget { get; set; } = BossStatusTargetType.Self;
+
+    public string InternalStateKey { get; set; } = string.Empty;
 }
