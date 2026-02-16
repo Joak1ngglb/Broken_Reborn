@@ -33,6 +33,16 @@ public partial class KeyValueRowComponent : ComponentBase
     /// <param name="color">The <see cref="Color"/> to draw the value text in.</param>
     public void SetValueTextColor(Color color) => _valueLabel.SetTextColor(color, ComponentState.Normal);
 
+    public void SetKeyText(string key) => _keyLabel.SetText(key);
+
+    public void SetValueText(string value) => _valueLabel.SetText(value);
+
+    public void SetText(string key, string value)
+    {
+        SetKeyText(key);
+        SetValueText(value);
+    }
+
     public void SetIcon(IGameTexture? texture)
     {
         _icon.Texture = texture;
