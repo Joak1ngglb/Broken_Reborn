@@ -22,6 +22,7 @@ using Intersect.Config.Guilds;
 using Intersect.Configuration;
 using Intersect.Core;
 using Intersect.Enums;
+using Intersect.Framework.Core.Combat;
 using Intersect.Extensions;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -2725,12 +2726,13 @@ public partial class Player : Entity, IPlayer
 
     public int CalculateCriticalChance(int baseCritChance)
     {
-        var agilityPerCrit = Math.Max(1, Options.Instance.Combat.AgilityPerCritChance);
-        var agilityContribution = Stat[(int)Enums.Stat.Agility] / agilityPerCrit;
-        var equipmentBonus = GetEquipmentEffect(ItemEffect.CriticalChance);
-
-        var total = baseCritChance + agilityContribution + equipmentBonus;
-        return Math.Max(0, total);
+        return CombatFormulaCalculator.CalculateCriticalChance(
+            baseCritChance,
+            Stat[(int)Enums.Stat.Agility],
+            Options.Instance.Combat.AgilityPerCritChance,
+            GetEquipmentEffect(ItemEffect.CriticalChance),
+            antiCritChance: 0
+        );
     }
 
 
