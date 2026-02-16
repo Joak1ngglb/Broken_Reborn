@@ -25,6 +25,82 @@ public static partial class NpcExperienceCalculator
             return 0;
         }
 
+        var monotonicRangeLimit = Math.Max(4, Math.Max(3, experienceOptions.LowLevelCapMaxLevel + 1));
+
+        if (level <= monotonicRangeLimit)
+        {
+            var runningMaximum = CalculateExperienceWithoutMonotonicity(1, experienceOptions);
+
+            if (level == 1)
+            {
+                return runningMaximum;
+            }
+
+            for (var currentLevel = 2; currentLevel <= level; currentLevel++)
+            {
+                var currentExperience = CalculateExperienceWithoutMonotonicity(currentLevel, experienceOptions);
+                runningMaximum = Math.Max(runningMaximum, currentExperience);
+            }
+
+            return runningMaximum;
+        }
+
+        return CalculateExperienceWithoutMonotonicity(level, experienceOptions);
+    }
+
+    private static long CalculateExperienceWithoutMonotonicity(int level, NpcExperienceOptions experienceOptions)
+    {
+        if (level <= 0)
+        {
+            return 0;
+        }
+
+        var minimumExperience = Math.Max(1, experienceOptions.MinimumNpcExperience);
+
+        if (level == 1)
+        {
+            return Math.Max(minimumExperience, 9);
+        }
+
+        if (level == 2)
+        {
+            return Math.Max(minimumExperience, 12);
+        }
+
+        if (level == 3)
+        {
+            return Math.Max(minimumExperience, 18);
+        }
+
+        var cubicExperience = CalculateCubicExperience(level, experienceOptions, minimumExperience);
+
+        var lowLevelCapMaxLevel = Math.Max(0, experienceOptions.LowLevelCapMaxLevel);
+        var lowLevelCapPerLevel = Math.Max(0, experienceOptions.LowLevelCapPerLevel);
+
+        if (lowLevelCapMaxLevel <= 0 || lowLevelCapPerLevel <= 0 || level > lowLevelCapMaxLevel)
+        {
+            return cubicExperience;
+        }
+
+        var cappedExperience = Math.Min(cubicExperience, Math.Max(minimumExperience, level * lowLevelCapPerLevel));
+        var transitionStartLevel = Math.Max(4, lowLevelCapMaxLevel - 1);
+
+        if (level < transitionStartLevel)
+        {
+            return cappedExperience;
+        }
+
+        var transitionSteps = Math.Max(1, lowLevelCapMaxLevel - transitionStartLevel);
+        var transitionProgress = Math.Clamp((double)(level - transitionStartLevel) / transitionSteps, 0d, 1d);
+        var smoothProgress = transitionProgress * transitionProgress * (3d - 2d * transitionProgress); // SmoothStep
+
+        var blendedExperience = cappedExperience + (cubicExperience - cappedExperience) * smoothProgress;
+
+        return (long)Math.Max(minimumExperience, Math.Round(blendedExperience));
+    }
+
+    private static long CalculateCubicExperience(int level, NpcExperienceOptions experienceOptions, int minimumExperience)
+    {
         // Cálculo da experiência base
         var levelCubed = Math.Pow(level, 3);
         var levelSquared = Math.Pow(level, 2);
@@ -38,7 +114,6 @@ public static partial class NpcExperienceCalculator
         }
 
         var experience = baseExp / (2.4 * level * experienceFactor);
-        var minimumExperience = Math.Max(1, experienceOptions.MinimumNpcExperience);
 
         // Garantir que a XP seja pelo menos 1
         return (long)Math.Max(minimumExperience, Math.Round(experience));
