@@ -6,6 +6,7 @@ using Intersect.Client.General;
 using Intersect.Network.Packets.Localization;
 using Intersect.Client.Networking;
 using Intersect.Core;
+using Microsoft.Extensions.Logging;
 
 namespace Intersect.Client.Localization;
 
