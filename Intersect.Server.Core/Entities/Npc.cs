@@ -266,6 +266,11 @@ public partial class Npc : Entity
                 {
                     PacketSender.SendUnlockedBestiaryEntries(player);
                 }
+
+                if (BossManager.Instance.IsBoss(Id))
+                {
+                    BossManager.Instance.OnBossKilled(Id, player).GetAwaiter().GetResult();
+                }
             }
 
 

@@ -12,6 +12,7 @@ using Intersect.Server.Plugins;
 using Intersect.Plugins.Interfaces;
 using Intersect.Rsa;
 using Intersect.Server.Database.PlayerData.Players;
+using Intersect.Server.Entities.BossSystem;
 using Microsoft.Extensions.Logging;
 
 namespace Intersect.Server.Core;
@@ -110,6 +111,9 @@ internal partial class ServerContext : ApplicationContext<ServerContext, ServerC
             // Except this line, this line is fine.
             ApplicationContext.Context.Value?.Logger.LogInformation("Disposing network..." + $" ({stopwatch.ElapsedMilliseconds}ms)");
             Network.Dispose();
+
+            ApplicationContext.Context.Value?.Logger.LogInformation("Shutting down boss manager..." + $" ({stopwatch.ElapsedMilliseconds}ms)");
+            BossManager.Instance.Shutdown();
 
             ApplicationContext.Context.Value?.Logger.LogInformation("Saving updated server variable values");
             DbInterface.SaveUpdatedServerVariables();

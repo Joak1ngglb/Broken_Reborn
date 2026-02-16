@@ -286,7 +286,6 @@ internal sealed partial class LogicService
                     }
 
                     Time.Update();
-                    BossManager.Update(startTime);
                     swCps++;
 
                     var endTime = Timing.Global.Milliseconds;

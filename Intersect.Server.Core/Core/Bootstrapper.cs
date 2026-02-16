@@ -307,7 +307,7 @@ internal static class Bootstrapper
 
         Time.Update();
 
-        BossManager.InitializeCatalog();
+        BossManager.Instance.Initialize();
 
         Console.WriteLine();
         Console.WriteLine(Strings.Commandoutput.ServerInfo);
