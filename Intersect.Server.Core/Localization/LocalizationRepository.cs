@@ -5,9 +5,11 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using Intersect.Core;
 using Intersect.Framework.Core.Localization;
 using Intersect.Server.Core;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 
 namespace Intersect.Server.Localization;
 
@@ -308,6 +310,13 @@ public sealed class LocalizationRepository
 
         if (string.IsNullOrWhiteSpace(currentHash))
         {
+            ApplicationContext.Context.Value?.Logger.LogDebug(
+                "Localization source not found for {EntityType}/{EntityId}/{Field}.",
+                entityType,
+                entityId,
+                field
+            );
+            LocalizationStatsTracker.RecordRepositoryLookup(missingSource: true, missingCurrentHashTranslation: false);
             return null;
         }
 
@@ -371,6 +380,15 @@ public sealed class LocalizationRepository
         {
             return translation;
         }
+
+        ApplicationContext.Context.Value?.Logger.LogTrace(
+            "No translation for current hash found for {EntityType}/{EntityId}/{Field} in language '{Language}'.",
+            entityType,
+            entityId,
+            field,
+            normalizedLanguage
+        );
+        LocalizationStatsTracker.RecordRepositoryLookup(missingSource: false, missingCurrentHashTranslation: true);
 
         translation = GetLatestTranslation(normalizedLanguage);
         if (!string.IsNullOrWhiteSpace(translation))
