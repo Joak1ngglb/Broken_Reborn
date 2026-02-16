@@ -440,7 +440,7 @@ namespace Intersect.Client.Interface.Game
         {
             var requests = quests
                 .Select(
-                    quest => new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), QuestFieldKey.Name)
+                    quest => new LocalizationRequestEntry(GetQuestEntityType(quest), quest.Id.ToString(), QuestFieldKey.Name)
                 )
                 .ToList();
 
@@ -449,18 +449,19 @@ namespace Intersect.Client.Interface.Game
 
         private void RequestQuestLocalization(QuestDescriptor quest)
         {
+            var entityType = GetQuestEntityType(quest);
             var entries = new List<LocalizationRequestEntry>
             {
-                new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), QuestFieldKey.Name),
-                new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), QuestFieldKey.BeforeDescription),
-                new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), QuestFieldKey.InProgressDescription),
-                new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), QuestFieldKey.EndDescription)
+                new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.Name),
+                new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.BeforeDescription),
+                new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.InProgressDescription),
+                new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.EndDescription)
             };
 
             foreach (var task in quest.Tasks)
             {
                 entries.Add(new LocalizationRequestEntry(
-                    quest.Type.ToString(),
+                    entityType,
                     quest.Id.ToString(),
                     GetQuestTaskLocalizationField(task)
                 ));
@@ -470,7 +471,10 @@ namespace Intersect.Client.Interface.Game
         }
 
         private static string GetLocalizedQuestField(QuestDescriptor quest, string field, string fallback) =>
-            GameLocalization.GetTextOrDefault(quest.Type.ToString(), quest.Id, field, fallback);
+            GameLocalization.GetTextOrDefault(GetQuestEntityType(quest), quest.Id, field, fallback);
+
+        private static string GetQuestEntityType(QuestDescriptor quest) =>
+            LocalizationEntityTypes.FromGameObjectType(quest.Type);
 
         private static string GetQuestTaskLocalizationField(QuestTaskDescriptor task) =>
             QuestFieldKey.TaskDescription(task.Id);
@@ -481,7 +485,7 @@ namespace Intersect.Client.Interface.Game
             string fallback
         ) =>
             GameLocalization.GetTextOrDefault(
-                quest.Type.ToString(),
+                GetQuestEntityType(quest),
                 quest.Id,
                 GetQuestTaskLocalizationField(task),
                 fallback
@@ -518,7 +522,7 @@ namespace Intersect.Client.Interface.Game
 
             if (mSelectedQuest != null)
             {
-                var entityType = mSelectedQuest.Type.ToString();
+                var entityType = GetQuestEntityType(mSelectedQuest);
                 var entityId = mSelectedQuest.Id.ToString();
                 if (requests.Any(
                         request => request.EntityType == entityType &&
