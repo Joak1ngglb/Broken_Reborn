@@ -217,16 +217,20 @@ namespace Intersect.Client.Interface.Game
 
         private void RequestLocalization(QuestDescriptor quest)
         {
+            var entityType = GetQuestEntityType(quest);
             GameLocalization.RequestEntries(
                 [
-                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), QuestFieldKey.Name),
-                    new LocalizationRequestEntry(quest.Type.ToString(), quest.Id.ToString(), QuestFieldKey.StartDescription)
+                    new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.Name),
+                    new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.StartDescription)
                 ]
             );
         }
 
         private static string GetLocalizedQuestField(QuestDescriptor quest, string field, string fallback) =>
-            GameLocalization.GetTextOrDefault(quest.Type.ToString(), quest.Id, field, fallback);
+            GameLocalization.GetTextOrDefault(GetQuestEntityType(quest), quest.Id, field, fallback);
+
+        private static string GetQuestEntityType(QuestDescriptor quest) =>
+            LocalizationEntityTypes.FromGameObjectType(quest.Type);
 
         private void SubscribeToLocalizationUpdates()
         {
@@ -251,7 +255,7 @@ namespace Intersect.Client.Interface.Game
                 return;
             }
 
-            var entityType = quest.Type.ToString();
+            var entityType = GetQuestEntityType(quest);
             var entityId = quest.Id.ToString();
             if (requests.Any(
                     request => request.EntityType == entityType &&
