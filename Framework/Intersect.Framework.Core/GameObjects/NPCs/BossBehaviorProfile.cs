@@ -52,13 +52,28 @@ public enum BossTargetSelectionType
 
 public class BossBehaviorProfile
 {
-    public const int LatestVersion = 1;
+    public const int LatestVersion = 2;
 
     public int Version { get; set; } = LatestVersion;
 
     public int EvaluationIntervalMs { get; set; } = 250;
 
     public int GlobalCooldownMs { get; set; } = 1000;
+
+    /// <summary>
+    /// Wind-up/telegraph delay applied before critical actions are executed.
+    /// </summary>
+    public int TelegraphMs { get; set; } = 0;
+
+    /// <summary>
+    /// Minimum window between actions marked as burst/big skills.
+    /// </summary>
+    public int MinIntervalBetweenBigSkills { get; set; } = 5000;
+
+    /// <summary>
+    /// Maximum number of consecutive control casts allowed before forcing a non-control action.
+    /// </summary>
+    public int MaxConsecutiveControlCasts { get; set; } = 2;
 
     public List<BossPhase> Phases { get; set; } = [];
 }
@@ -126,6 +141,31 @@ public class BossAction
     public int Priority { get; set; }
 
     public int CooldownMs { get; set; }
+
+    /// <summary>
+    /// Marks this as a control action for anti-chain logic.
+    /// </summary>
+    public bool IsControlSkill { get; set; }
+
+    /// <summary>
+    /// Marks this as a burst/big action for interval throttling.
+    /// </summary>
+    public bool IsBigSkill { get; set; }
+
+    /// <summary>
+    /// Whether the action should show telegraph feedback before execution.
+    /// </summary>
+    public bool IsCriticalSkill { get; set; }
+
+    /// <summary>
+    /// Optional warning message used in telegraph feedback.
+    /// </summary>
+    public string TelegraphMessage { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional animation shown when telegraphing.
+    /// </summary>
+    public Guid TelegraphAnimationId { get; set; } = Guid.Empty;
 }
 
 public class BossCondition
