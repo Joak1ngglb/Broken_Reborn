@@ -33,6 +33,8 @@ public partial class Npc : Entity
     //Spell casting
     public long CastFreq;
 
+    private readonly BossAiExecutor _bossAiExecutor;
+
     /// <summary>
     /// Damage Map - Keep track of who is doing the most damage to this npc and focus accordingly
     /// </summary>
@@ -120,6 +122,7 @@ public partial class Npc : Entity
         Immunities = npcDescriptor.Immunities;
         Descriptor = npcDescriptor;
         Despawnable = despawnable;
+        _bossAiExecutor = new BossAiExecutor();
 
         for (var i = 0; i < Enum.GetValues<Stat>().Length; i++)
         {
@@ -751,49 +754,73 @@ public partial class Npc : Entity
         return blockerType == MovementBlockerType.NotBlocked;
     }
 
+    public bool TryCastSpellById(Guid spellId, Entity explicitTarget = null)
+    {
+        if (spellId == Guid.Empty)
+        {
+            return false;
+        }
+
+        var spellIndex = Descriptor.Spells.IndexOf(spellId);
+        if (spellIndex < 0)
+        {
+            return false;
+        }
+
+        if (!SpellDescriptor.TryGet(spellId, out var spellDescriptor))
+        {
+            return false;
+        }
+
+        var target = explicitTarget ?? Target;
+        return TryBeginSpellCast(spellDescriptor, spellIndex, target);
+    }
+
     private void TryCastSpells()
     {
-        var target = Target;
-
-        if (target == null || mPathFinder.GetTarget() == null)
-        {
-            return;
-        }
-
-        // Check if NPC is stunned/sleeping
-        if (IsStunnedOrSleeping)
-        {
-            return;
-        }
-
-        //Check if NPC is casting a spell
-        if (IsCasting)
-        {
-            return; //can't move while casting
-        }
-
-        if (CastFreq >= Timing.Global.Milliseconds)
-        {
-            return;
-        }
-
-        // Check if the NPC is able to cast spells
-        if (IsUnableToCastSpells)
-        {
-            return;
-        }
-
         if (Descriptor.Spells is not { Count: > 0 })
         {
             return;
         }
 
-        // Pick a random spell
         var spellIndex = Randomization.Next(0, Spells.Count);
         var spellId = Descriptor.Spells[spellIndex];
-        if (!SpellDescriptor.TryGet(spellId, out var spellBase))
+        if (!SpellDescriptor.TryGet(spellId, out var spellDescriptor))
         {
             return;
+        }
+
+        _ = TryBeginSpellCast(spellDescriptor, spellIndex, Target);
+    }
+
+    private bool TryBeginSpellCast(SpellDescriptor spellBase, int spellIndex, Entity target)
+    {
+        if (target == null || mPathFinder.GetTarget() == null)
+        {
+            return false;
+        }
+
+        // Check if NPC is stunned/sleeping
+        if (IsStunnedOrSleeping)
+        {
+            return false;
+        }
+
+        //Check if NPC is casting a spell
+        if (IsCasting)
+        {
+            return false; //can't move while casting
+        }
+
+        if (CastFreq >= Timing.Global.Milliseconds)
+        {
+            return false;
+        }
+
+        // Check if the NPC is able to cast spells
+        if (IsUnableToCastSpells)
+        {
+            return false;
         }
 
         if (spellBase.Combat == null)
@@ -801,16 +828,10 @@ public partial class Npc : Entity
             ApplicationContext.Context.Value?.Logger.LogWarning($"Combat data missing for {spellBase.Id}.");
         }
 
-        //TODO: try cast spell to find out hidden targets?
-        // if (target.HasStatusEffect(SpellEffect.Stealth) /* && spellBase.Combat.TargetType != SpellTargetType.AoE*/)
-        // {
-        //     return;
-        // }
-
         // Check if we are even allowed to cast this spell.
         if (!CanCastSpell(spellBase, target, true, SoftRetargetOnSelfCast, out _))
         {
-            return;
+            return false;
         }
 
         var targetType = spellBase.Combat?.TargetType ?? SpellTargetType.Single;
@@ -826,14 +847,14 @@ public partial class Npc : Entity
             {
                 if (LastRandomMove >= Timing.Global.Milliseconds)
                 {
-                    return;
+                    return false;
                 }
 
                 //Face the target -- next frame fire -- then go on with life
                 ChangeDir(dirToEnemy); // Gotta get dir to enemy
                 LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 3000);
 
-                return;
+                return false;
             }
         }
 
@@ -852,27 +873,22 @@ public partial class Npc : Entity
         {
             case 0:
                 CastFreq = Timing.Global.Milliseconds + 30000;
-
                 break;
 
             case 1:
                 CastFreq = Timing.Global.Milliseconds + 15000;
-
                 break;
 
             case 2:
                 CastFreq = Timing.Global.Milliseconds + 8000;
-
                 break;
 
             case 3:
                 CastFreq = Timing.Global.Milliseconds + 4000;
-
                 break;
 
             case 4:
                 CastFreq = Timing.Global.Milliseconds + 2000;
-
                 break;
         }
 
@@ -892,11 +908,10 @@ public partial class Npc : Entity
                 AnimationSourceType.SpellCast,
                 spellBase.Id
             );
-
-            //Target Type 1 will be global entity
         }
 
-        PacketSender.SendEntityCastTime(this, spellId);
+        PacketSender.SendEntityCastTime(this, spellBase.Id);
+        return true;
     }
 
     public bool IsFleeing()
@@ -1060,7 +1075,16 @@ public partial class Npc : Entity
 
                     if (mPathFinder.GetTarget() != null && Descriptor.Movement != (int)NpcMovement.Static)
                     {
-                        TryCastSpells();
+                        var bossActionExecuted = false;
+                        if (Descriptor.IsBoss && !Descriptor.UsesDefaultAiBehavior)
+                        {
+                            bossActionExecuted = _bossAiExecutor.TryExecute(this, timeMs);
+                        }
+
+                        if (!bossActionExecuted)
+                        {
+                            TryCastSpells();
+                        }
                         // TODO: Make resetting mobs actually return to their starting location.
                         if ((!mResetting && !IsOneBlockAway(
                             mPathFinder.GetTarget().TargetMapId, mPathFinder.GetTarget().TargetX,
