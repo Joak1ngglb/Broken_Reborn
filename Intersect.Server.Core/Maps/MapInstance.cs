@@ -931,7 +931,14 @@ public partial class MapInstance : IMapInstance
     /// </summary>
     /// <param name="item">The item to remove from the instance</param>
     /// <param name="respawn">Whether or not this item will respawn</param>
-    public void RemoveItem(MapItem item, bool respawn = true)
+    public void RemoveItem(
+        MapItem item,
+        bool respawn = true,
+        MapItemRemovalMode removalMode = MapItemRemovalMode.Immediate,
+        Guid? collectorEntityId = null,
+        int? collectorTileX = null,
+        int? collectorTileY = null
+    )
     {
         if (item != null)
         {
@@ -957,7 +964,18 @@ public partial class MapInstance : IMapInstance
             {
                 TileItems[item.TileIndex] = null;
             }
-            PacketSender.SendMapItemUpdate(mMapController.Id, MapInstanceId, item, true, item.VisibleToAll, oldOwner);
+            PacketSender.SendMapItemUpdate(
+                mMapController.Id,
+                MapInstanceId,
+                item,
+                true,
+                item.VisibleToAll,
+                oldOwner,
+                removalMode,
+                collectorEntityId,
+                collectorTileX,
+                collectorTileY
+            );
         }
     }
 

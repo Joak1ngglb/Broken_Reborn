@@ -1857,7 +1857,14 @@ internal sealed partial class PacketHandler
                 }
 
                 // Remove the item from the map now, because otherwise the overflow would just add to the existing quantity
-                mapInstanceWithItems.RemoveItem(mapItem);
+                mapInstanceWithItems.RemoveItem(
+                    mapItem,
+                    true,
+                    MapItemRemovalMode.AbsorbToCollector,
+                    player.Id,
+                    player.X,
+                    player.Y
+                );
 
                 // Try to give the item to our player.
                 if (!player.TryGiveItem(mapItem, ItemHandling.Overflow, false, -1, true, mapItem.X, mapItem.Y))

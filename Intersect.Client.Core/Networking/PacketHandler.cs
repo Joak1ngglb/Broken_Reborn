@@ -1448,14 +1448,39 @@ internal sealed partial class PacketHandler
         // Are we deleting this item?
         if (packet.ItemId == Guid.Empty)
         {
-            // Find our item based on our unique Id and remove it.
-            foreach(var location in map.MapItems.Keys)
+            // Find our item based on our unique Id.
+            foreach (var (_, itemsOnTile) in map.MapItems)
             {
-                var tempItem = map.MapItems[location].Where(item => item.Id == packet.Id).SingleOrDefault();
-                if (tempItem != null)
+                var tempItem = itemsOnTile.SingleOrDefault(item => item.Id == packet.Id);
+                if (tempItem is not MapItemInstance mapItemInstance)
                 {
-                    map.MapItems[location].Remove(tempItem);
+                    continue;
                 }
+
+                if (packet.RemovalMode == MapItemRemovalMode.AbsorbToCollector)
+                {
+                    var targetTileX = packet.CollectorTileX;
+                    var targetTileY = packet.CollectorTileY;
+                    if (packet.CollectorEntityId.HasValue && Globals.Entities.TryGetValue(packet.CollectorEntityId.Value, out var collector))
+                    {
+                        targetTileX = collector.X;
+                        targetTileY = collector.Y;
+                    }
+
+                    if (targetTileX.HasValue && targetTileY.HasValue)
+                    {
+                        mapItemInstance.IsBeingAbsorbed = true;
+                        mapItemInstance.AbsorbProgress = 0f;
+                        mapItemInstance.AbsorbStartTileX = mapItemInstance.X;
+                        mapItemInstance.AbsorbStartTileY = mapItemInstance.Y;
+                        mapItemInstance.AbsorbTargetTileX = targetTileX.Value;
+                        mapItemInstance.AbsorbTargetTileY = targetTileY.Value;
+                        return;
+                    }
+                }
+
+                itemsOnTile.Remove(tempItem);
+                return;
             }
         }
         else

@@ -1224,7 +1224,18 @@ public static partial class PacketSender
     /// <param name="itemRef">The map item that we are sending (or null if removing), passing this saves us a lookup for it.</param>
     /// <param name="sendToAll">If we are removing the item from the map, do we send this data to everyone?</param>
     /// <param name="owner">The previous owner of an item being removed when the data is not send to everyone.</param>
-    public static void SendMapItemUpdate(Guid mapId, Guid mapInstanceId, MapItem itemRef, bool removing, bool sendToAll = true, Guid owner = new Guid())
+    public static void SendMapItemUpdate(
+        Guid mapId,
+        Guid mapInstanceId,
+        MapItem itemRef,
+        bool removing,
+        bool sendToAll = true,
+        Guid owner = new Guid(),
+        MapItemRemovalMode removalMode = MapItemRemovalMode.Immediate,
+        Guid? collectorEntityId = null,
+        int? collectorTileX = null,
+        int? collectorTileY = null
+    )
     {
         // Does the item exist? If not, send a delete notification. If it does, send an update.
         if (removing)
@@ -1232,7 +1243,19 @@ public static partial class PacketSender
             // Are we to send the removal to all players?
             if (sendToAll)
             {
-                SendDataToProximityOnMapInstance(mapId, mapInstanceId, new MapItemUpdatePacket(mapId, itemRef.TileIndex, itemRef.UniqueId));
+                SendDataToProximityOnMapInstance(
+                    mapId,
+                    mapInstanceId,
+                    new MapItemUpdatePacket(
+                        mapId,
+                        itemRef.TileIndex,
+                        itemRef.UniqueId,
+                        removalMode,
+                        collectorEntityId,
+                        collectorTileX,
+                        collectorTileY
+                    )
+                );
             }
             else
             {
@@ -1240,12 +1263,34 @@ public static partial class PacketSender
                 var player = Player.FindOnline(owner);
                 if (player != null)
                 {
-                    player.SendPacket(new MapItemUpdatePacket(mapId, itemRef.TileIndex, itemRef.UniqueId));
+                    player.SendPacket(
+                        new MapItemUpdatePacket(
+                            mapId,
+                            itemRef.TileIndex,
+                            itemRef.UniqueId,
+                            removalMode,
+                            collectorEntityId,
+                            collectorTileX,
+                            collectorTileY
+                        )
+                    );
                 }
                 else
                 {
                     // Uh, our player doesn't exist.. send it to everyone anyway.
-                    SendDataToProximityOnMapInstance(mapId, mapInstanceId, new MapItemUpdatePacket(mapId, itemRef.TileIndex, itemRef.UniqueId));
+                    SendDataToProximityOnMapInstance(
+                        mapId,
+                        mapInstanceId,
+                        new MapItemUpdatePacket(
+                            mapId,
+                            itemRef.TileIndex,
+                            itemRef.UniqueId,
+                            removalMode,
+                            collectorEntityId,
+                            collectorTileX,
+                            collectorTileY
+                        )
+                    );
                 }
             }
 

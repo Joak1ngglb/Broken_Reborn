@@ -118,6 +118,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
     //Update Timer
     private long _lastUpdateTime;
+    private long _lastMapItemAnimationUpdateTime;
 
     protected float mOverlayIntensity;
 
@@ -275,6 +276,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         }
 
         _lastUpdateTime = nowMilliseconds + 10000;
+        UpdateMapItemAnimations(nowMilliseconds);
         UpdateMapAttributes();
         if (BackgroundSound == null && !string.IsNullOrWhiteSpace(Sound))
         {
@@ -898,6 +900,55 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         _tileBuffersPerLayer.Clear();
     }
 
+    private void UpdateMapItemAnimations(long nowMilliseconds)
+    {
+        if (_lastMapItemAnimationUpdateTime <= 0)
+        {
+            _lastMapItemAnimationUpdateTime = nowMilliseconds;
+            return;
+        }
+
+        var elapsedMs = Math.Max(1, nowMilliseconds - _lastMapItemAnimationUpdateTime);
+        _lastMapItemAnimationUpdateTime = nowMilliseconds;
+
+        var completedRemovals = new List<(int TileIndex, Guid ItemId)>();
+        foreach (var (tileIndex, itemInstancesOnTile) in MapItems)
+        {
+            foreach (var itemOnTile in itemInstancesOnTile)
+            {
+                if (itemOnTile is not MapItemInstance mapItem || !mapItem.IsBeingAbsorbed)
+                {
+                    continue;
+                }
+
+                mapItem.AbsorbProgress = MathF.Min(1f, mapItem.AbsorbProgress + elapsedMs / 180f);
+                if (mapItem.AbsorbProgress >= 1f)
+                {
+                    completedRemovals.Add((tileIndex, mapItem.Id));
+                }
+            }
+        }
+
+        foreach (var (tileIndex, itemId) in completedRemovals)
+        {
+            if (!MapItems.TryGetValue(tileIndex, out var tileItems))
+            {
+                continue;
+            }
+
+            var item = tileItems.SingleOrDefault(i => i.Id == itemId);
+            if (item != null)
+            {
+                tileItems.Remove(item);
+            }
+
+            if (tileItems.Count == 0)
+            {
+                MapItems.Remove(tileIndex);
+            }
+        }
+    }
+
     //Rendering/Drawing Code
     public void Draw(int layer) //Lower, Middle, Upper
     {
@@ -951,12 +1002,8 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         var mapItemHeight = Options.Instance.Map.MapItemHeight;
 
         // Draw map items.
-        foreach (var (tileIndex, itemInstancesOnTile) in MapItems)
+        foreach (var (_, itemInstancesOnTile) in MapItems)
         {
-            // Calculate tile coordinates.
-            var tileX = tileIndex % _width;
-            var tileY = (int)Math.Floor(tileIndex / (float)_width);
-
             // Loop through this in reverse to match client/server display and pick-up order.
             for (var index = itemInstancesOnTile.Count - 1; index >= 0; index--)
             {
@@ -977,20 +1024,27 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                     continue;
                 }
 
-                var x = X + tileX * _tileWidth;
-                var y = Y + tileY * _tileHeight;
-                var centerX = x + (_tileWidth / 2);
-                var centerY = y + (_tileHeight / 2);
-                var textureXPosition = centerX - (mapItemWidth / 2);
-                var textureYPosition = centerY - (mapItemHeight / 2);
+                var renderTileX = mapItemInstance.X;
+                var renderTileY = mapItemInstance.Y;
+                var renderScale = 1f;
+                var renderOpacity = 1f;
 
                 var rotationDegrees = 0f;
                 if (mapItemInstance is MapItemInstance clientMapItem)
                 {
+                    if (clientMapItem.IsBeingAbsorbed)
+                    {
+                        var eased = 1f - MathF.Pow(1f - clientMapItem.AbsorbProgress, 2f);
+                        renderTileX = (int)(clientMapItem.AbsorbStartTileX + (clientMapItem.AbsorbTargetTileX - clientMapItem.AbsorbStartTileX) * eased);
+                        renderTileY = (int)(clientMapItem.AbsorbStartTileY + (clientMapItem.AbsorbTargetTileY - clientMapItem.AbsorbStartTileY) * eased);
+                        renderScale = MathF.Max(0.4f, 1f - 0.55f * eased);
+                        renderOpacity = MathF.Max(0f, 1f - eased);
+                    }
+
                     if (clientMapItem.HasFallen > 0)
                     {
                         var fallStep = MathF.Min(clientMapItem.HasFallen, 0.2f);
-                        textureYPosition -= (long)(clientMapItem.HasFallen * _tileHeight);
+                        renderTileY -= (int)clientMapItem.HasFallen;
                         clientMapItem.HasFallen -= fallStep;
                         clientMapItem.DropRotationDegrees += clientMapItem.DropAngularSpeed * fallStep;
                         rotationDegrees = clientMapItem.DropRotationDegrees;
@@ -1008,12 +1062,27 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                     }
                 }
 
+                var x = X + renderTileX * _tileWidth;
+                var y = Y + renderTileY * _tileHeight;
+                var centerX = x + (_tileWidth / 2f);
+                var centerY = y + (_tileHeight / 2f);
+                var renderWidth = mapItemWidth * renderScale;
+                var renderHeight = mapItemHeight * renderScale;
+                var textureXPosition = centerX - (renderWidth / 2f);
+                var textureYPosition = centerY - (renderHeight / 2f);
+
+                var color = itemDescriptor.Color;
+                if (renderOpacity < 1f)
+                {
+                    color = new Color((byte)(color.A * renderOpacity), color.R, color.G, color.B);
+                }
+
                 // Draw the item texture.
                 Graphics.DrawGameTexture(
                     itemTexture,
                     new FloatRect(0, 0, itemTexture.Width, itemTexture.Height),
-                    new FloatRect(textureXPosition, textureYPosition, mapItemWidth, mapItemHeight),
-                    itemDescriptor.Color,
+                    new FloatRect(textureXPosition, textureYPosition, renderWidth, renderHeight),
+                    color,
                     rotationDegrees: rotationDegrees
                 );
             }

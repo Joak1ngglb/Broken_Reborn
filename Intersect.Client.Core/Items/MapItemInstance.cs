@@ -24,6 +24,18 @@ public partial class MapItemInstance : Item, IMapItemInstance
 
     public float DropAngularSpeed { get; set; }
 
+    public bool IsBeingAbsorbed { get; set; }
+
+    public float AbsorbProgress { get; set; }
+
+    public float AbsorbStartTileX { get; set; }
+
+    public float AbsorbStartTileY { get; set; }
+
+    public float AbsorbTargetTileX { get; set; }
+
+    public float AbsorbTargetTileY { get; set; }
+
     [JsonIgnore] public int TileIndex => Y * Options.Instance.Map.MapWidth + X;
 
     public MapItemInstance() : base()
