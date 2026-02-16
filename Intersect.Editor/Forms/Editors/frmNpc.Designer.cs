@@ -83,6 +83,26 @@ namespace Intersect.Editor.Forms.Editors
             lblHP = new Label();
             lblExp = new Label();
             pnlContainer = new Panel();
+            grpBoss = new DarkGroupBox();
+            grpBossAi = new DarkGroupBox();
+            lblBossActions = new Label();
+            lblBossTriggers = new Label();
+            lblBossPhases = new Label();
+            btnBossPreset = new DarkButton();
+            btnBossActionRemove = new DarkButton();
+            btnBossActionAdd = new DarkButton();
+            btnBossTriggerRemove = new DarkButton();
+            btnBossTriggerAdd = new DarkButton();
+            btnBossPhaseRemove = new DarkButton();
+            btnBossPhaseAdd = new DarkButton();
+            lstBossActions = new ListBox();
+            lstBossTriggers = new ListBox();
+            lstBossPhases = new ListBox();
+            chkBossAnnounceOnRespawn = new DarkCheckBox();
+            chkBossAnnounceOnKill = new DarkCheckBox();
+            nudBossRespawnMinutes = new DarkNumericUpDown();
+            lblBossRespawnMinutes = new Label();
+            chkIsBoss = new DarkCheckBox();
             grpImmunities = new DarkGroupBox();
             nudTenacity = new DarkNumericUpDown();
             lblTenacity = new Label();
@@ -113,8 +133,6 @@ namespace Intersect.Editor.Forms.Editors
             lblCritChance = new Label();
             cmbAttackAnimation = new DarkComboBox();
             lblAttackAnimation = new Label();
-            cmbDeathAnimation = new DarkComboBox();
-            lblDeathAnimation = new Label();
             lblDamage = new Label();
             grpCommonEvents = new DarkGroupBox();
             cmbOnDeathEventParty = new DarkComboBox();
@@ -162,6 +180,8 @@ namespace Intersect.Editor.Forms.Editors
             lstAggro = new ListBox();
             chkAttackAllies = new DarkCheckBox();
             chkEnabled = new DarkCheckBox();
+            label1 = new Label();
+            darkComboBox1 = new DarkComboBox();
             grpSpells = new DarkGroupBox();
             cmbSpell = new DarkComboBox();
             cmbFreq = new DarkComboBox();
@@ -170,6 +190,9 @@ namespace Intersect.Editor.Forms.Editors
             btnRemove = new DarkButton();
             btnAdd = new DarkButton();
             lstSpells = new ListBox();
+            DeathNpcGrp = new DarkGroupBox();
+            lblDeathAnimation = new Label();
+            cmbDeathAnimation = new DarkComboBox();
             grpBestiary = new DarkGroupBox();
             lstBestiary = new ListBox();
             cmbBestiary = new DarkComboBox();
@@ -191,9 +214,6 @@ namespace Intersect.Editor.Forms.Editors
             toolStripItemPaste = new ToolStripButton();
             toolStripSeparator3 = new ToolStripSeparator();
             toolStripItemUndo = new ToolStripButton();
-            label1 = new Label();
-            darkComboBox1 = new DarkComboBox();
-            DeathNpcGrp = new DarkGroupBox();
             grpNpcs.SuspendLayout();
             grpGeneral.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudRgbaA).BeginInit();
@@ -217,6 +237,9 @@ namespace Intersect.Editor.Forms.Editors
             ((System.ComponentModel.ISupportInitialize)nudMag).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudStr).BeginInit();
             pnlContainer.SuspendLayout();
+            grpBoss.SuspendLayout();
+            grpBossAi.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudBossRespawnMinutes).BeginInit();
             grpImmunities.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudTenacity).BeginInit();
             grpCombat.SuspendLayout();
@@ -240,10 +263,10 @@ namespace Intersect.Editor.Forms.Editors
             ((System.ComponentModel.ISupportInitialize)nudDropChance).BeginInit();
             grpNpcVsNpc.SuspendLayout();
             grpSpells.SuspendLayout();
+            DeathNpcGrp.SuspendLayout();
             grpBestiary.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudBestiaryAmount).BeginInit();
             toolStrip.SuspendLayout();
-            DeathNpcGrp.SuspendLayout();
             SuspendLayout();
             // 
             // grpNpcs
@@ -893,13 +916,14 @@ namespace Intersect.Editor.Forms.Editors
             lblExp.Location = new System.Drawing.Point(124, 175);
             lblExp.Margin = new Padding(4, 0, 4, 0);
             lblExp.Name = "lblExp";
-            lblExp.Size = new Size(29, 15);
+            lblExp.Size = new Size(28, 15);
             lblExp.TabIndex = 11;
             lblExp.Text = "Exp:";
             // 
             // pnlContainer
             // 
             pnlContainer.AutoScroll = true;
+            pnlContainer.Controls.Add(grpBoss);
             pnlContainer.Controls.Add(grpImmunities);
             pnlContainer.Controls.Add(grpCombat);
             pnlContainer.Controls.Add(grpCommonEvents);
@@ -918,6 +942,241 @@ namespace Intersect.Editor.Forms.Editors
             pnlContainer.Size = new Size(1138, 642);
             pnlContainer.TabIndex = 17;
             pnlContainer.Paint += pnlContainer_Paint;
+            // 
+            // grpBoss
+            // 
+            grpBoss.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+            grpBoss.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            grpBoss.Controls.Add(grpBossAi);
+            grpBoss.Controls.Add(chkBossAnnounceOnRespawn);
+            grpBoss.Controls.Add(chkBossAnnounceOnKill);
+            grpBoss.Controls.Add(nudBossRespawnMinutes);
+            grpBoss.Controls.Add(lblBossRespawnMinutes);
+            grpBoss.Controls.Add(chkIsBoss);
+            grpBoss.ForeColor = System.Drawing.Color.Gainsboro;
+            grpBoss.Location = new System.Drawing.Point(8, 855);
+            grpBoss.Margin = new Padding(2);
+            grpBoss.Name = "grpBoss";
+            grpBoss.Padding = new Padding(2);
+            grpBoss.Size = new Size(596, 356);
+            grpBoss.TabIndex = 34;
+            grpBoss.TabStop = false;
+            grpBoss.Text = "Boss";
+            // 
+            // grpBossAi
+            // 
+            grpBossAi.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+            grpBossAi.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            grpBossAi.Controls.Add(lblBossActions);
+            grpBossAi.Controls.Add(lblBossTriggers);
+            grpBossAi.Controls.Add(lblBossPhases);
+            grpBossAi.Controls.Add(btnBossPreset);
+            grpBossAi.Controls.Add(btnBossActionRemove);
+            grpBossAi.Controls.Add(btnBossActionAdd);
+            grpBossAi.Controls.Add(btnBossTriggerRemove);
+            grpBossAi.Controls.Add(btnBossTriggerAdd);
+            grpBossAi.Controls.Add(btnBossPhaseRemove);
+            grpBossAi.Controls.Add(btnBossPhaseAdd);
+            grpBossAi.Controls.Add(lstBossActions);
+            grpBossAi.Controls.Add(lstBossTriggers);
+            grpBossAi.Controls.Add(lstBossPhases);
+            grpBossAi.ForeColor = System.Drawing.Color.Gainsboro;
+            grpBossAi.Location = new System.Drawing.Point(15, 123);
+            grpBossAi.Margin = new Padding(2);
+            grpBossAi.Name = "grpBossAi";
+            grpBossAi.Padding = new Padding(2);
+            grpBossAi.Size = new Size(566, 220);
+            grpBossAi.TabIndex = 92;
+            grpBossAi.TabStop = false;
+            grpBossAi.Text = "Boss AI";
+            // 
+            // lblBossActions
+            // 
+            lblBossActions.AutoSize = true;
+            lblBossActions.Location = new System.Drawing.Point(386, 24);
+            lblBossActions.Name = "lblBossActions";
+            lblBossActions.Size = new Size(47, 15);
+            lblBossActions.TabIndex = 12;
+            lblBossActions.Text = "Actions";
+            // 
+            // lblBossTriggers
+            // 
+            lblBossTriggers.AutoSize = true;
+            lblBossTriggers.Location = new System.Drawing.Point(198, 24);
+            lblBossTriggers.Name = "lblBossTriggers";
+            lblBossTriggers.Size = new Size(49, 15);
+            lblBossTriggers.TabIndex = 11;
+            lblBossTriggers.Text = "Triggers";
+            // 
+            // lblBossPhases
+            // 
+            lblBossPhases.AutoSize = true;
+            lblBossPhases.Location = new System.Drawing.Point(10, 24);
+            lblBossPhases.Name = "lblBossPhases";
+            lblBossPhases.Size = new Size(43, 15);
+            lblBossPhases.TabIndex = 10;
+            lblBossPhases.Text = "Phases";
+            // 
+            // btnBossPreset
+            // 
+            btnBossPreset.Location = new System.Drawing.Point(10, 187);
+            btnBossPreset.Name = "btnBossPreset";
+            btnBossPreset.Padding = new Padding(5);
+            btnBossPreset.Size = new Size(172, 23);
+            btnBossPreset.TabIndex = 9;
+            btnBossPreset.Text = "Apply 30% Heal+Enrage";
+            btnBossPreset.Click += btnBossPreset_Click;
+            // 
+            // btnBossActionRemove
+            // 
+            btnBossActionRemove.Location = new System.Drawing.Point(478, 187);
+            btnBossActionRemove.Name = "btnBossActionRemove";
+            btnBossActionRemove.Padding = new Padding(5);
+            btnBossActionRemove.Size = new Size(78, 23);
+            btnBossActionRemove.TabIndex = 8;
+            btnBossActionRemove.Text = "Remove";
+            btnBossActionRemove.Click += btnBossActionRemove_Click;
+            // 
+            // btnBossActionAdd
+            // 
+            btnBossActionAdd.Location = new System.Drawing.Point(389, 187);
+            btnBossActionAdd.Name = "btnBossActionAdd";
+            btnBossActionAdd.Padding = new Padding(5);
+            btnBossActionAdd.Size = new Size(78, 23);
+            btnBossActionAdd.TabIndex = 7;
+            btnBossActionAdd.Text = "Add";
+            btnBossActionAdd.Click += btnBossActionAdd_Click;
+            // 
+            // btnBossTriggerRemove
+            // 
+            btnBossTriggerRemove.Location = new System.Drawing.Point(289, 187);
+            btnBossTriggerRemove.Name = "btnBossTriggerRemove";
+            btnBossTriggerRemove.Padding = new Padding(5);
+            btnBossTriggerRemove.Size = new Size(78, 23);
+            btnBossTriggerRemove.TabIndex = 6;
+            btnBossTriggerRemove.Text = "Remove";
+            btnBossTriggerRemove.Click += btnBossTriggerRemove_Click;
+            // 
+            // btnBossTriggerAdd
+            // 
+            btnBossTriggerAdd.Location = new System.Drawing.Point(200, 187);
+            btnBossTriggerAdd.Name = "btnBossTriggerAdd";
+            btnBossTriggerAdd.Padding = new Padding(5);
+            btnBossTriggerAdd.Size = new Size(78, 23);
+            btnBossTriggerAdd.TabIndex = 5;
+            btnBossTriggerAdd.Text = "Add";
+            btnBossTriggerAdd.Click += btnBossTriggerAdd_Click;
+            // 
+            // btnBossPhaseRemove
+            // 
+            btnBossPhaseRemove.Location = new System.Drawing.Point(99, 158);
+            btnBossPhaseRemove.Name = "btnBossPhaseRemove";
+            btnBossPhaseRemove.Padding = new Padding(5);
+            btnBossPhaseRemove.Size = new Size(83, 23);
+            btnBossPhaseRemove.TabIndex = 4;
+            btnBossPhaseRemove.Text = "Remove";
+            btnBossPhaseRemove.Click += btnBossPhaseRemove_Click;
+            // 
+            // btnBossPhaseAdd
+            // 
+            btnBossPhaseAdd.Location = new System.Drawing.Point(10, 158);
+            btnBossPhaseAdd.Name = "btnBossPhaseAdd";
+            btnBossPhaseAdd.Padding = new Padding(5);
+            btnBossPhaseAdd.Size = new Size(83, 23);
+            btnBossPhaseAdd.TabIndex = 3;
+            btnBossPhaseAdd.Text = "Add";
+            btnBossPhaseAdd.Click += btnBossPhaseAdd_Click;
+            // 
+            // lstBossActions
+            // 
+            lstBossActions.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            lstBossActions.ForeColor = System.Drawing.Color.Gainsboro;
+            lstBossActions.FormattingEnabled = true;
+            lstBossActions.ItemHeight = 15;
+            lstBossActions.Location = new System.Drawing.Point(389, 42);
+            lstBossActions.Name = "lstBossActions";
+            lstBossActions.Size = new Size(167, 139);
+            lstBossActions.TabIndex = 2;
+            // 
+            // lstBossTriggers
+            // 
+            lstBossTriggers.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            lstBossTriggers.ForeColor = System.Drawing.Color.Gainsboro;
+            lstBossTriggers.FormattingEnabled = true;
+            lstBossTriggers.ItemHeight = 15;
+            lstBossTriggers.Location = new System.Drawing.Point(200, 42);
+            lstBossTriggers.Name = "lstBossTriggers";
+            lstBossTriggers.Size = new Size(167, 139);
+            lstBossTriggers.TabIndex = 1;
+            lstBossTriggers.SelectedIndexChanged += lstBossTriggers_SelectedIndexChanged;
+            // 
+            // lstBossPhases
+            // 
+            lstBossPhases.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            lstBossPhases.ForeColor = System.Drawing.Color.Gainsboro;
+            lstBossPhases.FormattingEnabled = true;
+            lstBossPhases.ItemHeight = 15;
+            lstBossPhases.Location = new System.Drawing.Point(10, 42);
+            lstBossPhases.Name = "lstBossPhases";
+            lstBossPhases.Size = new Size(172, 109);
+            lstBossPhases.TabIndex = 0;
+            lstBossPhases.SelectedIndexChanged += lstBossPhases_SelectedIndexChanged;
+            // 
+            // chkBossAnnounceOnRespawn
+            // 
+            chkBossAnnounceOnRespawn.AutoSize = true;
+            chkBossAnnounceOnRespawn.Location = new System.Drawing.Point(150, 98);
+            chkBossAnnounceOnRespawn.Margin = new Padding(4, 3, 4, 3);
+            chkBossAnnounceOnRespawn.Name = "chkBossAnnounceOnRespawn";
+            chkBossAnnounceOnRespawn.Size = new Size(139, 19);
+            chkBossAnnounceOnRespawn.TabIndex = 91;
+            chkBossAnnounceOnRespawn.Text = "Announce on Respawn";
+            chkBossAnnounceOnRespawn.CheckedChanged += chkBossAnnounceOnRespawn_CheckedChanged;
+            // 
+            // chkBossAnnounceOnKill
+            // 
+            chkBossAnnounceOnKill.AutoSize = true;
+            chkBossAnnounceOnKill.Location = new System.Drawing.Point(15, 98);
+            chkBossAnnounceOnKill.Margin = new Padding(4, 3, 4, 3);
+            chkBossAnnounceOnKill.Name = "chkBossAnnounceOnKill";
+            chkBossAnnounceOnKill.Size = new Size(116, 19);
+            chkBossAnnounceOnKill.TabIndex = 90;
+            chkBossAnnounceOnKill.Text = "Announce on Kill";
+            chkBossAnnounceOnKill.CheckedChanged += chkBossAnnounceOnKill_CheckedChanged;
+            // 
+            // nudBossRespawnMinutes
+            // 
+            nudBossRespawnMinutes.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            nudBossRespawnMinutes.ForeColor = System.Drawing.Color.Gainsboro;
+            nudBossRespawnMinutes.Location = new System.Drawing.Point(15, 68);
+            nudBossRespawnMinutes.Margin = new Padding(4, 3, 4, 3);
+            nudBossRespawnMinutes.Maximum = new decimal(new int[] { 10080, 0, 0, 0 });
+            nudBossRespawnMinutes.Name = "nudBossRespawnMinutes";
+            nudBossRespawnMinutes.Size = new Size(275, 23);
+            nudBossRespawnMinutes.TabIndex = 89;
+            nudBossRespawnMinutes.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            nudBossRespawnMinutes.ValueChanged += nudBossRespawnMinutes_ValueChanged;
+            // 
+            // lblBossRespawnMinutes
+            // 
+            lblBossRespawnMinutes.AutoSize = true;
+            lblBossRespawnMinutes.Location = new System.Drawing.Point(12, 50);
+            lblBossRespawnMinutes.Margin = new Padding(4, 0, 4, 0);
+            lblBossRespawnMinutes.Name = "lblBossRespawnMinutes";
+            lblBossRespawnMinutes.Size = new Size(141, 15);
+            lblBossRespawnMinutes.TabIndex = 88;
+            lblBossRespawnMinutes.Text = "Respawn Time (minutes):";
+            // 
+            // chkIsBoss
+            // 
+            chkIsBoss.AutoSize = true;
+            chkIsBoss.Location = new System.Drawing.Point(15, 24);
+            chkIsBoss.Margin = new Padding(4, 3, 4, 3);
+            chkIsBoss.Name = "chkIsBoss";
+            chkIsBoss.Size = new Size(63, 19);
+            chkIsBoss.TabIndex = 87;
+            chkIsBoss.Text = "Is Boss";
+            chkIsBoss.CheckedChanged += chkIsBoss_CheckedChanged;
             // 
             // grpImmunities
             // 
@@ -963,7 +1222,7 @@ namespace Intersect.Editor.Forms.Editors
             lblTenacity.Location = new System.Drawing.Point(6, 141);
             lblTenacity.Margin = new Padding(4, 0, 4, 0);
             lblTenacity.Name = "lblTenacity";
-            lblTenacity.Size = new Size(74, 15);
+            lblTenacity.Size = new Size(75, 15);
             lblTenacity.TabIndex = 79;
             lblTenacity.Text = "Tenacity (%):";
             // 
@@ -973,7 +1232,7 @@ namespace Intersect.Editor.Forms.Editors
             chkTaunt.Location = new System.Drawing.Point(205, 110);
             chkTaunt.Margin = new Padding(4, 3, 4, 3);
             chkTaunt.Name = "chkTaunt";
-            chkTaunt.Size = new Size(55, 19);
+            chkTaunt.Size = new Size(56, 19);
             chkTaunt.TabIndex = 86;
             chkTaunt.Text = "Taunt";
             chkTaunt.CheckedChanged += chkTaunt_CheckedChanged;
@@ -995,7 +1254,7 @@ namespace Intersect.Editor.Forms.Editors
             chkTransform.Location = new System.Drawing.Point(205, 83);
             chkTransform.Margin = new Padding(4, 3, 4, 3);
             chkTransform.Name = "chkTransform";
-            chkTransform.Size = new Size(79, 19);
+            chkTransform.Size = new Size(80, 19);
             chkTransform.TabIndex = 84;
             chkTransform.Text = "Transform";
             chkTransform.CheckedChanged += chkTransform_CheckedChanged;
@@ -1178,7 +1437,7 @@ namespace Intersect.Editor.Forms.Editors
             lblCritMultiplier.Location = new System.Drawing.Point(12, 119);
             lblCritMultiplier.Margin = new Padding(4, 0, 4, 0);
             lblCritMultiplier.Name = "lblCritMultiplier";
-            lblCritMultiplier.Size = new Size(156, 15);
+            lblCritMultiplier.Size = new Size(155, 15);
             lblCritMultiplier.TabIndex = 62;
             lblCritMultiplier.Text = "Crit Multiplier (Default 1.5x):";
             // 
@@ -1292,7 +1551,7 @@ namespace Intersect.Editor.Forms.Editors
             lblDamageType.Location = new System.Drawing.Point(10, 167);
             lblDamageType.Margin = new Padding(4, 0, 4, 0);
             lblDamageType.Name = "lblDamageType";
-            lblDamageType.Size = new Size(81, 15);
+            lblDamageType.Size = new Size(82, 15);
             lblDamageType.TabIndex = 53;
             lblDamageType.Text = "Damage Type:";
             // 
@@ -1337,38 +1596,6 @@ namespace Intersect.Editor.Forms.Editors
             lblAttackAnimation.Size = new Size(103, 15);
             lblAttackAnimation.TabIndex = 49;
             lblAttackAnimation.Text = "Attack Animation:";
-            // 
-            // cmbDeathAnimation
-            // 
-            cmbDeathAnimation.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            cmbDeathAnimation.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            cmbDeathAnimation.BorderStyle = ButtonBorderStyle.Solid;
-            cmbDeathAnimation.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
-            cmbDeathAnimation.DrawDropdownHoverOutline = false;
-            cmbDeathAnimation.DrawFocusRectangle = false;
-            cmbDeathAnimation.DrawMode = DrawMode.OwnerDrawFixed;
-            cmbDeathAnimation.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbDeathAnimation.FlatStyle = FlatStyle.Flat;
-            cmbDeathAnimation.ForeColor = System.Drawing.Color.Gainsboro;
-            cmbDeathAnimation.FormattingEnabled = true;
-            cmbDeathAnimation.Location = new System.Drawing.Point(20, 41);
-            cmbDeathAnimation.Margin = new Padding(4, 3, 4, 3);
-            cmbDeathAnimation.Name = "cmbDeathAnimation";
-            cmbDeathAnimation.Size = new Size(234, 24);
-            cmbDeathAnimation.TabIndex = 49;
-            cmbDeathAnimation.Text = null;
-            cmbDeathAnimation.TextPadding = new Padding(2);
-            cmbDeathAnimation.SelectedIndexChanged += cmbDeathAnimation_SelectedIndexChanged;
-            // 
-            // lblDeathAnimation
-            // 
-            lblDeathAnimation.AutoSize = true;
-            lblDeathAnimation.Location = new System.Drawing.Point(20, 19);
-            lblDeathAnimation.Margin = new Padding(4, 0, 4, 0);
-            lblDeathAnimation.Name = "lblDeathAnimation";
-            lblDeathAnimation.Size = new Size(100, 15);
-            lblDeathAnimation.TabIndex = 48;
-            lblDeathAnimation.Text = "Death Animation:";
             // 
             // lblDamage
             // 
@@ -1876,7 +2103,7 @@ namespace Intersect.Editor.Forms.Editors
             lblDropMaxAmount.Location = new System.Drawing.Point(163, 156);
             lblDropMaxAmount.Margin = new Padding(4, 0, 4, 0);
             lblDropMaxAmount.Name = "lblDropMaxAmount";
-            lblDropMaxAmount.Size = new Size(80, 15);
+            lblDropMaxAmount.Size = new Size(79, 15);
             lblDropMaxAmount.TabIndex = 15;
             lblDropMaxAmount.Text = "Max Amount:";
             // 
@@ -2012,6 +2239,38 @@ namespace Intersect.Editor.Forms.Editors
             chkEnabled.Text = "Enabled?";
             chkEnabled.CheckedChanged += chkEnabled_CheckedChanged;
             // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(102, 42);
+            label1.Margin = new Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new Size(100, 15);
+            label1.TabIndex = 48;
+            label1.Text = "Death Animation:";
+            // 
+            // darkComboBox1
+            // 
+            darkComboBox1.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            darkComboBox1.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            darkComboBox1.BorderStyle = ButtonBorderStyle.Solid;
+            darkComboBox1.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            darkComboBox1.DrawDropdownHoverOutline = false;
+            darkComboBox1.DrawFocusRectangle = false;
+            darkComboBox1.DrawMode = DrawMode.OwnerDrawFixed;
+            darkComboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
+            darkComboBox1.FlatStyle = FlatStyle.Flat;
+            darkComboBox1.ForeColor = System.Drawing.Color.Gainsboro;
+            darkComboBox1.FormattingEnabled = true;
+            darkComboBox1.Location = new System.Drawing.Point(106, 59);
+            darkComboBox1.Margin = new Padding(4, 3, 4, 3);
+            darkComboBox1.Name = "darkComboBox1";
+            darkComboBox1.Size = new Size(276, 24);
+            darkComboBox1.TabIndex = 49;
+            darkComboBox1.Text = null;
+            darkComboBox1.TextPadding = new Padding(2);
+            darkComboBox1.SelectedIndexChanged += cmbDeathAnimation_SelectedIndexChanged;
+            // 
             // grpSpells
             // 
             grpSpells.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
@@ -2134,6 +2393,54 @@ namespace Intersect.Editor.Forms.Editors
             lstSpells.TabIndex = 29;
             lstSpells.SelectedIndexChanged += lstSpells_SelectedIndexChanged;
             // 
+            // DeathNpcGrp
+            // 
+            DeathNpcGrp.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+            DeathNpcGrp.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            DeathNpcGrp.Controls.Add(lblDeathAnimation);
+            DeathNpcGrp.Controls.Add(cmbDeathAnimation);
+            DeathNpcGrp.ForeColor = System.Drawing.Color.Gainsboro;
+            DeathNpcGrp.Location = new System.Drawing.Point(261, 744);
+            DeathNpcGrp.Margin = new Padding(2);
+            DeathNpcGrp.Name = "DeathNpcGrp";
+            DeathNpcGrp.Padding = new Padding(2);
+            DeathNpcGrp.Size = new Size(266, 87);
+            DeathNpcGrp.TabIndex = 34;
+            DeathNpcGrp.TabStop = false;
+            DeathNpcGrp.Text = "Death Animation";
+            // 
+            // lblDeathAnimation
+            // 
+            lblDeathAnimation.AutoSize = true;
+            lblDeathAnimation.Location = new System.Drawing.Point(20, 19);
+            lblDeathAnimation.Margin = new Padding(4, 0, 4, 0);
+            lblDeathAnimation.Name = "lblDeathAnimation";
+            lblDeathAnimation.Size = new Size(100, 15);
+            lblDeathAnimation.TabIndex = 48;
+            lblDeathAnimation.Text = "Death Animation:";
+            // 
+            // cmbDeathAnimation
+            // 
+            cmbDeathAnimation.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+            cmbDeathAnimation.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            cmbDeathAnimation.BorderStyle = ButtonBorderStyle.Solid;
+            cmbDeathAnimation.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
+            cmbDeathAnimation.DrawDropdownHoverOutline = false;
+            cmbDeathAnimation.DrawFocusRectangle = false;
+            cmbDeathAnimation.DrawMode = DrawMode.OwnerDrawFixed;
+            cmbDeathAnimation.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbDeathAnimation.FlatStyle = FlatStyle.Flat;
+            cmbDeathAnimation.ForeColor = System.Drawing.Color.Gainsboro;
+            cmbDeathAnimation.FormattingEnabled = true;
+            cmbDeathAnimation.Location = new System.Drawing.Point(20, 41);
+            cmbDeathAnimation.Margin = new Padding(4, 3, 4, 3);
+            cmbDeathAnimation.Name = "cmbDeathAnimation";
+            cmbDeathAnimation.Size = new Size(234, 24);
+            cmbDeathAnimation.TabIndex = 49;
+            cmbDeathAnimation.Text = null;
+            cmbDeathAnimation.TextPadding = new Padding(2);
+            cmbDeathAnimation.SelectedIndexChanged += cmbDeathAnimation_SelectedIndexChanged;
+            // 
             // grpBestiary
             // 
             grpBestiary.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
@@ -2150,7 +2457,7 @@ namespace Intersect.Editor.Forms.Editors
             grpBestiary.Margin = new Padding(2);
             grpBestiary.Name = "grpBestiary";
             grpBestiary.Padding = new Padding(2);
-            grpBestiary.Size = new Size(266, 157);
+            grpBestiary.Size = new Size(266, 134);
             grpBestiary.TabIndex = 34;
             grpBestiary.TabStop = false;
             grpBestiary.Text = "Bestiary";
@@ -2165,7 +2472,7 @@ namespace Intersect.Editor.Forms.Editors
             lstBestiary.Location = new System.Drawing.Point(7, 22);
             lstBestiary.Margin = new Padding(4, 3, 4, 3);
             lstBestiary.Name = "lstBestiary";
-            lstBestiary.Size = new Size(120, 92);
+            lstBestiary.Size = new Size(120, 77);
             lstBestiary.TabIndex = 0;
             lstBestiary.SelectedIndexChanged += lstBestiary_SelectedIndexChanged;
             // 
@@ -2226,7 +2533,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             // btnBestiaryAdd
             // 
-            btnBestiaryAdd.Location = new System.Drawing.Point(7, 126);
+            btnBestiaryAdd.Location = new System.Drawing.Point(7, 105);
             btnBestiaryAdd.Margin = new Padding(4, 3, 4, 3);
             btnBestiaryAdd.Name = "btnBestiaryAdd";
             btnBestiaryAdd.Padding = new Padding(6);
@@ -2237,7 +2544,7 @@ namespace Intersect.Editor.Forms.Editors
             // 
             // btnBestiaryRemove
             // 
-            btnBestiaryRemove.Location = new System.Drawing.Point(73, 126);
+            btnBestiaryRemove.Location = new System.Drawing.Point(75, 105);
             btnBestiaryRemove.Margin = new Padding(4, 3, 4, 3);
             btnBestiaryRemove.Name = "btnBestiaryRemove";
             btnBestiaryRemove.Padding = new Padding(6);
@@ -2380,54 +2687,6 @@ namespace Intersect.Editor.Forms.Editors
             toolStripItemUndo.Text = "Undo";
             toolStripItemUndo.Click += toolStripItemUndo_Click;
             // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(102, 42);
-            label1.Margin = new Padding(4, 0, 4, 0);
-            label1.Name = "label1";
-            label1.Size = new Size(100, 15);
-            label1.TabIndex = 48;
-            label1.Text = "Death Animation:";
-            // 
-            // darkComboBox1
-            // 
-            darkComboBox1.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
-            darkComboBox1.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            darkComboBox1.BorderStyle = ButtonBorderStyle.Solid;
-            darkComboBox1.ButtonColor = System.Drawing.Color.FromArgb(43, 43, 43);
-            darkComboBox1.DrawDropdownHoverOutline = false;
-            darkComboBox1.DrawFocusRectangle = false;
-            darkComboBox1.DrawMode = DrawMode.OwnerDrawFixed;
-            darkComboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
-            darkComboBox1.FlatStyle = FlatStyle.Flat;
-            darkComboBox1.ForeColor = System.Drawing.Color.Gainsboro;
-            darkComboBox1.FormattingEnabled = true;
-            darkComboBox1.Location = new System.Drawing.Point(106, 59);
-            darkComboBox1.Margin = new Padding(4, 3, 4, 3);
-            darkComboBox1.Name = "darkComboBox1";
-            darkComboBox1.Size = new Size(276, 24);
-            darkComboBox1.TabIndex = 49;
-            darkComboBox1.Text = null;
-            darkComboBox1.TextPadding = new Padding(2);
-            darkComboBox1.SelectedIndexChanged += cmbDeathAnimation_SelectedIndexChanged;
-            // 
-            // DeathNpcGrp
-            // 
-            DeathNpcGrp.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-            DeathNpcGrp.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
-            DeathNpcGrp.Controls.Add(lblDeathAnimation);
-            DeathNpcGrp.Controls.Add(cmbDeathAnimation);
-            DeathNpcGrp.ForeColor = System.Drawing.Color.Gainsboro;
-            DeathNpcGrp.Location = new System.Drawing.Point(261, 744);
-            DeathNpcGrp.Margin = new Padding(2);
-            DeathNpcGrp.Name = "DeathNpcGrp";
-            DeathNpcGrp.Padding = new Padding(2);
-            DeathNpcGrp.Size = new Size(266, 87);
-            DeathNpcGrp.TabIndex = 34;
-            DeathNpcGrp.TabStop = false;
-            DeathNpcGrp.Text = "Death Animation";
-            // 
             // FrmNpc
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -2477,6 +2736,11 @@ namespace Intersect.Editor.Forms.Editors
             ((System.ComponentModel.ISupportInitialize)nudMag).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudStr).EndInit();
             pnlContainer.ResumeLayout(false);
+            grpBoss.ResumeLayout(false);
+            grpBoss.PerformLayout();
+            grpBossAi.ResumeLayout(false);
+            grpBossAi.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nudBossRespawnMinutes).EndInit();
             grpImmunities.ResumeLayout(false);
             grpImmunities.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nudTenacity).EndInit();
@@ -2509,13 +2773,13 @@ namespace Intersect.Editor.Forms.Editors
             grpNpcVsNpc.PerformLayout();
             grpSpells.ResumeLayout(false);
             grpSpells.PerformLayout();
+            DeathNpcGrp.ResumeLayout(false);
+            DeathNpcGrp.PerformLayout();
             grpBestiary.ResumeLayout(false);
             grpBestiary.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nudBestiaryAmount).EndInit();
             toolStrip.ResumeLayout(false);
             toolStrip.PerformLayout();
-            DeathNpcGrp.ResumeLayout(false);
-            DeathNpcGrp.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -2653,6 +2917,7 @@ namespace Intersect.Editor.Forms.Editors
         private DarkCheckBox chkIndividualLoot;
         private Controls.GameObjectList lstGameObjects;
         private DarkGroupBox grpImmunities;
+        private DarkGroupBox grpBoss;
         private DarkNumericUpDown nudTenacity;
         private System.Windows.Forms.Label lblTenacity;
         private DarkCheckBox chkTaunt;
@@ -2663,6 +2928,25 @@ namespace Intersect.Editor.Forms.Editors
         private DarkCheckBox chkStun;
         private DarkCheckBox chkSilence;
         private DarkCheckBox chkKnockback;
+        private DarkCheckBox chkIsBoss;
+        private Label lblBossRespawnMinutes;
+        private DarkNumericUpDown nudBossRespawnMinutes;
+        private DarkCheckBox chkBossAnnounceOnKill;
+        private DarkCheckBox chkBossAnnounceOnRespawn;
+        private DarkGroupBox grpBossAi;
+        private Label lblBossActions;
+        private Label lblBossTriggers;
+        private Label lblBossPhases;
+        private DarkButton btnBossPreset;
+        private DarkButton btnBossActionRemove;
+        private DarkButton btnBossActionAdd;
+        private DarkButton btnBossTriggerRemove;
+        private DarkButton btnBossTriggerAdd;
+        private DarkButton btnBossPhaseRemove;
+        private DarkButton btnBossPhaseAdd;
+        private ListBox lstBossActions;
+        private ListBox lstBossTriggers;
+        private ListBox lstBossPhases;
         private DarkNumericUpDown nudDropMinAmount;
         private Label lblDropMinAmount;
         private DarkNumericUpDown nudDmg;

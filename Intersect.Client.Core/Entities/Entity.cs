@@ -233,6 +233,8 @@ public partial class Entity : IEntity
 
     public NpcAggression Aggression { get; set; }
 
+    public bool IsBossEntity { get; set; }
+
     public long[] Vital { get; set; } = new long[Enum.GetValues<Vital>().Length];
 
     IReadOnlyDictionary<Vital, long> IEntity.Vitals =>
@@ -1747,24 +1749,16 @@ public partial class Entity : IEntity
             return;
         }
 
-        // Detectar se é um BOSS e remover a tag do nome
+        // El estilo visual de boss depende únicamente del flag serializado por el servidor.
         var displayName = Name;
-        var isBoss = Name.Contains("[BOSS]", StringComparison.OrdinalIgnoreCase);
+        var isBoss = IsBossEntity;
 
         if (isBoss)
         {
-            // Remover a tag [BOSS] do nome exibido (case-insensitive)
-            displayName = System.Text.RegularExpressions.Regex.Replace(
-                Name,
-                @"\[BOSS\]",
-                "",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase
-            ).Trim();
-
-            // Aplicar cores de BOSS
-            textColor = new Color(255, 255, 0, 0);        // Vermelho puro
-            backgroundColor = new Color(255, 0, 0, 0);    // Preto sólido
-            borderColor = new Color(255, 0, 0, 0);        // Borda preta
+            // Aplicar cores de BOSS (ARGB)
+            textColor = new Color(255, 255, 0, 255);      // Amarelo sólido (ARGB: 255, 255, 0, 255)
+            borderColor = new Color(0, 0, 0, 255);        // Preto sólido (ARGB: 0, 0, 0, 255)
+            backgroundColor = new Color(0, 0, 0, 255);    // Preto sólido (ARGB: 0, 0, 0, 255)
         }
 
         if (cachedNameColor == null || lastPlayerLevel != player.Level)

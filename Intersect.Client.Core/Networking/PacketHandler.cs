@@ -392,12 +392,14 @@ internal sealed partial class PacketHandler
         {
             en.Load(packet);
             en.Aggression = packet.Aggression;
+            en.IsBossEntity = packet.IsBoss;
         }
         else
         {
             var entity = new Entity(packet.EntityId, packet, EntityType.GlobalEntity)
             {
                 Aggression = packet.Aggression,
+                IsBossEntity = packet.IsBoss,
             };
             Globals.Entities.Add(entity.Id, entity);
         }

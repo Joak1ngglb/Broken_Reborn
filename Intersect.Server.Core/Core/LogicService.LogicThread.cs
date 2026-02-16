@@ -19,6 +19,7 @@ using Intersect.Server.Core.Services;
 using System;
 using System.Threading.Tasks;
 using Serilog;
+using Intersect.Server.Entities.BossSystem;
 
 namespace Intersect.Server.Core;
 

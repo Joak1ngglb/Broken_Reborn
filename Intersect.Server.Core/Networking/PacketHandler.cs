@@ -13,6 +13,7 @@ using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Database.PlayerData.Security;
 using Intersect.Server.Database.PlayerData.Shops;
 using Intersect.Server.Entities;
+using Intersect.Server.Entities.BossSystem;
 using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
@@ -26,6 +27,7 @@ using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.Localization;
 using Intersect.Framework.Core.Security;
@@ -1229,6 +1231,66 @@ internal sealed partial class PacketHandler
             {
                 PacketSender.SendChatMsg(player, Strings.Player.Offline, ChatMessageType.PM, CustomColors.Alerts.Error);
             }
+        }
+        else if (cmd == "/bossailog")
+        {
+            if (!(client?.Power.IsAdmin ?? false))
+            {
+                PacketSender.SendChatMsg(player, Strings.Account.NotAllowed, ChatMessageType.Error, CustomColors.Alerts.Error);
+                return;
+            }
+
+            if (msgSplit.Length < 1)
+            {
+                PacketSender.SendChatMsg(player, "Uso: /bossailog <bossId|bossName> [on|off|toggle]", ChatMessageType.Notice);
+                return;
+            }
+
+            var bossKey = msgSplit[0];
+            var mode = msgSplit.Length > 1 ? msgSplit[1].ToLowerInvariant() : "toggle";
+
+            NPCDescriptor? descriptor = null;
+            if (Guid.TryParse(bossKey, out var bossId))
+            {
+                descriptor = NPCDescriptor.Get(bossId);
+            }
+
+            descriptor ??= NPCDescriptor.Lookup.Values
+                .OfType<NPCDescriptor>()
+                .FirstOrDefault(npc => string.Equals(npc.Name, bossKey, StringComparison.OrdinalIgnoreCase));
+
+            if (descriptor == null || !descriptor.IsBoss)
+            {
+                PacketSender.SendChatMsg(player, $"Boss '{bossKey}' no encontrado o no marcado como boss.", ChatMessageType.Error, CustomColors.Alerts.Error);
+                return;
+            }
+
+            bool enabled;
+            switch (mode)
+            {
+                case "on":
+                case "1":
+                case "true":
+                    enabled = BossAiDebugSettings.SetEnabled(descriptor.Id, true);
+                    break;
+                case "off":
+                case "0":
+                case "false":
+                    enabled = BossAiDebugSettings.SetEnabled(descriptor.Id, false);
+                    break;
+                default:
+                    enabled = BossAiDebugSettings.Toggle(descriptor.Id);
+                    break;
+            }
+
+            PacketSender.SendChatMsg(
+                player,
+                $"Boss AI debug para '{descriptor.Name}' ({descriptor.Id}) => {(enabled ? "ON" : "OFF")}",
+                ChatMessageType.Notice,
+                enabled ? CustomColors.Alerts.Success : CustomColors.Alerts.Info
+            );
+
+            return;
         }
         else if (cmd == "/alignment" && msgSplit.Length >= 2 &&
                  string.Equals(msgSplit[0], "set", StringComparison.OrdinalIgnoreCase))

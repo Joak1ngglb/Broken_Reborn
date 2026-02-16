@@ -19,6 +19,7 @@ using Intersect.Plugins;
 using Intersect.Plugins.Contexts;
 using Intersect.Plugins.Helpers;
 using Intersect.Server.Database;
+using Intersect.Server.Entities.BossSystem;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
@@ -305,6 +306,8 @@ internal static class Bootstrapper
 
 
         Time.Update();
+
+        BossManager.Instance.Initialize();
 
         Console.WriteLine();
         Console.WriteLine(Strings.Commandoutput.ServerInfo);
