@@ -154,9 +154,8 @@ public static partial class NpcExperienceCalculator
             experience = CalculateExperience(npcDescriptor.Level);
         }
 
-        // Aplicar multiplicador de Boss utilizando o flag explícito.
-        // Compatibilidade temporária: aceita prefixo legado [BOSS] com warning de migração.
-        if (NpcBossCompatibility.IsBoss(npcDescriptor))
+        // Aplicar multiplicador de Boss usando exclusivamente o flag IsBoss do descriptor.
+        if (npcDescriptor.IsBoss)
         {
             experience *= Math.Max(1, experienceOptions.BossExperienceMultiplier);
         }

@@ -1749,19 +1749,12 @@ public partial class Entity : IEntity
             return;
         }
 
-        // Detectar BOSS por flag explícita enviada pelo servidor e remover prefixo legado do nome exibido.
+        // El estilo visual de boss depende únicamente del flag serializado por el servidor.
         var displayName = Name;
         var isBoss = IsBossEntity;
 
         if (isBoss)
         {
-            displayName = System.Text.RegularExpressions.Regex.Replace(
-                Name,
-                @"^\[BOSS\]\s*",
-                "",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase
-            ).Trim();
-
             // Aplicar cores de BOSS (ARGB)
             textColor = new Color(255, 255, 0, 255);      // Amarelo sólido (ARGB: 255, 255, 0, 255)
             borderColor = new Color(0, 0, 0, 255);        // Preto sólido (ARGB: 0, 0, 0, 255)

@@ -1835,7 +1835,7 @@ public partial class Npc : Entity
         var pkt = (NpcEntityPacket)packet;
         pkt.Aggression = GetAggression(forPlayer);
         pkt.Level = Level; // Asegúrate de que el nivel se incluya en el paquete
-        pkt.IsBoss = NpcBossCompatibility.IsBoss(Descriptor);
+        pkt.IsBoss = Descriptor?.IsBoss == true;
 
         return pkt;
     }
