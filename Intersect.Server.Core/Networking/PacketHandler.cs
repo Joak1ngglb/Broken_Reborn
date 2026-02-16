@@ -20,6 +20,7 @@ using Intersect.Server.Maps;
 using Intersect.Utilities;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using Intersect.Core;
 using Intersect.Framework.Core;
@@ -521,14 +522,19 @@ internal sealed partial class PacketHandler
         }
 
         var language = string.IsNullOrWhiteSpace(packet.Language) ? "en" : packet.Language;
+        var totalRequests = packet.Requests.Count;
+        var emptyRequests = 0;
+        var unknownEntityTypeRequests = 0;
         var entries = new List<LocalizedTextEntry>();
         var validRequests = new List<LocalizationRequestEntry>(packet.Requests.Count);
         var batchKeys = new List<LocalizationKey>(packet.Requests.Count);
+        var missesByEntityTypeAndField = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var request in packet.Requests)
         {
             if (request == null)
             {
+                emptyRequests++;
                 continue;
             }
 
@@ -540,12 +546,14 @@ internal sealed partial class PacketHandler
                     entityType,
                     client.Id
                 );
+                unknownEntityTypeRequests++;
                 entries.Add(new LocalizedTextEntry(request, string.Empty));
                 continue;
             }
 
             if (string.IsNullOrWhiteSpace(request.EntityId) || string.IsNullOrWhiteSpace(request.Field))
             {
+                emptyRequests++;
                 entries.Add(new LocalizedTextEntry(request, string.Empty));
                 continue;
             }
@@ -564,9 +572,38 @@ internal sealed partial class PacketHandler
                     ? localizedText
                     : string.Empty;
 
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    var missKey = $"{request.EntityType}/{request.Field}";
+                    missesByEntityTypeAndField[missKey] =
+                        missesByEntityTypeAndField.TryGetValue(missKey, out var currentMisses)
+                            ? currentMisses + 1
+                            : 1;
+                }
+
                 entries.Add(new LocalizedTextEntry(request, text));
             }
         }
+
+        ApplicationContext.Context.Value?.Logger.LogDebug(
+            "Localization batch from client {ClientId}: total={TotalRequests}, valid={ValidRequests}, empty={EmptyRequests}, unknownEntityType={UnknownEntityTypeRequests}, missesByEntityTypeField={MissesByEntityTypeField}.",
+            client.Id,
+            totalRequests,
+            validRequests.Count,
+            emptyRequests,
+            unknownEntityTypeRequests,
+            missesByEntityTypeAndField.Count > 0
+                ? string.Join(", ", missesByEntityTypeAndField.Select(pair => $"{pair.Key}:{pair.Value}"))
+                : "none"
+        );
+
+        LocalizationStatsTracker.RecordPacketBatch(
+            totalRequests,
+            validRequests.Count,
+            emptyRequests,
+            unknownEntityTypeRequests,
+            missesByEntityTypeAndField
+        );
 
         if (entries.Count > 0)
         {
