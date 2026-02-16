@@ -22,6 +22,7 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using Stat = Intersect.Enums.Stat;
 using Intersect.Server.General;
+using Intersect.Server.Entities.BossSystem;
 
 namespace Intersect.Server.Entities;
 
@@ -279,6 +280,8 @@ public partial class Npc : Entity
             }
             PacketSender.SendEntityDie(this);
             PacketSender.SendEntityLeave(this);
+
+            BossManager.HandleDeath(this);
         }
     }
 

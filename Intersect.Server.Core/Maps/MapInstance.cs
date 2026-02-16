@@ -16,6 +16,7 @@ using Intersect.Server.Entities.Events;
 using Intersect.Server.Networking;
 using Intersect.Utilities;
 using Intersect.Server.Entities;
+using Intersect.Server.Entities.BossSystem;
 using Intersect.Server.Classes.Maps;
 using Intersect.Server.Core.MapInstancing;
 using Intersect.Server.Framework.Items;
@@ -472,6 +473,10 @@ public partial class MapInstance : IMapInstance
             FindNpcSpawnLocation(spawn, out var x, out var y, out Direction dir);
 
             npcSpawnInstance.Entity = SpawnNpc((byte) x, (byte) y, dir, spawn.NpcId);
+            if (npcSpawnInstance.Entity != null)
+            {
+                BossManager.RegisterSpawn(npcSpawnInstance.Entity);
+            }
         }
     }
 
@@ -1399,6 +1404,11 @@ public partial class MapInstance : IMapInstance
         {
             var spawn = spawns[i];
             if (!NpcSpawnInstances.TryGetValue(spawn, out var spawnInstance) || spawnInstance?.Entity?.Descriptor == default || !spawnInstance.Entity.IsDead)
+            {
+                continue;
+            }
+
+            if (spawnInstance.Entity.Descriptor.IsBoss)
             {
                 continue;
             }

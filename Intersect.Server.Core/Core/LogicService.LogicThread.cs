@@ -19,6 +19,7 @@ using Intersect.Server.Core.Services;
 using System;
 using System.Threading.Tasks;
 using Serilog;
+using Intersect.Server.Entities.BossSystem;
 
 namespace Intersect.Server.Core;
 
@@ -285,6 +286,7 @@ internal sealed partial class LogicService
                     }
 
                     Time.Update();
+                    BossManager.Update(startTime);
                     swCps++;
 
                     var endTime = Timing.Global.Milliseconds;
