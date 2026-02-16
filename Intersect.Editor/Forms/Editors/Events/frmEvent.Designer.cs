@@ -1114,7 +1114,7 @@ namespace Intersect.Editor.Forms.Editors.Events
             btnReindexTranslations.Padding = new Padding(6);
             btnReindexTranslations.Size = new Size(160, 24);
             btnReindexTranslations.TabIndex = 8;
-            btnReindexTranslations.Text = "Reindex Translations";
+            btnReindexTranslations.Text = "Reindexar localización Quest/Event";
             btnReindexTranslations.Click += btnReindexTranslations_Click;
             // 
             // commandMenu
