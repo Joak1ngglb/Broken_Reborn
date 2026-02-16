@@ -13,7 +13,7 @@ public partial class LocalizedString(string value) : Localized
 
     public static implicit operator LocalizedString(string value) => new(value);
 
-    public static implicit operator string(LocalizedString localizedString) => localizedString._value;
+    public static implicit operator string(LocalizedString localizedString) => localizedString?._value;
 
     public override string ToString() => _value;
 
