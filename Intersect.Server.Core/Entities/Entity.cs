@@ -3465,44 +3465,32 @@ public abstract partial class Entity : IEntity
             return;
         }
 
-        // Find tiles to spawn items.
+        // Find tiles to spawn items around the source entity on this map only.
         var range = Math.Max(0, Options.ItemDropRange);
-        var tiles = new List<(TileHelper Tile, int Distance)>();
-        for (var x = X - range; x <= X + range; x++)
+        var hasMapInstance = MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var mapInstance);
+        var tiles = new List<(int X, int Y, int Distance)>();
+        if (hasMapInstance)
         {
-            for (var y = Y - range; y <= Y + range; y++)
+            var minX = Math.Max(0, X - range);
+            var maxX = Math.Min(Options.Instance.Map.MapWidth - 1, X + range);
+            var minY = Math.Max(0, Y - range);
+            var maxY = Math.Min(Options.Instance.Map.MapHeight - 1, Y + range);
+
+            for (var x = minX; x <= maxX; x++)
             {
-                // Use a radial selection (Manhattan distance) rather than a full square area.
-                var distance = Math.Abs(x - X) + Math.Abs(y - Y);
-                if (distance > range)
+                for (var y = minY; y <= maxY; y++)
                 {
-                    continue;
-                }
+                    // Use Chebyshev distance so immediate diagonals are considered "around" the entity.
+                    var distance = Math.Max(Math.Abs(x - X), Math.Abs(y - Y));
+                    if (distance == 0 || distance > range)
+                    {
+                        continue;
+                    }
 
-                var tileHelper = new TileHelper(MapId, x, y);
-                if (!tileHelper.TryFix())
-                {
-                    continue;
-                }
-
-                var mapId = tileHelper.GetMapId();
-
-                // Drops should stay on the current map unless explicitly intended otherwise.
-                if (mapId != MapId)
-                {
-                    continue;
-                }
-
-                if (!MapController.TryGetInstanceFromMap(mapId, MapInstanceId, out var mapInstance))
-                {
-                    continue;
-                }
-
-                var tileX = tileHelper.GetX();
-                var tileY = tileHelper.GetY();
-                if (!mapInstance.TileBlocked(tileX, tileY))
-                {
-                    tiles.Add((tileHelper, distance));
+                    if (!mapInstance.TileBlocked(x, y))
+                    {
+                        tiles.Add((x, y, distance));
+                    }
                 }
             }
         }
@@ -3512,7 +3500,7 @@ public abstract partial class Entity : IEntity
             .ThenBy(_ => Randomization.Next())
             .ToList();
 
-        var closestTilePoolCount = Math.Min(5, orderedTiles.Count);
+        var closestTilePoolCount = Math.Min(8, orderedTiles.Count);
 
         // Drop items
         foreach (var slot in Items)
@@ -3540,15 +3528,11 @@ public abstract partial class Entity : IEntity
             }
 
             // Spawn the actual item!
-            if (closestTilePoolCount > 0)
+            if (closestTilePoolCount > 0 && hasMapInstance)
             {
-                var tile = orderedTiles[Randomization.Next(closestTilePoolCount)].Tile;
-                var mapId = tile.GetMapId();
-                if (MapController.TryGetInstanceFromMap(mapId, MapInstanceId, out var tileInstance))
-                {
-                    var itemSource = this.AsItemSource();
-                    tileInstance.SpawnItem(itemSource, tile.GetX(), tile.GetY(), drop, drop.Quantity, lootOwner, sendUpdate);
-                }
+                var tile = orderedTiles[Randomization.Next(closestTilePoolCount)];
+                var itemSource = this.AsItemSource();
+                mapInstance.SpawnItem(itemSource, tile.X, tile.Y, drop, drop.Quantity, lootOwner, sendUpdate);
             }
             else if (MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance))
             {
