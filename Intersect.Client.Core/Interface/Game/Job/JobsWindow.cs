@@ -372,7 +372,11 @@ namespace Intersect.Client.Interface.Game.Job
             if (table == null)
                 return;
 
-            var inventoryItemsByDescriptorId = Globals.Me.Inventory
+            var me = Globals.Me as Intersect.Client.Entities.Entity;
+            if (me == null)
+                return;
+
+            var inventoryItemsByDescriptorId = me.Inventory
                 .Where(i => i != null)
                 .GroupBy(i => i.ItemId)
                 .ToDictionary(g => g.Key, g => g.Sum(i => i.Quantity));

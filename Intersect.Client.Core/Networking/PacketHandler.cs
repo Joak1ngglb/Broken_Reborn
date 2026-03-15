@@ -44,6 +44,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Intersect.Framework.Core.GameObjects.Spells;
+using Intersect.Framework.Core.GameObjects.Items;
 
 namespace Intersect.Client.Networking;
 

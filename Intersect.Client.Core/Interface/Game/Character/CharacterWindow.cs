@@ -2,7 +2,6 @@ using Intersect.Client.Core;
 using Intersect.Client.Entities;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
@@ -18,6 +17,9 @@ using Intersect.Enums;
 using Intersect.Framework.Core.Combat;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
+using System.Globalization;
+using Intersect.Client.Entities;
+
 
 namespace Intersect.Client.Interface.Game.Character;
 
@@ -113,7 +115,6 @@ public partial class CharacterWindow : Window
     private Player? _player;
     private ItemProperties mItemProperties = null;
     private ClassDescriptor mClassDescriptor;
-
     public Player? DisplayedPlayer => _player ?? Globals.Me;
 
     long HpRegenAmount;
@@ -585,13 +586,16 @@ public partial class CharacterWindow : Window
 
     private IEnumerable<ItemDescriptor> GetEquippedDescriptors(Player player)
     {
+        var entity = (Entity)player;
+
         if (player == Globals.Me)
         {
-            foreach (var (_, equipmentSlots) in player.MyEquipment)
+            foreach (var equipmentEntry in entity.MyEquipment)
             {
+                var equipmentSlots = equipmentEntry.Value;
                 foreach (var slotIndex in equipmentSlots)
                 {
-                    var invItem = player.Inventory.ElementAtOrDefault(slotIndex);
+                    var invItem = entity.Inventory.ElementAtOrDefault(slotIndex);
                     if (invItem?.ItemId == null || invItem.ItemId == Guid.Empty)
                         continue;
 
@@ -603,8 +607,9 @@ public partial class CharacterWindow : Window
         }
         else
         {
-            foreach (var (_, equippedItems) in player.Equipment)
+            foreach (var equipmentEntry in entity.Equipment)
             {
+                var equippedItems = equipmentEntry.Value;
                 foreach (var id in equippedItems)
                 {
                     if (id == Guid.Empty)
@@ -625,6 +630,8 @@ public partial class CharacterWindow : Window
         out int scalingPercent
     )
     {
+        var entity = (Entity)player;
+
         baseDamage = 0;
         scalingStat = Stat.Attack;
         scalingPercent = 0;
@@ -644,12 +651,12 @@ public partial class CharacterWindow : Window
 
         if (player == Globals.Me)
         {
-            if (player.MyEquipment.TryGetValue(weaponSlotIndex, out var list) && list.Count > 0)
+            if (entity.MyEquipment.TryGetValue(weaponSlotIndex, out var list) && list.Count > 0)
             {
                 var invIndex = list[0];
                 if (invIndex >= 0 && invIndex < Options.Instance.Player.MaxInventory)
                 {
-                    var inventorySlot = player.Inventory.ElementAtOrDefault(invIndex);
+                    var inventorySlot = entity.Inventory.ElementAtOrDefault(invIndex);
                     if (inventorySlot != null)
                     {
                         weaponId = inventorySlot.ItemId;
@@ -659,7 +666,7 @@ public partial class CharacterWindow : Window
         }
         else
         {
-            if (player.Equipment.TryGetValue(weaponSlotIndex, out var list) && list.Count > 0)
+            if (entity.Equipment.TryGetValue(weaponSlotIndex, out var list) && list.Count > 0)
             {
                 weaponId = list[0];
             }
@@ -715,11 +722,10 @@ public partial class CharacterWindow : Window
                         var inventoryIndex = equippedList[0];
                         if (inventoryIndex >= 0 && inventoryIndex < Options.Instance.Player.MaxInventory)
                         {
-                            var itemNum = player.Inventory[inventoryIndex].ItemId;
-
-                            if (ItemDescriptor.TryGet(itemNum, out var itemDescriptor))
+                            var equippedItem = player.Inventory[inventoryIndex];
+                            if (equippedItem != null && ItemDescriptor.TryGet(equippedItem.ItemId, out var itemDescriptor))
                             {
-                                paperdoll = player.Gender == 0 ? itemDescriptor.MalePaperdoll : itemDescriptor.FemalePaperdoll;
+                                paperdoll = player.Gender == Gender.Male ? itemDescriptor.MalePaperdoll : itemDescriptor.FemalePaperdoll;
                                 PaperdollPanels[z].RenderColor = itemDescriptor.Color;
                             }
                         }
@@ -802,6 +808,7 @@ public partial class CharacterWindow : Window
         if (player is null)
             return;
 
+        var entity = (Entity)player;
         int itemIndex = 0;
         for (var slotIndex = 0; slotIndex < Options.Instance.Equipment.EquipmentSlots.Count; slotIndex++)
         {
@@ -809,7 +816,7 @@ public partial class CharacterWindow : Window
 
             if (player == Globals.Me)
             {
-                var itemSlots = player.MyEquipment.GetValueOrDefault(slotIndex) ?? new List<int>();
+                var itemSlots = entity.MyEquipment.GetValueOrDefault(slotIndex) ?? new List<int>();
                 for (var i = 0; i < slot.MaxItems; i++)
                 {
                     if (itemIndex >= Items.Count)
@@ -820,7 +827,7 @@ public partial class CharacterWindow : Window
 
                     if (i < itemSlots.Count && itemSlots[i] >= 0 && itemSlots[i] < Options.Instance.Player.MaxInventory)
                     {
-                        var invItem = player.Inventory[itemSlots[i]];
+                        var invItem = entity.Inventory[itemSlots[i]];
                         if (invItem.ItemId != Guid.Empty)
                         {
                             itemIds.Add(invItem.ItemId);
@@ -834,7 +841,7 @@ public partial class CharacterWindow : Window
             }
             else
             {
-                var equippedIds = player.Equipment.GetValueOrDefault(slotIndex) ?? new List<Guid>();
+                var equippedIds = entity.Equipment.GetValueOrDefault(slotIndex) ?? new List<Guid>();
                 for (var i = 0; i < slot.MaxItems; i++)
                 {
                     if (itemIndex >= Items.Count)
@@ -855,6 +862,7 @@ public partial class CharacterWindow : Window
     {
         var player = DisplayedPlayer;
         mClassDescriptor = ClassDescriptor.Get(player?.Class ?? Guid.Empty);
+        var entity = player as Entity;
 
         HpRegenAmount = mClassDescriptor?.VitalRegen[(int)Vital.Health] ?? 0;
         ManaRegenAmount = mClassDescriptor?.VitalRegen[(int)Vital.Mana] ?? 0;
@@ -919,7 +927,7 @@ public partial class CharacterWindow : Window
 
             mSpeedBuff.SetText(Strings.Character.StatLabelValue.ToString(
                 Strings.Combat.Stats[Stat.Speed],
-                player.Stat[(int)Stat.Speed]
+                entity?.Stat[(int)Stat.Speed] ?? 0
             ));
 
             int sourceBaseDamage;
@@ -933,7 +941,7 @@ public partial class CharacterWindow : Window
                 sourceScalingPercent = mClassDescriptor?.Scaling ?? 0;
             }
 
-            var statValue = player.Stat[(int)sourceScalingStat];
+            var statValue = entity?.Stat[(int)sourceScalingStat] ?? 0;
             var scaledBase = sourceBaseDamage + statValue * (sourceScalingPercent / 100f);
             var afterBonuses = scaledBase * (1f + _flatDamage / 100f);
 
@@ -961,9 +969,9 @@ public partial class CharacterWindow : Window
         mDamageBuff.SetText(Strings.Character.FlatDamage.ToString(FormatPercentBonus(_flatDamage)));
         mCureBuff.SetText(Strings.Character.FlatCures.ToString(FormatPercentBonus(_flatCures)));
 
-        var agility = player?.Stat[(int)Stat.Agility] ?? 0;
-        var attack = player?.Stat[(int)Stat.Attack] ?? 0;
-        var defense = player?.Stat[(int)Stat.Defense] ?? 0;
+        var agility = entity?.Stat[(int)Stat.Agility] ?? 0;
+        var attack = entity?.Stat[(int)Stat.Attack] ?? 0;
+        var defense = entity?.Stat[(int)Stat.Defense] ?? 0;
 
         var accuracyScore = CombatFormulaCalculator.CalculateAccuracyScore(agility, attack, _accuracy);
         var evasionScore = CombatFormulaCalculator.CalculateEvasionScore(agility, defense, _evasion);
