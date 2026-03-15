@@ -39,6 +39,7 @@ namespace Intersect.Client.Interface.Game.Job
         private List<RecipeItem> mItems = new List<RecipeItem>();
         private RecipeItem mCombinedItem;
         private readonly HashSet<Guid> _visibleRecipeIds = new();
+        private readonly Dictionary<Guid, Label> _recipeNameLabels = new();
         private bool _localizationSubscribed;
 
         private JobType SelectedJob = JobType.None;
@@ -322,20 +323,40 @@ namespace Intersect.Client.Interface.Game.Job
             }
         }
 
+        private void ReleaseHoverFromRecipePanel()
+        {
+            if (InputHandler.HoveredControl is not { } hoveredControl)
+            {
+                return;
+            }
+
+            for (var current = hoveredControl; current != null; current = current.Parent)
+            {
+                if (current == mRecipePanel)
+                {
+                    InputHandler.HoveredControl = null;
+                    return;
+                }
+            }
+        }
+
+        private void ResetRecipePanel()
+        {
+            Interface.GameUi.ItemDescriptionWindow?.Hide();
+            mRecipePanel.ClearChildren(dispose: true);
+            mItems.Clear();
+            _recipeNameLabels.Clear();
+        }
+
         private void LoadRecipes(JobType jobType)
         {  // Record current scroll position before clearing to preserve it
             ReleaseMouseFocusFromRecipePanel();
+            ReleaseHoverFromRecipePanel();
 
             var currentScroll = mRecipePanel.VerticalScrollBar.ScrollAmount;
+            ResetRecipePanel();
             // 🔄 Limpiar visual y lógicamente las recetas anteriores
-            foreach (var craftedItem in mItems)
-            {
-                if (craftedItem.Container is { } container)
-                {
-                    container.Dispose(); // Para evitar fugas visuales
-                }
-                Interface.GameUi.ItemDescriptionWindow?.Hide();
-            }
+            Interface.GameUi.ItemDescriptionWindow?.Hide();
 
             // Limpiar visualmente y en memoria
             mRecipePanel.ClearChildren(); // ✅ Limpia todo visual
@@ -394,6 +415,7 @@ namespace Intersect.Client.Interface.Game.Job
                     TextColorOverride = Color.White
                 };
                 nameLbl.SetPosition(50, 5);
+                _recipeNameLabels[recipe.Id] = nameLbl;
 
                 // XP
                 var estimatedExperience = CraftingExperiencePolicy.CalculateAwardedExperience(recipe, playerJobLevel);
@@ -559,15 +581,28 @@ namespace Intersect.Client.Interface.Game.Job
             }
 
             var entityType = GameObjectType.Crafts.ToString();
-            if (requests.Any(
-                    request => request != null &&
-                               request.EntityType == entityType &&
-                               request.Field == "Name" &&
-                               Guid.TryParse(request.EntityId, out var recipeId) &&
-                               _visibleRecipeIds.Contains(recipeId)
-                ))
+            var updatedRecipeNames = false;
+            foreach (var request in requests)
             {
-                LoadRecipes(SelectedJob);
+                if (request == null ||
+                    request.EntityType != entityType ||
+                    request.Field != "Name" ||
+                    !Guid.TryParse(request.EntityId, out var recipeId) ||
+                    !_visibleRecipeIds.Contains(recipeId) ||
+                    !_recipeNameLabels.TryGetValue(recipeId, out var label) ||
+                    !CraftingRecipeDescriptor.TryGet(recipeId, out var recipe))
+                {
+                    continue;
+                }
+
+                label.Text = GetLocalizedRecipeName(recipe);
+                label.SizeToChildren(false, true);
+                updatedRecipeNames = true;
+            }
+
+            if (updatedRecipeNames)
+            {
+                mRecipePanel.UpdateScrollBars();
             }
         }
     }

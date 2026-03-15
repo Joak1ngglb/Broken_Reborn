@@ -635,6 +635,7 @@ public partial class InventoryWindow : Window
             }
 
             requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+            requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Description"));
         }
 
         if (requests.Count > 0)
@@ -662,7 +663,10 @@ public partial class InventoryWindow : Window
         }
 
         GameLocalization.RequestEntries(
-            [new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name")]
+            [
+                new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"),
+                new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Description")
+            ]
         );
     }
 

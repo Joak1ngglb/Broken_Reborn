@@ -178,17 +178,23 @@ public partial class GameInterface : MutableInterface
         set => _itemDescriptionWindow = value;
     }
 
+    public ItemDescriptionWindow? ExistingItemDescriptionWindow => _itemDescriptionWindow;
+
     public ChatItemDescriptionWindow? ChatItemDescriptionWindow
     {
         get => _chatItemDescriptionWindow ??= new ChatItemDescriptionWindow();
         set => _chatItemDescriptionWindow = value;
     }
 
+    public ChatItemDescriptionWindow? ExistingChatItemDescriptionWindow => _chatItemDescriptionWindow;
+
     public SpellDescriptionWindow? SpellDescriptionWindow
     {
         get => _spellDescriptionWindow ??= new SpellDescriptionWindow();
         set => _spellDescriptionWindow = value;
     }
+
+    public SpellDescriptionWindow? ExistingSpellDescriptionWindow => _spellDescriptionWindow;
 
     public MenuContainer GameMenu { get; private set; }
 

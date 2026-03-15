@@ -237,6 +237,7 @@ namespace Intersect.Client.Interface.Game.Shops
                 }
 
                 requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+                requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Description"));
             }
 
             if (requests.Count > 0)

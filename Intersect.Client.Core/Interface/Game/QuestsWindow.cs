@@ -465,6 +465,36 @@ namespace Intersect.Client.Interface.Game
                     quest.Id.ToString(),
                     GetQuestTaskLocalizationField(task)
                 ));
+
+                switch (task.Objective)
+                {
+                    case QuestObjective.GatherItems when ItemDescriptor.TryGet(task.TargetId, out var item):
+                        entries.Add(new LocalizationRequestEntry(item.Type.ToString(), item.Id.ToString(), "Name"));
+                        entries.Add(new LocalizationRequestEntry(item.Type.ToString(), item.Id.ToString(), "Description"));
+                        break;
+
+                    case QuestObjective.KillNpcs when NPCDescriptor.TryGet(task.TargetId, out var npc):
+                        entries.Add(new LocalizationRequestEntry(
+                            LocalizationEntityTypes.Npc,
+                            npc.Id.ToString(),
+                            "Name"
+                        ));
+                        break;
+                }
+            }
+
+            if (Globals.QuestRewards.TryGetValue(quest.Id, out var rewards))
+            {
+                foreach (var rewardItemId in rewards.Keys)
+                {
+                    if (!ItemDescriptor.TryGet(rewardItemId, out var rewardDescriptor))
+                    {
+                        continue;
+                    }
+
+                    entries.Add(new LocalizationRequestEntry(rewardDescriptor.Type.ToString(), rewardDescriptor.Id.ToString(), "Name"));
+                    entries.Add(new LocalizationRequestEntry(rewardDescriptor.Type.ToString(), rewardDescriptor.Id.ToString(), "Description"));
+                }
             }
 
             GameLocalization.RequestEntries(entries);
@@ -501,6 +531,21 @@ namespace Intersect.Client.Interface.Game
             return GameLocalization.GetTextOrDefault(item.Type.ToString(), item.Id, "Name", item.Name);
         }
 
+        private static string GetLocalizedNpcName(Guid npcId)
+        {
+            if (!NPCDescriptor.TryGet(npcId, out var npc) || npc == null)
+            {
+                return NPCDescriptor.GetName(npcId);
+            }
+
+            return GameLocalization.GetTextOrDefault(
+                LocalizationEntityTypes.Npc,
+                npc.Id,
+                "Name",
+                npc.Name
+            );
+        }
+
         private void SubscribeToLocalizationUpdates()
         {
             if (_localizationSubscribed)
@@ -525,14 +570,21 @@ namespace Intersect.Client.Interface.Game
                 var entityType = GetQuestEntityType(mSelectedQuest);
                 var entityId = mSelectedQuest.Id.ToString();
                 if (requests.Any(
-                        request => request.EntityType == entityType &&
-                                   request.EntityId == entityId &&
-                                   (request.Field == QuestFieldKey.Name ||
-                                    request.Field == QuestFieldKey.BeforeDescription ||
-                                    request.Field == QuestFieldKey.InProgressDescription ||
-                                    request.Field == QuestFieldKey.EndDescription ||
-                                    request.Field.StartsWith("Task:", StringComparison.Ordinal))
-                    ))
+                        request =>
+                            (request.EntityType == entityType &&
+                             request.EntityId == entityId &&
+                             (request.Field == QuestFieldKey.Name ||
+                              request.Field == QuestFieldKey.BeforeDescription ||
+                              request.Field == QuestFieldKey.InProgressDescription ||
+                              request.Field == QuestFieldKey.EndDescription ||
+                              request.Field.StartsWith("Task:", StringComparison.Ordinal))) ||
+                            (request.EntityType == GameObjectType.Item.ToString() &&
+                             (mSelectedQuest.Tasks.Any(task => task.Objective == QuestObjective.GatherItems && task.TargetId.ToString() == request.EntityId) ||
+                              (Globals.QuestRewards.TryGetValue(mSelectedQuest.Id, out var rewards) &&
+                               rewards.Keys.Any(itemId => itemId.ToString() == request.EntityId)))) ||
+                            (request.EntityType == LocalizationEntityTypes.Npc &&
+                             mSelectedQuest.Tasks.Any(task => task.Objective == QuestObjective.KillNpcs && task.TargetId.ToString() == request.EntityId))
+                     ))
                 {
                     UpdateSelectedQuest();
                 }
@@ -725,13 +777,13 @@ namespace Intersect.Client.Interface.Game
                             else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.KillNpcs)
                             {
                                 mQuestCurrentTaskLabel.AddText(
-                                    Strings.QuestLog.TaskNpc.ToString(
-                                        Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress,
-                                        mSelectedQuest.Tasks[i].Quantity,
-                                        NPCDescriptor.GetName(mSelectedQuest.Tasks[i].TargetId)
-                                    ),
-                                    mQuestDescTemplateLabel
-                                );
+                                        Strings.QuestLog.TaskNpc.ToString(
+                                            Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress,
+                                            mSelectedQuest.Tasks[i].Quantity,
+                                            GetLocalizedNpcName(mSelectedQuest.Tasks[i].TargetId)
+                                        ),
+                                        mQuestDescTemplateLabel
+                                    );
                             }
                         }
                     }
@@ -1190,7 +1242,7 @@ namespace Intersect.Client.Interface.Game
 
                     case QuestObjective.KillNpcs:
                         desc = Strings.QuestLog.TaskNpc.ToString(
-                            progress, task.Quantity, NPCDescriptor.GetName(task.TargetId));
+                            progress, task.Quantity, GetLocalizedNpcName(task.TargetId));
                         break;
                 }
 
