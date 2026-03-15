@@ -12,7 +12,7 @@ using Intersect.Network.Packets.Localization;
 
 namespace Intersect.Client.Interface.Game.DescriptionWindows;
 
-public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.GameUi.GameCanvas, "DescriptionWindow")
+public partial class SpellDescriptionWindow : DescriptionWindowBase
 {
     private const string CooldownIconName = "effect_cooldown_reduction.png";
     private const string CritIconName = "crit.png";
@@ -22,6 +22,11 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
     private SpellProperties? _spellProperties;
     private SpellProperties? _effectiveProps;
     private bool _localizationSubscribed;
+
+    public SpellDescriptionWindow() : base(Interface.GameUi.GameCanvas, "DescriptionWindow")
+    {
+        base.Hide();
+    }
 
     public void Show(Guid spellId, ItemDescriptionWindow? itemDecriptionContainer = default)
     {
@@ -57,13 +62,11 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
 
     public override void Hide()
     {
-        if (Interface.GameUi.SpellDescriptionWindow == this)
-        {
-            Interface.GameUi.GameCanvas.RemoveChild(Interface.GameUi.SpellDescriptionWindow, true);
-            Interface.GameUi.SpellDescriptionWindow = default;
-        }
-
         UnsubscribeFromLocalizationUpdates();
+        _spellDescriptor = null;
+        _spellProperties = null;
+        _effectiveProps = null;
+        base.Hide();
     }
 
     protected void SetupDescriptionWindow()

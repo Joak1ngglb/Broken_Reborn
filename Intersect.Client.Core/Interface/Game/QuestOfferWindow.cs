@@ -11,6 +11,7 @@ using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Config;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.Localization;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Localization;
@@ -218,12 +219,27 @@ namespace Intersect.Client.Interface.Game
         private void RequestLocalization(QuestDescriptor quest)
         {
             var entityType = GetQuestEntityType(quest);
-            GameLocalization.RequestEntries(
-                [
-                    new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.Name),
-                    new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.StartDescription)
-                ]
-            );
+            var requests = new List<LocalizationRequestEntry>
+            {
+                new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.Name),
+                new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.StartDescription)
+            };
+
+            if (Globals.QuestRewards.TryGetValue(quest.Id, out var rewards))
+            {
+                foreach (var rewardItemId in rewards.Keys)
+                {
+                    if (!ItemDescriptor.TryGet(rewardItemId, out var descriptor))
+                    {
+                        continue;
+                    }
+
+                    requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+                    requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Description"));
+                }
+            }
+
+            GameLocalization.RequestEntries(requests);
         }
 
         private static string GetLocalizedQuestField(QuestDescriptor quest, string field, string fallback) =>

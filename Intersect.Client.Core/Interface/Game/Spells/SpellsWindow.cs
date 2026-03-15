@@ -393,6 +393,7 @@ public partial class SpellsWindow : Window
             }
 
             requests.Add(new LocalizationRequestEntry(spell.Type.ToString(), spellId.ToString(), "Name"));
+            requests.Add(new LocalizationRequestEntry(spell.Type.ToString(), spellId.ToString(), "Description"));
         }
 
         if (requests.Count > 0)

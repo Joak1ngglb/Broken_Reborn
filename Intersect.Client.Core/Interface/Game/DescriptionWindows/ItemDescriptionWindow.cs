@@ -17,7 +17,7 @@ using Intersect.Network.Packets.Localization;
 
 namespace Intersect.Client.Interface.Game.DescriptionWindows;
 
-public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.GameUi.GameCanvas, "DescriptionWindow")
+public partial class ItemDescriptionWindow : DescriptionWindowBase
 {
     private const string AttackSpeedIconName = "attack_speed.png";
     private const string BlockIconName = "block.png";
@@ -30,6 +30,11 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
     private int _amount;
     private string? _valueLabel;
     private bool _localizationSubscribed;
+
+    public ItemDescriptionWindow() : base(Interface.GameUi.GameCanvas, "DescriptionWindow")
+    {
+        base.Hide();
+    }
 
     public void Show(
         ItemDescriptor item,
@@ -102,18 +107,14 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
     public override void Hide()
     {
-        if (Interface.GameUi.ItemDescriptionWindow == this)
-        {
-            Interface.GameUi.GameCanvas.RemoveChild(Interface.GameUi.ItemDescriptionWindow, true);
-            Interface.GameUi.ItemDescriptionWindow = default;
-        }
-
         UnsubscribeFromLocalizationUpdates();
-        if (Interface.GameUi.SpellDescriptionWindow != default)
-        {
-            Interface.GameUi.GameCanvas.RemoveChild(Interface.GameUi.SpellDescriptionWindow, true);
-            Interface.GameUi.SpellDescriptionWindow = default;
-        }
+        _itemDescriptor = null;
+        _itemProperties = null;
+        _valueLabel = null;
+        _amount = 0;
+
+        Interface.GameUi.ExistingSpellDescriptionWindow?.Hide();
+        base.Hide();
     }
 
     protected void SetupDescriptionWindow()

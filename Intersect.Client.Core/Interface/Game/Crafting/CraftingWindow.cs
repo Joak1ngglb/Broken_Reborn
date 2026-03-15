@@ -384,6 +384,51 @@ public partial class CraftingWindow : Window
         GameLocalization.RequestEntries(requests);
     }
 
+    private void RequestRecipeItemLocalization(IEnumerable<CraftingRecipeDescriptor> recipes)
+    {
+        if (recipes == null)
+        {
+            return;
+        }
+
+        var itemIds = new HashSet<Guid>();
+        foreach (var recipe in recipes)
+        {
+            if (recipe == null)
+            {
+                continue;
+            }
+
+            itemIds.Add(recipe.ItemId);
+            foreach (var ingredient in recipe.Ingredients)
+            {
+                itemIds.Add(ingredient.ItemId);
+            }
+        }
+
+        if (itemIds.Count == 0)
+        {
+            return;
+        }
+
+        var requests = new List<LocalizationRequestEntry>();
+        foreach (var itemId in itemIds)
+        {
+            if (!ItemDescriptor.TryGet(itemId, out var descriptor))
+            {
+                continue;
+            }
+
+            requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+            requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Description"));
+        }
+
+        if (requests.Count > 0)
+        {
+            GameLocalization.RequestEntries(requests);
+        }
+    }
+
     private static string GetLocalizedRecipeName(CraftingRecipeDescriptor recipe) =>
         recipe == null
             ? string.Empty
@@ -622,6 +667,7 @@ public partial class CraftingWindow : Window
         }
 
         RequestRecipeLocalization(descriptors!);
+        RequestRecipeItemLocalization(descriptors!);
 
         CraftingRecipeDescriptor? first = null;
         CraftingRecipeDescriptor? selected = null;

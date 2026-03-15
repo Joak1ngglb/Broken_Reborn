@@ -32,9 +32,12 @@ using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
+using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.Security;
 using Intersect.Framework.Threading;
 using Intersect.Localization;
+using Intersect.Framework.Core.Localization;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -1967,6 +1970,7 @@ internal sealed partial class PacketHandler
         {
             Globals.ActiveCraftingTable = new CraftingTableDescriptor();
             Globals.ActiveCraftingTable.Load(packet.TableData);
+            PrefetchCraftingLocalization(Globals.ActiveCraftingTable);
             Interface.Interface.EnqueueInGame(gameInterface => gameInterface.NotifyOpenCraftingTable(packet.JournalMode));
         }
         else
@@ -2219,6 +2223,120 @@ internal sealed partial class PacketHandler
         en.AddChatBubble(packet.Text);
     }
 
+    private static void PrefetchQuestLocalization(Guid questId)
+    {
+        if (!QuestDescriptor.TryGet(questId, out var quest) || quest == null)
+        {
+            return;
+        }
+
+        var entityType = LocalizationEntityTypes.FromGameObjectType(quest.Type);
+        var requests = new List<LocalizationRequestEntry>
+        {
+            new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.Name),
+            new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.StartDescription),
+            new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.BeforeDescription),
+            new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.InProgressDescription),
+            new LocalizationRequestEntry(entityType, quest.Id.ToString(), QuestFieldKey.EndDescription)
+        };
+
+        foreach (var task in quest.Tasks)
+        {
+            requests.Add(new LocalizationRequestEntry(
+                entityType,
+                quest.Id.ToString(),
+                QuestFieldKey.TaskDescription(task.Id)
+            ));
+
+            switch (task.Objective)
+            {
+                case QuestObjective.GatherItems when ItemDescriptor.TryGet(task.TargetId, out var item):
+                    requests.Add(new LocalizationRequestEntry(item.Type.ToString(), item.Id.ToString(), "Name"));
+                    requests.Add(new LocalizationRequestEntry(item.Type.ToString(), item.Id.ToString(), "Description"));
+                    break;
+
+                case QuestObjective.KillNpcs when NPCDescriptor.TryGet(task.TargetId, out var npc):
+                    requests.Add(new LocalizationRequestEntry(
+                        LocalizationEntityTypes.Npc,
+                        npc.Id.ToString(),
+                        "Name"
+                    ));
+                    break;
+            }
+        }
+
+        if (Globals.QuestRewards.TryGetValue(questId, out var rewards))
+        {
+            foreach (var rewardItemId in rewards.Keys)
+            {
+                if (!ItemDescriptor.TryGet(rewardItemId, out var rewardDescriptor))
+                {
+                    continue;
+                }
+
+                requests.Add(new LocalizationRequestEntry(rewardDescriptor.Type.ToString(), rewardDescriptor.Id.ToString(), "Name"));
+                requests.Add(new LocalizationRequestEntry(rewardDescriptor.Type.ToString(), rewardDescriptor.Id.ToString(), "Description"));
+            }
+        }
+
+        if (requests.Count > 0)
+        {
+            GameLocalization.RequestEntries(requests);
+        }
+    }
+
+    private static void PrefetchCraftingLocalization(CraftingTableDescriptor? table)
+    {
+        if (table == null)
+        {
+            return;
+        }
+
+        var requests = new List<LocalizationRequestEntry>
+        {
+            new LocalizationRequestEntry(
+                LocalizationEntityTypes.FromGameObjectType(table.Type),
+                table.Id.ToString(),
+                "Name"
+            )
+        };
+
+        foreach (var recipeId in table.Crafts)
+        {
+            if (!CraftingRecipeDescriptor.TryGet(recipeId, out var recipe) || recipe == null)
+            {
+                continue;
+            }
+
+            requests.Add(new LocalizationRequestEntry(
+                LocalizationEntityTypes.FromGameObjectType(recipe.Type),
+                recipe.Id.ToString(),
+                "Name"
+            ));
+
+            var itemIds = new HashSet<Guid>(recipe.Ingredients.Select(ingredient => ingredient.ItemId))
+            {
+                recipe.ItemId
+            };
+
+            foreach (var itemId in itemIds)
+            {
+                if (!ItemDescriptor.TryGet(itemId, out var descriptor))
+                {
+                    continue;
+                }
+
+                requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+                requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Description"));
+            }
+        }
+
+        if (requests.Count > 0)
+        {
+            GameLocalization.RequestEntries(requests);
+        }
+    }
+
     //QuestOfferPacket
     public void HandlePacket(IPacketSender packetSender, QuestOfferPacket packet)
     {
@@ -2232,6 +2350,7 @@ internal sealed partial class PacketHandler
         Globals.QuestJobExperience[packet.QuestId] = packet.QuestRewardJobExperience;
         Globals.QuestGuildExperience[packet.QuestId] = packet.QuestRewardGuildExperience;
         Globals.QuestFactionHonor[packet.QuestId] = packet.QuestRewardFactionHonor;
+        PrefetchQuestLocalization(packet.QuestId);
     }
 
     //QuestProgressPacket
@@ -2292,6 +2411,16 @@ internal sealed partial class PacketHandler
             foreach (var honor in packet.QuestRewardFactionHonor)
             {
                 Globals.QuestFactionHonor[honor.Key] = honor.Value;
+            }
+
+            var localizedQuestIds = packet.Quests.Keys
+                .Concat(packet.QuestRewardItems.Keys)
+                .Distinct()
+                .ToList();
+
+            foreach (var questId in localizedQuestIds)
+            {
+                PrefetchQuestLocalization(questId);
             }
 
             Globals.Me.HiddenQuests = packet.HiddenQuests;

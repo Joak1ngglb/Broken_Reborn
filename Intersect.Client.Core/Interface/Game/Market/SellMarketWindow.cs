@@ -502,6 +502,7 @@ namespace Intersect.Client.Interface.Game.Market
                 }
 
                 requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"));
+                requests.Add(new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Description"));
             }
 
             if (requests.Count > 0)
@@ -529,7 +530,10 @@ namespace Intersect.Client.Interface.Game.Market
             }
 
             GameLocalization.RequestEntries(
-                [new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name")]
+                [
+                    new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Name"),
+                    new LocalizationRequestEntry(descriptor.Type.ToString(), descriptor.Id.ToString(), "Description")
+                ]
             );
         }
 
