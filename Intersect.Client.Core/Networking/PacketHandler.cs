@@ -1397,14 +1397,22 @@ internal sealed partial class PacketHandler
     {
         Fade.FadeIn(ClientConfiguration.Instance.FadeDurationMs);
         Globals.WaitingOnServer = false;
-        if (Interface.Interface.GameUi?.mMarketWindow != null && Interface.Interface.GameUi.mMarketWindow.IsWaitingSearch)
+
+        if (
+            Interface.Interface.HasInGameUI &&
+            Interface.Interface.GameUi.mMarketWindow != null &&
+            Interface.Interface.GameUi.mMarketWindow.IsWaitingSearch
+        )
         {
             Interface.Interface.GameUi.mMarketWindow.SearchFailed(packet.Error);
+            return;
         }
-        else
+
+        Interface.Interface.ShowAlert(packet.Error, packet.Header, alertType: AlertType.Error);
+
+        if (Interface.Interface.HasMainMenuUI)
         {
-            Interface.Interface.ShowAlert(packet.Error, packet.Header, alertType: AlertType.Error);
-            Interface.Interface.MenuUi?.Reset();
+            Interface.Interface.MenuUi.Reset();
         }
     }
 
