@@ -199,6 +199,12 @@ internal sealed partial class PacketHandler
             return false;
         }
 
+        var isInGameUiInitializationWindow = Globals.GameState is GameStates.Loading or GameStates.InGame;
+        if (!isInGameUiInitializationWindow)
+        {
+            return false;
+        }
+
         return packet is ErrorMessagePacket;
     }
 
