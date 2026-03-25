@@ -51,6 +51,10 @@ namespace Intersect.Client.Networking;
 
 internal sealed partial class PacketHandler
 {
+    private readonly Queue<IPacket> _pendingGameUiPackets = new();
+    private readonly object _pendingGameUiPacketsLock = new();
+    private bool _isFlushingPendingGameUiPackets;
+
     private sealed partial class VirtualPacketSender : IPacketSender
     {
         public IApplicationContext ApplicationContext { get; }
@@ -109,6 +113,9 @@ internal sealed partial class PacketHandler
 
     public bool HandlePacket(IPacket packet)
     {
+        Logger.LogDebug("[PACKET RECEIVED] {PacketType}", packet.GetType().Name);
+        Logger.LogDebug("[UI STATE] Ready: {IsGameUiReady}", Interface.Interface.IsGameUiReady);
+
         if (packet is AbstractTimedPacket timedPacket)
         {
             Timing.Global.Synchronize(timedPacket.UTC, timedPacket.Offset);
@@ -130,6 +137,23 @@ internal sealed partial class PacketHandler
 
             return false;
         }
+
+        if (ShouldDelayUntilGameUiReady(packet))
+        {
+            lock (_pendingGameUiPacketsLock)
+            {
+                _pendingGameUiPackets.Enqueue(packet);
+            }
+
+            Logger.LogWarning(
+                "[PACKET QUEUED] UI not ready for packet: {PacketType}",
+                packet.GetType().Name
+            );
+
+            return true;
+        }
+
+        FlushPendingGameUiPackets();
 
         if (Registry.TryGetPreprocessors(packet, out var preprocessors))
         {
@@ -166,6 +190,69 @@ internal sealed partial class PacketHandler
         }
 
         return true;
+    }
+
+    private bool ShouldDelayUntilGameUiReady(IPacket packet)
+    {
+        if (Interface.Interface.IsGameUiReady)
+        {
+            return false;
+        }
+
+        var isInGameUiInitializationWindow = Globals.GameState is GameStates.Loading or GameStates.InGame;
+        if (!isInGameUiInitializationWindow)
+        {
+            return false;
+        }
+
+        return packet is ErrorMessagePacket;
+    }
+
+    private void FlushPendingGameUiPackets()
+    {
+        if (!Interface.Interface.IsGameUiReady)
+        {
+            return;
+        }
+
+        lock (_pendingGameUiPacketsLock)
+        {
+            if (_isFlushingPendingGameUiPackets || _pendingGameUiPackets.Count < 1)
+            {
+                return;
+            }
+
+            _isFlushingPendingGameUiPackets = true;
+        }
+
+        try
+        {
+            while (true)
+            {
+                IPacket? pendingPacket;
+                lock (_pendingGameUiPacketsLock)
+                {
+                    if (!_pendingGameUiPackets.TryDequeue(out pendingPacket))
+                    {
+                        break;
+                    }
+                }
+
+                Logger.LogDebug(
+                    "[PACKET REPLAY] Processing queued packet now that UI is ready: {PacketType}",
+                    pendingPacket.GetType().Name
+                );
+
+                HandlePacket(pendingPacket);
+            }
+        }
+        finally
+        {
+            lock (_pendingGameUiPacketsLock)
+            {
+                _isFlushingPendingGameUiPackets = false;
+            }
+        }
     }
 
     //PingPacket
@@ -1367,14 +1454,30 @@ internal sealed partial class PacketHandler
     {
         Fade.FadeIn(ClientConfiguration.Instance.FadeDurationMs);
         Globals.WaitingOnServer = false;
-        if (Interface.Interface.GameUi?.mMarketWindow != null && Interface.Interface.GameUi.mMarketWindow.IsWaitingSearch)
+
+        if (!Interface.Interface.IsGameUiReady)
+        {
+            Logger.LogWarning(
+                "[UI NOT READY] Error received before UI initialization: {ErrorMessage}",
+                packet.Error
+            );
+        }
+
+        if (
+            Interface.Interface.HasInGameUI &&
+            Interface.Interface.GameUi.mMarketWindow != null &&
+            Interface.Interface.GameUi.mMarketWindow.IsWaitingSearch
+        )
         {
             Interface.Interface.GameUi.mMarketWindow.SearchFailed(packet.Error);
+            return;
         }
-        else
+
+        Interface.Interface.ShowAlert(packet.Error, packet.Header, alertType: AlertType.Error);
+
+        if (Interface.Interface.HasMainMenuUI)
         {
-            Interface.Interface.ShowAlert(packet.Error, packet.Header, alertType: AlertType.Error);
-            Interface.Interface.MenuUi?.Reset();
+            Interface.Interface.MenuUi.Reset();
         }
     }
 

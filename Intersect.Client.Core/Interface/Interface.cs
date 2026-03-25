@@ -47,19 +47,13 @@ public static partial class Interface
 
     public static bool HasMainMenuUI => _uiMainMenu != null;
 
-    public static GameInterface GameUi
+    public static GameInterface? GameUi
     {
-        get
-        {
-            if (_uiInGame == null)
-            {
-                throw new InvalidOperationException("In-game UI not initialized");
-            }
-
-            return _uiInGame;
-        }
+        get => _uiInGame;
         private set => _uiInGame = value;
     }
+
+    public static bool IsGameUiReady => _uiInGame != null;
 
     public static MenuGuiBase MenuUi
     {
@@ -151,7 +145,7 @@ public static partial class Interface
             return;
         }
 
-        PendingActionsForInGameInterface.Enqueue(() => action(GameUi));
+        PendingActionsForInGameInterface.Enqueue(() => action(_uiInGame!));
     }
 
     public static void EnqueueInGame<TArg0, TArg1>(Action<GameInterface> action, Action<TArg0, TArg1> onDeferred, TArg0 arg0, TArg1 arg1)
@@ -162,7 +156,7 @@ public static partial class Interface
             return;
         }
 
-        PendingActionsForInGameInterface.Enqueue(() => action(GameUi));
+        PendingActionsForInGameInterface.Enqueue(() => action(_uiInGame!));
         onDeferred(arg0, arg1);
     }
 
@@ -339,7 +333,7 @@ public static partial class Interface
         }
         else if (Globals.GameState == GameStates.InGame)
         {
-            GameUi.Update(elapsed, total);
+            GameUi?.Update(elapsed, total);
         }
 
         //Do not allow hiding of UI under several conditions
@@ -379,7 +373,7 @@ public static partial class Interface
                     _canvasInGame.Show();
                 }
 
-                GameUi.Draw(elapsed, total);
+                GameUi?.Draw(elapsed, total);
             }
         }
     }
