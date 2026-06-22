@@ -152,7 +152,7 @@ public partial class FrmClass : EditorForm
             nudAttack.Value = mEditorItem.BaseStat[(int) Stat.Attack];
             nudMag.Value = mEditorItem.BaseStat[(int) Stat.Intelligence];
             nudDef.Value = mEditorItem.BaseStat[(int) Stat.Defense];
-            nudMR.Value = mEditorItem.BaseStat[(int) Stat.Vitality];
+            nudMR.Value = mEditorItem.BaseStat[(int) Stat.Willpower];
             nudSpd.Value = mEditorItem.BaseStat[(int) Stat.Speed];
             nudBaseHP.Value = Math.Max(
                 Math.Min(mEditorItem.BaseVital[(int) Vital.Health], nudBaseHP.Maximum), nudBaseHP.Minimum
@@ -371,7 +371,7 @@ public partial class FrmClass : EditorForm
         lblDef.Text = Strings.ClassEditor.basearmor;
         lblSpd.Text = Strings.ClassEditor.basespeed;
         lblMag.Text = Strings.ClassEditor.baseabilitypower;
-        lblMR.Text = Strings.ClassEditor.basemagicresist;
+        lblMR.Text = $"Base {Globals.GetStatName((int)Stat.Willpower)}:";
         lblPoints.Text = Strings.ClassEditor.basepoints;
 
         grpSpells.Text = Strings.ClassEditor.learntspells;
@@ -440,9 +440,7 @@ public partial class FrmClass : EditorForm
             rdoStaticIncrease.Checked ? "" : Strings.ClassEditor.boostpercent.ToString()
         );
 
-        lblMagicResistIncrease.Text = Strings.ClassEditor.magicresistboost.ToString(
-            rdoStaticIncrease.Checked ? "" : Strings.ClassEditor.boostpercent.ToString()
-        );
+        lblMagicResistIncrease.Text = $"{Globals.GetStatName((int)Stat.Willpower)} +{(rdoStaticIncrease.Checked ? "" : Strings.ClassEditor.boostpercent.ToString())}:";
 
         lblPointsIncrease.Text = Strings.ClassEditor.pointsboost;
 
@@ -790,7 +788,7 @@ public partial class FrmClass : EditorForm
         );
 
         nudMagicResistIncrease.Value = Math.Min(
-            nudMagicResistIncrease.Maximum, mEditorItem.StatIncrease[(int) Stat.Vitality]
+            nudMagicResistIncrease.Maximum, mEditorItem.StatIncrease[(int) Stat.Willpower]
         );
 
         nudSpeedIncrease.Value = Math.Min(nudSpeedIncrease.Maximum, mEditorItem.StatIncrease[(int) Stat.Speed]);
@@ -819,9 +817,7 @@ public partial class FrmClass : EditorForm
             rdoStaticIncrease.Checked ? "" : Strings.ClassEditor.boostpercent.ToString()
         );
 
-        lblMagicResistIncrease.Text = Strings.ClassEditor.magicresistboost.ToString(
-            rdoStaticIncrease.Checked ? "" : Strings.ClassEditor.boostpercent.ToString()
-        );
+        lblMagicResistIncrease.Text = $"{Globals.GetStatName((int)Stat.Willpower)} +{(rdoStaticIncrease.Checked ? "" : Strings.ClassEditor.boostpercent.ToString())}:";
 
         nudPointsIncrease.Value = mEditorItem.PointIncrease;
     }
@@ -982,7 +978,7 @@ public partial class FrmClass : EditorForm
 
     private void nudMR_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.BaseStat[(int) Stat.Vitality] = (int) nudMR.Value;
+        mEditorItem.BaseStat[(int) Stat.Willpower] = (int) nudMR.Value;
     }
 
     private void nudPoints_ValueChanged(object sender, EventArgs e)
@@ -1050,7 +1046,7 @@ public partial class FrmClass : EditorForm
 
     private void nudMagicResistIncrease_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.StatIncrease[(int) Stat.Vitality] = (int) nudMagicResistIncrease.Value;
+        mEditorItem.StatIncrease[(int) Stat.Willpower] = (int) nudMagicResistIncrease.Value;
         UpdateIncreases();
     }
 

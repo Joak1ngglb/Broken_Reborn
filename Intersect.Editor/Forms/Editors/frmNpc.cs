@@ -214,7 +214,7 @@ public partial class FrmNpc : EditorForm
         lblDef.Text = Strings.NpcEditor.defense;
         lblSpd.Text = Strings.NpcEditor.speed;
         lblMag.Text = Strings.NpcEditor.abilitypower;
-        lblMR.Text = Strings.NpcEditor.magicresist;
+        lblMR.Text = $"{Globals.GetStatName((int)Stat.Willpower)}:";
         lblExp.Text = Strings.NpcEditor.exp;
 
         grpRegen.Text = Strings.NpcEditor.regen;
@@ -336,7 +336,7 @@ public partial class FrmNpc : EditorForm
             nudStr.Value = mEditorItem.Stats[(int)Stat.Attack];
             nudMag.Value = mEditorItem.Stats[(int)Stat.Intelligence];
             nudDef.Value = mEditorItem.Stats[(int)Stat.Defense];
-            nudMR.Value = mEditorItem.Stats[(int)Stat.Vitality];
+            nudMR.Value = mEditorItem.Stats[(int)Stat.Willpower];
             nudSpd.Value = mEditorItem.Stats[(int)Stat.Speed];
             nudAgi.Value = mEditorItem.Stats[(int)Stat.Agility];
             nudHp.Value = mEditorItem.MaxVitals[(int)Vital.Health];
@@ -779,7 +779,7 @@ public partial class FrmNpc : EditorForm
 
     private void nudMR_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Stats[(int)Stat.Vitality] = (int)nudMR.Value;
+        mEditorItem.Stats[(int)Stat.Willpower] = (int)nudMR.Value;
     }
 
     private void nudSpd_ValueChanged(object sender, EventArgs e)

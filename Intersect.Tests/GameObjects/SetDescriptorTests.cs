@@ -69,10 +69,12 @@ public class SetDescriptorTests
     public void GetBonusesScalesWithPieces()
     {
         var items = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+        var stats = new int[Enum.GetValues<Stat>().Length];
+        stats[(int)Stat.Attack] = 40;
         var descriptor = new SetDescriptor(Guid.NewGuid())
         {
             ItemIds = items,
-            Stats = new[] { 40, 0, 0, 0, 0, 0, 0, 0 },
+            Stats = stats,
             Effects = new List<EffectData> { new(ItemEffect.Luck, 20) }
         };
 

@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Reflection;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.Database;
 using Intersect.Client.Framework.Graphics;
@@ -16,16 +14,10 @@ using Intersect.Client.MonoGame.Network;
 using Intersect.Configuration;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Intersect.Client.Framework.Database;
-using Intersect.Client.Framework.Graphics;
 using Intersect.Client.ThirdParty;
 using MainMenu = Intersect.Client.Interface.Menu.MainMenu;
-using Intersect.Client.Interface.Shared;
 using Intersect.Client.MonoGame.NativeInterop;
 using Intersect.Client.MonoGame.NativeInterop.OpenGL;
-using Intersect.Client.MonoGame.Network;
-using Intersect.Client.ThirdParty;
-using Intersect.Configuration;
 using Intersect.Core;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.AssetManagement;
@@ -33,10 +25,7 @@ using Intersect.Framework.SystemInformation;
 using Intersect.Framework.Threading;
 using Intersect.Framework.Utilities;
 using Microsoft.Extensions.Logging;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Exception = System.Exception;
-using MainMenu = Intersect.Client.Interface.Menu.MainMenu;
 
 namespace Intersect.Client.MonoGame;
 
@@ -102,7 +91,7 @@ internal partial class IntersectGame : Game
 
         mGraphics.PreparingDeviceSettings += (_, args) =>
         {
-            args.HGraphicsDeviceInformation.PresentationParameters.RenderTargetUsage =
+            args.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage =
                 RenderTargetUsage.PreserveContents;
             args.GraphicsDeviceInformation.PresentationParameters.MultiSampleCount = 8;
         };

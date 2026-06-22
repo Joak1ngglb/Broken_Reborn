@@ -246,7 +246,7 @@ public partial record Options
 
     public static string PlayerDeathAnimationId => Instance.Combat.PlayerDeathAnimationId;
 
-    public static int ItemDropRange => Instance.Combat.ItemDropRange;
+ 
 
     public static float DamageScreenFlashIntensity => Instance.Combat.DamageScreenFlashIntensity;
 

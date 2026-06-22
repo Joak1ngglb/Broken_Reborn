@@ -29,6 +29,7 @@ public partial class frmSets : EditorForm
     {
         InitializeComponent();
         Icon = Program.Icon;
+        lblVit.Text = $"{Globals.GetStatName((int)Stat.Willpower)}:";
 
         lstGameObjects.LostFocus += itemList_FocusChanged;
         lstGameObjects.GotFocus += itemList_FocusChanged;
@@ -70,8 +71,8 @@ public partial class frmSets : EditorForm
             nudAgi.Value = mEditorSet.Stats[(int)Stat.Agility];
             nudAgiPercentage.Value = mEditorSet.PercentageStats[(int)Stat.Agility];
 
-            nudVit.Value = mEditorSet.Stats[(int)Stat.Vitality];
-            nudVitPercentage.Value = mEditorSet.PercentageStats[(int)Stat.Vitality];
+            nudVit.Value = mEditorSet.Stats[(int)Stat.Willpower];
+            nudVitPercentage.Value = mEditorSet.PercentageStats[(int)Stat.Willpower];
 
             nudInt.Value = mEditorSet.Stats[(int)Stat.Intelligence];
             nudIntPercentage.Value = mEditorSet.PercentageStats[(int)Stat.Intelligence];
@@ -425,7 +426,7 @@ public partial class frmSets : EditorForm
 
     private void nudVit_ValueChanged(object sender, EventArgs e)
     {
-        mEditorSet.Stats[(int)Stat.Vitality] = (int)nudVit.Value;
+        mEditorSet.Stats[(int)Stat.Willpower] = (int)nudVit.Value;
     }
 
     private void nudARP_ValueChanged(object sender, EventArgs e)
@@ -540,7 +541,7 @@ public partial class frmSets : EditorForm
 
     private void nudVitPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorSet.PercentageStats[(int)Stat.Vitality] = (int)nudVitPercentage.Value;
+        mEditorSet.PercentageStats[(int)Stat.Willpower] = (int)nudVitPercentage.Value;
     }
 
     private void nudARPPercentage_ValueChanged(object sender, EventArgs e)

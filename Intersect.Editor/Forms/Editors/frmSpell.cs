@@ -157,6 +157,7 @@ public partial class FrmSpell : EditorForm
             SpellUpgradeKeys.Combat.StatDiff.Vitality => Globals.GetStatName((int)Stat.Vitality),
             SpellUpgradeKeys.Combat.StatDiff.Speed => Globals.GetStatName((int)Stat.Speed),
             SpellUpgradeKeys.Combat.StatDiff.Agility => Globals.GetStatName((int)Stat.Agility),
+            SpellUpgradeKeys.Combat.StatDiff.Willpower => Globals.GetStatName((int)Stat.Willpower),
             SpellUpgradeKeys.Combat.VitalDiff.Health => "Salud (daño/curación):",
             SpellUpgradeKeys.Combat.VitalDiff.Mana => "Maná (daño/curación):",
             SpellUpgradeKeys.VitalCost.Health => "Coste de salud:",
@@ -402,7 +403,7 @@ public partial class FrmSpell : EditorForm
         lblDef.Text = Strings.SpellEditor.defense;
         lblSpd.Text = Strings.SpellEditor.speed;
         lblMag.Text = Strings.SpellEditor.abilitypower;
-        lblMR.Text = Strings.SpellEditor.magicresist;
+        lblMR.Text = $"{Globals.GetStatName((int)Stat.Willpower)}:";
 
         grpEffectDuration.Text = Strings.SpellEditor.boostduration;
         lblBuffDuration.Text = Strings.SpellEditor.duration;
@@ -630,14 +631,14 @@ public partial class FrmSpell : EditorForm
             nudDef.Value = mEditorItem.Combat.StatDiff[(int)Stat.Defense];
             nudSpd.Value = mEditorItem.Combat.StatDiff[(int)Stat.Speed];
             nudMag.Value = mEditorItem.Combat.StatDiff[(int)Stat.Intelligence];
-            nudMR.Value = mEditorItem.Combat.StatDiff[(int)Stat.Vitality];
+            nudMR.Value = mEditorItem.Combat.StatDiff[(int)Stat.Willpower];
             nudAgi.Value = mEditorItem.Combat.StatDiff[(int)Stat.Agility];
 
             // Porcentajes
             nudStrPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Attack];
             nudDefPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Defense];
             nudMagPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Intelligence];
-            nudMRPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Vitality];
+            nudMRPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Willpower];
             nudSpdPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Speed];
             nudAgiPercentage.Value = mEditorItem.Combat.PercentageStatDiff[(int)Stat.Agility];
 
@@ -1140,7 +1141,7 @@ public partial class FrmSpell : EditorForm
 
     private void nudMR_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Combat.StatDiff[(int)Stat.Vitality] = (int)nudMR.Value;
+        mEditorItem.Combat.StatDiff[(int)Stat.Willpower] = (int)nudMR.Value;
     }
 
     private void nudSpd_ValueChanged(object sender, EventArgs e)
@@ -1165,7 +1166,7 @@ public partial class FrmSpell : EditorForm
 
     private void nudMRPercentage_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Combat.PercentageStatDiff[(int)Stat.Vitality] = (int)nudMRPercentage.Value;
+        mEditorItem.Combat.PercentageStatDiff[(int)Stat.Willpower] = (int)nudMRPercentage.Value;
     }
 
     private void nudSpdPercentage_ValueChanged(object sender, EventArgs e)

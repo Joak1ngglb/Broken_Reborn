@@ -286,7 +286,7 @@ public partial class FrmItem : EditorForm
         lblDef.Text = Strings.ItemEditor.defensebonus;
         lblSpd.Text = Strings.ItemEditor.speedbonus;
         lblMag.Text = Strings.ItemEditor.abilitypowerbonus;
-        lblMR.Text = Strings.ItemEditor.magicresistbonus;
+        lblMR.Text = $"{Globals.GetStatName((int)Stat.Willpower)}:";
         lblEffectPercent.Text = Strings.ItemEditor.bonusamount;
         lblEquipmentAnimation.Text = Strings.ItemEditor.equipmentanimation;
 
@@ -426,21 +426,21 @@ public partial class FrmItem : EditorForm
             SetNumericValue(nudStr, mEditorItem.StatsGiven, 0);
             SetNumericValue(nudMag, mEditorItem.StatsGiven, 1);
             SetNumericValue(nudDef, mEditorItem.StatsGiven, 2);
-            SetNumericValue(nudMR, mEditorItem.StatsGiven, 3);
+            SetNumericValue(nudMR, mEditorItem.StatsGiven, (int)Stat.Willpower);
             SetNumericValue(nudSpd, mEditorItem.StatsGiven, 4);
             SetNumericValue(nudAgi, mEditorItem.StatsGiven, 5);
-            SetNumericValue(nudDmg, mEditorItem.StatsGiven, 6);
-            SetNumericValue(nudCur, mEditorItem.StatsGiven, 7);
+            SetNumericValue(nudDmg, mEditorItem.StatsGiven, int.MaxValue);
+            SetNumericValue(nudCur, mEditorItem.StatsGiven, int.MaxValue);
 
             // Stats porcentuales
             SetNumericValue(nudStrPercentage, mEditorItem.PercentageStatsGiven, 0);
             SetNumericValue(nudMagPercentage, mEditorItem.PercentageStatsGiven, 1);
             SetNumericValue(nudDefPercentage, mEditorItem.PercentageStatsGiven, 2);
-            SetNumericValue(nudMRPercentage, mEditorItem.PercentageStatsGiven, 3);
+            SetNumericValue(nudMRPercentage, mEditorItem.PercentageStatsGiven, (int)Stat.Willpower);
             SetNumericValue(nudSpdPercentage, mEditorItem.PercentageStatsGiven, 4);
             SetNumericValue(nudAgiPercentage, mEditorItem.PercentageStatsGiven, 5);
-            SetNumericValue(nudDmgPercentage, mEditorItem.PercentageStatsGiven, 6);
-            SetNumericValue(nudCurPercentage, mEditorItem.PercentageStatsGiven, 7);
+            SetNumericValue(nudDmgPercentage, mEditorItem.PercentageStatsGiven, int.MaxValue);
+            SetNumericValue(nudCurPercentage, mEditorItem.PercentageStatsGiven, int.MaxValue);
 
             // Vitals
             nudHealthBonus.Value = mEditorItem.VitalsGiven[0];
@@ -1085,7 +1085,7 @@ public partial class FrmItem : EditorForm
 
     private void nudMR_ValueChanged(object sender, EventArgs e)
     {
-        UpdateStatValue(mEditorItem.StatsGiven, 3, (int)nudMR.Value);
+        UpdateStatValue(mEditorItem.StatsGiven, (int)Stat.Willpower, (int)nudMR.Value);
     }
 
     private void nudSpd_ValueChanged(object sender, EventArgs e)
@@ -1110,7 +1110,7 @@ public partial class FrmItem : EditorForm
 
     private void nudMRPercentage_ValueChanged(object sender, EventArgs e)
     {
-        UpdateStatValue(mEditorItem.PercentageStatsGiven, 3, (int)nudMRPercentage.Value);
+        UpdateStatValue(mEditorItem.PercentageStatsGiven, (int)Stat.Willpower, (int)nudMRPercentage.Value);
     }
 
     private void nudSpdPercentage_ValueChanged(object sender, EventArgs e)

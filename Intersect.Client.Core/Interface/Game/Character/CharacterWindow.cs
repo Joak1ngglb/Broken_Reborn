@@ -18,7 +18,6 @@ using Intersect.Framework.Core.Combat;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using System.Globalization;
-using Intersect.Client.Entities;
 
 
 namespace Intersect.Client.Interface.Game.Character;
@@ -69,7 +68,7 @@ public partial class CharacterWindow : Window
     private Label mAttackLabel;
     private Label mAbilityPwrLabel;
     private Label mDefenseLabel;
-    private Label mMagicRstLabel;
+    private Label mVitalityLabel;
     private Label mSpeedLabel;
     private Label mAgilityLabel;
     private Label mWillpowerLabel;
@@ -82,7 +81,7 @@ public partial class CharacterWindow : Window
     private Button mAddAttackBtn;
     private Button mAddAbilityPwrBtn;
     private Button mAddDefenseBtn;
-    private Button mAddMagicResistBtn;
+    private Button mAddVitalityBtn;
     private Button mAddWillpowerBtn;
     private Button mAddAgilityBtn; // (ojo: en tu código estaba “IncreaseSpeedButton” pero variable “AgilityBtn”)
 
@@ -446,16 +445,16 @@ public partial class CharacterWindow : Window
         mAddDefenseBtn.Clicked += _addDefenseBtn_Clicked;
         leftY += StatRowHeight;
 
-        mMagicRstLabel = CreateLabelWithIcon(
+        mVitalityLabel = CreateLabelWithIcon(
             mStatsContainer,
-            "MagicResistLabel",
+            "VitalityLabel",
             StatEffectIconProvider.GetIconForStat(Stat.Vitality),
             leftX,
             leftY,
             leftLabelWidth
         );
-        mAddMagicResistBtn = CreateStatButton(mStatsContainer, "IncreaseMagicResistButton", buttonX, leftY);
-        mAddMagicResistBtn.Clicked += _addMagicResistBtn_Clicked;
+        mAddVitalityBtn = CreateStatButton(mStatsContainer, "IncreaseVitalityButton", buttonX, leftY);
+        mAddVitalityBtn.Clicked += _addVitalityBtn_Clicked;
         leftY += StatRowHeight;
 
         mAgilityLabel = CreateLabelWithIcon(
@@ -587,8 +586,11 @@ public partial class CharacterWindow : Window
     public void SetPlayer(Player? player) => _player = player;
 
     //Update Button Event Handlers
-    void _addMagicResistBtn_Clicked(Base sender, MouseButtonState arguments) =>
+    void _addVitalityBtn_Clicked(Base sender, MouseButtonState arguments) =>
         PacketSender.SendUpgradeStat((int)Stat.Vitality);
+
+    void _addWillpowerBtn_Clicked(Base sender, MouseButtonState arguments) =>
+        PacketSender.SendUpgradeStat((int)Stat.Willpower);
 
     void _addAbilityPwrBtn_Clicked(Base sender, MouseButtonState arguments) =>
         PacketSender.SendUpgradeStat((int)Stat.Intelligence);
@@ -796,9 +798,10 @@ public partial class CharacterWindow : Window
         mAttackLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Attack], player.Stat[(int)Stat.Attack]));
         mAbilityPwrLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Intelligence], player.Stat[(int)Stat.Intelligence]));
         mDefenseLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Defense], player.Stat[(int)Stat.Defense]));
-        mMagicRstLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Vitality], player.Stat[(int)Stat.Vitality]));
+        mVitalityLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Vitality], player.Stat[(int)Stat.Vitality]));
         mSpeedLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Speed], player.Stat[(int)Stat.Speed]));
         mAgilityLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Agility], player.Stat[(int)Stat.Agility]));
+        mWillpowerLabel.SetText(Strings.Character.StatLabelValue.ToString(Strings.Combat.Stats[Stat.Willpower], player.Stat[(int)Stat.Willpower]));
 
         var critChance = player.CalculateCriticalChance(player.GetBaseCriticalChance());
         mCritChanceLabel.SetText(Strings.Character.CriticalChance.ToString(critChance));
@@ -809,8 +812,9 @@ public partial class CharacterWindow : Window
         mAddAbilityPwrBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Intelligence] == Options.Instance.Player.MaxStat;
         mAddAttackBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Attack] == Options.Instance.Player.MaxStat;
         mAddDefenseBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Defense] == Options.Instance.Player.MaxStat;
-        mAddMagicResistBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Vitality] == Options.Instance.Player.MaxStat;
+        mAddVitalityBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Vitality] == Options.Instance.Player.MaxStat;
         mAddAgilityBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Agility] == Options.Instance.Player.MaxStat;
+        mAddWillpowerBtn.IsHidden = player.StatPoints == 0 || player.Stat[(int)Stat.Willpower] == Options.Instance.Player.MaxStat;
 
         // Effects
         UpdateExtraBuffs();
@@ -899,6 +903,7 @@ public partial class CharacterWindow : Window
         _armorPenetration = default;
         _damageReduction = default;
         _damageReflect = default;
+        _criticalReduction = default;
         _flatDamage = default;
         _flatCures = default;
 
@@ -935,6 +940,7 @@ public partial class CharacterWindow : Window
                         case ItemEffect.ArmorPenetration: _armorPenetration += effectValue; break;
                         case ItemEffect.DamageReduction: _damageReduction += effectValue; break;
                         case ItemEffect.DamageReflect: _damageReflect += effectValue; break;
+                        case ItemEffect.CriticalReduction: _criticalReduction += effectValue; break;
                         case ItemEffect.Damages: _flatDamage += effectValue; break;
                         case ItemEffect.Cures: _flatCures += effectValue; break;
                     }
@@ -1005,6 +1011,7 @@ public partial class CharacterWindow : Window
         mArmorPenetration.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.ArmorPenetration]} {FormatPercentBonus(_armorPenetration)}");
         mDamageReduction.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.DamageReduction]} {FormatPercentBonus(_damageReduction)}");
         mDamageReflect.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.DamageReflect]} {FormatPercentBonus(_damageReflect)}");
+        mCriticalReduction.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.CriticalReduction]} {FormatPercentBonus(_criticalReduction)}");
 
         // Estos dos son “flat” pero los estás mostrando también acá
         mFlatDamage.SetText($"{Strings.ItemDescription.BonusEffects[(int)ItemEffect.Damages]} {FormatPercentBonus(_flatDamage)}");

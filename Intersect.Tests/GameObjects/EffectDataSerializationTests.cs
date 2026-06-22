@@ -11,6 +11,7 @@ public class EffectDataSerializationTests
     [TestCase(ItemEffect.ArmorPenetration)]
     [TestCase(ItemEffect.DamageReduction)]
     [TestCase(ItemEffect.DamageReflect)]
+    [TestCase(ItemEffect.CriticalReduction)]
     public void EffectDataSerializesNewItemEffects(ItemEffect itemEffect)
     {
         var effect = new EffectData(itemEffect, 25, isPassive: false, EffectStacking.Renew);
