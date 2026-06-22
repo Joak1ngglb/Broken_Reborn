@@ -2263,6 +2263,7 @@ public abstract partial class Entity : IEntity
         else
         {
             isCrit = true;
+            critMultiplier = CombatResolver.ApplyCriticalReduction(critMultiplier, defenderEffects);
         }
 
         //If the enemy is a resource, the original base damage value will be used on "Calculate Damages", if not, we need change...

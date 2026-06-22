@@ -156,4 +156,13 @@ public partial class EquipmentProperties
             : EffectRange_Cures = new ItemRange();
         set => EffectRanges[ItemEffect.Cures] = value;
     }
+
+    [JsonIgnore]
+    public ItemRange EffectRange_CriticalReduction
+    {
+        get => EffectRanges.TryGetValue(ItemEffect.CriticalReduction, out var range)
+            ? range
+            : EffectRange_CriticalReduction = new ItemRange();
+        set => EffectRanges[ItemEffect.CriticalReduction] = value;
+    }
 }

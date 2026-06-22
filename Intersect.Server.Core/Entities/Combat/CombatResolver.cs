@@ -40,7 +40,14 @@ public static class CombatResolver
             defenderEffects.GetTotalEffectValue(ItemEffect.Evasion)
         );
 
-        return CombatFormulaCalculator.CalculateHitChance(accuracy, evasion);
+        return CombatFormulaCalculator.CalculateHitChance(
+            accuracy,
+            evasion,
+            Options.Instance.Combat.BaseHitChance,
+            Options.Instance.Combat.MinHitChance,
+            Options.Instance.Combat.MaxHitChance,
+            Options.Instance.Combat.HitChanceSwingFactor
+        );
     }
 
     public static int CalculateCriticalChance(
@@ -64,18 +71,18 @@ public static class CombatResolver
         CombatantEffects attackerEffects
     )
     {
+        if (damageType != DamageType.Physical)
+        {
+            return null;
+        }
+
         var penetration = attackerEffects.GetTotalEffectValue(ItemEffect.ArmorPenetration);
         if (penetration == 0)
         {
             return null;
         }
 
-        var baseDefense = damageType switch
-        {
-            DamageType.Magic => defender.Stat[(int)Enums.Stat.Vitality].Value(),
-            DamageType.Physical => defender.Stat[(int)Enums.Stat.Defense].Value(),
-            _ => 0,
-        };
+        var baseDefense = defender.Stat[(int)Enums.Stat.Defense].Value();
 
         if (baseDefense <= 0)
         {
@@ -84,8 +91,15 @@ public static class CombatResolver
 
         var effectiveDefense = Math.Max(0, baseDefense * (1 - penetration / 100f));
 
-        var parameter = damageType == DamageType.Magic ? "V_MagicResist" : "V_Defense";
-        return new Dictionary<string, object> { [parameter] = effectiveDefense };
+        return new Dictionary<string, object> { ["V_Defense"] = effectiveDefense };
+    }
+
+    public static double ApplyCriticalReduction(double criticalMultiplier, CombatantEffects defenderEffects)
+    {
+        return CombatFormulaCalculator.ApplyCriticalReduction(
+            criticalMultiplier,
+            defenderEffects.GetTotalEffectValue(ItemEffect.CriticalReduction)
+        );
     }
 
     public static long ApplyFinalDamageReduction(long damage, CombatantEffects defenderEffects)

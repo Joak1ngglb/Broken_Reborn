@@ -59,7 +59,27 @@ public partial class CombatOptions
     /// <summary>
     /// Number of agility points required to gain 1% critical chance.
     /// </summary>
-    public int AgilityPerCritChance { get; set; } = 10;
+    public int AgilityPerCritChance { get; set; } = 20;
+
+    /// <summary>
+    /// Baseline hit chance when accuracy and evasion are evenly matched.
+    /// </summary>
+    public double BaseHitChance { get; set; } = 0.75d;
+
+    /// <summary>
+    /// Lowest allowed hit chance after accuracy and evasion modifiers are applied.
+    /// </summary>
+    public double MinHitChance { get; set; } = 0.25d;
+
+    /// <summary>
+    /// Highest allowed hit chance after accuracy and evasion modifiers are applied.
+    /// </summary>
+    public double MaxHitChance { get; set; } = 0.98d;
+
+    /// <summary>
+    /// How strongly the accuracy vs evasion delta shifts the final hit chance.
+    /// </summary>
+    public double HitChanceSwingFactor { get; set; } = 0.20d;
 
     /// <summary>
     /// Allowed distance to target party members when using quick target keys.

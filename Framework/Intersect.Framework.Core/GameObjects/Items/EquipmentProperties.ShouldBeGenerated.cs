@@ -51,4 +51,12 @@ public partial class EquipmentProperties
         get => StatRanges.TryGetValue(Stat.Agility, out var range) ? range : StatRange_Agility = new ItemRange();
         set => StatRanges[Stat.Agility] = value;
     }
+
+    [JsonIgnore]
+    public ItemRange StatRange_Willpower
+    {
+        get =>
+            StatRanges.TryGetValue(Stat.Willpower, out var range) ? range : StatRange_Willpower = new ItemRange();
+        set => StatRanges[Stat.Willpower] = value;
+    }
 }

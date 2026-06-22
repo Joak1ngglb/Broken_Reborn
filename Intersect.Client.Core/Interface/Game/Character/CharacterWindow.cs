@@ -72,6 +72,7 @@ public partial class CharacterWindow : Window
     private Label mMagicRstLabel;
     private Label mSpeedLabel;
     private Label mAgilityLabel;
+    private Label mWillpowerLabel;
     private Label mDamageLabel;
     private Label mCureLabel;
     private Label mCritChanceLabel;
@@ -82,6 +83,7 @@ public partial class CharacterWindow : Window
     private Button mAddAbilityPwrBtn;
     private Button mAddDefenseBtn;
     private Button mAddMagicResistBtn;
+    private Button mAddWillpowerBtn;
     private Button mAddAgilityBtn; // (ojo: en tu código estaba “IncreaseSpeedButton” pero variable “AgilityBtn”)
 
     // Extra Buffs UI
@@ -105,6 +107,7 @@ public partial class CharacterWindow : Window
     private Label mArmorPenetration;
     private Label mDamageReduction;
     private Label mDamageReflect;
+    private Label mCriticalReduction;
     private Label mFlatDamage;
     private Label mFlatCures;
 
@@ -134,6 +137,7 @@ public partial class CharacterWindow : Window
     private int _armorPenetration = default;
     private int _damageReduction = default;
     private int _damageReflect = default;
+    private int _criticalReduction = default;
     private int _flatDamage = default;
     private int _flatCures = default;
 
@@ -401,8 +405,9 @@ public partial class CharacterWindow : Window
         var leftX = 0;
         var rightX = (mStatsContainer.Width / 2) + 8;
         var leftLabelWidth = 152;
-        var rightLabelWidth = mStatsContainer.Width - rightX - StatIconSize - IconSpacing;
+        var rightLabelWidth = 152;
         var buttonX = leftX + StatIconSize + IconSpacing + leftLabelWidth + 8;
+        var rightButtonX = rightX + StatIconSize + IconSpacing + rightLabelWidth + 8;
 
         var leftY = startY;
         mAttackLabel = CreateLabelWithIcon(
@@ -475,6 +480,18 @@ public partial class CharacterWindow : Window
         );
         rightY += StatRowHeight;
 
+        mWillpowerLabel = CreateLabelWithIcon(
+            mStatsContainer,
+            "WillpowerLabel",
+            StatEffectIconProvider.GetIconForStat(Stat.Willpower),
+            rightX,
+            rightY,
+            rightLabelWidth
+        );
+        mAddWillpowerBtn = CreateStatButton(mStatsContainer, "IncreaseWillpowerButton", rightButtonX, rightY);
+        mAddWillpowerBtn.Clicked += _addWillpowerBtn_Clicked;
+        rightY += StatRowHeight;
+
         mDamageLabel = CreateLabelWithIcon(
             mStatsContainer,
             "DamageLabel",
@@ -511,7 +528,7 @@ public partial class CharacterWindow : Window
             mStatsContainer,
             "BasicAttackDamageLabel",
             0,
-            startY + (StatRowHeight * 5) + 8,
+            startY + (StatRowHeight * 6) + 8,
             mStatsContainer.Width,
             StatRowHeight + 4
         );
@@ -555,6 +572,7 @@ public partial class CharacterWindow : Window
         mArmorPenetration = CreateLabelWithIcon(mExtraBuffsList, "ArmorPenetration", StatEffectIconProvider.GetIconForItemEffect(ItemEffect.ArmorPenetration), 0, y, labelWidth, EffectRowHeight, EffectIconSize); y += EffectRowHeight;
         mDamageReduction = CreateLabelWithIcon(mExtraBuffsList, "DamageReduction", StatEffectIconProvider.GetIconForItemEffect(ItemEffect.DamageReduction), 0, y, labelWidth, EffectRowHeight, EffectIconSize); y += EffectRowHeight;
         mDamageReflect = CreateLabelWithIcon(mExtraBuffsList, "DamageReflect", StatEffectIconProvider.GetIconForItemEffect(ItemEffect.DamageReflect), 0, y, labelWidth, EffectRowHeight, EffectIconSize); y += EffectRowHeight;
+        mCriticalReduction = CreateLabelWithIcon(mExtraBuffsList, "CriticalReduction", StatEffectIconProvider.GetIconForItemEffect(ItemEffect.CriticalReduction), 0, y, labelWidth, EffectRowHeight, EffectIconSize); y += EffectRowHeight;
 
         mFlatDamage = CreateLabelWithIcon(mExtraBuffsList, "FlatDamage", StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Damages), 0, y, labelWidth, EffectRowHeight, EffectIconSize); y += EffectRowHeight;
         mFlatCures = CreateLabelWithIcon(mExtraBuffsList, "FlatCures", StatEffectIconProvider.GetIconForItemEffect(ItemEffect.Cures), 0, y, labelWidth, EffectRowHeight, EffectIconSize); y += EffectRowHeight;

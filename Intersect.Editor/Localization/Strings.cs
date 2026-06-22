@@ -1423,6 +1423,7 @@ Tick timer saved in server config.json.";
             {3, @"Vitality"},
             {4, @"Speed"},
             {5, @"Agility"},
+            {6, @"Willpower"},
         };
 
         public static Dictionary<int, LocalizedString> vitals = new Dictionary<int, LocalizedString>
@@ -4024,6 +4025,7 @@ Tick timer saved in server config.json.";
             {13, @"Damage Reflect"},
             {14, @"Damages"},
             {15, @"Cures"},
+            {16, @"Critical Reduction"},
         };
 
         public static LocalizedString bonuses = @"Stat Bonuses";

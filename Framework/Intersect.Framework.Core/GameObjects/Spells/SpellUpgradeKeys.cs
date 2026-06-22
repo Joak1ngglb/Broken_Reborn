@@ -30,6 +30,7 @@ public static class SpellUpgradeKeys
             public const string Vitality = "Combat.StatDiff.Vitality";
             public const string Speed = "Combat.StatDiff.Speed";
             public const string Agility = "Combat.StatDiff.Agility";
+            public const string Willpower = "Combat.StatDiff.Willpower";
 
             public static string? GetKey(Stat stat) => stat switch
             {
@@ -39,6 +40,7 @@ public static class SpellUpgradeKeys
                 Stat.Vitality => Vitality,
                 Stat.Speed => Speed,
                 Stat.Agility => Agility,
+                Stat.Willpower => Willpower,
                 _ => null,
             };
         }
@@ -95,6 +97,7 @@ public static class SpellUpgradeKeys
         Combat.StatDiff.Vitality,
         Combat.StatDiff.Speed,
         Combat.StatDiff.Agility,
+        Combat.StatDiff.Willpower,
         Combat.VitalDiff.Health,
         Combat.VitalDiff.Mana,
         VitalCost.Health,

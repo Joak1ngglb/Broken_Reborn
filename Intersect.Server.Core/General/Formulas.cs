@@ -185,12 +185,12 @@ public partial class Formulas
             expression.Parameters["A_Defense"] = request.Attacker.Stat[(int)Stat.Defense].Value();
             expression.Parameters["A_Speed"] = request.Attacker.Stat[(int)Stat.Agility].Value();
             expression.Parameters["A_AbilityPwr"] = request.Attacker.Stat[(int)Stat.Intelligence].Value();
-            expression.Parameters["A_MagicResist"] = request.Attacker.Stat[(int)Stat.Vitality].Value();
+            expression.Parameters["A_MagicResist"] = request.Attacker.Stat[(int)Stat.Willpower].Value();
             expression.Parameters["A_Level"] = request.AttackerLevel ?? request.Attacker.Level;
             expression.Parameters["V_Attack"] = request.Defender.Stat[(int)Stat.Attack].Value();
 
             var defenderDefense = request.Defender.Stat[(int)Stat.Defense].Value();
-            var defenderResist = request.Defender.Stat[(int)Stat.Vitality].Value();
+            var defenderResist = request.Defender.Stat[(int)Stat.Willpower].Value();
 
             if (negate && resolverOptions.IgnoreHealingDefense)
             {

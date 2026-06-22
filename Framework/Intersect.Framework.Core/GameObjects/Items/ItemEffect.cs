@@ -33,4 +33,6 @@ public enum ItemEffect : byte
     Damages,
 
     Cures,
+
+    CriticalReduction,
 }

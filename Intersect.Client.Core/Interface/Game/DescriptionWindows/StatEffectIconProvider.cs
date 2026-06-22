@@ -30,6 +30,7 @@ public static class StatEffectIconProvider
             Stat.Vitality => "stat_vitality.png",
             Stat.Speed => "stat_speed.png",
             Stat.Agility => "stat_agility.png",
+            Stat.Willpower => "stat_intelligence.png",
             _ => null,
         };
     }
@@ -63,6 +64,7 @@ public static class StatEffectIconProvider
             ItemEffect.DamageReflect => "effect_damage_reflect.png",
             ItemEffect.Damages => "effect_damage.png",
             ItemEffect.Cures => "effect_cure.png",
+            ItemEffect.CriticalReduction => "effect_damage_reduction.png",
             _ => null,
         };
     }

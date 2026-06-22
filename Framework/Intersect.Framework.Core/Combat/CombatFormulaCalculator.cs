@@ -4,10 +4,10 @@ namespace Intersect.Framework.Core.Combat;
 
 public static class CombatFormulaCalculator
 {
-    private const double MinHitChance = 0.1d;
+    private const double MinHitChance = 0.25d;
     private const double MaxHitChance = 0.98d;
-    private const double BaseHitChance = 0.7d;
-    private const double HitChanceSwingFactor = 0.3d;
+    private const double BaseHitChance = 0.75d;
+    private const double HitChanceSwingFactor = 0.20d;
 
     public static double CalculateAccuracyScore(int agility, int attack, int accuracyBonus)
     {
@@ -21,11 +21,30 @@ public static class CombatFormulaCalculator
 
     public static double CalculateHitChance(double accuracyScore, double evasionScore)
     {
+        return CalculateHitChance(
+            accuracyScore,
+            evasionScore,
+            BaseHitChance,
+            MinHitChance,
+            MaxHitChance,
+            HitChanceSwingFactor
+        );
+    }
+
+    public static double CalculateHitChance(
+        double accuracyScore,
+        double evasionScore,
+        double baseHitChance,
+        double minHitChance,
+        double maxHitChance,
+        double hitChanceSwingFactor
+    )
+    {
         var statBalance = accuracyScore - evasionScore;
         var normalization = Math.Max(50d, accuracyScore + evasionScore);
-        var hitChance = BaseHitChance + HitChanceSwingFactor * statBalance / normalization;
+        var hitChance = baseHitChance + hitChanceSwingFactor * statBalance / normalization;
 
-        return Math.Clamp(hitChance, MinHitChance, MaxHitChance);
+        return Math.Clamp(hitChance, minHitChance, maxHitChance);
     }
 
     public static int CalculateAgilityCriticalContribution(int agility, int agilityPerCritChance)
@@ -47,5 +66,15 @@ public static class CombatFormulaCalculator
         critChance -= antiCritChance;
 
         return Math.Max(0, critChance);
+    }
+
+    public static double ApplyCriticalReduction(double criticalMultiplier, int criticalReduction)
+    {
+        if (criticalMultiplier <= 1d || criticalReduction <= 0)
+        {
+            return Math.Max(1d, criticalMultiplier);
+        }
+
+        return Math.Max(1d, criticalMultiplier - criticalReduction / 100d);
     }
 }

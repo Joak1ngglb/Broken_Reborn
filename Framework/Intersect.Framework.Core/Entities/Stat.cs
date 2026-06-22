@@ -13,4 +13,6 @@ public enum Stat
     Speed,
 
     Agility,
+
+    Willpower,
 }

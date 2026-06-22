@@ -209,6 +209,8 @@ public static partial class Globals
                 return "Agility";
             case (int) Stat.Speed:
                 return "Speed";
+            case (int) Stat.Willpower:
+                return "Willpower";
             default:
                 return "Invalid Stat";
         }

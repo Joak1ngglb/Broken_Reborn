@@ -1544,6 +1544,7 @@ public static partial class Strings
             { Stat.Vitality, @"Vitality" },
             { Stat.Speed, @"Speed" },
             { Stat.Agility, @"Agility" },
+            { Stat.Willpower, @"Willpower" },
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -2547,6 +2548,7 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {13, @"Damage Reflect:"},
             {14, @"Damage Bonus:"},
             {15, @"Healing Bonus:"},
+            {16, @"Critical Reduction:"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -2588,6 +2590,7 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {3, @"Vitality:"},
             {4, @"Speed:"},
             {5, @"Agility:"},
+            {6, @"Willpower:"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -2599,6 +2602,7 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {3, @"Vitality"},
             {4, @"Speed"},
             {5, @"Agility"},
+            {6, @"Willpower"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -3536,6 +3540,7 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {3, @"Vitality"},
             {4, @"Speed"},
             {5, @"Agility"},
+            {6, @"Willpower"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -3547,6 +3552,7 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
             {3, @"Vitality:"},
             {4, @"Speed:"},
             {5, @"Agility:"},
+            {6, @"Willpower:"},
         };
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
