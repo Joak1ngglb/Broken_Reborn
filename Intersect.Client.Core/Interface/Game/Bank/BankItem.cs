@@ -62,7 +62,7 @@ public partial class BankItem : SlotItem
 
     protected override void OnContextMenuOpening(ContextMenu contextMenu)
     {
-        contextMenu.ClearChildren(); // Clear context menu
+        contextMenu.ClearChildren(); // Limpiar el menú contextual
 
         if (Globals.BankSlots is not { Length: > 0 } bankSlots)
         {
@@ -76,21 +76,24 @@ public partial class BankItem : SlotItem
             return;
         }
 
-        // Clear the context menu and add the withdraw item with updated item name
-        contextMenu.ClearChildren();
-        contextMenu.AddChild(_withdrawContextItem);
-        _withdrawContextItem.SetText(Strings.BankContextMenu.Withdraw.ToString(item.Name));
-        contextMenu.AddChild(_showItemContextItem);
-        _showItemContextItem.SetText(Strings.ItemContextMenu.Show.ToString(item.Name));
+        if (bankSlots[slotIndex] is not { } bankSlot)
+        {
+            return;
+        }
 
+        // Obtener el descriptor del ítem antes de usarlo
         if (!ItemDescriptor.TryGet(bankSlot.ItemId, out var item))
         {
             return;
         }
 
-        // Update context menu
+        // Limpiar el menú contextual y agregar los elementos con el nombre actualizado
+        contextMenu.ClearChildren();
         _withdrawContextItem.SetText(Strings.BankContextMenu.Withdraw.ToString(item.Name));
         contextMenu.AddChild(_withdrawContextItem);
+        _showItemContextItem.SetText(Strings.ItemContextMenu.Show.ToString(item.Name));
+        contextMenu.AddChild(_showItemContextItem);
+
         base.OnContextMenuOpening(contextMenu);
     }
 
